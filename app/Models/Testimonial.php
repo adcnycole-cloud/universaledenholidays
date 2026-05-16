@@ -1,0 +1,34 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+
+class Testimonial extends Model
+{
+    protected $fillable = [
+        'name',
+        'location',
+        'trip_name',
+        'quote',
+        'rating',
+        'profile_photo_path',
+        'is_featured',
+    ];
+
+    protected function casts(): array
+    {
+        return [
+            'is_featured' => 'boolean',
+        ];
+    }
+
+    public function getProfilePhotoUrlAttribute(): string
+    {
+        if ($this->profile_photo_path) {
+            return asset('storage/'.$this->profile_photo_path);
+        }
+
+        return 'https://ui-avatars.com/api/?name='.urlencode($this->name).'&background=0f4fb5&color=ffffff&size=128&bold=true';
+    }
+}

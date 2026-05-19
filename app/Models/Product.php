@@ -24,8 +24,6 @@ class Product extends Model
         'capacity',
         'is_featured',
         'is_top_choice',
-        'is_discounted',
-        'discount_percentage',
         'is_active',
     ];
 
@@ -38,10 +36,8 @@ class Product extends Model
             'malaysia_child_price_myr' => 'decimal:2',
             'international_adult_price_myr' => 'decimal:2',
             'international_child_price_myr' => 'decimal:2',
-            'discount_percentage' => 'decimal:2',
             'is_featured' => 'boolean',
             'is_top_choice' => 'boolean',
-            'is_discounted' => 'boolean',
             'is_active' => 'boolean',
         ];
     }

@@ -56,7 +56,7 @@
                     </div>
                     @if (in_array($booking->payment_status, ['awaiting_payment', 'payment_submitted'], true))
                         <div class="mt-5">
-                            <a href="{{ route('bookings.payment.show', $booking) }}" class="inline-flex rounded-full bg-stone-900 px-5 py-3 text-sm font-semibold uppercase tracking-[0.2em] text-white transition hover:bg-stone-800">
+                            <a href="{{ route('bookings.payment.show', ['reference' => $booking->booking_reference]) }}" class="inline-flex rounded-full bg-stone-900 px-5 py-3 text-sm font-semibold uppercase tracking-[0.2em] text-white transition hover:bg-stone-800">
                                 {{ $booking->payment_status === 'payment_submitted' ? 'View Payment Step' : 'Continue Payment' }}
                             </a>
                         </div>

@@ -68,7 +68,7 @@
                 </div>
 
                 <section class="mt-8 rounded-[2rem] border border-stone-200 bg-white p-6 shadow-sm">
-                    <h2 class="text-3xl font-semibold text-stone-900">Product Highlights</h2>
+                    <h2 class="text-3xl font-semibold text-stone-900">Tour Highlights</h2>
                     <div class="mt-5 grid gap-6 md:grid-cols-[1.1fr_0.9fr]">
                         <div class="rounded-3xl bg-stone-100 p-6">
                             @if ($primaryImage)
@@ -222,7 +222,7 @@
             </section>
 
             <section class="rounded-[2rem] border border-stone-200 bg-white p-6 shadow-sm">
-                <h2 class="text-2xl font-semibold text-stone-900">Service Inclusion</h2>
+                <h2 class="text-2xl font-semibold text-stone-900">Tour Inclusion</h2>
                 <div class="mt-6 overflow-hidden rounded-3xl border border-stone-200">
                     <table class="min-w-full text-left text-sm">
                         <tbody class="bg-white text-stone-700">
@@ -236,7 +236,7 @@
                             </tr>
                             <tr class="border-b border-stone-200">
                                 <th class="bg-stone-50 px-5 py-4 font-semibold">Accommodation</th>
-                                <td class="px-5 py-4">Included where relevant for package and overnight products.</td>
+                                <td class="px-5 py-4">Included where relevant for package and overnight tour products.</td>
                             </tr>
                             <tr>
                                 <th class="bg-stone-50 px-5 py-4 font-semibold">Exclusion</th>

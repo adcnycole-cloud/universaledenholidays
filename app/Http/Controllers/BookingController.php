@@ -24,7 +24,7 @@ class BookingController extends Controller
                     'name' => 'City Lights',
                     'location' => 'Singapore',
                     'price' => '$460',
-                    'description' => 'A quick urban getaway with hotel stay, breakfast, and an evening city experience.',
+                    'description' => 'A quick urban getaway with hotel stay, breakfast, and a night tour.',
                 ],
                 [
                     'name' => 'Highland Retreat',

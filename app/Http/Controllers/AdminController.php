@@ -23,7 +23,7 @@ class AdminController extends Controller
         [
             'name' => '41/44 Seaters Bus',
             'location' => 'Sabah, Malaysia',
-            'summary' => 'Suitable for large groups, holiday transfers, and corporate travel across Sabah.',
+            'summary' => 'Suitable for large groups, tours, and corporate travel across Sabah.',
             'description' => 'A comfortable 41/44 seater bus option for larger group movements, events, and holiday transport arrangements.',
             'duration' => 'Custom charter',
             'price_myr' => 0,
@@ -36,8 +36,6 @@ class AdminController extends Controller
             'gallery_images' => [],
             'is_featured' => true,
             'is_top_choice' => false,
-            'is_discounted' => false,
-            'discount_percentage' => null,
             'is_active' => true,
         ],
         [
@@ -56,8 +54,6 @@ class AdminController extends Controller
             'gallery_images' => [],
             'is_featured' => true,
             'is_top_choice' => false,
-            'is_discounted' => false,
-            'discount_percentage' => null,
             'is_active' => true,
         ],
         [
@@ -76,8 +72,6 @@ class AdminController extends Controller
             'gallery_images' => [],
             'is_featured' => true,
             'is_top_choice' => false,
-            'is_discounted' => false,
-            'discount_percentage' => null,
             'is_active' => true,
         ],
     ];
@@ -107,6 +101,11 @@ class AdminController extends Controller
         return view('admin.packages', $this->sharedAdminData());
     }
 
+    public function tours(): View
+    {
+        return view('admin.tours', $this->sharedAdminData());
+    }
+
     public function testimonials(): View
     {
         return view('admin.testimonials', $this->sharedAdminData());
@@ -114,44 +113,40 @@ class AdminController extends Controller
 
     public function bookings(): View
     {
-        $reportType = request('report_type', 'monthly');
-        $reportPeriod = $this->resolveReportPeriod($reportType, request('period'));
+        $selectedMonth = request('month');
+        $monthDate = $this->resolveReportMonth($selectedMonth);
         $data = $this->sharedAdminData();
         $reportBookings = Booking::with(['user', 'product'])
-            ->whereBetween('created_at', [$reportPeriod['start'], $reportPeriod['end']])
+            ->whereBetween('created_at', [$monthDate->copy()->startOfMonth(), $monthDate->copy()->endOfMonth()])
             ->latest()
             ->get();
 
         return view('admin.bookings', $data + [
-            'reportType' => $reportType,
-            'reportPeriodValue' => $reportPeriod['value'],
-            'reportPeriodOptions' => $reportType === 'yearly'
-                ? $this->bookingYearOptions()
-                : $this->bookingMonthOptions(),
-            'bookingReport' => $this->buildBookingReport($reportBookings, $reportPeriod),
+            'reportMonth' => $monthDate,
+            'reportMonthOptions' => $this->bookingMonthOptions(),
+            'monthlyReport' => $this->buildMonthlyReport($reportBookings, $monthDate),
         ]);
     }
 
     public function exportMonthlyBookings(Request $request): StreamedResponse
     {
-        $reportType = $request->query('report_type', 'monthly');
-        $reportPeriod = $this->resolveReportPeriod($reportType, $request->query('period'));
-        $report = $this->buildBookingReport(
+        $monthDate = $this->resolveReportMonth($request->query('month'));
+        $report = $this->buildMonthlyReport(
             Booking::with(['user', 'product'])
-                ->whereBetween('created_at', [$reportPeriod['start'], $reportPeriod['end']])
+                ->whereBetween('created_at', [$monthDate->copy()->startOfMonth(), $monthDate->copy()->endOfMonth()])
                 ->latest()
                 ->get(),
-            $reportPeriod,
+            $monthDate,
         );
 
         $spreadsheet = new Spreadsheet();
         $sheet = $spreadsheet->getActiveSheet();
-        $sheet->setTitle($reportType === 'yearly' ? 'Yearly Report' : 'Monthly Report');
+        $sheet->setTitle('Monthly Report');
 
         $sheet->fromArray([
             ['Universal Eden Holidays'],
-            [$reportType === 'yearly' ? 'Yearly Booking Report' : 'Monthly Booking Report'],
-            [$reportType === 'yearly' ? 'Year' : 'Month', $report['period_label']],
+            ['Monthly Booking Report'],
+            ['Month', $report['month_label']],
             ['Total Bookings', $report['totals']['bookings']],
             ['Confirmed', $report['totals']['confirmed']],
             ['Completed', $report['totals']['completed']],
@@ -191,7 +186,7 @@ class AdminController extends Controller
         return response()->streamDownload(function () use ($spreadsheet) {
             $writer = new Xlsx($spreadsheet);
             $writer->save('php://output');
-        }, ($reportType === 'yearly' ? 'yearly-bookings-' : 'monthly-bookings-').$report['period_value'].'.xlsx', [
+        }, 'monthly-bookings-'.$monthDate->format('Y-m').'.xlsx', [
             'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         ]);
     }
@@ -218,13 +213,12 @@ class AdminController extends Controller
     {
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'category' => ['required', 'in:transport,package'],
+            'category' => ['required', 'in:transport,package,tour'],
             'location' => ['required', 'string', 'max:255'],
             'summary' => ['required', 'string', 'max:255'],
             'image_url' => ['nullable', 'url', 'max:2048'],
             'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
-            'gallery_image_files' => ['nullable', 'array', 'max:8'],
-            'gallery_image_files.*' => ['image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
+            'gallery_images' => ['nullable', 'string', 'max:12000'],
             'description' => ['required', 'string', 'max:1000'],
             'duration' => ['required', 'string', 'max:100'],
             'price_myr' => ['required', 'numeric', 'min:0'],
@@ -235,31 +229,31 @@ class AdminController extends Controller
             'capacity' => ['nullable', 'integer', 'min:1', 'max:500'],
             'is_featured' => ['nullable', 'boolean'],
             'is_top_choice' => ['nullable', 'boolean'],
-            'is_discounted' => ['nullable', 'boolean'],
-            'discount_percentage' => ['nullable', 'numeric', 'min:0', 'max:100'],
         ]);
 
         if ($validated['category'] === 'transport') {
             return back()->with('success', 'Transport products are fixed for now. Please edit the existing 41/44 bus, 17 seater van, or 9/14 seater van entries below.');
         }
 
+        $galleryImages = collect(preg_split('/\r\n|\r|\n/', $validated['gallery_images'] ?? ''))
+            ->map(fn ($image) => trim($image))
+            ->filter()
+            ->values();
+
+        validator(
+            ['gallery_images' => $galleryImages->all()],
+            ['gallery_images.*' => ['url', 'max:2048']],
+        )->validate();
+
         if ($request->hasFile('image')) {
             $validated['image_url'] = $this->storeProductImage($request->file('image'));
         }
 
-        $galleryImages = $request->hasFile('gallery_image_files')
-            ? $this->storeProductGalleryImages($request->file('gallery_image_files'))
-            : [];
-
         Product::create($validated + [
-            'gallery_images' => $galleryImages,
+            'gallery_images' => $galleryImages->all(),
             'capacity' => $validated['capacity'] ?? null,
             'is_featured' => $request->boolean('is_featured'),
             'is_top_choice' => $request->boolean('is_top_choice'),
-            'is_discounted' => $request->boolean('is_discounted'),
-            'discount_percentage' => $request->boolean('is_discounted')
-                ? ($validated['discount_percentage'] ?? 0)
-                : null,
             'is_active' => true,
         ]);
 
@@ -274,10 +268,7 @@ class AdminController extends Controller
             'summary' => ['required', 'string', 'max:255'],
             'image_url' => ['nullable', 'url', 'max:2048'],
             'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
-            'existing_gallery_images' => ['nullable', 'array', 'max:8'],
-            'existing_gallery_images.*' => ['url', 'max:2048'],
-            'gallery_image_files' => ['nullable', 'array', 'max:8'],
-            'gallery_image_files.*' => ['image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
+            'gallery_images' => ['nullable', 'string', 'max:12000'],
             'description' => ['required', 'string', 'max:1000'],
             'duration' => ['required', 'string', 'max:100'],
             'price_myr' => ['required', 'numeric', 'min:0'],
@@ -288,8 +279,6 @@ class AdminController extends Controller
             'capacity' => ['nullable', 'integer', 'min:1', 'max:500'],
             'is_featured' => ['nullable', 'boolean'],
             'is_top_choice' => ['nullable', 'boolean'],
-            'is_discounted' => ['nullable', 'boolean'],
-            'discount_percentage' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'is_active' => ['nullable', 'boolean'],
         ]);
 
@@ -300,37 +289,26 @@ class AdminController extends Controller
             }
         }
 
+        $galleryImages = collect(preg_split('/\r\n|\r|\n/', $validated['gallery_images'] ?? ''))
+            ->map(fn ($image) => trim($image))
+            ->filter()
+            ->values();
+
+        validator(
+            ['gallery_images' => $galleryImages->all()],
+            ['gallery_images.*' => ['url', 'max:2048']],
+        )->validate();
+
         if ($request->hasFile('image')) {
             $this->deleteManagedProductImage($product->image_url);
             $validated['image_url'] = $this->storeProductImage($request->file('image'));
         }
 
-        $existingGalleryImages = collect($validated['existing_gallery_images'] ?? [])
-            ->filter(fn ($imageUrl) => is_string($imageUrl) && filled($imageUrl))
-            ->values()
-            ->all();
-
-        $originalGalleryImages = $product->gallery_images ?? [];
-        $removedGalleryImages = array_values(array_diff($originalGalleryImages, $existingGalleryImages));
-        $this->deleteManagedProductImages($removedGalleryImages);
-
-        $galleryImages = $existingGalleryImages;
-        if ($request->hasFile('gallery_image_files')) {
-            $galleryImages = array_merge(
-                $galleryImages,
-                $this->storeProductGalleryImages($request->file('gallery_image_files')),
-            );
-        }
-
         $product->update($validated + [
-            'gallery_images' => $galleryImages,
+            'gallery_images' => $galleryImages->all(),
             'capacity' => $validated['capacity'] ?? null,
             'is_featured' => $request->boolean('is_featured'),
             'is_top_choice' => $request->boolean('is_top_choice'),
-            'is_discounted' => $request->boolean('is_discounted'),
-            'discount_percentage' => $request->boolean('is_discounted')
-                ? ($validated['discount_percentage'] ?? 0)
-                : null,
             'is_active' => $request->boolean('is_active', true),
         ]);
 
@@ -340,7 +318,6 @@ class AdminController extends Controller
     public function destroyProduct(Product $product): RedirectResponse
     {
         $this->deleteManagedProductImage($product->image_url);
-        $this->deleteManagedProductImages($product->gallery_images ?? []);
         $product->delete();
 
         return back()->with('success', 'Product deleted successfully.');
@@ -353,18 +330,6 @@ class AdminController extends Controller
         return Storage::url($path);
     }
 
-    private function storeProductGalleryImages(array $images): array
-    {
-        return collect($images)
-            ->map(function ($image) {
-                $path = $image->store('product-galleries', 'public');
-
-                return Storage::url($path);
-            })
-            ->values()
-            ->all();
-    }
-
     private function deleteManagedProductImage(?string $imageUrl): void
     {
         if (! is_string($imageUrl) || ! str_starts_with($imageUrl, '/storage/')) {
@@ -372,13 +337,6 @@ class AdminController extends Controller
         }
 
         Storage::disk('public')->delete(substr($imageUrl, strlen('/storage/')));
-    }
-
-    private function deleteManagedProductImages(array $imageUrls): void
-    {
-        collect($imageUrls)
-            ->filter(fn ($imageUrl) => is_string($imageUrl) && str_starts_with($imageUrl, '/storage/'))
-            ->each(fn ($imageUrl) => Storage::disk('public')->delete(substr($imageUrl, strlen('/storage/'))));
     }
 
     public function storeNewsFeature(Request $request): RedirectResponse
@@ -581,6 +539,7 @@ class AdminController extends Controller
                 ->filter()
                 ->values(),
             'packageProducts' => $products->where('category', 'package')->values(),
+            'tourProducts' => $products->where('category', 'tour')->values(),
             'newsFeatures' => NewsFeature::latest()->get(),
             'testimonials' => Testimonial::latest()->get(),
             'bookings' => Booking::with(['user', 'product'])->latest()->get(),
@@ -596,37 +555,13 @@ class AdminController extends Controller
         ];
     }
 
-    private function resolveReportPeriod(?string $reportType, ?string $period): array
+    private function resolveReportMonth(?string $month): Carbon
     {
-        if ($reportType === 'yearly') {
-            if (is_string($period) && preg_match('/^\d{4}$/', $period) === 1) {
-                $yearDate = Carbon::createFromFormat('Y', $period)->startOfYear();
-            } else {
-                $yearDate = now()->startOfYear();
-            }
-
-            return [
-                'type' => 'yearly',
-                'value' => $yearDate->format('Y'),
-                'label' => $yearDate->format('Y'),
-                'start' => $yearDate->copy()->startOfYear(),
-                'end' => $yearDate->copy()->endOfYear(),
-            ];
+        if (is_string($month) && preg_match('/^\d{4}-\d{2}$/', $month) === 1) {
+            return Carbon::createFromFormat('Y-m', $month)->startOfMonth();
         }
 
-        if (is_string($period) && preg_match('/^\d{4}-\d{2}$/', $period) === 1) {
-            $monthDate = Carbon::createFromFormat('Y-m', $period)->startOfMonth();
-        } else {
-            $monthDate = now()->startOfMonth();
-        }
-
-        return [
-            'type' => 'monthly',
-            'value' => $monthDate->format('Y-m'),
-            'label' => $monthDate->format('F Y'),
-            'start' => $monthDate->copy()->startOfMonth(),
-            'end' => $monthDate->copy()->endOfMonth(),
-        ];
+        return now()->startOfMonth();
     }
 
     private function bookingMonthOptions(): Collection
@@ -643,28 +578,14 @@ class AdminController extends Controller
             ]);
     }
 
-    private function bookingYearOptions(): Collection
-    {
-        return Booking::query()
-            ->selectRaw('YEAR(created_at) as year_key')
-            ->groupBy('year_key')
-            ->orderByDesc('year_key')
-            ->get()
-            ->map(fn ($row) => [
-                'value' => (string) $row->year_key,
-                'label' => (string) $row->year_key,
-            ]);
-    }
-
-    private function buildBookingReport(Collection $bookings, array $reportPeriod): array
+    private function buildMonthlyReport(Collection $bookings, Carbon $monthDate): array
     {
         $confirmedCount = $bookings->where('status', 'confirmed')->count();
         $completedCount = $bookings->where('status', 'completed')->count();
 
         return [
-            'period_type' => $reportPeriod['type'],
-            'period_value' => $reportPeriod['value'],
-            'period_label' => $reportPeriod['label'],
+            'month_value' => $monthDate->format('Y-m'),
+            'month_label' => $monthDate->format('F Y'),
             'totals' => [
                 'bookings' => $bookings->count(),
                 'confirmed' => $confirmedCount,

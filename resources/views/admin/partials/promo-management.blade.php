@@ -1,4 +1,4 @@
-<section id="admin-promo-listings" class="mt-5 space-y-8">
+<section id="admin-promo-listings" class="mt-8 grid gap-8 lg:grid-cols-[1.2fr_0.8fr]">
     <section class="rounded-[2rem] border border-stone-200 bg-white p-6 shadow-sm">
         <p class="text-sm uppercase tracking-[0.3em] text-rose-600">Promos</p>
         <h1 class="mt-2 text-3xl font-semibold text-stone-900">Upload posters for special offers</h1>
@@ -49,25 +49,11 @@
                     <input id="admin-promo-search" type="search" placeholder="Search promos by label, title, or summary" class="w-full rounded-full border border-stone-300 bg-stone-50 px-4 py-3 text-sm text-stone-800 outline-none transition focus:border-sky-400 focus:bg-white">
                 </label>
             </div>
-            <div class="flex items-center justify-end gap-3">
-                <p id="admin-promo-results" class="sr-only">Showing promo entries</p>
+            <div class="flex items-center justify-between gap-3">
+                <p id="admin-promo-results" class="text-sm text-stone-500">Showing promo entries</p>
                 <div class="flex items-center gap-2">
-                    <button
-                        id="admin-promo-prev"
-                        type="button"
-                        class="inline-flex h-10 w-10 items-center justify-center rounded-full border border-stone-300 bg-white text-stone-700 transition hover:bg-stone-100"
-                        aria-label="Previous promos page"
-                    >
-                        <span class="text-lg leading-none">&#8249;</span>
-                    </button>
-                    <button
-                        id="admin-promo-next"
-                        type="button"
-                        class="inline-flex h-10 w-10 items-center justify-center rounded-full border border-stone-300 bg-white text-stone-700 transition hover:bg-stone-100"
-                        aria-label="Next promos page"
-                    >
-                        <span class="text-lg leading-none">&#8250;</span>
-                    </button>
+                    <button id="admin-promo-prev" type="button" class="rounded-full border border-stone-300 bg-white px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-stone-700 transition hover:bg-stone-100">Previous</button>
+                    <button id="admin-promo-next" type="button" class="rounded-full border border-stone-300 bg-white px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-stone-700 transition hover:bg-stone-100">Next</button>
                 </div>
             </div>
         </div>
@@ -75,13 +61,8 @@
             @forelse ($newsFeatures as $feature)
                 @php($promoEnded = $feature->ends_at && $feature->ends_at->isPast())
                 <article data-admin-promo-item="true" class="overflow-hidden rounded-3xl border border-stone-200 bg-stone-50">
-                    <div style="display: grid; gap: 0; grid-template-columns: 226px minmax(0, 1fr);">
-                        <div class="border-b border-stone-200 bg-white md:border-b-0 md:border-r" style="padding: 0.35rem;">
-                            <a href="{{ $feature->poster_url }}" target="_blank" rel="noopener noreferrer" class="block">
-                                <img src="{{ $feature->poster_url }}" alt="{{ $feature->title }}" style="display: block; width: 200px; max-width: 200px; height: 300px; margin: 0 auto; object-fit: contain; border-radius: 0.375rem; background: #fff; box-shadow: 0 1px 3px rgba(15,23,42,0.12);">
-                            </a>
-                        </div>
-                        <div class="min-w-0 p-6 md:p-7" style="min-width: 0;">
+                    <img src="{{ $feature->poster_url }}" alt="{{ $feature->title }}" class="h-44 w-full object-cover">
+                    <div class="p-5">
                         <div class="flex flex-wrap items-center justify-between gap-3">
                             <div class="flex flex-wrap items-center gap-2">
                                 <span class="rounded-full bg-rose-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.25em] text-rose-700">{{ $feature->promo_label ?: 'Promo News' }}</span>
@@ -145,15 +126,6 @@
                         @if ($feature->summary)
                             <p class="mt-2 text-sm leading-6 text-stone-600">{{ $feature->summary }}</p>
                         @endif
-                        <div class="mt-4 flex flex-wrap gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-stone-500">
-                            @if ($feature->starts_at)
-                                <span class="rounded-full bg-white px-3 py-1">Start {{ $feature->starts_at->format('d M Y') }}</span>
-                            @endif
-                            @if ($feature->ends_at)
-                                <span class="rounded-full bg-white px-3 py-1">End {{ $feature->ends_at->format('d M Y') }}</span>
-                            @endif
-                        </div>
-                        </div>
                     </div>
                 </article>
             @empty

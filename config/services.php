@@ -35,4 +35,13 @@ return [
         ],
     ],
 
+    'billplz' => [
+        'sandbox' => env('BILLPLZ_SANDBOX', true),
+        'base_url' => env('BILLPLZ_BASE_URL'),
+        'verify_ssl' => env('BILLPLZ_VERIFY_SSL', true),
+        'api_key' => env('BILLPLZ_API_KEY'),
+        'collection_id' => env('BILLPLZ_COLLECTION_ID'),
+        'x_signature_key' => env('BILLPLZ_X_SIGNATURE_KEY'),
+    ],
+
 ];

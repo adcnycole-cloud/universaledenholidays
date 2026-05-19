@@ -1,4 +1,4 @@
-<x-layouts.app title="Universal Eden Holidays | Sabah Packages and Transport">
+<x-layouts.app title="Universal Eden Holidays | Sabah Tours and Transport">
     <div style="background-color: #f1f0e9;">
     <style>
         html,
@@ -974,7 +974,7 @@
                         </div>
                     </div>
                     <p class="mt-4 text-sm leading-6 text-stone-600">
-                        We help travelers explore Sabah with smoother planning, reliable transport, curated holiday packages, and practical booking support from the first enquiry to the final trip detail.
+                        We help travelers explore Sabah with smoother planning, reliable transport, curated tour packages, and practical booking support from the first enquiry to the final trip detail.
                     </p>
                 </div>
                 <div class="grid gap-3 md:grid-cols-2">
@@ -1006,7 +1006,7 @@
                     <img src="{{ asset('images/ue_logo.jpg') }}" alt="Universal Eden Logo" class="h-12 w-12 rounded-full object-cover ring-2 ring-white/10">
                     <div>
                         <p class="font-['Prata'] text-xl text-white">Universal Eden Holidays</p>
-                        <p class="text-xs uppercase tracking-[0.28em] text-stone-400">Sabah Packages and Transport</p>
+                        <p class="text-xs uppercase tracking-[0.28em] text-stone-400">Sabah Tours and Transport</p>
                     </div>
                 </div>
                 <p class="mt-5 max-w-md text-sm leading-7 text-stone-400">

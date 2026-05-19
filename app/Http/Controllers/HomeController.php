@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Mail\CompleteBookingAccessMail;
+use App\Mail\BookingSubmittedMail;
 use App\Models\Booking;
 use App\Models\NewsFeature;
 use App\Models\Product;
@@ -57,6 +57,7 @@ class HomeController extends Controller
         return view('booking.create', [
             'transportServices' => $products->where('category', 'transport')->values(),
             'travelPackages' => $products->where('category', 'package')->values(),
+            'tours' => $products->where('category', 'tour')->values(),
             'selectedProduct' => $selectedProduct,
             'isProductLocked' => $selectedProduct !== null,
             'formMode' => $formMode,
@@ -174,6 +175,8 @@ class HomeController extends Controller
             'transportServices' => $products->where('category', 'transport')->values(),
             'travelPackages' => $travelPackages,
             'popularPackages' => $popularPackages,
+            'tours' => $products->where('category', 'tour')->values(),
+            'topTours' => $products->where('category', 'tour')->where('is_top_choice', true)->values(),
             'currentPromo' => $currentPromo,
             'pastPromo' => $pastPromos->first(),
             'pastPromos' => $pastPromos,
@@ -191,7 +194,7 @@ class HomeController extends Controller
 
         $baseRules = [
             'product_id' => ['required', 'exists:products,id'],
-            'service_type' => ['required', 'in:transport,package'],
+            'service_type' => ['required', 'in:transport,package,tour'],
             'action_type' => ['nullable', 'in:reserve,instant_book,book_now'],
             'locked_product_id' => ['nullable', 'exists:products,id'],
             'full_name' => ['required', 'string', 'max:255'],
@@ -245,7 +248,7 @@ class HomeController extends Controller
             $booking = Booking::create([
                 'user_id' => $request->user()?->id,
                 'product_id' => $product->id,
-                'booking_reference' => 'UEH-'.Str::upper(Str::random(8)),
+                'booking_reference' => $this->createBookingReference(),
                 'service_type' => $validated['service_type'],
                 'full_name' => $validated['full_name'],
                 'email' => $validated['email'],
@@ -294,7 +297,7 @@ class HomeController extends Controller
         $booking = Booking::create([
             'user_id' => $request->user()?->id,
             'product_id' => $product->id,
-            'booking_reference' => 'UEH-'.Str::upper(Str::random(8)),
+            'booking_reference' => $this->createBookingReference(),
             'service_type' => $validated['service_type'],
             'full_name' => $validated['full_name'],
             'email' => $validated['email'],
@@ -315,28 +318,32 @@ class HomeController extends Controller
             'amount_myr' => $amountMyr,
             'amount_display' => $amountDisplay,
             'status' => 'pending',
-            'payment_status' => 'awaiting_setup',
+            'payment_status' => $amountMyr > 0 ? 'awaiting_payment' : 'not_required',
         ]);
 
-        $accessToken = Str::random(64);
-
-        $booking->update([
-            'account_setup_token' => hash('sha256', $accessToken),
-            'account_setup_expires_at' => now()->addDay(),
-        ]);
-
-        Mail::to($booking->email)->send(new CompleteBookingAccessMail(
+        Mail::to($booking->email)->send(new BookingSubmittedMail(
             $booking->fresh(),
-            route('bookings.access.show', $accessToken),
+            route('bookings.lookup.show', ['booking_reference' => $booking->booking_reference]),
         ));
+
+        BookingAccessController::grantGuestAccess($request, $booking);
 
         $isReserveFlow = ($validated['action_type'] ?? null) === 'reserve';
 
-        return redirect()->route('home')->with(
+        return redirect()->route('bookings.payment.show', ['reference' => $booking->booking_reference])->with(
             'success',
             $isReserveFlow
-                ? 'Your reserve request has been submitted. We sent a secure email link so you can complete your account and continue to payment.'
-                : 'Your booking request has been submitted. We sent a secure email link so you can complete your account and continue to payment.'
+                ? 'Your reserve request has been submitted. Your Booking ID is '.$booking->booking_reference.'. We emailed the same details and opened your payment page.'
+                : 'Your booking request has been submitted. Your Booking ID is '.$booking->booking_reference.'. We emailed the same details and opened your payment page.'
         );
+    }
+
+    private function createBookingReference(): string
+    {
+        do {
+            $reference = 'UEH-'.Str::upper(Str::random(8));
+        } while (Booking::where('booking_reference', $reference)->exists());
+
+        return $reference;
     }
 }

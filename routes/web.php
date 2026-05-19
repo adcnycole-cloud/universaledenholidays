@@ -11,6 +11,12 @@ Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/products/{product}', [HomeController::class, 'showProduct'])->name('products.show');
 Route::get('/booking', [HomeController::class, 'showBookingForm'])->name('booking.create');
 Route::post('/bookings', [HomeController::class, 'book'])->name('bookings.store');
+Route::get('/booking-access', [BookingAccessController::class, 'showLookupForm'])->name('bookings.lookup.show');
+Route::post('/booking-access', [BookingAccessController::class, 'lookup'])->name('bookings.lookup.submit');
+Route::get('/booking-access/{reference}/payment', [BookingAccessController::class, 'showPaymentPage'])->name('bookings.payment.show');
+Route::post('/booking-access/{reference}/payment', [BookingAccessController::class, 'submitPayment'])->name('bookings.payment.submit');
+Route::get('/booking-access/{reference}/payment/return', [BookingAccessController::class, 'handleBillplzRedirect'])->name('bookings.payment.return');
+Route::post('/payments/billplz/callback', [BookingAccessController::class, 'handleBillplzCallback'])->name('bookings.payment.callback');
 Route::get('/booking-access/{token}', [BookingAccessController::class, 'showSetupForm'])->name('bookings.access.show');
 Route::post('/booking-access/{token}', [BookingAccessController::class, 'completeSetup'])->name('bookings.access.complete');
 
@@ -26,8 +32,6 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'show'])->name('profile.show');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::get('/profile/bookings', [ProfileController::class, 'bookings'])->name('profile.bookings');
-    Route::get('/bookings/{booking}/payment', [BookingAccessController::class, 'showPaymentPage'])->name('bookings.payment.show');
-    Route::post('/bookings/{booking}/payment', [BookingAccessController::class, 'submitPayment'])->name('bookings.payment.submit');
 });
 
 Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
@@ -36,6 +40,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     Route::get('/promos', [AdminController::class, 'promos'])->name('admin.promos');
     Route::get('/transport', [AdminController::class, 'transport'])->name('admin.transport');
     Route::get('/packages', [AdminController::class, 'packages'])->name('admin.packages');
+    Route::get('/tours', [AdminController::class, 'tours'])->name('admin.tours');
     Route::get('/testimonials', [AdminController::class, 'testimonials'])->name('admin.testimonials');
     Route::get('/bookings', [AdminController::class, 'bookings'])->name('admin.bookings');
     Route::get('/bookings/export/monthly', [AdminController::class, 'exportMonthlyBookings'])->name('admin.bookings.export');

@@ -1,6 +1,8 @@
 <x-layouts.app title="Admin Profile | Universal Eden Holidays">
-    <main class="mx-auto max-w-[1700px] px-6 py-6 lg:px-10">
-        <section class="mt-5 rounded-[2rem] border border-stone-200 bg-white p-6 shadow-sm">
+    <main class="mx-auto max-w-[1700px] px-6 py-10 lg:px-10">
+        @include('admin.partials.overview-cards', ['stats' => $stats])
+
+        <section class="mt-8 rounded-[2rem] border border-stone-200 bg-white p-6 shadow-sm">
             <p class="text-sm uppercase tracking-[0.3em] text-sky-700">Admin Profile</p>
             <div class="mt-4 grid gap-6 lg:grid-cols-[0.85fr_1.15fr]">
                 <div class="rounded-[1.75rem] bg-[linear-gradient(135deg,_#e0f2fe,_#f8fafc_55%,_#ecfccb)] p-6">

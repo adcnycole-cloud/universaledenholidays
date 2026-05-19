@@ -5,8 +5,8 @@
                 <p class="text-sm uppercase tracking-[0.3em] text-amber-600">Booking Payment</p>
                 <h1 class="mt-2 text-3xl font-semibold text-stone-900">Review your booking and payment step</h1>
             </div>
-            <a href="{{ route('profile.bookings') }}" class="rounded-full border border-stone-300 px-4 py-2.5 text-sm font-semibold text-stone-700 transition hover:bg-stone-50">
-                My Bookings
+            <a href="{{ auth()->check() ? route('profile.bookings') : route('bookings.lookup.show') }}" class="rounded-full border border-stone-300 px-4 py-2.5 text-sm font-semibold text-stone-700 transition hover:bg-stone-50">
+                {{ auth()->check() ? 'My Bookings' : 'Find Another Booking' }}
             </a>
         </div>
 
@@ -14,9 +14,12 @@
             <section class="rounded-[2rem] border border-stone-200 bg-white p-6 shadow-sm">
                 <div class="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                     <div>
-                        <p class="text-sm text-stone-500">Reference {{ $booking->booking_reference }}</p>
+                        <p class="text-xs uppercase tracking-[0.3em] text-amber-600">Booking Details</p>
+                        <h2 class="mt-2 text-sm text-stone-500">Booking ID:</h2>
+                        <h2 class="mt-2 text-2xl font-extrabold text-stone-900">{{ $booking->booking_reference }}</h2>
                         <h2 class="mt-2 text-2xl font-semibold text-stone-900">{{ $booking->package_name }}</h2>
                         <p class="mt-2 text-sm leading-6 text-stone-600">{{ $booking->destination }}</p>
+                        <p class="mt-2 text-xs uppercase tracking-[0.24em] text-stone-400">Use this Booking ID with your booking email to trace or revisit this payment page.</p>
                     </div>
                     <span class="inline-flex rounded-full bg-amber-50 px-4 py-2 text-xs font-semibold uppercase tracking-[0.24em] text-amber-700">
                         {{ ucwords(str_replace('_', ' ', $booking->payment_status)) }}
@@ -45,25 +48,28 @@
 
             <aside class="rounded-[2rem] border border-stone-200 bg-stone-900 p-6 text-white shadow-sm">
                 <p class="text-xs uppercase tracking-[0.3em] text-amber-200">Next Step</p>
-                <h2 class="mt-3 text-2xl font-semibold">Submit your payment step</h2>
+                <h2 class="mt-3 text-2xl font-semibold">Pay your bill</h2>
                 <p class="mt-4 text-sm leading-7 text-stone-300">
-                    {{ match ($booking->payment_method) {
-                        'credit_card' => 'Use this step after you are ready to receive your card payment instruction from our Sabah team.',
-                        'bank_transfer' => 'Use this step after you are ready to receive the bank transfer details for this booking.',
-                        'e_wallet' => 'Use this step to confirm you are ready for the e-wallet payment instructions.',
-                        default => 'Use this step to confirm your preferred payment arrangement for this booking.',
-                    } }}
+                    You will be redirected to our payment gateway. After payment, the status will be updated on this booking page.
                 </p>
 
-                <form method="POST" action="{{ route('bookings.payment.submit', $booking) }}" class="mt-6">
+                <form method="POST" action="{{ route('bookings.payment.submit', ['reference' => $booking->booking_reference]) }}" class="mt-6">
                     @csrf
-                    <button type="submit" class="inline-flex w-full items-center justify-center rounded-full bg-white px-6 py-3 text-sm font-semibold uppercase tracking-[0.2em] text-stone-900 transition hover:bg-stone-100">
-                        {{ $booking->payment_status === 'payment_submitted' ? 'Payment Step Submitted' : 'Confirm Payment Step' }}
+                    <button
+                        type="submit"
+                        @disabled($booking->payment_status === 'paid')
+                        class="inline-flex w-full items-center justify-center rounded-full bg-white px-6 py-3 text-sm font-semibold uppercase tracking-[0.2em] text-stone-900 transition hover:bg-stone-100 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                        {{ $booking->payment_status === 'paid' ? 'Payment Completed' : ($booking->billplz_bill_id ? 'Continue Payment on Billplz' : 'Payment') }}
                     </button>
                 </form>
 
                 <p class="mt-4 text-xs leading-6 text-stone-400">
-                    Once submitted, our team can verify the next payment details and follow up with you by email or phone.
+                    @if ($booking->billplz_bill_id)
+                        Bill ID: {{ $booking->billplz_bill_id }}
+                    @else
+                        A Billplz bill will be generated when you click the button above.
+                    @endif
                 </p>
             </aside>
         </div>

@@ -1,6 +1,8 @@
 <x-layouts.app title="Admin Transport | Universal Eden Holidays">
-    <main class="mx-auto max-w-[1700px] px-6 py-6 lg:px-10">
-        <section class="mt-5 space-y-8">
+    <main class="mx-auto max-w-[1700px] px-6 py-10 lg:px-10">
+        @include('admin.partials.overview-cards', ['stats' => $stats])
+
+        <section class="mt-8 grid gap-8 lg:grid-cols-[1.2fr_0.8fr]">
             <section class="rounded-[2rem] border border-stone-200 bg-white p-6 shadow-sm">
                 <p class="text-sm uppercase tracking-[0.3em] text-sky-700">Transport</p>
                 <h1 class="mt-2 text-3xl font-semibold text-stone-900">Manage fixed transport fleet</h1>

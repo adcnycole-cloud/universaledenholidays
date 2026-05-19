@@ -9,7 +9,7 @@
             'reserve' => 'Reserve your Sabah experience',
             'instant_book' => 'Instant book your Sabah experience',
             'book_now' => 'Complete your booking request',
-            default => 'Book transport services and packages',
+            default => 'Book transport services, packages, and tours',
         };
         $bookingSubmitLabel = $isReserveForm
             ? 'Submit Reserve Form'
@@ -19,7 +19,7 @@
         <div class="mb-6 flex items-start justify-between gap-4">
             <div>
                 <p class="text-sm uppercase tracking-[0.3em] text-amber-600">{{ $isEnquiry ? 'Enquiry Form' : ($isReserveForm ? 'Reserve Form' : 'Booking Form') }}</p>
-                <h1 class="mt-2 text-2xl font-semibold text-stone-900">{{ $isEnquiry ? 'Send an enquiry for transport services and packages' : $actionTitle }}</h1>
+                <h1 class="mt-2 text-2xl font-semibold text-stone-900">{{ $isEnquiry ? 'Send an enquiry for transport, packages, and tours' : $actionTitle }}</h1>
             </div>
             <a href="{{ route('home') }}" class="rounded-full border border-stone-300 px-4 py-2.5 text-sm font-semibold text-stone-700 transition hover:bg-stone-50">
                 Back to Home
@@ -93,6 +93,18 @@
                                         @selected(old('product_id') == $product->id || ($selectedProduct && $selectedProduct->id == $product->id))
                                     >{{ $product->name }} - Package</option>
                                 @endforeach
+                                @foreach ($tours as $product)
+                                    <option
+                                        value="{{ $product->id }}"
+                                        data-category="tour"
+                                        data-name="{{ $product->name }}"
+                                        data-malaysia-adult="{{ $product->malaysia_adult_price_myr }}"
+                                        data-malaysia-child="{{ $product->malaysia_child_price_myr }}"
+                                        data-international-adult="{{ $product->international_adult_price_myr }}"
+                                        data-international-child="{{ $product->international_child_price_myr }}"
+                                        @selected(old('product_id') == $product->id || ($selectedProduct && $selectedProduct->id == $product->id))
+                                    >{{ $product->name }} - Tour</option>
+                                @endforeach
                             </select>
                         @endif
                     </div>
@@ -102,13 +114,14 @@
                             <input type="hidden" name="service_type" value="{{ $selectedProduct->category }}">
                             <select id="service_type" class="w-full rounded-2xl border border-stone-300 bg-stone-100 px-4 py-3 text-stone-800" disabled>
                                 <option value="{{ $selectedProduct->category }}" selected>
-                                    {{ $selectedProduct->category === 'transport' ? 'Transport service' : 'Travel package' }}
+                                    {{ $selectedProduct->category === 'transport' ? 'Transport service' : ($selectedProduct->category === 'package' ? 'Travel package' : 'Tour') }}
                                 </option>
                             </select>
                         @else
                             <select id="service_type" name="service_type" class="w-full rounded-2xl border border-stone-300 bg-white px-4 py-3 text-stone-800" required>
                                 <option value="transport" @selected($selectedServiceType === 'transport')>Transport service</option>
                                 <option value="package" @selected($selectedServiceType === 'package')>Travel package</option>
+                                <option value="tour" @selected($selectedServiceType === 'tour')>Tour</option>
                             </select>
                         @endif
                     </div>
@@ -393,11 +406,11 @@
                         </li>
                         <li class="flex gap-3">
                             <span class="flex min-h-6 min-w-6 items-center justify-center rounded-full bg-sky-100 text-xs font-semibold text-sky-700">3</span>
-                            <span>{{ $isEnquiry ? 'If you want to proceed, we will guide you into the booking step with the right details.' : ($isReserveForm ? 'You\'ll receive a secure email link to complete a short account setup and continue to payment.' : 'You\'ll receive a secure email link to complete a short account setup and continue to payment.') }}</span>
+                            <span>{{ $isEnquiry ? 'If you want to proceed, we will guide you into the booking step with the right details.' : ($isReserveForm ? 'We immediately generate a Booking ID and email it to you so you can trace the booking and continue to payment.' : 'We immediately generate a Booking ID and email it to you so you can trace the booking and continue to payment.') }}</span>
                         </li>
                         <li class="flex gap-3">
                             <span class="flex min-h-6 min-w-6 items-center justify-center rounded-full bg-sky-100 text-xs font-semibold text-sky-700">4</span>
-                            <span>{{ $isEnquiry ? 'Our Sabah team follows up to help you choose the right transport service or package.' : ($isReserveForm ? 'Our Sabah team will help finalize and convert your reserve request into a confirmed booking.' : 'Track your booking in your profile under "My Bookings" once confirmed.') }}</span>
+                            <span>{{ $isEnquiry ? 'Our Sabah team follows up to help you choose the right transport, package, or tour.' : ($isReserveForm ? 'Use your Booking ID and booking email any time to trace the reserve request or continue with payment.' : 'Use your Booking ID and booking email any time to trace the booking or continue with payment.') }}</span>
                         </li>
                     </ul>
                 </div>
@@ -407,7 +420,7 @@
                     <div class="mt-4 space-y-3 text-sm text-stone-600">
                         <div>
                             <p class="font-semibold text-stone-900">Product Questions</p>
-                            <p>Unsure which package or transport option suits you? Browse our recommendations on the homepage.</p>
+                            <p>Unsure which tour or package suits you? Browse our recommendations on the homepage.</p>
                         </div>
                         <div>
                             <p class="font-semibold text-stone-900">Pricing Clarity</p>

@@ -1,4 +1,4 @@
-<section class="mt-5 space-y-8">
+<section class="mt-8 grid gap-8 lg:grid-cols-[1.2fr_0.8fr]">
     <section class="rounded-[2rem] border border-stone-200 bg-white p-6 shadow-sm">
         <p class="text-sm uppercase tracking-[0.3em] text-amber-600">Testimonials</p>
         <h1 class="mt-2 text-3xl font-semibold text-stone-900">Add customer reviews</h1>

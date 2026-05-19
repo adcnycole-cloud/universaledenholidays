@@ -1029,6 +1029,7 @@
                 <div class="mt-5 flex flex-col gap-3 text-sm text-stone-400">
                     <a href="{{ route('home') }}#about-us" class="transition hover:text-white">About Us</a>
                     <a href="{{ route('home') }}#popular-picks" class="transition hover:text-white">Popular Picks</a>
+                    <a href="{{ route('bookings.track.form') }}" class="transition hover:text-white">Track Your Bookings</a>
                     @auth
                         <a href="{{ route('profile.show') }}" class="transition hover:text-white">My Profile</a>
                     @else

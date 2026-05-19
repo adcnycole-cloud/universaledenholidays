@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Mail\CompleteBookingAccessMail;
+use App\Mail\BookingReferenceMail;
 use App\Models\Booking;
 use App\Models\NewsFeature;
 use App\Models\Product;
@@ -245,7 +245,7 @@ class HomeController extends Controller
             $booking = Booking::create([
                 'user_id' => $request->user()?->id,
                 'product_id' => $product->id,
-                'booking_reference' => 'UEH-'.Str::upper(Str::random(8)),
+                'booking_reference' => $this->generateUniqueBookingReference(),
                 'service_type' => $validated['service_type'],
                 'full_name' => $validated['full_name'],
                 'email' => $validated['email'],
@@ -294,7 +294,7 @@ class HomeController extends Controller
         $booking = Booking::create([
             'user_id' => $request->user()?->id,
             'product_id' => $product->id,
-            'booking_reference' => 'UEH-'.Str::upper(Str::random(8)),
+            'booking_reference' => $this->generateUniqueBookingReference(),
             'service_type' => $validated['service_type'],
             'full_name' => $validated['full_name'],
             'email' => $validated['email'],
@@ -315,28 +315,27 @@ class HomeController extends Controller
             'amount_myr' => $amountMyr,
             'amount_display' => $amountDisplay,
             'status' => 'pending',
-            'payment_status' => 'awaiting_setup',
+            'payment_status' => 'awaiting_confirmation',
         ]);
 
-        $accessToken = Str::random(64);
-
-        $booking->update([
-            'account_setup_token' => hash('sha256', $accessToken),
-            'account_setup_expires_at' => now()->addDay(),
-        ]);
-
-        Mail::to($booking->email)->send(new CompleteBookingAccessMail(
-            $booking->fresh(),
-            route('bookings.access.show', $accessToken),
-        ));
+        Mail::to($booking->email)->send(new BookingReferenceMail($booking->fresh()));
 
         $isReserveFlow = ($validated['action_type'] ?? null) === 'reserve';
 
-        return redirect()->route('home')->with(
+        return redirect()->route('bookings.track.show', $booking->booking_reference)->with(
             'success',
             $isReserveFlow
-                ? 'Your reserve request has been submitted. We sent a secure email link so you can complete your account and continue to payment.'
-                : 'Your booking request has been submitted. We sent a secure email link so you can complete your account and continue to payment.'
+                ? 'Your reserve request has been submitted. Your Booking ID is '.$booking->booking_reference.'. You can track and continue payment using this ID.'
+                : 'Your booking request has been submitted. Your Booking ID is '.$booking->booking_reference.'. You can track and continue payment using this ID.'
         );
+    }
+
+    private function generateUniqueBookingReference(): string
+    {
+        do {
+            $reference = 'UEH-'.Str::upper(Str::random(8));
+        } while (Booking::where('booking_reference', $reference)->exists());
+
+        return $reference;
     }
 }

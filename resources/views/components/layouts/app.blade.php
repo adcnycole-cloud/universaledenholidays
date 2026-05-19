@@ -24,9 +24,9 @@
 
             .app-toast-stack {
                 position: fixed;
-                top: 1rem;
+                top: calc(var(--app-header-offset, 0px) + 0.75rem);
                 right: 1rem;
-                z-index: 60;
+                z-index: 260;
                 display: flex;
                 width: min(28rem, calc(100vw - 2rem));
                 flex-direction: column;
@@ -51,7 +51,7 @@
 
             @media (max-width: 640px) {
                 .app-toast-stack {
-                    top: 0.75rem;
+                    top: calc(var(--app-header-offset, 0px) + 0.5rem);
                     right: 0.75rem;
                     left: 0.75rem;
                     width: auto;
@@ -100,6 +100,7 @@
                                 <a href="{{ route('home') }}#transport" class="transition hover:text-sky-700">Transport</a>
                                 <a href="{{ route('home') }}#packages-showcase" class="transition hover:text-sky-700">Packages</a>
                                 <a href="{{ route('home') }}#testimonials" class="transition hover:text-sky-700">Testimonials</a>
+                                <a href="{{ route('bookings.track.form') }}" class="transition hover:text-sky-700">Track Booking</a>
                                 <a href="{{ route('home') }}#about-us" class="transition hover:text-sky-700">About Us</a>
                                 @auth
                                     @if (auth()->user()->isAdmin())

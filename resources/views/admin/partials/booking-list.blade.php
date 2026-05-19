@@ -142,10 +142,24 @@
                                 </div>
                             </td>
                             <td class="px-4 py-4">
+                                @php($isPaymentPaid = strtolower((string) $booking->payment_status) === 'paid')
                                 <div class="min-w-[9rem]">
                                     <p class="font-semibold text-stone-900">{{ $booking->currency_code }} {{ number_format((float) $booking->amount_display, 2) }}</p>
                                     <p class="mt-1 text-xs text-stone-500">MYR {{ number_format((float) $booking->amount_myr, 2) }}</p>
-                                    <p class="mt-1 text-xs text-stone-500">Payment: {{ ucwords(str_replace('_', ' ', $booking->payment_status)) }}</p>
+                                    <div class="mt-1 flex items-center gap-2 text-xs">
+                                        <span class="text-stone-500">Payment:</span>
+                                        <span class="inline-flex rounded-full px-2.5 py-1 font-semibold uppercase tracking-[0.08em] {{ $isPaymentPaid ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700' }}">
+                                            {{ ucwords(str_replace('_', ' ', $booking->payment_status)) }}
+                                        </span>
+                                    </div>
+                                    @if ($booking->payment_gateway)
+                                        <p class="mt-1 text-[11px] uppercase tracking-[0.12em] text-stone-500">
+                                            Gateway: {{ strtoupper($booking->payment_gateway) }}
+                                            @if ($booking->payment_gateway_status)
+                                                ({{ str_replace('_', ' ', $booking->payment_gateway_status) }})
+                                            @endif
+                                        </p>
+                                    @endif
                                 </div>
                             </td>
                             <td class="px-4 py-4">

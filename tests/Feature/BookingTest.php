@@ -40,12 +40,15 @@ class BookingTest extends TestCase
             'special_requests' => 'Sea view room',
         ]);
 
-        $response->assertRedirect('/');
+        $booking = \App\Models\Booking::where('email', 'ava@example.com')->firstOrFail();
+
+        $response->assertRedirect(route('bookings.track.show', $booking->booking_reference));
 
         $this->assertDatabaseHas('bookings', [
             'full_name' => 'Ava Tan',
             'email' => 'ava@example.com',
             'status' => 'pending',
+            'payment_status' => 'awaiting_confirmation',
             'product_id' => $product->id,
         ]);
     }

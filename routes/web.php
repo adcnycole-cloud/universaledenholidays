@@ -11,6 +11,16 @@ Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/products/{product}', [HomeController::class, 'showProduct'])->name('products.show');
 Route::get('/booking', [HomeController::class, 'showBookingForm'])->name('booking.create');
 Route::post('/bookings', [HomeController::class, 'book'])->name('bookings.store');
+Route::get('/booking-tracker', [BookingAccessController::class, 'showTrackingForm'])->name('bookings.track.form');
+Route::post('/booking-tracker', [BookingAccessController::class, 'findTrackingBooking'])->name('bookings.track.find');
+Route::get('/booking-tracker/{bookingReference}', [BookingAccessController::class, 'showTrackingDetails'])->name('bookings.track.show');
+Route::post('/booking-tracker/{bookingReference}/confirm', [BookingAccessController::class, 'confirmAndContinueToPayment'])->name('bookings.track.confirm');
+Route::get('/booking-tracker/{bookingReference}/payment', [BookingAccessController::class, 'showSandboxPaymentPage'])->name('bookings.track.payment.show');
+Route::post('/booking-tracker/{bookingReference}/payment', [BookingAccessController::class, 'submitSandboxPayment'])->name('bookings.track.payment.submit');
+Route::post('/payments/billplz/callback', [BookingAccessController::class, 'handleBillplzCallback'])->name('bookings.billplz.callback');
+Route::get('/payments/billplz/redirect/{bookingReference}', [BookingAccessController::class, 'handleBillplzRedirect'])->name('bookings.billplz.redirect');
+Route::get('/booking-tracker/{bookingReference}/receipt', [BookingAccessController::class, 'showReceipt'])->name('bookings.track.receipt.show');
+Route::get('/booking-tracker/{bookingReference}/receipt.pdf', [BookingAccessController::class, 'downloadReceiptPdf'])->name('bookings.track.receipt.pdf');
 Route::get('/booking-access/{token}', [BookingAccessController::class, 'showSetupForm'])->name('bookings.access.show');
 Route::post('/booking-access/{token}', [BookingAccessController::class, 'completeSetup'])->name('bookings.access.complete');
 

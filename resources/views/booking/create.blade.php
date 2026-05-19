@@ -21,9 +21,14 @@
                 <p class="text-sm uppercase tracking-[0.3em] text-amber-600">{{ $isEnquiry ? 'Enquiry Form' : ($isReserveForm ? 'Reserve Form' : 'Booking Form') }}</p>
                 <h1 class="mt-2 text-2xl font-semibold text-stone-900">{{ $isEnquiry ? 'Send an enquiry for transport services and packages' : $actionTitle }}</h1>
             </div>
-            <a href="{{ route('home') }}" class="rounded-full border border-stone-300 px-4 py-2.5 text-sm font-semibold text-stone-700 transition hover:bg-stone-50">
-                Back to Home
-            </a>
+            <div class="flex items-center gap-2">
+                <a href="{{ route('bookings.track.form') }}" class="rounded-full border border-sky-300 px-4 py-2.5 text-sm font-semibold text-sky-700 transition hover:bg-sky-50">
+                    Track Booking ID
+                </a>
+                <a href="{{ route('home') }}" class="rounded-full border border-stone-300 px-4 py-2.5 text-sm font-semibold text-stone-700 transition hover:bg-stone-50">
+                    Back to Home
+                </a>
+            </div>
         </div>
 
         <div class="rounded-[1.75rem] border border-stone-200 bg-white p-5 shadow-sm">
@@ -393,11 +398,11 @@
                         </li>
                         <li class="flex gap-3">
                             <span class="flex min-h-6 min-w-6 items-center justify-center rounded-full bg-sky-100 text-xs font-semibold text-sky-700">3</span>
-                            <span>{{ $isEnquiry ? 'If you want to proceed, we will guide you into the booking step with the right details.' : ($isReserveForm ? 'You\'ll receive a secure email link to complete a short account setup and continue to payment.' : 'You\'ll receive a secure email link to complete a short account setup and continue to payment.') }}</span>
+                            <span>{{ $isEnquiry ? 'If you want to proceed, we will guide you into the booking step with the right details.' : 'You will receive a Booking ID by email right after submission.' }}</span>
                         </li>
                         <li class="flex gap-3">
                             <span class="flex min-h-6 min-w-6 items-center justify-center rounded-full bg-sky-100 text-xs font-semibold text-sky-700">4</span>
-                            <span>{{ $isEnquiry ? 'Our Sabah team follows up to help you choose the right transport service or package.' : ($isReserveForm ? 'Our Sabah team will help finalize and convert your reserve request into a confirmed booking.' : 'Track your booking in your profile under "My Bookings" once confirmed.') }}</span>
+                            <span>{{ $isEnquiry ? 'Our Sabah team follows up to help you choose the right transport service or package.' : 'Use your Booking ID to track details, confirm the booking, and continue to sandbox payment.' }}</span>
                         </li>
                     </ul>
                 </div>

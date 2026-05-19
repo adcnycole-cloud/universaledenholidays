@@ -1,12 +1,21 @@
 <x-layouts.app title="Booking Payment | Universal Eden Holidays">
+    @php
+        $isTrackingFlow = $isTrackingFlow ?? false;
+        $backRoute = $isTrackingFlow
+            ? route('bookings.track.show', $booking->booking_reference)
+            : route('profile.bookings');
+        $submitRoute = $isTrackingFlow
+            ? route('bookings.track.payment.submit', $booking->booking_reference)
+            : route('bookings.payment.submit', $booking);
+    @endphp
     <main class="mx-auto max-w-4xl px-6 py-10 lg:px-10">
         <div class="mb-8 flex items-start justify-between gap-4">
             <div>
                 <p class="text-sm uppercase tracking-[0.3em] text-amber-600">Booking Payment</p>
-                <h1 class="mt-2 text-3xl font-semibold text-stone-900">Review your booking and payment step</h1>
+                <h1 class="mt-2 text-3xl font-semibold text-stone-900">Review your booking and sandbox payment</h1>
             </div>
-            <a href="{{ route('profile.bookings') }}" class="rounded-full border border-stone-300 px-4 py-2.5 text-sm font-semibold text-stone-700 transition hover:bg-stone-50">
-                My Bookings
+            <a href="{{ $backRoute }}" class="rounded-full border border-stone-300 px-4 py-2.5 text-sm font-semibold text-stone-700 transition hover:bg-stone-50">
+                {{ $isTrackingFlow ? 'Back to Tracker' : 'My Bookings' }}
             </a>
         </div>
 
@@ -44,26 +53,37 @@
             </section>
 
             <aside class="rounded-[2rem] border border-stone-200 bg-stone-900 p-6 text-white shadow-sm">
-                <p class="text-xs uppercase tracking-[0.3em] text-amber-200">Next Step</p>
-                <h2 class="mt-3 text-2xl font-semibold">Submit your payment step</h2>
+                <p class="text-xs uppercase tracking-[0.3em] text-amber-200">Sandbox Payment</p>
+                <h2 class="mt-3 text-2xl font-semibold">Submit sandbox payment</h2>
                 <p class="mt-4 text-sm leading-7 text-stone-300">
                     {{ match ($booking->payment_method) {
-                        'credit_card' => 'Use this step after you are ready to receive your card payment instruction from our Sabah team.',
-                        'bank_transfer' => 'Use this step after you are ready to receive the bank transfer details for this booking.',
-                        'e_wallet' => 'Use this step to confirm you are ready for the e-wallet payment instructions.',
-                        default => 'Use this step to confirm your preferred payment arrangement for this booking.',
+                        'credit_card' => 'Use this sandbox step to simulate card payment submission for this booking.',
+                        'bank_transfer' => 'Use this sandbox step to simulate bank transfer submission for this booking.',
+                        'e_wallet' => 'Use this sandbox step to simulate e-wallet payment submission for this booking.',
+                        default => 'Use this sandbox step to simulate payment submission for this booking.',
                     } }}
                 </p>
 
-                <form method="POST" action="{{ route('bookings.payment.submit', $booking) }}" class="mt-6">
+                <form method="POST" action="{{ $submitRoute }}" class="mt-6 space-y-3">
                     @csrf
+                    <div>
+                        <label for="sandbox_reference" class="mb-2 block text-xs uppercase tracking-[0.2em] text-stone-300">Sandbox transaction ref</label>
+                        <input
+                            id="sandbox_reference"
+                            name="sandbox_reference"
+                            type="text"
+                            value="{{ old('sandbox_reference') }}"
+                            placeholder="SBX-{{ $booking->booking_reference }}"
+                            class="w-full rounded-2xl border border-stone-600 bg-stone-800 px-4 py-3 text-sm text-white"
+                        >
+                    </div>
                     <button type="submit" class="inline-flex w-full items-center justify-center rounded-full bg-white px-6 py-3 text-sm font-semibold uppercase tracking-[0.2em] text-stone-900 transition hover:bg-stone-100">
-                        {{ $booking->payment_status === 'payment_submitted' ? 'Payment Step Submitted' : 'Confirm Payment Step' }}
+                        {{ $booking->payment_status === 'paid' ? 'Payment Submitted' : 'Submit Sandbox Payment' }}
                     </button>
                 </form>
 
                 <p class="mt-4 text-xs leading-6 text-stone-400">
-                    Once submitted, our team can verify the next payment details and follow up with you by email or phone.
+                    This sandbox confirms the payment flow. A payment receipt email will be sent once submitted.
                 </p>
             </aside>
         </div>

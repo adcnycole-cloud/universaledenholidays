@@ -36,7 +36,6 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     Route::get('/promos', [AdminController::class, 'promos'])->name('admin.promos');
     Route::get('/transport', [AdminController::class, 'transport'])->name('admin.transport');
     Route::get('/packages', [AdminController::class, 'packages'])->name('admin.packages');
-    Route::get('/tours', [AdminController::class, 'tours'])->name('admin.tours');
     Route::get('/testimonials', [AdminController::class, 'testimonials'])->name('admin.testimonials');
     Route::get('/bookings', [AdminController::class, 'bookings'])->name('admin.bookings');
     Route::get('/bookings/export/monthly', [AdminController::class, 'exportMonthlyBookings'])->name('admin.bookings.export');

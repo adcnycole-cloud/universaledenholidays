@@ -25,15 +25,6 @@ return new class extends Migration
         DB::table('products')->where('name', 'Island Escape Package')->update([
             'image_url' => 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1200&q=80',
         ]);
-        DB::table('products')->where('name', 'Kundasang Day Tour')->update([
-            'image_url' => 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1200&q=80',
-        ]);
-        DB::table('products')->where('name', 'Mari Mari Cultural Village Tour')->update([
-            'image_url' => 'https://images.unsplash.com/photo-1516483638261-f4dbaf036963?auto=format&fit=crop&w=1200&q=80',
-        ]);
-        DB::table('products')->where('name', 'Kinabatangan River Wildlife Cruise')->update([
-            'image_url' => 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=1200&q=80',
-        ]);
     }
 
     public function down(): void

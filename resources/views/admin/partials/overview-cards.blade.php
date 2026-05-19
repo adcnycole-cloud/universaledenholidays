@@ -1,4 +1,4 @@
-<section class="mt-8 flex flex-wrap gap-4">
+<section class="mt-3 flex flex-wrap gap-4">
     <div class="flex min-w-[11rem] flex-1 flex-col justify-between rounded-[1.75rem] border border-stone-200 bg-white p-5 shadow-sm">
         <p class="text-sm text-stone-500">Products</p>
         <p class="mt-2 text-3xl font-semibold text-stone-900">{{ $stats['products'] }}</p>

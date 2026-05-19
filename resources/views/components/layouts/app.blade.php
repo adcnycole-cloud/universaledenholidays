@@ -61,26 +61,32 @@
         @php($isAdminRoute = request()->routeIs('admin.*'))
         @php($hideHeader = request()->routeIs('login', 'admin.login'))
         @php($currencyOptions = ['MYR', 'KRW', 'USD', 'SGD', 'CNY'])
+        @php($adminNavBase = 'rounded-full border px-4 py-2 transition')
+        @php($adminNavActive = $adminNavBase.' border-emerald-200 bg-emerald-50 text-emerald-700')
+        @php($adminNavIdle = $adminNavBase.' border-stone-200 text-stone-700 hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700')
         <div class="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(14,165,233,0.08),_transparent_30%),linear-gradient(180deg,_#fffdf9,_#f8fafc)]">
             @unless ($hideHeader)
                 <header class="js-app-header border-b shadow-[0_10px_24px_rgba(15,23,42,0.08)] backdrop-blur {{ $isAdminRoute ? 'border-emerald-200/80 bg-white/95' : 'border-stone-200/80 bg-white/92' }} ">
                     <div class="flex w-full items-center justify-between px-6 py-4 lg:px-10">
-                        <a href="{{ $isAdminRoute ? route('admin.dashboard') : route('home') }}" class="flex items-center gap-3" style="position: relative; left: 1rem;">
-                            <img src="{{ asset('images/ue_logo.jpg') }}" alt="Universal Eden Logo" class="h-11 w-11 rounded-full object-cover {{ $isAdminRoute ? 'ring-2 ring-emerald-100' : '' }}">
-                            <span class="font-['Prata'] text-xl text-stone-900">Universal Eden Holidays</span>
-                        </a>
+                        @if ($isAdminRoute)
+                            <div class="hidden md:block md:w-24 lg:w-32" aria-hidden="true"></div>
+                        @else
+                            <a href="{{ route('home') }}" class="flex items-center gap-3" style="position: relative; left: 1rem;">
+                                <img src="{{ asset('images/ue_logo.jpg') }}" alt="Universal Eden Logo" class="h-11 w-11 rounded-full object-cover">
+                                <span class="font-['Prata'] text-xl text-stone-900">Universal Eden Holidays</span>
+                            </a>
+                        @endif
 
                         @if ($isAdminRoute)
                             <nav class="hidden items-center gap-3 text-sm font-medium md:flex">
-                                <a href="{{ route('admin.dashboard') }}" class="rounded-full border border-emerald-200 bg-emerald-50 px-4 py-2 text-emerald-700 transition hover:bg-emerald-100">Overview</a>
-                                <a href="{{ route('admin.profile') }}" class="rounded-full border border-stone-200 px-4 py-2 text-stone-700 transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700">Profile</a>
-                                <a href="{{ route('admin.promos') }}" class="rounded-full border border-stone-200 px-4 py-2 text-stone-700 transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700">Promos</a>
-                                <a href="{{ route('admin.transport') }}" class="rounded-full border border-stone-200 px-4 py-2 text-stone-700 transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700">Transport</a>
-                                <a href="{{ route('admin.packages') }}" class="rounded-full border border-stone-200 px-4 py-2 text-stone-700 transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700">Packages</a>
-                                <a href="{{ route('admin.tours') }}" class="rounded-full border border-stone-200 px-4 py-2 text-stone-700 transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700">Tours</a>
-                                <a href="{{ route('admin.testimonials') }}" class="rounded-full border border-stone-200 px-4 py-2 text-stone-700 transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700">Testimonials</a>
-                                <a href="{{ route('admin.bookings') }}" class="rounded-full border border-stone-200 px-4 py-2 text-stone-700 transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700">Bookings</a>
-                                <a href="{{ route('home') }}" class="rounded-full bg-stone-900 px-4 py-2 text-green transition hover:bg-stone-700">View Site</a>
+                                <a href="{{ route('admin.dashboard') }}" class="{{ request()->routeIs('admin.dashboard') ? $adminNavActive : $adminNavIdle }}">Overview</a>
+                                <a href="{{ route('admin.profile') }}" class="{{ request()->routeIs('admin.profile') ? $adminNavActive : $adminNavIdle }}">Profile</a>
+                                <a href="{{ route('admin.promos') }}" class="{{ request()->routeIs('admin.promos') ? $adminNavActive : $adminNavIdle }}">Promos</a>
+                                <a href="{{ route('admin.transport') }}" class="{{ request()->routeIs('admin.transport') ? $adminNavActive : $adminNavIdle }}">Transport</a>
+                                <a href="{{ route('admin.packages') }}" class="{{ request()->routeIs('admin.packages') ? $adminNavActive : $adminNavIdle }}">Packages</a>
+                                <a href="{{ route('admin.testimonials') }}" class="{{ request()->routeIs('admin.testimonials') ? $adminNavActive : $adminNavIdle }}">Testimonials</a>
+                                <a href="{{ route('admin.bookings') }}" class="{{ request()->routeIs('admin.bookings', 'admin.bookings.export') ? $adminNavActive : $adminNavIdle }}">Bookings</a>
+                                <a href="{{ route('home') }}" class="rounded-full bg-sky-600 px-4 py-2 text-white transition hover:bg-sky-700">View Site</a>
                             </nav>
                         @else
                             <nav class="hidden items-center gap-6 text-sm font-medium text-stone-600 md:flex">
@@ -169,6 +175,14 @@
 
             <div style="{{ $hideHeader ? '' : 'padding-top: var(--app-header-offset, 0px);' }}">
                 {{ $slot }}
+
+                @if ($isAdminRoute)
+                    <footer class="border-t border-stone-200/80 bg-white/70">
+                        <div class="mx-auto max-w-[1700px] px-6 py-4 text-center text-xs font-medium uppercase tracking-[0.18em] text-stone-500 lg:px-10">
+                            Copyright by universaledenholidays @ Adcey
+                        </div>
+                    </footer>
+                @endif
             </div>
         </div>
         <script>

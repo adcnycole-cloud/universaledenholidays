@@ -53,7 +53,7 @@
             <tr>
                 <td style="width: 58%; border: none;">
                     <div class="title">Universal Eden Holidays</div>
-                    <div class="muted">Sabah Tours and Transport</div>
+                    <div class="muted">Sabah Packages and Transport</div>
                     <div style="margin-top: 10px;">Kota Kinabalu, Sabah, Malaysia</div>
                     <div>info@universaledenholiday.com</div>
                     <div>+60 88 212 345</div>

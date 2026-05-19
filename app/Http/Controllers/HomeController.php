@@ -57,7 +57,6 @@ class HomeController extends Controller
         return view('booking.create', [
             'transportServices' => $products->where('category', 'transport')->values(),
             'travelPackages' => $products->where('category', 'package')->values(),
-            'tours' => $products->where('category', 'tour')->values(),
             'selectedProduct' => $selectedProduct,
             'isProductLocked' => $selectedProduct !== null,
             'formMode' => $formMode,
@@ -175,8 +174,6 @@ class HomeController extends Controller
             'transportServices' => $products->where('category', 'transport')->values(),
             'travelPackages' => $travelPackages,
             'popularPackages' => $popularPackages,
-            'tours' => $products->where('category', 'tour')->values(),
-            'topTours' => $products->where('category', 'tour')->where('is_top_choice', true)->values(),
             'currentPromo' => $currentPromo,
             'pastPromo' => $pastPromos->first(),
             'pastPromos' => $pastPromos,
@@ -194,7 +191,7 @@ class HomeController extends Controller
 
         $baseRules = [
             'product_id' => ['required', 'exists:products,id'],
-            'service_type' => ['required', 'in:transport,package,tour'],
+            'service_type' => ['required', 'in:transport,package'],
             'action_type' => ['nullable', 'in:reserve,instant_book,book_now'],
             'locked_product_id' => ['nullable', 'exists:products,id'],
             'full_name' => ['required', 'string', 'max:255'],

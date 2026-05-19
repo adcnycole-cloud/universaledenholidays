@@ -60,6 +60,15 @@
                                 {{ $booking->payment_status === 'payment_submitted' ? 'View Payment Step' : 'Continue Payment' }}
                             </a>
                         </div>
+                    @elseif ($booking->payment_status === 'paid' && $booking->booking_reference)
+                        <div class="mt-5 flex flex-wrap gap-3">
+                            <a href="{{ route('bookings.track.receipt.show', $booking->booking_reference) }}" class="inline-flex rounded-full bg-emerald-600 px-5 py-3 text-sm font-semibold uppercase tracking-[0.2em] text-white transition hover:bg-emerald-700">
+                                View Receipt
+                            </a>
+                            <a href="{{ route('bookings.track.receipt.pdf', $booking->booking_reference) }}" class="inline-flex rounded-full border border-stone-300 bg-white px-5 py-3 text-sm font-semibold uppercase tracking-[0.2em] text-stone-900 transition hover:bg-stone-50">
+                                Download PDF Receipt
+                            </a>
+                        </div>
                     @endif
                 </article>
             @empty

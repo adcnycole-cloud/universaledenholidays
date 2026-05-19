@@ -218,6 +218,22 @@ class BookingAccessController extends Controller
         ])->setPaper('a4')->download('receipt-'.$booking->invoice_number_or_reference.'.pdf');
     }
 
+    public function viewReceiptPdf(string $bookingReference)
+    {
+        $booking = $this->resolveBookingFromReference($bookingReference)->load(['product', 'user']);
+
+        abort_unless($booking->payment_status === 'paid' || $booking->invoice_number, 404);
+
+        if (! $booking->invoice_number) {
+            $this->issueInvoiceForBooking($booking);
+            $booking->refresh();
+        }
+
+        return Pdf::loadView('admin.bookings.invoice-pdf', [
+            'booking' => $booking,
+        ])->setPaper('a4')->stream('receipt-'.$booking->invoice_number_or_reference.'.pdf');
+    }
+
     public function submitSandboxPayment(Request $request, string $bookingReference): RedirectResponse
     {
         $booking = $this->resolveBookingFromReference($bookingReference);

@@ -184,9 +184,17 @@
                                         <p class="text-xs text-stone-400">Not issued yet</p>
                                     @endif
 
-                                    @if ($booking->status === 'confirmed')
+                                    @if ($booking->status === 'confirmed' || $booking->invoice_number)
                                         <a href="{{ route('admin.bookings.invoice', $booking) }}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center rounded-full border border-stone-300 bg-stone-100 px-3 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-stone-900 transition hover:bg-stone-200">
                                             Print Invoice
+                                        </a>
+                                    @endif
+                                    @if ($booking->payment_status === 'paid' && $booking->booking_reference)
+                                        <a href="{{ route('bookings.track.receipt.show', $booking->booking_reference) }}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center rounded-full border border-emerald-300 bg-emerald-50 px-3 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-emerald-800 transition hover:bg-emerald-100">
+                                            View Invoice
+                                        </a>
+                                        <a href="{{ route('bookings.track.receipt.pdf', $booking->booking_reference) }}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center rounded-full border border-sky-300 bg-sky-50 px-3 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-sky-800 transition hover:bg-sky-100">
+                                            Download PDF
                                         </a>
                                     @endif
                                 </div>

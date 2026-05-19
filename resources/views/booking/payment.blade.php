@@ -12,7 +12,7 @@
         <div class="mb-8 flex items-start justify-between gap-4">
             <div>
                 <p class="text-sm uppercase tracking-[0.3em] text-amber-600">Booking Payment</p>
-                <h1 class="mt-2 text-3xl font-semibold text-stone-900">Review your booking and sandbox payment</h1>
+                <h1 class="mt-2 text-3xl font-semibold text-stone-900">Review your booking and payment</h1>
             </div>
             <a href="{{ $backRoute }}" class="rounded-full border border-stone-300 px-4 py-2.5 text-sm font-semibold text-stone-700 transition hover:bg-stone-50">
                 {{ $isTrackingFlow ? 'Back to Tracker' : 'My Bookings' }}

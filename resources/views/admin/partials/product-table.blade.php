@@ -1,29 +1,34 @@
 @php($editable = $editable ?? false)
 @php($wrapperId = $wrapperId ?? null)
 @php($itemAttribute = $itemAttribute ?? null)
+@php($gridColumns = $gridColumns ?? 1)
 
-<div @if($wrapperId) id="{{ $wrapperId }}" @endif class="mt-6 space-y-4">
+<div
+    @if($wrapperId) id="{{ $wrapperId }}" @endif
+    class="mt-6 {{ $gridColumns > 1 ? 'grid gap-4' : 'space-y-4' }}"
+    @if($gridColumns > 1) style="display: grid; grid-template-columns: repeat({{ $gridColumns }}, minmax(0, 1fr)); gap: 1rem; align-items: start;" @endif
+>
     @forelse ($products as $product)
         @php($cardImage = $product->image_url ?: (collect($product->gallery_images ?? [])->filter()->first()))
         @php($isPackage = $product->category === 'package')
 
-        <article @if($itemAttribute) {{ $itemAttribute }}="true" @endif class="rounded-3xl border border-stone-200 bg-stone-50 p-5" @if($isPackage) data-package-inline-row @endif>
+        <article @if($itemAttribute) {{ $itemAttribute }}="true" @endif class="relative rounded-3xl border border-stone-200 bg-stone-50 p-5" @if($isPackage) data-package-inline-row @endif>
             <div
                 class="grid gap-4 items-start {{ $isPackage ? '' : 'xl:grid-cols-[110px_minmax(0,1fr)_auto]' }}"
                 @if ($isPackage) style="grid-template-columns: 180px minmax(0, 1fr);" @endif
             >
-                <div class="overflow-hidden border border-stone-200 bg-white {{ $isPackage ? 'rounded-md' : 'rounded-[1.2rem]' }}" @if ($isPackage) style="width: 180px; height: 180px;" @endif>
+                <div class="overflow-hidden border border-stone-200 bg-white {{ $isPackage ? 'rounded-md' : 'rounded-[1rem]' }}" @if ($isPackage) style="width: 180px; height: 180px;" @else style="width: 72px; height: 72px;" @endif>
                     @if ($cardImage)
                         <img
                             src="{{ $cardImage }}"
                             alt="{{ $product->name }}"
                             class="w-full object-cover {{ $isPackage ? '' : 'h-24' }}"
-                            @if ($isPackage) style="width: 180px; height: 180px;" @endif
+                            @if ($isPackage) style="width: 180px; height: 180px;" @else style="width: 72px; height: 72px;" @endif
                         >
                     @else
                         <div
                             class="flex items-center justify-center bg-stone-100 text-center font-semibold uppercase text-stone-400 {{ $isPackage ? 'px-1 text-[8px] tracking-[0.15em]' : 'h-24 px-2 text-[10px] tracking-[0.2em]' }}"
-                            @if ($isPackage) style="width: 180px; height: 180px;" @endif
+                            @if ($isPackage) style="width: 180px; height: 180px;" @else style="width: 72px; height: 72px;" @endif
                         >
                             No image
                         </div>
@@ -60,10 +65,11 @@
                                 </div>
                             </div>
 
-                            <div class="package-inline-edit hidden rounded-[2rem] border border-stone-200 bg-stone-100/80 p-6 shadow-sm">
-                                <div class="grid gap-8 xl:grid-cols-[560px_minmax(0,1fr)] xl:items-start">
+                            <div class="package-inline-edit hidden fixed inset-x-0 bottom-0 z-[280] items-start justify-center overflow-y-auto bg-stone-950/55 px-8 py-6">
+                                <div class="w-full max-w-[1390px] overflow-y-auto rounded-[2rem] border border-stone-200 bg-stone-100 p-4 shadow-[0_24px_60px_rgba(15,23,42,0.24)]" data-package-inline-panel>
+                                <div class="grid gap-6 items-start" style="grid-template-columns: 560px minmax(0, 1fr);">
                                     <div>
-                                        <div class="grid gap-6" style="grid-template-columns: 180px 180px 170px;">
+                                        <div class="grid gap-4" style="grid-template-columns: 180px 180px 170px;">
                                             <div class="min-w-0">
                                                 <p class="mb-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-stone-400">Main image</p>
                                                 @if ($product->image_url)
@@ -95,10 +101,12 @@
                                             <div class="min-w-0">
                                                 <p class="mb-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-stone-400">Gallery folder</p>
                                                 @if ($inlineGalleryImages->isNotEmpty())
-                                                    <button type="button" class="package-inline-gallery-open flex h-[180px] w-[180px] flex-col justify-center rounded-2xl border border-stone-200 bg-white px-7 py-5 text-left transition hover:bg-stone-50" data-inline-gallery-target="package-inline-gallery-{{ $product->id }}">
-                                                        <p class="text-4xl font-semibold leading-none text-stone-900">{{ $inlineGalleryImages->count() }}</p>
-                                                        <p class="mt-3 text-lg font-semibold uppercase tracking-[0.06em] text-stone-800">Image{{ $inlineGalleryImages->count() === 1 ? '' : 's' }}</p>
-                                                        <p class="mt-6 text-sm uppercase tracking-[0.18em] text-stone-400">Stored</p>
+                                                    <button type="button" class="package-inline-gallery-open relative flex h-[180px] w-[180px] flex-col justify-end overflow-hidden rounded-[1.6rem] border border-amber-200 bg-gradient-to-b from-amber-100 via-amber-50 to-white px-6 py-5 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md" data-inline-gallery-target="package-inline-gallery-{{ $product->id }}">
+                                                        <span class="absolute left-5 top-0 h-8 w-20 rounded-b-[1rem] rounded-t-[0.75rem] bg-amber-200/90"></span>
+                                                        <span class="absolute left-0 right-0 top-7 h-px bg-amber-200/80"></span>
+                                                        <p class="text-4xl font-semibold leading-none text-amber-950">{{ $inlineGalleryImages->count() }}</p>
+                                                        <p class="mt-3 text-lg font-semibold uppercase tracking-[0.06em] text-amber-900">Image{{ $inlineGalleryImages->count() === 1 ? '' : 's' }}</p>
+                                                        <p class="mt-4 text-sm uppercase tracking-[0.18em] text-amber-700/70">Open folder</p>
                                                     </button>
 
                                                     <div id="package-inline-gallery-{{ $product->id }}" class="package-inline-gallery-modal fixed inset-0 z-[250] hidden items-center justify-center bg-stone-950/60 px-4 py-6">
@@ -123,10 +131,12 @@
                                                         </div>
                                                     </div>
                                                 @else
-                                                    <div class="flex h-[180px] w-[180px] flex-col justify-center rounded-2xl border border-stone-200 bg-white px-7 py-5 text-left">
-                                                        <p class="text-4xl font-semibold leading-none text-stone-900">0</p>
-                                                        <p class="mt-3 text-lg font-semibold uppercase tracking-[0.06em] text-stone-800">Images</p>
-                                                        <p class="mt-6 text-sm uppercase tracking-[0.18em] text-stone-400">Stored</p>
+                                                    <div class="relative flex h-[180px] w-[180px] flex-col justify-end overflow-hidden rounded-[1.6rem] border border-amber-200 bg-gradient-to-b from-amber-100 via-amber-50 to-white px-6 py-5 text-left shadow-sm">
+                                                        <span class="absolute left-5 top-0 h-8 w-20 rounded-b-[1rem] rounded-t-[0.75rem] bg-amber-200/90"></span>
+                                                        <span class="absolute left-0 right-0 top-7 h-px bg-amber-200/80"></span>
+                                                        <p class="text-4xl font-semibold leading-none text-amber-950">0</p>
+                                                        <p class="mt-3 text-lg font-semibold uppercase tracking-[0.06em] text-amber-900">Images</p>
+                                                        <p class="mt-4 text-sm uppercase tracking-[0.18em] text-amber-700/70">Empty folder</p>
                                                     </div>
                                                 @endif
                                             </div>
@@ -135,68 +145,67 @@
                                                 <p class="mb-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-stone-500">Upload images</p>
                                                 <div class="flex h-[180px] flex-col justify-between gap-2">
                                                     <label class="block">
-                                                        <span class="mb-2 block text-[11px] font-semibold uppercase tracking-[0.14em] text-stone-500">Main image</span>
-                                                        <input name="image" type="file" accept=".jpg,.jpeg,.png,.webp" class="w-full rounded-2xl border border-dashed border-stone-300 bg-white px-3 py-3 text-xs text-stone-700">
+                                                        <span class="mb-1 block text-[11px] font-semibold uppercase tracking-[0.14em] text-stone-500">Main image</span>
+                                                        <input name="image" type="file" accept=".jpg,.jpeg,.png,.webp" class="w-full rounded-2xl border border-dashed border-stone-300 bg-white px-3 py-2 text-xs text-stone-700">
                                                     </label>
                                                     <label class="block">
-                                                        <span class="mb-2 block text-[11px] font-semibold uppercase tracking-[0.14em] text-stone-500">Gallery folder</span>
-                                                        <input name="gallery_image_files[]" type="file" accept=".jpg,.jpeg,.png,.webp" multiple class="w-full rounded-2xl border border-dashed border-stone-300 bg-white px-3 py-3 text-xs text-stone-700">
+                                                        <span class="mb-1 block text-[11px] font-semibold uppercase tracking-[0.14em] text-stone-500">Gallery folder</span>
+                                                        <input name="gallery_image_files[]" type="file" accept=".jpg,.jpeg,.png,.webp" multiple class="w-full rounded-2xl border border-dashed border-stone-300 bg-white px-3 py-2 text-xs text-stone-700">
                                                     </label>
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
 
-                                    <div class="grid gap-5">
-                                <div class="grid gap-5 md:grid-cols-2 {{ $product->category !== 'package' ? 'hidden' : '' }}">
+                                    <div class="grid gap-3">
+                                <div
+                                    class="grid gap-3 {{ $product->category !== 'package' ? 'hidden' : '' }}"
+                                    style="grid-template-columns: repeat(4, minmax(0, 1fr)); align-content: start;"
+                                >
                                     <div>
-                                        <label class="mb-2 block text-sm font-medium uppercase tracking-[0.02em] text-stone-500">Name</label>
-                                        <input name="name" type="text" value="{{ $product->name }}" class="w-full rounded-lg border border-stone-300 bg-white px-4 py-3 text-sm text-stone-800">
+                                        <label class="mb-1 block text-sm font-medium uppercase tracking-[0.02em] text-stone-500">Name</label>
+                                        <input name="name" type="text" value="{{ $product->name }}" class="w-full rounded-lg border border-stone-300 bg-white px-4 py-2.5 text-sm text-stone-800">
                                     </div>
                                     <div>
-                                        <label class="mb-2 block text-sm font-medium uppercase tracking-[0.02em] text-stone-500">Location</label>
-                                        <input name="location" type="text" value="{{ $product->location }}" class="w-full rounded-lg border border-stone-300 bg-white px-4 py-3 text-sm text-stone-800">
+                                        <label class="mb-1 block text-sm font-medium uppercase tracking-[0.02em] text-stone-500">Location</label>
+                                        <input name="location" type="text" value="{{ $product->location }}" class="w-full rounded-lg border border-stone-300 bg-white px-4 py-2.5 text-sm text-stone-800">
                                     </div>
                                     <div>
-                                        <label class="mb-2 block text-sm font-medium uppercase tracking-[0.02em] text-stone-500">Duration</label>
-                                        <input name="duration" type="text" value="{{ $product->duration }}" class="w-full rounded-lg border border-stone-300 bg-white px-4 py-3 text-sm text-stone-800">
+                                        <label class="mb-1 block text-sm font-medium uppercase tracking-[0.02em] text-stone-500">Duration</label>
+                                        <input name="duration" type="text" value="{{ $product->duration }}" class="w-full rounded-lg border border-stone-300 bg-white px-4 py-2.5 text-sm text-stone-800">
                                     </div>
                                     <div>
-                                        <label class="mb-2 block text-sm font-medium uppercase tracking-[0.02em] text-stone-500">Capacity</label>
-                                        <input name="capacity" type="number" value="{{ $product->capacity }}" class="w-full rounded-lg border border-stone-300 bg-white px-4 py-3 text-sm text-stone-800">
+                                        <label class="mb-1 block text-sm font-medium uppercase tracking-[0.02em] text-stone-500">Capacity</label>
+                                        <input name="capacity" type="number" value="{{ $product->capacity }}" class="w-full rounded-lg border border-stone-300 bg-white px-4 py-2.5 text-sm text-stone-800">
+                                    </div>
+                                    <div>
+                                        <label class="mb-1 block text-sm font-medium uppercase tracking-[0.02em] text-stone-500">Malaysian adult price (MYR)</label>
+                                        <input name="malaysia_adult_price_myr" type="number" step="0.01" value="{{ $product->malaysia_adult_price_myr }}" class="w-full rounded-lg border border-stone-300 bg-white px-4 py-2.5 text-sm text-stone-800">
+                                    </div>
+                                    <div>
+                                        <label class="mb-1 block text-sm font-medium uppercase tracking-[0.02em] text-stone-500">International adult price (MYR)</label>
+                                        <input name="international_adult_price_myr" type="number" step="0.01" value="{{ $product->international_adult_price_myr }}" class="w-full rounded-lg border border-stone-300 bg-white px-4 py-2.5 text-sm text-stone-800">
+                                    </div>
+                                    <div>
+                                        <label class="mb-1 block text-sm font-medium uppercase tracking-[0.02em] text-stone-500">Malaysian child price (MYR)</label>
+                                        <input name="malaysia_child_price_myr" type="number" step="0.01" value="{{ $product->malaysia_child_price_myr }}" class="w-full rounded-lg border border-stone-300 bg-white px-4 py-2.5 text-sm text-stone-800">
+                                    </div>
+                                    <div>
+                                        <label class="mb-1 block text-sm font-medium uppercase tracking-[0.02em] text-stone-500">International child price (MYR)</label>
+                                        <input name="international_child_price_myr" type="number" step="0.01" value="{{ $product->international_child_price_myr }}" class="w-full rounded-lg border border-stone-300 bg-white px-4 py-2.5 text-sm text-stone-800">
+                                    </div>
+                                    <div style="grid-column: span 2 / span 2;">
+                                        <label class="mb-1 block text-sm font-medium uppercase tracking-[0.02em] text-stone-500">Summary</label>
+                                        <textarea name="summary" rows="6" class="w-full rounded-lg border border-stone-300 bg-white px-4 py-3 text-sm text-stone-800">{{ $product->summary }}</textarea>
+                                    </div>
+                                    <div style="grid-column: span 2 / span 2;">
+                                        <label class="mb-1 block text-sm font-medium uppercase tracking-[0.02em] text-stone-500">Description</label>
+                                        <textarea name="description" rows="6" class="w-full rounded-lg border border-stone-300 bg-white px-4 py-3 text-sm text-stone-800">{{ $product->description }}</textarea>
                                     </div>
                                 </div>
-                                <div class="grid gap-5 md:grid-cols-2">
-                                    <div>
-                                        <label class="mb-2 block text-sm font-medium uppercase tracking-[0.02em] text-stone-500">Malaysian adult price (MYR)</label>
-                                        <input name="malaysia_adult_price_myr" type="number" step="0.01" value="{{ $product->malaysia_adult_price_myr }}" class="w-full rounded-lg border border-stone-300 bg-white px-4 py-3 text-sm text-stone-800">
-                                    </div>
-                                    <div>
-                                        <label class="mb-2 block text-sm font-medium uppercase tracking-[0.02em] text-stone-500">International adult price (MYR)</label>
-                                        <input name="international_adult_price_myr" type="number" step="0.01" value="{{ $product->international_adult_price_myr }}" class="w-full rounded-lg border border-stone-300 bg-white px-4 py-3 text-sm text-stone-800">
-                                    </div>
-                                    <div>
-                                        <label class="mb-2 block text-sm font-medium uppercase tracking-[0.02em] text-stone-500">Malaysian child price (MYR)</label>
-                                        <input name="malaysia_child_price_myr" type="number" step="0.01" value="{{ $product->malaysia_child_price_myr }}" class="w-full rounded-lg border border-stone-300 bg-white px-4 py-3 text-sm text-stone-800">
-                                    </div>
-                                    <div>
-                                        <label class="mb-2 block text-sm font-medium uppercase tracking-[0.02em] text-stone-500">International child price (MYR)</label>
-                                        <input name="international_child_price_myr" type="number" step="0.01" value="{{ $product->international_child_price_myr }}" class="w-full rounded-lg border border-stone-300 bg-white px-4 py-3 text-sm text-stone-800">
                                     </div>
                                 </div>
-                                <div class="grid gap-5 md:grid-cols-2">
-                                    <div>
-                                        <label class="mb-2 block text-sm font-medium uppercase tracking-[0.02em] text-stone-500">Summary</label>
-                                        <textarea name="summary" rows="3" class="w-full rounded-lg border border-stone-300 bg-white px-4 py-4 text-sm text-stone-800">{{ $product->summary }}</textarea>
-                                    </div>
-                                    <div>
-                                        <label class="mb-2 block text-sm font-medium uppercase tracking-[0.02em] text-stone-500">Description</label>
-                                        <textarea name="description" rows="3" class="w-full rounded-lg border border-stone-300 bg-white px-4 py-4 text-sm text-stone-800">{{ $product->description }}</textarea>
-                                    </div>
-                                </div>
-                                    </div>
-                                </div>
-                                <div class="mt-5 flex flex-wrap items-center gap-5">
+                                <div class="mt-3 flex flex-wrap items-center gap-3">
                                     <label class="flex items-center gap-2 text-sm text-stone-600">
                                         <input type="checkbox" name="is_featured" value="1" @checked($product->is_featured) class="rounded border-stone-300">
                                         Featured
@@ -218,7 +227,7 @@
                                         <input id="package-discount-{{ $product->id }}" name="discount_percentage" type="number" step="0.01" min="0" max="100" value="{{ $product->discount_percentage }}" class="w-24 rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm text-stone-800">
                                     </div>
                                 </div>
-                                <div class="mt-6 flex justify-end gap-3">
+                                <div class="mt-3 flex justify-end gap-3">
                                     <button type="submit" form="{{ $inlineFormId }}" class="rounded-full bg-sky-600 px-6 py-3 text-sm font-semibold uppercase tracking-[0.16em] text-white transition hover:bg-sky-700">
                                         Save
                                     </button>
@@ -227,23 +236,38 @@
                                     </button>
                                 </div>
                             </div>
+                            </div>
                         </form>
                     @else
-                        <div class="flex flex-wrap items-center gap-2">
-                            <h4 class="text-xl font-semibold text-stone-900">{{ $product->name }}</h4>
-                            <span class="rounded-full bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] {{ $product->is_active ? 'text-emerald-700' : 'text-stone-500' }}">
-                                {{ $product->is_active ? 'Active' : 'Hidden' }}
-                            </span>
-                        </div>
-                        <p class="mt-2 text-sm text-stone-500">{{ $product->location }} | {{ $product->duration }}</p>
-                        <p class="mt-3 text-sm leading-6 text-stone-600">{{ $product->summary }}</p>
-                        <div class="mt-4 flex flex-wrap gap-2 text-xs font-semibold uppercase tracking-[0.2em]">
-                            <span class="rounded-full bg-white px-3 py-1 text-stone-600">RM {{ number_format((float) $product->malaysia_adult_price_myr, 2) }}</span>
+                        @if ($isPackage)
+                            <div class="flex flex-wrap items-center gap-2">
+                                <h4 class="text-xl font-semibold text-stone-900">{{ $product->name }}</h4>
+                                <span class="rounded-full bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] {{ $product->is_active ? 'text-emerald-700' : 'text-stone-500' }}">
+                                    {{ $product->is_active ? 'Active' : 'Hidden' }}
+                                </span>
+                            </div>
+                            <p class="mt-2 text-sm text-stone-500">{{ $product->location }} | {{ $product->duration }}</p>
+                            <p class="mt-3 text-sm leading-6 text-stone-600">{{ $product->summary }}</p>
+                            <div class="mt-4 flex flex-wrap gap-2 text-xs font-semibold uppercase tracking-[0.2em]">
+                                <span class="rounded-full bg-white px-3 py-1 text-stone-600">RM {{ number_format((float) $product->malaysia_adult_price_myr, 2) }}</span>
+                                @if ($product->capacity)
+                                    <span class="rounded-full bg-white px-3 py-1 text-stone-600">Capacity {{ $product->capacity }}</span>
+                                @endif
+                                <span class="rounded-full bg-white px-3 py-1 text-stone-600">{{ $product->is_top_choice ? 'Top choice' : ($product->is_featured ? 'Featured' : 'Standard') }}</span>
+                            </div>
+                        @else
+                            <div class="flex flex-wrap items-center gap-2">
+                                <h4 class="text-xl font-semibold text-stone-900">{{ $product->name }}</h4>
+                                <span class="rounded-full bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] {{ $product->is_active ? 'text-emerald-700' : 'text-stone-500' }}">
+                                    {{ $product->is_active ? 'Active' : 'Hidden' }}
+                                </span>
+                            </div>
                             @if ($product->capacity)
-                                <span class="rounded-full bg-white px-3 py-1 text-stone-600">Capacity {{ $product->capacity }}</span>
+                                <p class="mt-2 text-sm font-medium text-stone-500">Capacity: {{ $product->capacity }}</p>
                             @endif
-                            <span class="rounded-full bg-white px-3 py-1 text-stone-600">{{ $product->is_top_choice ? 'Top choice' : ($product->is_featured ? 'Featured' : 'Standard') }}</span>
-                        </div>
+                            <p class="mt-3 text-sm leading-6 text-stone-600">{{ $product->summary }}</p>
+                            <p class="mt-3 text-sm leading-7 text-stone-500">{{ $product->description }}</p>
+                        @endif
                     @endif
                 </div>
 
@@ -260,12 +284,12 @@
                                 Cancel
                             </button>
                         @else
-                            <details class="group w-full">
-                                <summary class="cursor-pointer list-none rounded-full border border-stone-300 bg-white px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-stone-700 transition hover:bg-stone-100">
+                            <details class="group inline-block">
+                                <summary class="cursor-pointer list-none rounded-full border border-stone-300 bg-white px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-stone-700 transition hover:bg-stone-100 inline-flex min-w-[6.75rem] items-center justify-center">
                                     <span class="group-open:hidden">Edit</span>
                                     <span class="hidden group-open:inline">Close</span>
                                 </summary>
-                                <form method="POST" action="{{ route('admin.products.update', $product) }}" enctype="multipart/form-data" class="mx-auto mt-4 w-full max-w-[900px] min-w-[320px] space-y-3 rounded-2xl border border-stone-200 bg-white p-4">
+                                <form method="POST" action="{{ route('admin.products.update', $product) }}" enctype="multipart/form-data" class="absolute left-0 right-0 top-0 z-20 mt-0 w-full min-w-[320px] space-y-3 rounded-2xl border border-stone-200 bg-white p-4 shadow-[0_18px_40px_rgba(15,23,42,0.16)]">
                                 @csrf
                                 @method('PATCH')
                                 <div class="grid gap-3 md:grid-cols-2">
@@ -334,42 +358,33 @@
                                 @else
                                     @php($transportGalleryImages = collect($product->gallery_images ?? [])->filter()->values())
                                     <input type="hidden" name="image_url" value="{{ $product->image_url }}">
+                                    <input type="hidden" name="location" value="{{ $product->location }}">
+                                    <input type="hidden" name="duration" value="{{ $product->duration }}">
+                                    <input type="hidden" name="malaysia_adult_price_myr" value="{{ $product->malaysia_adult_price_myr }}">
+                                    <input type="hidden" name="malaysia_child_price_myr" value="{{ $product->malaysia_child_price_myr }}">
+                                    <input type="hidden" name="international_adult_price_myr" value="{{ $product->international_adult_price_myr }}">
+                                    <input type="hidden" name="international_child_price_myr" value="{{ $product->international_child_price_myr }}">
                                     @foreach ($transportGalleryImages as $galleryImage)
                                         <input type="hidden" name="existing_gallery_images[]" value="{{ $galleryImage }}">
                                     @endforeach
-                                    <div class="grid gap-6 lg:grid-cols-[210px_210px_210px_minmax(0,1fr)] lg:items-start">
+                                    <div class="grid gap-6 lg:grid-cols-[210px_210px_minmax(0,1fr)] lg:items-start">
                                         <div>
                                             <label class="mb-2 block text-xs font-medium uppercase tracking-[0.18em] text-stone-500">Main image</label>
                                             @if ($product->image_url)
-                                                <img src="{{ $product->image_url }}" alt="{{ $product->name }}" class="h-[180px] w-[180px] rounded-2xl object-cover shadow-sm">
+                                                <img src="{{ $product->image_url }}" alt="{{ $product->name }}" class="rounded-2xl object-cover shadow-sm" style="width: 80px; height: 80px;">
                                             @else
-                                                <div class="flex h-[180px] w-[180px] items-center justify-center rounded-2xl border border-dashed border-stone-300 bg-stone-50 px-3 text-center text-xs font-medium uppercase tracking-[0.16em] text-stone-400">
+                                                <div class="flex items-center justify-center rounded-2xl border border-dashed border-stone-300 bg-stone-50 px-2 text-center text-[10px] font-medium uppercase tracking-[0.16em] text-stone-400" style="width: 80px; height: 80px;">
                                                     No main image
                                                 </div>
                                             @endif
                                         </div>
 
                                         <div>
-                                            <label class="mb-2 block text-xs font-medium uppercase tracking-[0.18em] text-stone-500">Gallery folder</label>
-                                            <div class="flex h-[180px] w-[180px] flex-col justify-center rounded-2xl border border-stone-200 bg-stone-50 px-6 py-4">
-                                                <p class="text-3xl font-semibold text-stone-900">{{ $transportGalleryImages->count() }}</p>
-                                                <p class="mt-2 text-sm font-semibold uppercase tracking-[0.12em] text-stone-700">
-                                                    {{ $transportGalleryImages->count() === 1 ? 'Image' : 'Images' }}
-                                                </p>
-                                                <p class="mt-6 text-xs uppercase tracking-[0.18em] text-stone-400">Stored</p>
-                                            </div>
-                                        </div>
-
-                                        <div>
                                             <label class="mb-2 block text-xs font-medium uppercase tracking-[0.18em] text-stone-500">Upload images</label>
-                                            <div class="flex min-h-[180px] flex-col justify-start gap-5">
+                                            <div class="flex flex-col justify-start gap-4" style="min-height: 80px;">
                                                 <div>
                                                     <label class="mb-2 block text-[11px] font-semibold uppercase tracking-[0.14em] text-stone-400">Main image</label>
                                                     <input name="image" type="file" accept=".jpg,.jpeg,.png,.webp" class="w-full rounded-2xl border border-dashed border-stone-300 px-3 py-3 text-xs text-stone-700">
-                                                </div>
-                                                <div>
-                                                    <label class="mb-2 block text-[11px] font-semibold uppercase tracking-[0.14em] text-stone-400">Gallery folder</label>
-                                                    <input name="gallery_image_files[]" type="file" accept=".jpg,.jpeg,.png,.webp" multiple class="w-full rounded-2xl border border-dashed border-stone-300 px-3 py-3 text-xs text-stone-700">
                                                 </div>
                                             </div>
                                         </div>
@@ -380,65 +395,22 @@
                                                 <input name="name" type="text" value="{{ $product->name }}" class="w-full rounded-xl border border-stone-300 px-4 py-3 text-sm text-stone-800">
                                             </div>
                                             <div>
-                                                <label class="mb-2 block text-xs font-medium uppercase tracking-[0.18em] text-stone-500">Location</label>
-                                                <input name="location" type="text" value="{{ $product->location }}" class="w-full rounded-xl border border-stone-300 px-4 py-3 text-sm text-stone-800">
-                                            </div>
-                                            <div class="grid gap-2 md:grid-cols-[80px_1fr_80px_1fr] md:items-center">
-                                                <div class="md:col-span-4">
-                                                    <label class="mb-2 block text-xs font-medium uppercase tracking-[0.18em] text-stone-500">Duration</label>
-                                                </div>
-                                                @php($durationParts = preg_split('/\s+/', trim((string) $product->duration), 2))
-                                                <input name="duration" type="text" value="{{ $product->duration }}" class="md:col-span-4 w-full rounded-xl border border-stone-300 px-4 py-3 text-sm text-stone-800">
-                                            </div>
-                                            <div>
                                                 <label class="mb-2 block text-xs font-medium uppercase tracking-[0.18em] text-stone-500">Capacity</label>
                                                 <input name="capacity" type="number" value="{{ $product->capacity }}" class="w-full rounded-xl border border-stone-300 px-4 py-3 text-sm text-stone-800">
                                             </div>
-                                            <div>
-                                                <label class="mb-2 block text-xs font-medium uppercase tracking-[0.18em] text-stone-500">Malaysian adult price (MYR)</label>
-                                                <input name="malaysia_adult_price_myr" type="number" step="0.01" value="{{ $product->malaysia_adult_price_myr }}" class="w-full rounded-xl border border-stone-300 px-4 py-3 text-sm text-stone-800">
-                                            </div>
-                                            <div>
-                                                <label class="mb-2 block text-xs font-medium uppercase tracking-[0.18em] text-stone-500">International adult price (MYR)</label>
-                                                <input name="international_adult_price_myr" type="number" step="0.01" value="{{ $product->international_adult_price_myr }}" class="w-full rounded-xl border border-stone-300 px-4 py-3 text-sm text-stone-800">
-                                            </div>
-                                            <div>
-                                                <label class="mb-2 block text-xs font-medium uppercase tracking-[0.18em] text-stone-500">Malaysian child price (MYR)</label>
-                                                <input name="malaysia_child_price_myr" type="number" step="0.01" value="{{ $product->malaysia_child_price_myr }}" class="w-full rounded-xl border border-stone-300 px-4 py-3 text-sm text-stone-800">
-                                            </div>
-                                            <div>
-                                                <label class="mb-2 block text-xs font-medium uppercase tracking-[0.18em] text-stone-500">International child price (MYR)</label>
-                                                <input name="international_child_price_myr" type="number" step="0.01" value="{{ $product->international_child_price_myr }}" class="w-full rounded-xl border border-stone-300 px-4 py-3 text-sm text-stone-800">
-                                            </div>
-                                            <div>
+                                            <div class="md:col-span-2">
                                                 <label class="mb-2 block text-xs font-medium uppercase tracking-[0.18em] text-stone-500">Summary</label>
                                                 <textarea name="summary" rows="3" class="w-full rounded-xl border border-stone-300 px-4 py-3 text-sm text-stone-800">{{ $product->summary }}</textarea>
                                             </div>
-                                            <div>
+                                            <div class="md:col-span-2">
                                                 <label class="mb-2 block text-xs font-medium uppercase tracking-[0.18em] text-stone-500">Description</label>
                                                 <textarea name="description" rows="3" class="w-full rounded-xl border border-stone-300 px-4 py-3 text-sm text-stone-800">{{ $product->description }}</textarea>
                                             </div>
                                             <div class="md:col-span-2 flex flex-wrap gap-5 pt-1">
                                                 <label class="flex items-center gap-2 text-sm text-stone-600">
-                                                    <input type="checkbox" name="is_featured" value="1" @checked($product->is_featured) class="rounded border-stone-300">
-                                                    Featured
-                                                </label>
-                                                <label class="flex items-center gap-2 text-sm text-stone-600">
-                                                    <input type="checkbox" name="is_top_choice" value="1" @checked($product->is_top_choice) class="rounded border-stone-300">
-                                                    Top choice
-                                                </label>
-                                                <label class="flex items-center gap-2 text-sm text-stone-600">
                                                     <input type="checkbox" name="is_active" value="1" @checked($product->is_active) class="rounded border-stone-300">
                                                     Active
                                                 </label>
-                                                <label class="flex items-center gap-2 text-sm text-stone-600">
-                                                    <input type="checkbox" name="is_discounted" value="1" @checked($product->is_discounted) class="rounded border-stone-300">
-                                                    Discount
-                                                </label>
-                                                <div class="flex items-center gap-2 text-sm text-stone-600">
-                                                    <label for="transport-discount-{{ $product->id }}">%</label>
-                                                    <input id="transport-discount-{{ $product->id }}" name="discount_percentage" type="number" step="0.01" min="0" max="100" value="{{ $product->discount_percentage }}" class="w-24 rounded-xl border border-stone-300 px-3 py-2 text-sm text-stone-800">
-                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -447,10 +419,6 @@
                                     <div>
                                         <label class="mb-1 block text-xs font-medium uppercase tracking-[0.18em] text-stone-500">Duration</label>
                                         <input name="duration" type="text" value="{{ $product->duration }}" class="w-full rounded-2xl border border-stone-300 px-4 py-3 text-sm text-stone-800">
-                                    </div>
-                                    <div>
-                                        <label class="mb-1 block text-xs font-medium uppercase tracking-[0.18em] text-stone-500">Price (MYR)</label>
-                                        <input name="price_myr" type="number" step="0.01" value="{{ $product->price_myr }}" class="w-full rounded-2xl border border-stone-300 px-4 py-3 text-sm text-stone-800">
                                     </div>
                                     <div>
                                         <label class="mb-1 block text-xs font-medium uppercase tracking-[0.18em] text-stone-500">Capacity</label>
@@ -511,7 +479,7 @@
                         <form method="POST" action="{{ route('admin.products.destroy', $product) }}" onsubmit="return confirm('Delete this product?');">
                             @csrf
                             @method('DELETE')
-                            <button type="submit" class="rounded-full border border-rose-300 bg-white px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-rose-700 transition hover:bg-rose-50">
+                            <button type="submit" class="rounded-full border border-rose-300 bg-white px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-rose-700 transition hover:bg-rose-50 {{ $isPackage ? '' : 'min-w-[6.75rem]' }}">
                                 Delete
                             </button>
                         </form>
@@ -532,6 +500,7 @@
             const form = row.querySelector('[data-package-inline-form]');
             const viewSection = row.querySelector('.package-inline-view');
             const editSection = row.querySelector('.package-inline-edit');
+            const editPanel = row.querySelector('[data-package-inline-panel]');
             const editButton = row.querySelector('[data-package-inline-edit]');
             const cancelButton = row.querySelector('[data-package-inline-cancel]');
             const saveButton = row.querySelector('.package-inline-save');
@@ -544,22 +513,62 @@
                 form.reset();
             };
 
+            const updateEditPosition = () => {
+                if (!editSection || !editPanel) {
+                    return;
+                }
+
+                const managementStack = row.closest('[data-product-management-stack]');
+                const createPanel = managementStack?.querySelector('[data-product-create-panel]');
+                const headerOffset = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--app-header-offset')) || 0;
+                const createPanelBottom = createPanel?.getBoundingClientRect().bottom;
+                const topOffset = Math.max(headerOffset + 16, (createPanelBottom ?? headerOffset) + 16);
+                const availableHeight = Math.max(320, window.innerHeight - topOffset - 24);
+                const panelHeight = Math.min(520, availableHeight);
+
+                editSection.style.top = `${topOffset}px`;
+                editPanel.style.height = `${panelHeight}px`;
+                editPanel.style.maxHeight = `${panelHeight}px`;
+                editPanel.style.width = '';
+                editPanel.style.marginLeft = '';
+                editSection.style.justifyContent = '';
+            };
+
             editButton.addEventListener('click', () => {
+                updateEditPosition();
                 viewSection.classList.add('hidden');
                 editSection.classList.remove('hidden');
+                editSection.classList.add('flex');
                 editButton.classList.add('hidden');
-                cancelButton.classList.remove('hidden');
-                saveButton.classList.remove('hidden');
             });
 
             cancelButton.addEventListener('click', () => {
                 resetForm();
                 viewSection.classList.remove('hidden');
                 editSection.classList.add('hidden');
+                editSection.classList.remove('flex');
                 editButton.classList.remove('hidden');
-                cancelButton.classList.add('hidden');
-                saveButton.classList.add('hidden');
             });
+
+            editSection.addEventListener('click', (event) => {
+                if (event.target !== editSection) {
+                    return;
+                }
+
+                cancelButton.click();
+            });
+
+            window.addEventListener('resize', () => {
+                if (!editSection.classList.contains('hidden')) {
+                    updateEditPosition();
+                }
+            });
+
+            window.addEventListener('scroll', () => {
+                if (!editSection.classList.contains('hidden')) {
+                    updateEditPosition();
+                }
+            }, { passive: true });
         });
 
         document.querySelectorAll('.package-gallery-remove').forEach((button) => {

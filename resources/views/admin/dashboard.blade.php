@@ -38,6 +38,11 @@
                     <p class="mt-3 text-xl font-semibold text-stone-900">Booking Queue</p>
                     <p class="mt-2 text-sm leading-6 text-stone-600">Review incoming requests and update their status.</p>
                 </a>
+                <a href="{{ route('admin.enquiries') }}" class="rounded-[1.5rem] border border-stone-200 bg-stone-50 p-5 transition hover:-translate-y-1 hover:bg-white hover:shadow-sm">
+                    <p class="text-sm font-semibold uppercase tracking-[0.22em] text-emerald-700">Enquiries</p>
+                    <p class="mt-3 text-xl font-semibold text-stone-900">Enquiry Inbox</p>
+                    <p class="mt-2 text-sm leading-6 text-stone-600">See customers who asked questions before reserving or booking.</p>
+                </a>
                 <a href="{{ route('home') }}" class="rounded-[1.5rem] border border-stone-200 bg-stone-50 p-5 transition hover:-translate-y-1 hover:bg-white hover:shadow-sm">
                     <p class="text-sm font-semibold uppercase tracking-[0.22em] text-stone-600">Live Site</p>
                     <p class="mt-3 text-xl font-semibold text-stone-900">View Homepage</p>

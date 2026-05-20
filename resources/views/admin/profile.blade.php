@@ -15,6 +15,7 @@
                     <div class="mt-5 flex flex-wrap gap-3">
                         <a href="{{ route('home') }}" class="rounded-full bg-sky-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-sky-700">View Homepage</a>
                         <a href="{{ route('admin.bookings') }}" class="rounded-full border border-stone-300 px-5 py-3 text-sm font-semibold text-stone-700 transition hover:bg-white">View Booking Queue</a>
+                        <a href="{{ route('admin.enquiries') }}" class="rounded-full border border-emerald-300 px-5 py-3 text-sm font-semibold text-emerald-700 transition hover:bg-white">View Enquiries</a>
                     </div>
                 </div>
             </div>

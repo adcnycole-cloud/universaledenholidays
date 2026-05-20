@@ -18,7 +18,7 @@
             .js-app-header {
                 position: fixed;
                 inset: 0 0 auto 0;
-                z-index: 200;
+                z-index: 180;
                 isolation: isolate;
             }
 
@@ -26,7 +26,7 @@
                 position: fixed;
                 top: calc(var(--app-header-offset, 0px) + 0.75rem);
                 right: 1rem;
-                z-index: 260;
+                z-index: 320;
                 display: flex;
                 width: min(28rem, calc(100vw - 2rem));
                 flex-direction: column;
@@ -66,10 +66,10 @@
         @php($adminNavIdle = $adminNavBase.' border-stone-200 text-stone-700 hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700')
         <div class="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(14,165,233,0.08),_transparent_30%),linear-gradient(180deg,_#fffdf9,_#f8fafc)]">
             @unless ($hideHeader)
-                <header class="js-app-header border-b shadow-[0_10px_24px_rgba(15,23,42,0.08)] backdrop-blur {{ $isAdminRoute ? 'border-emerald-200/80 bg-white/95' : 'border-stone-200/80 bg-white/92' }} ">
-                    <div class="flex w-full items-center justify-between px-6 py-4 lg:px-10">
+                <header class="js-app-header border-b shadow-[0_10px_24px_rgba(15,23,42,0.08)] {{ $isAdminRoute ? 'border-emerald-200 bg-white' : 'border-stone-200 bg-white' }} ">
+                    <div class="{{ $isAdminRoute ? 'grid w-full grid-cols-[1fr_auto_1fr] items-center px-6 py-3 lg:px-10' : 'flex w-full items-center justify-between px-6 py-3 lg:px-10' }}">
                         @if ($isAdminRoute)
-                            <div class="hidden md:block md:w-24 lg:w-32" aria-hidden="true"></div>
+                            <div class="justify-self-start" aria-hidden="true"></div>
                         @else
                             <a href="{{ route('home') }}" class="flex items-center gap-3" style="position: relative; left: 1rem;">
                                 <img src="{{ asset('images/ue_logo.jpg') }}" alt="Universal Eden Logo" class="h-11 w-11 rounded-full object-cover">
@@ -78,7 +78,7 @@
                         @endif
 
                         @if ($isAdminRoute)
-                            <nav class="hidden items-center gap-3 text-sm font-medium md:flex">
+                            <nav class="hidden items-center justify-center gap-2 text-sm font-medium md:flex md:justify-self-center">
                                 <a href="{{ route('admin.dashboard') }}" class="{{ request()->routeIs('admin.dashboard') ? $adminNavActive : $adminNavIdle }}">Overview</a>
                                 <a href="{{ route('admin.profile') }}" class="{{ request()->routeIs('admin.profile') ? $adminNavActive : $adminNavIdle }}">Profile</a>
                                 <a href="{{ route('admin.promos') }}" class="{{ request()->routeIs('admin.promos') ? $adminNavActive : $adminNavIdle }}">Promos</a>
@@ -86,7 +86,14 @@
                                 <a href="{{ route('admin.packages') }}" class="{{ request()->routeIs('admin.packages') ? $adminNavActive : $adminNavIdle }}">Packages</a>
                                 <a href="{{ route('admin.testimonials') }}" class="{{ request()->routeIs('admin.testimonials') ? $adminNavActive : $adminNavIdle }}">Testimonials</a>
                                 <a href="{{ route('admin.bookings') }}" class="{{ request()->routeIs('admin.bookings', 'admin.bookings.export') ? $adminNavActive : $adminNavIdle }}">Bookings</a>
+                                <a href="{{ route('admin.enquiries') }}" class="{{ request()->routeIs('admin.enquiries') ? $adminNavActive : $adminNavIdle }}">Enquiries</a>
                                 <a href="{{ route('home') }}" class="rounded-full bg-sky-600 px-4 py-2 text-white transition hover:bg-sky-700">View Site</a>
+                                @auth
+                                    <form method="POST" action="{{ route('logout') }}">
+                                        @csrf
+                                        <button type="submit" class="rounded-full border border-stone-300 px-4 py-2 text-sm font-semibold text-stone-700 transition hover:border-stone-400 hover:bg-stone-100">Logout</button>
+                                    </form>
+                                @endauth
                             </nav>
                         @else
                             <nav class="hidden items-center gap-6 text-sm font-medium text-stone-600 md:flex">
@@ -110,7 +117,7 @@
                             </nav>
                         @endif
 
-                        <div class="flex items-center gap-3">
+                        <div class="flex items-center gap-3 {{ $isAdminRoute ? 'w-full justify-end justify-self-stretch' : '' }}">
                             @if (! $isAdminRoute)
                                 <div class="flex items-center gap-2">
                                     <span class="text-sm font-semibold text-stone-500">Currency:</span>
@@ -125,10 +132,12 @@
                                 </div>
                             @endif
                             @auth
+                                @if (! $isAdminRoute)
                                 <form method="POST" action="{{ route('logout') }}">
                                     @csrf
                                     <button type="submit" class="rounded-full border border-stone-300 px-4 py-2 text-sm font-semibold text-stone-700 transition hover:border-stone-400 hover:bg-stone-100">Logout</button>
                                 </form>
+                                @endif
                             @else
                             @endauth
                         </div>

@@ -34,14 +34,10 @@
             </div>
         </div>
     @endif
-    <div class="grid gap-4 lg:grid-cols-3">
+    <div class="grid gap-4 lg:grid-cols-2">
         <div>
             <label for="{{ $category }}_duration" class="mb-2 block text-sm font-medium text-stone-700">Duration</label>
             <input id="{{ $category }}_duration" name="duration" type="text" class="w-full rounded-2xl border border-stone-300 px-4 py-3 text-stone-800">
-        </div>
-        <div>
-            <label for="{{ $category }}_price_myr" class="mb-2 block text-sm font-medium text-stone-700">Price (MYR)</label>
-            <input id="{{ $category }}_price_myr" name="price_myr" type="number" step="0.01" class="w-full rounded-2xl border border-stone-300 px-4 py-3 text-stone-800">
         </div>
         <div>
             <label for="{{ $category }}_capacity" class="mb-2 block text-sm font-medium text-stone-700">Capacity</label>

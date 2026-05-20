@@ -1,8 +1,8 @@
 @php($searchIdPrefix = $searchIdPrefix ?? 'admin-product')
 @php($stackLayout = $stackLayout ?? false)
 
-<section id="{{ $searchIdPrefix }}-listings" class="mt-5 {{ $stackLayout ? 'space-y-8' : 'grid gap-8 lg:grid-cols-[1.2fr_0.8fr]' }}">
-    <section class="rounded-[2rem] border border-stone-200 bg-white p-6 shadow-sm">
+<section id="{{ $searchIdPrefix }}-listings" class="mt-5 {{ $stackLayout ? 'space-y-8' : 'grid gap-8 lg:grid-cols-[1.2fr_0.8fr]' }}" data-product-management-stack>
+    <section class="rounded-[2rem] border border-stone-200 bg-white p-6 shadow-sm" data-product-create-panel>
         <p class="text-sm uppercase tracking-[0.3em] {{ $labelColor }}">{{ $sectionLabel }}</p>
         <h1 class="mt-2 text-3xl font-semibold text-stone-900">{{ $heading }}</h1>
         @include('admin.partials.product-form', ['category' => $category, 'title' => $title])
@@ -12,7 +12,6 @@
             <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                 <h2 class="text-2xl font-semibold text-stone-900">{{ $listHeading }}</h2>
                 <label class="relative block w-full lg:max-w-sm">
-                    <span class="sr-only">Search packages</span>
                     <input id="{{ $searchIdPrefix }}-search" type="search" placeholder="{{ $searchPlaceholder }}" class="w-full rounded-full border border-stone-300 bg-stone-50 px-4 py-3 text-sm text-stone-800 outline-none transition focus:border-sky-400 focus:bg-white">
                 </label>
             </div>
@@ -29,6 +28,7 @@
             'editable' => true,
             'wrapperId' => $searchIdPrefix . '-product-list',
             'itemAttribute' => 'data-' . $searchIdPrefix . '-item',
+            'gridColumns' => $gridColumns ?? 1,
         ])
     </section>
 </section>

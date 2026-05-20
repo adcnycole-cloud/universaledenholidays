@@ -99,11 +99,11 @@
                             <div class="grid gap-4 md:grid-cols-2">
                                 <div>
                                     <label for="email" class="mb-2 block text-sm text-stone-200">Email</label>
-                                    <input id="email" name="email" type="email" value="{{ old('email') }}" class="w-full rounded-2xl border border-white/10 bg-black/20 px-4 py-3 text-white outline-none transition focus:border-amber-300" required>
+                                    <input id="email" name="email" type="email" value="{{ old('email') }}" class="w-full rounded-2xl border border-white/10 bg-black/20 px-4 py-3 text-white outline-none transition focus:border-amber-300" autocomplete="email" inputmode="email" spellcheck="false" required>
                                 </div>
                                 <div>
                                     <label for="phone" class="mb-2 block text-sm text-stone-200">Phone</label>
-                                    <input id="phone" name="phone" type="text" value="{{ old('phone') }}" class="w-full rounded-2xl border border-white/10 bg-black/20 px-4 py-3 text-white outline-none transition focus:border-amber-300" required>
+                                    <input id="phone" name="phone" type="tel" value="{{ old('phone') }}" class="w-full rounded-2xl border border-white/10 bg-black/20 px-4 py-3 text-white outline-none transition focus:border-amber-300" autocomplete="tel" inputmode="tel" pattern="^\+[0-9\s\-()]{8,25}$" maxlength="25" placeholder="+60 12-345 6789" required>
                                 </div>
                             </div>
 

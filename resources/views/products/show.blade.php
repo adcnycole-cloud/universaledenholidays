@@ -13,16 +13,29 @@
             $primaryImage = $galleryImages[0] ?? null;
             $thumbnailImages = collect($galleryImages)->slice(1, 4)->values();
             $remainingGalleryCount = max(count($galleryImages) - 5, 0);
+            $previewImages = collect($galleryImages)
+                ->map(fn ($image, $index) => [
+                    'src' => $image,
+                    'alt' => $index === 0
+                        ? $product->name
+                        : $product->name.' gallery image '.($index + 1),
+                ])
+                ->values();
         @endphp
 
         <section class="grid gap-8 lg:grid-cols-[1fr_0.95fr]">
             <div>
                 <div class="overflow-hidden rounded-[2rem] border border-stone-200 bg-white shadow-sm">
                     @if ($primaryImage)
-                        <div class="relative overflow-hidden">
+                        <button
+                            type="button"
+                            class="relative block w-full overflow-hidden text-left"
+                            data-image-preview-trigger="0"
+                            aria-label="Open main image preview"
+                        >
                             <img src="{{ $primaryImage }}" alt="{{ $product->name }}" class="h-[26rem] w-full object-cover">
                             <img src="{{ asset('images/UE.png') }}" alt="Universal Eden trademark" class="pointer-events-none absolute z-10 h-14 w-auto opacity-90" style="right: 0; bottom: 0; transform: translate(-0.75rem, -0.75rem);">
-                        </div>
+                        </button>
                     @else
                         <div class="flex h-[26rem] items-center justify-center bg-[linear-gradient(135deg,_#dbeafe,_#fff7ed_55%,_#ecfeff)] px-8 text-center">
                             <div>
@@ -34,15 +47,20 @@
                     @if ($thumbnailImages->isNotEmpty())
                         <div class="grid grid-cols-2 gap-3 border-t border-stone-200 bg-stone-50 p-4 md:grid-cols-4">
                             @foreach ($thumbnailImages as $index => $image)
-                                <div class="relative overflow-hidden rounded-[1.25rem]">
+                                <button
+                                    type="button"
+                                    class="relative overflow-hidden rounded-[1.25rem] text-left"
+                                    data-image-preview-trigger="{{ $index + 1 }}"
+                                    aria-label="Open gallery image {{ $index + 2 }}"
+                                >
                                     <img src="{{ $image }}" alt="{{ $product->name }} gallery image {{ $index + 2 }}" class="h-28 w-full object-cover">
-                                    <img src="{{ asset('images/UE.png') }}" alt="Universal Eden trademark" class="pointer-events-none absolute z-10 h-8 w-auto opacity-90" style="right: 0; bottom: 0; transform: translate(-0.45rem, -0.45rem);">
+                                    <img src="{{ asset('images/UE.png') }}" alt="Universal Eden trademark" class="pointer-events-none absolute z-10 h-6 w-auto opacity-90" style="right: 0; bottom: 0; transform: translate(-0.35rem, -0.35rem);">
                                     @if ($remainingGalleryCount > 0 && $loop->last)
                                         <div class="absolute inset-0 flex items-center justify-center bg-black/45 text-2xl font-semibold text-white">
                                             +{{ $remainingGalleryCount }}
                                         </div>
                                     @endif
-                                </div>
+                                </button>
                             @endforeach
                         </div>
                     @endif
@@ -72,10 +90,15 @@
                     <div class="mt-5 grid gap-6 md:grid-cols-[1.1fr_0.9fr]">
                         <div class="rounded-3xl bg-stone-100 p-6">
                             @if ($primaryImage)
-                                <div class="relative overflow-hidden rounded-[1.5rem]">
+                                <button
+                                    type="button"
+                                    class="relative block w-full overflow-hidden rounded-[1.5rem] text-left"
+                                    data-image-preview-trigger="0"
+                                    aria-label="Open product highlight image preview"
+                                >
                                     <img src="{{ $primaryImage }}" alt="{{ $product->name }}" class="h-full min-h-64 w-full object-cover">
                                     <img src="{{ asset('images/UE.png') }}" alt="Universal Eden trademark" class="pointer-events-none absolute z-10 h-12 w-auto opacity-90" style="right: 0; bottom: 0; transform: translate(-0.75rem, -0.75rem);">
-                                </div>
+                                </button>
                             @else
                                 <div class="flex h-full min-h-64 items-center justify-center rounded-[1.5rem] bg-[linear-gradient(135deg,_#bae6fd,_#fde68a_55%,_#dcfce7)] px-8 text-center">
                                     <div>
@@ -118,8 +141,10 @@
 
                     <div class="mt-6 flex flex-wrap gap-3">
                         <a href="{{ route('booking.create', ['product_id' => $product->id, 'mode' => 'enquiry']) }}" class="rounded-full border border-amber-400 px-5 py-3 text-sm font-semibold text-amber-600 transition hover:bg-amber-50">Send Enquiry</a>
-                        <a href="{{ route('booking.create', ['product_id' => $product->id, 'action' => 'reserve']) }}" class="rounded-full border border-emerald-600 px-5 py-3 text-sm font-semibold text-emerald-600 transition hover:bg-emerald-50">Reserve Now</a>
-                        <a href="{{ route('booking.create', ['product_id' => $product->id, 'action' => 'instant_book']) }}" class="rounded-full bg-rose-500 px-5 py-3 text-sm font-semibold text-white transition hover:bg-rose-600">Instant Book</a>
+                        @if ($product->category !== 'transport')
+                            <a href="{{ route('booking.create', ['product_id' => $product->id, 'action' => 'reserve']) }}" class="rounded-full border border-emerald-600 px-5 py-3 text-sm font-semibold text-emerald-600 transition hover:bg-emerald-50">Reserve Now</a>
+                            <a href="{{ route('booking.create', ['product_id' => $product->id, 'action' => 'instant_book']) }}" class="rounded-full bg-rose-500 px-5 py-3 text-sm font-semibold text-white transition hover:bg-rose-600">Instant Book</a>
+                        @endif
                     </div>
                 </section>
 
@@ -251,7 +276,7 @@
         <section class="mt-8 rounded-[2rem] border border-stone-200 bg-white p-6 shadow-sm">
             <h2 class="text-2xl font-semibold text-stone-900">Reviews</h2>
             <div class="mt-6 grid gap-5 md:grid-cols-3">
-                @foreach ($testimonials as $testimonial)
+                @forelse ($testimonials as $testimonial)
                     <article class="rounded-3xl border border-stone-200 bg-stone-50 p-5">
                         <div class="flex items-center justify-between gap-4">
                             <div class="flex items-center gap-4">
@@ -265,7 +290,11 @@
                         </div>
                         <p class="mt-4 text-sm leading-7 text-stone-600">{{ $testimonial->quote }}</p>
                     </article>
-                @endforeach
+                @empty
+                    <div class="md:col-span-3 rounded-3xl border border-dashed border-stone-300 bg-stone-50 p-6 text-sm text-stone-600">
+                        No package reviews have been assigned here yet.
+                    </div>
+                @endforelse
             </div>
         </section>
 
@@ -353,4 +382,107 @@
             </div>
         </section>
     </main>
+
+    <div id="product-image-preview-modal" class="fixed inset-0 z-[260] hidden items-center justify-center bg-stone-950/80 px-4 py-6">
+        <div class="w-full max-w-6xl rounded-[1.75rem] bg-white shadow-[0_24px_60px_rgba(15,23,42,0.28)]">
+            <div class="flex items-center justify-between border-b border-stone-200 px-4 py-3">
+                <div>
+                    <p class="text-sm font-semibold text-stone-800">Image preview</p>
+                    <p id="product-image-preview-count" class="mt-1 text-xs uppercase tracking-[0.18em] text-stone-500"></p>
+                </div>
+                <button type="button" id="product-image-preview-close" class="inline-flex h-9 w-9 items-center justify-center rounded-full border border-stone-200 bg-white text-lg leading-none text-stone-500 transition hover:bg-stone-100" aria-label="Close image preview">&times;</button>
+            </div>
+            <div class="relative flex max-h-[80vh] items-center justify-center overflow-auto p-4">
+                <button type="button" id="product-image-preview-prev" class="absolute left-4 top-1/2 z-20 inline-flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-2xl leading-none text-stone-700 shadow-lg transition hover:bg-white" aria-label="Previous image">&#8249;</button>
+                <img id="product-image-preview-image" src="" alt="" class="max-h-[72vh] w-auto max-w-full rounded-[1.25rem] object-contain">
+                <img src="{{ asset('images/UE.png') }}" alt="Universal Eden trademark" class="pointer-events-none absolute z-10 h-14 w-auto opacity-90" style="right: 1.5rem; bottom: 1.5rem;">
+                <button type="button" id="product-image-preview-next" class="absolute right-4 top-1/2 z-20 inline-flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-2xl leading-none text-stone-700 shadow-lg transition hover:bg-white" aria-label="Next image">&#8250;</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const previewImages = @json($previewImages);
+            const modal = document.getElementById('product-image-preview-modal');
+            const modalImage = document.getElementById('product-image-preview-image');
+            const closeButton = document.getElementById('product-image-preview-close');
+            const prevButton = document.getElementById('product-image-preview-prev');
+            const nextButton = document.getElementById('product-image-preview-next');
+            const countLabel = document.getElementById('product-image-preview-count');
+            let activeIndex = 0;
+
+            if (!modal || !modalImage || !closeButton || !prevButton || !nextButton || !countLabel || !previewImages.length) {
+                return;
+            }
+
+            const renderImage = () => {
+                const currentImage = previewImages[activeIndex];
+
+                if (!currentImage) {
+                    return;
+                }
+
+                modalImage.src = currentImage.src;
+                modalImage.alt = currentImage.alt;
+                countLabel.textContent = `Image ${activeIndex + 1} of ${previewImages.length}`;
+            };
+
+            const closeModal = () => {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+                modalImage.src = '';
+                modalImage.alt = '';
+            };
+
+            const openModal = (index) => {
+                activeIndex = Number.isInteger(index) && index >= 0 && index < previewImages.length ? index : 0;
+                renderImage();
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+            };
+
+            const showPrevious = () => {
+                activeIndex = (activeIndex - 1 + previewImages.length) % previewImages.length;
+                renderImage();
+            };
+
+            const showNext = () => {
+                activeIndex = (activeIndex + 1) % previewImages.length;
+                renderImage();
+            };
+
+            document.querySelectorAll('[data-image-preview-trigger]').forEach((trigger) => {
+                trigger.addEventListener('click', () => {
+                    openModal(Number.parseInt(trigger.dataset.imagePreviewTrigger || '0', 10));
+                });
+            });
+
+            closeButton.addEventListener('click', closeModal);
+            prevButton.addEventListener('click', showPrevious);
+            nextButton.addEventListener('click', showNext);
+
+            modal.addEventListener('click', (event) => {
+                if (event.target !== modal) {
+                    return;
+                }
+
+                closeModal();
+            });
+
+            document.addEventListener('keydown', (event) => {
+                if (modal.classList.contains('hidden')) {
+                    return;
+                }
+
+                if (event.key === 'Escape') {
+                    closeModal();
+                } else if (event.key === 'ArrowLeft') {
+                    showPrevious();
+                } else if (event.key === 'ArrowRight') {
+                    showNext();
+                }
+            });
+        });
+    </script>
 </x-layouts.app>

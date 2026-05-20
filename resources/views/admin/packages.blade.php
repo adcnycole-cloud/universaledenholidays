@@ -11,6 +11,7 @@
             'searchIdPrefix' => 'admin-package',
             'searchPlaceholder' => 'Search packages by name, location, or summary',
             'stackLayout' => true,
+            'gridColumns' => 2,
         ])
     </main>
     @include('admin.partials.filter-paginate-script', [

@@ -50,6 +50,10 @@
                 @csrf
                 <input type="hidden" name="form_mode" value="{{ $isEnquiry ? 'enquiry' : 'booking' }}">
                 <input type="hidden" name="action_type" value="{{ $actionType }}">
+                @unless ($isEnquiry)
+                    <input type="hidden" id="payment_method" name="payment_method" value="{{ old('payment_method', 'bank_transfer') }}">
+                    <input type="hidden" id="currency_code" name="currency_code" value="{{ old('currency_code', auth()->user()->preferred_currency ?? 'MYR') }}">
+                @endunless
                 @if ($isProductLocked && $selectedProduct)
                     <input type="hidden" name="locked_product_id" value="{{ $selectedProduct->id }}">
                 @endif
@@ -63,6 +67,7 @@
                                     value="{{ $selectedProduct->id }}"
                                     data-category="{{ $selectedProduct->category }}"
                                     data-name="{{ $selectedProduct->name }}"
+                                    data-duration="{{ $selectedProduct->duration }}"
                                     data-malaysia-adult="{{ $selectedProduct->malaysia_adult_price_myr }}"
                                     data-malaysia-child="{{ $selectedProduct->malaysia_child_price_myr }}"
                                     data-international-adult="{{ $selectedProduct->international_adult_price_myr }}"
@@ -79,6 +84,7 @@
                                         value="{{ $product->id }}"
                                         data-category="transport"
                                         data-name="{{ $product->name }}"
+                                        data-duration="{{ $product->duration }}"
                                         data-malaysia-adult="{{ $product->malaysia_adult_price_myr }}"
                                         data-malaysia-child="{{ $product->malaysia_child_price_myr }}"
                                         data-international-adult="{{ $product->international_adult_price_myr }}"
@@ -91,6 +97,7 @@
                                         value="{{ $product->id }}"
                                         data-category="package"
                                         data-name="{{ $product->name }}"
+                                        data-duration="{{ $product->duration }}"
                                         data-malaysia-adult="{{ $product->malaysia_adult_price_myr }}"
                                         data-malaysia-child="{{ $product->malaysia_child_price_myr }}"
                                         data-international-adult="{{ $product->international_adult_price_myr }}"
@@ -130,12 +137,12 @@
                             </div>
                             <div>
                                 <label for="email" class="mb-2 block text-sm font-medium text-stone-700">Email <span class="text-rose-600">*</span></label>
-                                <input id="email" name="email" type="email" value="{{ old('email', auth()->user()->email ?? '') }}" class="w-full rounded-2xl border border-stone-300 bg-white px-4 py-3 text-stone-800" required>
+                                <input id="email" name="email" type="email" value="{{ old('email', auth()->user()->email ?? '') }}" class="w-full rounded-2xl border border-stone-300 bg-white px-4 py-3 text-stone-800" autocomplete="email" inputmode="email" spellcheck="false" required>
                             </div>
                         </div>
                         <div class="mt-3">
                             <label for="phone" class="mb-2 block text-sm font-medium text-stone-700">Phone <span class="text-rose-600">*</span></label>
-                            <input id="phone" name="phone" type="text" value="{{ old('phone', auth()->user()->phone ?? '') }}" class="w-full rounded-2xl border border-stone-300 bg-white px-4 py-3 text-stone-800" required>
+                            <input id="phone" name="phone" type="tel" value="{{ old('phone', auth()->user()->phone ?? '') }}" class="w-full rounded-2xl border border-stone-300 bg-white px-4 py-3 text-stone-800" autocomplete="tel" inputmode="tel" pattern="^\+[0-9\s\-()]{8,25}$" maxlength="25" placeholder="+60 12-345 6789" required>
                         </div>
                     </div>
 
@@ -176,12 +183,12 @@
                             </div>
                             <div>
                                 <label for="email" class="mb-2 block text-sm font-medium text-stone-700">Email <span class="text-rose-600">*</span></label>
-                                <input id="email" name="email" type="email" value="{{ old('email', auth()->user()->email ?? '') }}" class="w-full rounded-2xl border border-stone-300 bg-white px-4 py-3 text-stone-800" required>
+                                <input id="email" name="email" type="email" value="{{ old('email', auth()->user()->email ?? '') }}" class="w-full rounded-2xl border border-stone-300 bg-white px-4 py-3 text-stone-800" autocomplete="email" inputmode="email" spellcheck="false" required>
                             </div>
                         </div>
                         <div class="mt-3">
                             <label for="phone" class="mb-2 block text-sm font-medium text-stone-700">Phone <span class="text-rose-600">*</span></label>
-                            <input id="phone" name="phone" type="text" value="{{ old('phone', auth()->user()->phone ?? '') }}" class="w-full rounded-2xl border border-stone-300 bg-white px-4 py-3 text-stone-800" required>
+                            <input id="phone" name="phone" type="tel" value="{{ old('phone', auth()->user()->phone ?? '') }}" class="w-full rounded-2xl border border-stone-300 bg-white px-4 py-3 text-stone-800" autocomplete="tel" inputmode="tel" pattern="^\+[0-9\s\-()]{8,25}$" maxlength="25" placeholder="+60 12-345 6789" required>
                         </div>
                         <div class="mt-3">
                             <label for="pickup_location" class="mb-2 block text-sm font-medium text-stone-700">Pickup location <span class="text-rose-600">*</span></label>
@@ -195,6 +202,11 @@
                     </div>
 
                     <div class="rounded-[1.5rem] border border-stone-200 bg-stone-50/70 p-4 shadow-sm">
+                        <div class="mb-4 rounded-[1.25rem] border border-sky-200 bg-sky-50/80 p-4">
+                            <p class="text-xs font-semibold uppercase tracking-[0.22em] text-sky-700">Selected Package Duration</p>
+                            <p id="booking-package-duration" class="mt-2 text-lg font-semibold text-stone-900">{{ $selectedProduct?->duration ?: 'Select a product to view duration' }}</p>
+                            <p class="mt-1 text-xs leading-5 text-stone-500">Shown from the package or service you selected for this booking or reserve request.</p>
+                        </div>
                         <p class="mb-4 text-sm font-semibold uppercase tracking-[0.25em] text-stone-600">Travel Dates</p>
                         <div
                             class="rounded-[1.35rem] border border-stone-200 bg-[linear-gradient(180deg,_#fffdf9,_#faf8ff)] p-3.5"
@@ -339,29 +351,6 @@
                                     <p class="mt-1 text-[11px] uppercase tracking-[0.18em] text-emerald-100" id="booking-grand-total-myr">Base MYR total: RM 0.00</p>
                                 </div>
                             </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="rounded-[1.5rem] border border-stone-200 bg-white p-5 shadow-sm">
-                    <p class="mb-4 text-sm font-semibold uppercase tracking-[0.25em] text-stone-600">Payment & Currency</p>
-                    <div class="grid gap-4 md:grid-cols-2">
-                        <div>
-                            <label for="payment_method" class="mb-2 block text-sm font-medium text-stone-700">Payment method <span class="text-rose-600">*</span></label>
-                            <select id="payment_method" name="payment_method" class="w-full rounded-2xl border border-stone-300 bg-white px-4 py-3 text-stone-800" required>
-                                <option value="credit_card" @selected(old('payment_method') === 'credit_card')>Credit card</option>
-                                <option value="bank_transfer" @selected(old('payment_method') === 'bank_transfer')>Bank transfer</option>
-                                <option value="e_wallet" @selected(old('payment_method') === 'e_wallet')>E-wallet</option>
-                                <option value="pay_at_counter" @selected(old('payment_method') === 'pay_at_counter')>Pay at counter</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label for="currency_code" class="mb-2 block text-sm font-medium text-stone-700">Currency <span class="text-rose-600">*</span></label>
-                            <select id="currency_code" name="currency_code" class="w-full rounded-2xl border border-stone-300 bg-white px-4 py-3 text-stone-800" required>
-                                @foreach ($currencyRates as $code => $rate)
-                                    <option value="{{ $code }}" @selected(old('currency_code', auth()->user()->preferred_currency ?? 'MYR') === $code)>{{ $code }}</option>
-                                @endforeach
-                            </select>
                         </div>
                     </div>
                 </div>
@@ -600,16 +589,22 @@
             const productSelector = document.querySelector('#product_id');
             const serviceSelector = document.querySelector('#service_type');
             const currencySelector = document.querySelector('#currency_code');
+            const navbarCurrencySelector = document.querySelector('#currency-selector');
             const malaysiaAdultsInput = document.querySelector('#malaysian_adults');
             const malaysiaKidsInput = document.querySelector('#malaysian_kids');
             const internationalAdultsInput = document.querySelector('#international_adults');
             const internationalKidsInput = document.querySelector('#international_kids');
+            const malaysiaAdultPrice = document.querySelector('#booking-malaysia-adult');
+            const malaysiaChildPrice = document.querySelector('#booking-malaysia-child');
+            const internationalAdultPrice = document.querySelector('#booking-international-adult');
+            const internationalChildPrice = document.querySelector('#booking-international-child');
             const malaysiaTotal = document.querySelector('#booking-malaysia-total');
             const malaysiaCount = document.querySelector('#booking-malaysia-count');
             const internationalTotal = document.querySelector('#booking-international-total');
             const internationalCount = document.querySelector('#booking-international-count');
             const grandTotal = document.querySelector('#booking-grand-total');
             const grandTotalMyr = document.querySelector('#booking-grand-total-myr');
+            const packageDuration = document.querySelector('#booking-package-duration');
 
             const getCount = (input) => Math.max(Number(input?.value || 0), 0);
 
@@ -618,18 +613,79 @@
                 return totalGuests === 1 ? '1 guest' : `${totalGuests} guests`;
             };
 
+            const getSelectedOption = () => {
+                if (!productSelector) {
+                    return null;
+                }
+
+                return productSelector.options[productSelector.selectedIndex] || null;
+            };
+
+            const getSelectedDurationLabel = () => getSelectedOption()?.dataset.duration || '';
+
+            const getSelectedDurationDays = () => {
+                const durationLabel = getSelectedDurationLabel();
+                const durationMatch = durationLabel.match(/(\d+)\s*day/i);
+
+                return durationMatch ? Number(durationMatch[1]) : 0;
+            };
+
+            const getActiveCurrency = () => navbarCurrencySelector?.value || currencySelector?.value || 'MYR';
+
+            const syncBookingCurrency = () => {
+                if (currencySelector) {
+                    currencySelector.value = getActiveCurrency();
+                }
+            };
+
             const syncServiceTypeToProduct = () => {
                 if (!productSelector || !serviceSelector || serviceSelector.disabled) {
                     return;
                 }
 
-                const selectedOption = productSelector.options[productSelector.selectedIndex];
+                const selectedOption = getSelectedOption();
 
                 if (!selectedOption || !selectedOption.value || !selectedOption.dataset.category) {
                     return;
                 }
 
                 serviceSelector.value = selectedOption.dataset.category;
+            };
+
+            const updateMarketPriceCards = () => {
+                const selectedOption = getSelectedOption();
+                const currency = getActiveCurrency();
+                const rate = currencyRates[currency] ?? 1;
+
+                if (!selectedOption || !selectedOption.value) {
+                    if (malaysiaAdultPrice) {
+                        malaysiaAdultPrice.textContent = '--';
+                    }
+                    if (malaysiaChildPrice) {
+                        malaysiaChildPrice.textContent = '--';
+                    }
+                    if (internationalAdultPrice) {
+                        internationalAdultPrice.textContent = '--';
+                    }
+                    if (internationalChildPrice) {
+                        internationalChildPrice.textContent = '--';
+                    }
+
+                    return;
+                }
+
+                if (malaysiaAdultPrice) {
+                    malaysiaAdultPrice.textContent = formatPrice(Number(selectedOption.dataset.malaysiaAdult || 0) * rate, currency);
+                }
+                if (malaysiaChildPrice) {
+                    malaysiaChildPrice.textContent = formatPrice(Number(selectedOption.dataset.malaysiaChild || 0) * rate, currency);
+                }
+                if (internationalAdultPrice) {
+                    internationalAdultPrice.textContent = formatPrice(Number(selectedOption.dataset.internationalAdult || 0) * rate, currency);
+                }
+                if (internationalChildPrice) {
+                    internationalChildPrice.textContent = formatPrice(Number(selectedOption.dataset.internationalChild || 0) * rate, currency);
+                }
             };
 
             const updateBookingEstimate = () => {
@@ -646,9 +702,13 @@
                     return;
                 }
 
-                const selectedOption = productSelector.options[productSelector.selectedIndex];
+                const selectedOption = getSelectedOption();
 
                 if (!selectedOption || !selectedOption.value) {
+                    if (packageDuration) {
+                        packageDuration.textContent = 'Select a product to view duration';
+                    }
+                    updateMarketPriceCards();
                     malaysiaTotal.textContent = 'RM 0.00';
                     malaysiaCount.textContent = '0 guests';
                     internationalTotal.textContent = 'RM 0.00';
@@ -657,6 +717,13 @@
                     grandTotalMyr.textContent = 'Base MYR total: RM 0.00';
                     return;
                 }
+
+                if (packageDuration) {
+                    packageDuration.textContent = selectedOption.dataset.duration || 'Duration will be confirmed by our team';
+                }
+
+                syncBookingCurrency();
+                updateMarketPriceCards();
 
                 const malaysiaAdults = getCount(malaysiaAdultsInput);
                 const malaysiaKids = getCount(malaysiaKidsInput);
@@ -667,7 +734,7 @@
                 const internationalSubtotalMyr = (internationalAdults * Number(selectedOption.dataset.internationalAdult || 0))
                     + (internationalKids * Number(selectedOption.dataset.internationalChild || 0));
                 const totalMyr = malaysiaSubtotalMyr + internationalSubtotalMyr;
-                const currency = currencySelector.value || 'MYR';
+                const currency = getActiveCurrency();
                 const rate = currencyRates[currency] ?? 1;
 
                 malaysiaTotal.textContent = formatPrice(malaysiaSubtotalMyr * rate, currency);
@@ -678,7 +745,7 @@
                 grandTotalMyr.textContent = `Base MYR total: ${formatPrice(totalMyr, 'MYR')}`;
             };
 
-            [productSelector, currencySelector, malaysiaAdultsInput, malaysiaKidsInput, internationalAdultsInput, internationalKidsInput].forEach((element) => {
+            [productSelector, currencySelector, navbarCurrencySelector, malaysiaAdultsInput, malaysiaKidsInput, internationalAdultsInput, internationalKidsInput].forEach((element) => {
                 if (!element) {
                     return;
                 }
@@ -688,6 +755,11 @@
             });
 
             productSelector?.addEventListener('change', syncServiceTypeToProduct);
+            navbarCurrencySelector?.addEventListener('change', () => {
+                syncBookingCurrency();
+                updateBookingEstimate();
+            });
+            syncBookingCurrency();
             syncServiceTypeToProduct();
             updateBookingEstimate();
 
@@ -738,6 +810,12 @@
                 year: 'numeric',
             }).format(date);
 
+            const addDays = (date, days) => {
+                const nextDate = new Date(date);
+                nextDate.setDate(nextDate.getDate() + days);
+                return nextDate;
+            };
+
             const isSameDay = (first, second) => first
                 && second
                 && first.getFullYear() === second.getFullYear()
@@ -751,8 +829,14 @@
 
             const updateSummary = () => {
                 if (startDate) {
-                    dateLabel.textContent = formatDisplay(startDate);
-                    dateHint.textContent = 'Booking start date selected';
+                    const durationLabel = getSelectedDurationLabel();
+                    const durationDays = getSelectedDurationDays();
+                    const endDate = durationDays > 0 ? addDays(startDate, durationDays) : startDate;
+
+                    dateLabel.textContent = `${formatDisplay(startDate)} to ${formatDisplay(endDate)}`;
+                    dateHint.textContent = durationLabel
+                        ? ''
+                        : 'Booking dates calculated from your selected start date';
                     return;
                 }
 
@@ -762,7 +846,13 @@
 
             const syncInputs = () => {
                 startInput.value = startDate ? formatValue(startDate) : '';
-                endInput.value = startDate ? formatValue(startDate) : '';
+                if (startDate) {
+                    const durationDays = getSelectedDurationDays();
+                    const endDate = durationDays > 0 ? addDays(startDate, durationDays) : startDate;
+                    endInput.value = formatValue(endDate);
+                } else {
+                    endInput.value = '';
+                }
                 updateSummary();
             };
 
@@ -838,6 +928,8 @@
                 visibleMonth = new Date(visibleMonth.getFullYear(), visibleMonth.getMonth() + 1, 1);
                 renderCalendar();
             });
+
+            productSelector?.addEventListener('change', syncInputs);
 
             syncInputs();
             renderCalendar();

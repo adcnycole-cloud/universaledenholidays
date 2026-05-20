@@ -9,6 +9,7 @@ use App\Models\Product;
 use App\Models\Testimonial;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
@@ -85,7 +86,11 @@ class HomeController extends Controller
             'product' => $product,
             'relatedProducts' => $relatedProducts,
             'recommendedProducts' => $recommendedProducts,
-            'testimonials' => Testimonial::where('is_featured', true)->take(3)->get(),
+            'testimonials' => Testimonial::where('display_location', 'package')
+                ->where('product_id', $product->id)
+                ->orderByDesc('rating')
+                ->take(3)
+                ->get(),
             'currencyRates' => self::CURRENCY_RATES,
             'currencySymbols' => self::CURRENCY_SYMBOLS,
             'malaysiaPricingTiers' => $this->buildPricingTiers(
@@ -178,7 +183,7 @@ class HomeController extends Controller
             'pastPromo' => $pastPromos->first(),
             'pastPromos' => $pastPromos,
             'newsFeatures' => (clone $activeNewsQuery)->latest()->take(6)->get(),
-            'testimonials' => Testimonial::where('is_featured', true)->orderByDesc('rating')->get(),
+            'testimonials' => Testimonial::where('display_location', 'landing')->orderByDesc('rating')->get(),
             'recentBookings' => Booking::with('product')->latest()->take(5)->get(),
             'currencyRates' => self::CURRENCY_RATES,
             'currencySymbols' => self::CURRENCY_SYMBOLS,
@@ -195,8 +200,8 @@ class HomeController extends Controller
             'action_type' => ['nullable', 'in:reserve,instant_book,book_now'],
             'locked_product_id' => ['nullable', 'exists:products,id'],
             'full_name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'email', 'max:255'],
-            'phone' => ['required', 'string', 'max:50'],
+            'email' => ['required', 'string', 'max:255', 'email:rfc,dns'],
+            'phone' => $this->phoneRules(),
             'special_requests' => ['nullable', 'string', 'max:1000'],
         ];
 
@@ -318,16 +323,93 @@ class HomeController extends Controller
             'payment_status' => 'awaiting_confirmation',
         ]);
 
-        Mail::to($booking->email)->send(new BookingReferenceMail($booking->fresh()));
+        $bookingReferenceSent = $this->sendMailSafely(
+            $booking->email,
+            new BookingReferenceMail($booking->fresh()),
+            'booking reference email',
+            [
+                'booking_id' => $booking->id,
+                'booking_reference' => $booking->booking_reference,
+            ],
+        );
 
         $isReserveFlow = ($validated['action_type'] ?? null) === 'reserve';
+        $successMessage = $isReserveFlow
+            ? 'Your reserve request has been submitted. Your Booking ID is '.$booking->booking_reference.'. You can track and continue payment using this ID.'
+            : 'Your booking request has been submitted. Your Booking ID is '.$booking->booking_reference.'. You can track and continue payment using this ID.';
+
+        if (! $bookingReferenceSent) {
+            $successMessage .= ' We could not send the confirmation email right now, but your booking was saved successfully.';
+        }
 
         return redirect()->route('bookings.track.show', $booking->booking_reference)->with(
             'success',
-            $isReserveFlow
-                ? 'Your reserve request has been submitted. Your Booking ID is '.$booking->booking_reference.'. You can track and continue payment using this ID.'
-                : 'Your booking request has been submitted. Your Booking ID is '.$booking->booking_reference.'. You can track and continue payment using this ID.'
+            $successMessage
         );
+    }
+
+    private function sendMailSafely(string $email, object $mailable, string $mailType, array $context = []): bool
+    {
+        try {
+            Mail::to($email)->send($mailable);
+
+            return true;
+        } catch (\Throwable $exception) {
+            Log::warning('Unable to send '.$mailType.'.', $context + [
+                'email' => $email,
+                'message' => $exception->getMessage(),
+            ]);
+
+            return false;
+        }
+    }
+
+    private function phoneRules(): array
+    {
+        return [
+            'required',
+            'string',
+            'max:25',
+            function (string $attribute, mixed $value, \Closure $fail) {
+                $phone = trim((string) $value);
+
+                if (! preg_match('/^\+[0-9][0-9\s\-()]{7,24}$/', $phone)) {
+                    $fail('Please enter a valid phone number with a country code, for example +60 12-345 6789.');
+
+                    return;
+                }
+
+                $digitsOnly = preg_replace('/\D+/', '', $phone) ?? '';
+                $digitCount = strlen($digitsOnly);
+
+                if ($digitCount < 8 || $digitCount > 15) {
+                    $fail('Please enter a valid phone number between 8 and 15 digits.');
+
+                    return;
+                }
+
+                if (preg_match('/^(\d)\1+$/', $digitsOnly) === 1) {
+                    $fail('Please enter a real phone number, not a repeated-digit number.');
+
+                    return;
+                }
+
+                $supportedPatterns = [
+                    '60' => '/^(?:60)(?:1\d{8,9}|[3-9]\d{7,8})$/',
+                    '65' => '/^(?:65)(?:[3689]\d{7})$/',
+                    '82' => '/^(?:82)(?:1\d{8,9}|[2-6]\d{7,9})$/',
+                    '1' => '/^(?:1)(?:[2-9]\d{2}[2-9]\d{6})$/',
+                    '86' => '/^(?:86)(?:1[3-9]\d{9})$/',
+                ];
+
+                $matchesSupportedCountry = collect($supportedPatterns)
+                    ->contains(fn ($pattern) => preg_match($pattern, $digitsOnly) === 1);
+
+                if (! $matchesSupportedCountry) {
+                    $fail('Please enter a valid phone number with a supported country code and prefix.');
+                }
+            },
+        ];
     }
 
     private function generateUniqueBookingReference(): string

@@ -48,6 +48,15 @@
     </style>
 </head>
 <body>
+    @php
+        $tripDuration = $booking->product?->duration ?: 'Custom duration';
+        preg_match('/(\d+)\s*day/i', (string) $tripDuration, $durationMatches);
+        $durationDays = isset($durationMatches[1]) ? (int) $durationMatches[1] : null;
+        $travelStart = $booking->check_in_date;
+        $travelEnd = $durationDays && $travelStart
+            ? $travelStart->copy()->addDays($durationDays)
+            : $booking->check_out_date;
+    @endphp
     <div class="header card">
         <table>
             <tr>
@@ -83,7 +92,8 @@
                     Service: {{ ucfirst($booking->service_type) }}<br>
                     Package: {{ $booking->package_name }}<br>
                     Destination: {{ $booking->destination }}<br>
-                    Travel Dates: {{ optional($booking->check_in_date)->format('d M Y') }} to {{ optional($booking->check_out_date)->format('d M Y') }}<br>
+                    Trip Duration: {{ $tripDuration }}<br>
+                    Travel Dates: {{ optional($travelStart)->format('d M Y') }} to {{ optional($travelEnd)->format('d M Y') }}{{ $tripDuration ? ' ('.$tripDuration.')' : '' }}<br>
                     Pickup: {{ $booking->pickup_location ?: 'Not set' }}
                 </td>
             </tr>

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -75,6 +76,29 @@ class Booking extends Model
             + (int) $this->malaysian_kids
             + (int) $this->international_adults
             + (int) $this->international_kids;
+    }
+
+    public function scopeEnquiries(Builder $query): Builder
+    {
+        return $query
+            ->whereNull('pickup_location')
+            ->where('amount_myr', 0)
+            ->where('amount_display', 0)
+            ->where('payment_status', 'not_required')
+            ->where('malaysian_adults', 0)
+            ->where('malaysian_kids', 0)
+            ->where('international_adults', 0)
+            ->where('international_kids', 0);
+    }
+
+    public function scopeActiveBookings(Builder $query): Builder
+    {
+        return $query->whereNot(fn (Builder $builder) => $builder->enquiries());
+    }
+
+    public function getIsEnquiryAttribute(): bool
+    {
+        return $this->newQuery()->whereKey($this->getKey())->enquiries()->exists();
     }
 
     public function user(): BelongsTo

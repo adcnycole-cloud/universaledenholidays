@@ -26,7 +26,7 @@
                 <label for="quote" class="mb-2 block text-sm font-medium text-stone-700">Quote</label>
                 <textarea id="quote" name="quote" rows="3" class="w-full rounded-2xl border border-stone-300 px-4 py-3 text-stone-800"></textarea>
             </div>
-            <div class="grid gap-4 lg:grid-cols-[220px_auto] lg:items-end">
+            <div class="grid gap-4 lg:grid-cols-3 lg:items-end">
                 <div>
                     <label for="rating" class="mb-2 block text-sm font-medium text-stone-700">Rating</label>
                     <select id="rating" name="rating" class="w-full rounded-2xl border border-stone-300 px-4 py-3 text-stone-800">
@@ -35,10 +35,22 @@
                         @endforeach
                     </select>
                 </div>
-                <label class="flex items-center gap-2 text-sm text-stone-600 lg:pb-3">
-                    <input type="checkbox" name="is_featured" value="1" checked class="rounded border-stone-300">
-                    Feature on homepage
-                </label>
+                <div>
+                    <label for="testimonial_display_location" class="mb-2 block text-sm font-medium text-stone-700">Show review at</label>
+                    <select id="testimonial_display_location" name="display_location" class="w-full rounded-2xl border border-stone-300 px-4 py-3 text-stone-800" data-testimonial-location-select>
+                        <option value="landing">Landing page</option>
+                        <option value="package">Specific product package</option>
+                    </select>
+                </div>
+                <div data-testimonial-package-field class="hidden">
+                    <label for="testimonial_product_id" class="mb-2 block text-sm font-medium text-stone-700">Package</label>
+                    <select id="testimonial_product_id" name="product_id" class="w-full rounded-2xl border border-stone-300 px-4 py-3 text-stone-800">
+                        <option value="">Select a package</option>
+                        @foreach (($packageProducts ?? collect()) as $packageProduct)
+                            <option value="{{ $packageProduct->id }}">{{ $packageProduct->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
             </div>
             <button type="submit" class="w-full rounded-full bg-amber-600 px-5 py-3 text-sm font-semibold uppercase tracking-[0.25em] text-white transition hover:bg-amber-700">Save Testimonial</button>
         </form>
@@ -57,7 +69,14 @@
                             </div>
                         </div>
                         <div class="flex flex-wrap items-center gap-2">
-                            <span class="rounded-full bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.25em] {{ $testimonial->is_featured ? 'text-emerald-700' : 'text-stone-500' }}">{{ $testimonial->is_featured ? 'Featured' : 'Stored' }}</span>
+                            <span class="rounded-full bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.25em] {{ $testimonial->display_location === 'landing' ? 'text-emerald-700' : 'text-sky-700' }}">
+                                {{ $testimonial->display_location === 'landing' ? 'Landing page' : 'Package page' }}
+                            </span>
+                            @if ($testimonial->display_location === 'package' && $testimonial->product)
+                                <span class="rounded-full bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.25em] text-stone-500">
+                                    {{ $testimonial->product->name }}
+                                </span>
+                            @endif
                             <details class="group">
                                 <summary class="cursor-pointer list-none rounded-full border border-stone-300 bg-white px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-stone-700 transition hover:bg-stone-100">
                                     <span class="group-open:hidden">Edit</span>
@@ -90,6 +109,24 @@
                                             </select>
                                         </div>
                                     </div>
+                                    <div class="grid gap-3 md:grid-cols-2">
+                                        <div>
+                                            <label class="mb-1 block text-xs font-medium uppercase tracking-[0.18em] text-stone-500">Show review at</label>
+                                            <select name="display_location" class="w-full rounded-2xl border border-stone-300 px-4 py-3 text-sm text-stone-800" data-testimonial-location-select>
+                                                <option value="landing" @selected($testimonial->display_location === 'landing')>Landing page</option>
+                                                <option value="package" @selected($testimonial->display_location === 'package')>Specific product package</option>
+                                            </select>
+                                        </div>
+                                        <div data-testimonial-package-field class="{{ $testimonial->display_location === 'package' ? '' : 'hidden' }}">
+                                            <label class="mb-1 block text-xs font-medium uppercase tracking-[0.18em] text-stone-500">Package</label>
+                                            <select name="product_id" class="w-full rounded-2xl border border-stone-300 px-4 py-3 text-sm text-stone-800">
+                                                <option value="">Select a package</option>
+                                                @foreach (($packageProducts ?? collect()) as $packageProduct)
+                                                    <option value="{{ $packageProduct->id }}" @selected($testimonial->product_id === $packageProduct->id)>{{ $packageProduct->name }}</option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                    </div>
                                     <div>
                                         <label class="mb-1 block text-xs font-medium uppercase tracking-[0.18em] text-stone-500">Quote</label>
                                         <textarea name="quote" rows="3" class="w-full rounded-2xl border border-stone-300 px-4 py-3 text-sm text-stone-800">{{ $testimonial->quote }}</textarea>
@@ -98,10 +135,6 @@
                                         <label class="mb-1 block text-xs font-medium uppercase tracking-[0.18em] text-stone-500">Profile picture</label>
                                         <input name="profile_photo" type="file" accept=".jpg,.jpeg,.png,.webp" class="w-full rounded-2xl border border-dashed border-stone-300 px-4 py-3 text-sm text-stone-700">
                                     </div>
-                                    <label class="flex items-center gap-2 text-sm text-stone-600">
-                                        <input type="checkbox" name="is_featured" value="1" @checked($testimonial->is_featured) class="rounded border-stone-300">
-                                        Feature on homepage
-                                    </label>
                                     <button type="submit" class="w-full rounded-full bg-sky-600 px-4 py-3 text-sm font-semibold uppercase tracking-[0.2em] text-white transition hover:bg-sky-700">Update Testimonial</button>
                                 </form>
                             </details>
@@ -120,3 +153,29 @@
         </div>
     </section>
 </section>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const syncTestimonialPlacement = (scope) => {
+            const select = scope.querySelector('[data-testimonial-location-select]');
+            const packageField = scope.querySelector('[data-testimonial-package-field]');
+
+            if (!select || !packageField) {
+                return;
+            }
+
+            const update = () => {
+                packageField.classList.toggle('hidden', select.value !== 'package');
+            };
+
+            update();
+            select.addEventListener('change', update);
+        };
+
+        document.querySelectorAll('form').forEach((form) => {
+            if (form.querySelector('[data-testimonial-location-select]')) {
+                syncTestimonialPlacement(form);
+            }
+        });
+    });
+</script>

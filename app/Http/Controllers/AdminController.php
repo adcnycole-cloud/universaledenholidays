@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\BookingInvoiceMail;
 use Barryvdh\DomPDF\Facade\Pdf;
 use App\Models\Booking;
 use App\Models\NewsFeature;
@@ -11,6 +12,8 @@ use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
@@ -117,7 +120,8 @@ class AdminController extends Controller
         $reportType = request('report_type', 'monthly');
         $reportPeriod = $this->resolveReportPeriod($reportType, request('period'));
         $data = $this->sharedAdminData();
-        $reportBookings = Booking::with(['user', 'product'])
+        $reportBookings = Booking::activeBookings()
+            ->with(['user', 'product'])
             ->whereBetween('created_at', [$reportPeriod['start'], $reportPeriod['end']])
             ->latest()
             ->get();
@@ -132,12 +136,18 @@ class AdminController extends Controller
         ]);
     }
 
+    public function enquiries(): View
+    {
+        return view('admin.enquiries', $this->sharedAdminData());
+    }
+
     public function exportMonthlyBookings(Request $request): StreamedResponse
     {
         $reportType = $request->query('report_type', 'monthly');
         $reportPeriod = $this->resolveReportPeriod($reportType, $request->query('period'));
         $report = $this->buildBookingReport(
-            Booking::with(['user', 'product'])
+            Booking::activeBookings()
+                ->with(['user', 'product'])
                 ->whereBetween('created_at', [$reportPeriod['start'], $reportPeriod['end']])
                 ->latest()
                 ->get(),
@@ -207,11 +217,49 @@ class AdminController extends Controller
             $booking->refresh();
         }
 
-        $pdf = Pdf::loadView('admin.bookings.invoice-pdf', [
-            'booking' => $booking->fresh(['product', 'user']),
-        ])->setPaper('a4');
+        $pdf = $this->buildInvoicePdf($booking->fresh(['product', 'user']));
 
         return $pdf->stream('invoice-'.$booking->invoice_number_or_reference.'.pdf');
+    }
+
+    public function emailInvoice(Booking $booking): RedirectResponse
+    {
+        if (! in_array($booking->status, ['confirmed', 'completed'], true)) {
+            return back()->withErrors([
+                'invoice_email' => 'Only confirmed or completed bookings can receive an invoice email.',
+            ]);
+        }
+
+        if (! $this->invoiceEmailIsConfigured()) {
+            return back()->withErrors([
+                'invoice_email' => 'Invoice email is not configured for real delivery yet. Set MAIL_MAILER=smtp and add valid SMTP credentials in .env first.',
+            ]);
+        }
+
+        if (! $booking->invoice_number) {
+            $this->issueInvoiceForBooking($booking);
+            $booking->refresh();
+        }
+
+        $booking = $booking->fresh(['product', 'user']);
+        $pdfContent = $this->buildInvoicePdf($booking)->output();
+
+        try {
+            Mail::to($booking->email)->send(new BookingInvoiceMail($booking, $pdfContent));
+        } catch (\Throwable $exception) {
+            Log::error('Failed to send booking invoice email.', [
+                'booking_id' => $booking->id,
+                'booking_reference' => $booking->booking_reference,
+                'email' => $booking->email,
+                'message' => $exception->getMessage(),
+            ]);
+
+            return back()->withErrors([
+                'invoice_email' => $this->resolveInvoiceEmailErrorMessage($exception),
+            ]);
+        }
+
+        return back()->with('success', 'Invoice PDF sent to '.$booking->email.'.');
     }
 
     public function storeProduct(Request $request): RedirectResponse
@@ -223,11 +271,10 @@ class AdminController extends Controller
             'summary' => ['required', 'string', 'max:255'],
             'image_url' => ['nullable', 'url', 'max:2048'],
             'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
-            'gallery_image_files' => ['nullable', 'array', 'max:8'],
+            'gallery_image_files' => ['nullable', 'array', 'max:20'],
             'gallery_image_files.*' => ['image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
             'description' => ['required', 'string', 'max:1000'],
             'duration' => ['required', 'string', 'max:100'],
-            'price_myr' => ['required', 'numeric', 'min:0'],
             'malaysia_adult_price_myr' => ['required', 'numeric', 'min:0'],
             'malaysia_child_price_myr' => ['required', 'numeric', 'min:0'],
             'international_adult_price_myr' => ['required', 'numeric', 'min:0'],
@@ -252,6 +299,7 @@ class AdminController extends Controller
             : [];
 
         Product::create($validated + [
+            'price_myr' => $validated['malaysia_adult_price_myr'],
             'gallery_images' => $galleryImages,
             'capacity' => $validated['capacity'] ?? null,
             'is_featured' => $request->boolean('is_featured'),
@@ -274,13 +322,12 @@ class AdminController extends Controller
             'summary' => ['required', 'string', 'max:255'],
             'image_url' => ['nullable', 'url', 'max:2048'],
             'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
-            'existing_gallery_images' => ['nullable', 'array', 'max:8'],
-            'existing_gallery_images.*' => ['url', 'max:2048'],
-            'gallery_image_files' => ['nullable', 'array', 'max:8'],
+            'existing_gallery_images' => ['nullable', 'array', 'max:20'],
+            'existing_gallery_images.*' => ['string', 'max:2048'],
+            'gallery_image_files' => ['nullable', 'array', 'max:20'],
             'gallery_image_files.*' => ['image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
             'description' => ['required', 'string', 'max:1000'],
             'duration' => ['required', 'string', 'max:100'],
-            'price_myr' => ['required', 'numeric', 'min:0'],
             'malaysia_adult_price_myr' => ['required', 'numeric', 'min:0'],
             'malaysia_child_price_myr' => ['required', 'numeric', 'min:0'],
             'international_adult_price_myr' => ['required', 'numeric', 'min:0'],
@@ -323,6 +370,7 @@ class AdminController extends Controller
         }
 
         $product->update($validated + [
+            'price_myr' => $validated['malaysia_adult_price_myr'],
             'gallery_images' => $galleryImages,
             'capacity' => $validated['capacity'] ?? null,
             'is_featured' => $request->boolean('is_featured'),
@@ -460,8 +508,21 @@ class AdminController extends Controller
             'quote' => ['required', 'string', 'max:1000'],
             'rating' => ['required', 'integer', 'min:1', 'max:5'],
             'profile_photo' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
-            'is_featured' => ['nullable', 'boolean'],
+            'display_location' => ['required', 'in:landing,package'],
+            'product_id' => ['nullable', 'exists:products,id'],
         ]);
+
+        if (($validated['display_location'] ?? null) === 'package') {
+            $package = Product::where('id', $validated['product_id'] ?? null)
+                ->where('category', 'package')
+                ->first();
+
+            if (! $package) {
+                return back()->withErrors([
+                    'product_id' => 'Please choose a valid package for this testimonial.',
+                ])->withInput();
+            }
+        }
 
         $profilePhotoPath = null;
 
@@ -474,7 +535,10 @@ class AdminController extends Controller
         Testimonial::create([
             ...$validated,
             'profile_photo_path' => $profilePhotoPath,
-            'is_featured' => $request->boolean('is_featured'),
+            'is_featured' => ($validated['display_location'] ?? 'landing') === 'landing',
+            'product_id' => ($validated['display_location'] ?? 'landing') === 'package'
+                ? $validated['product_id']
+                : null,
         ]);
 
         return back()->with('success', 'Testimonial saved successfully.');
@@ -489,8 +553,21 @@ class AdminController extends Controller
             'quote' => ['required', 'string', 'max:1000'],
             'rating' => ['required', 'integer', 'min:1', 'max:5'],
             'profile_photo' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
-            'is_featured' => ['nullable', 'boolean'],
+            'display_location' => ['required', 'in:landing,package'],
+            'product_id' => ['nullable', 'exists:products,id'],
         ]);
+
+        if (($validated['display_location'] ?? null) === 'package') {
+            $package = Product::where('id', $validated['product_id'] ?? null)
+                ->where('category', 'package')
+                ->first();
+
+            if (! $package) {
+                return back()->withErrors([
+                    'product_id' => 'Please choose a valid package for this testimonial.',
+                ])->withInput();
+            }
+        }
 
         $updates = [
             'name' => $validated['name'],
@@ -498,7 +575,11 @@ class AdminController extends Controller
             'trip_name' => $validated['trip_name'],
             'quote' => $validated['quote'],
             'rating' => $validated['rating'],
-            'is_featured' => $request->boolean('is_featured'),
+            'display_location' => $validated['display_location'],
+            'product_id' => $validated['display_location'] === 'package'
+                ? $validated['product_id']
+                : null,
+            'is_featured' => $validated['display_location'] === 'landing',
         ];
 
         if ($request->hasFile('profile_photo')) {
@@ -582,13 +663,15 @@ class AdminController extends Controller
                 ->values(),
             'packageProducts' => $products->where('category', 'package')->values(),
             'newsFeatures' => NewsFeature::latest()->get(),
-            'testimonials' => Testimonial::latest()->get(),
-            'bookings' => Booking::with(['user', 'product'])->latest()->get(),
+            'testimonials' => Testimonial::with('product')->latest()->get(),
+            'bookings' => Booking::activeBookings()->with(['user', 'product'])->latest()->get(),
+            'enquiries' => Booking::enquiries()->with(['user', 'product'])->latest()->get(),
             'adminUser' => auth()->user(),
             'stats' => [
                 'products' => Product::count(),
-                'bookings' => Booking::count(),
-                'pendingBookings' => Booking::where('status', 'pending')->count(),
+                'bookings' => Booking::activeBookings()->count(),
+                'pendingBookings' => Booking::activeBookings()->where('status', 'pending')->count(),
+                'enquiries' => Booking::enquiries()->count(),
                 'customers' => \App\Models\User::where('role', 'customer')->count(),
                 'promos' => NewsFeature::count(),
                 'testimonials' => Testimonial::count(),
@@ -631,7 +714,7 @@ class AdminController extends Controller
 
     private function bookingMonthOptions(): Collection
     {
-        return Booking::query()
+        return Booking::activeBookings()
             ->selectRaw("DATE_FORMAT(created_at, '%Y-%m') as month_key")
             ->selectRaw('MAX(created_at) as month_date')
             ->groupBy('month_key')
@@ -645,7 +728,7 @@ class AdminController extends Controller
 
     private function bookingYearOptions(): Collection
     {
-        return Booking::query()
+        return Booking::activeBookings()
             ->selectRaw('YEAR(created_at) as year_key')
             ->groupBy('year_key')
             ->orderByDesc('year_key')
@@ -694,5 +777,46 @@ class AdminController extends Controller
             'invoice_number' => $invoiceNumber,
             'invoice_issued_at' => now(),
         ]);
+    }
+
+    private function buildInvoicePdf(Booking $booking)
+    {
+        return Pdf::loadView('admin.bookings.invoice-pdf', [
+            'booking' => $booking,
+        ])->setPaper('a4');
+    }
+
+    private function invoiceEmailIsConfigured(): bool
+    {
+        $defaultMailer = config('mail.default');
+
+        if (in_array($defaultMailer, ['log', 'array'], true)) {
+            return false;
+        }
+
+        if ($defaultMailer === 'smtp') {
+            return filled(config('mail.mailers.smtp.host'))
+                && filled(config('mail.mailers.smtp.port'))
+                && filled(config('mail.mailers.smtp.username'))
+                && filled(config('mail.mailers.smtp.password'))
+                && filled(config('mail.from.address'));
+        }
+
+        return filled(config('mail.from.address'));
+    }
+
+    private function resolveInvoiceEmailErrorMessage(\Throwable $exception): string
+    {
+        $message = strtolower($exception->getMessage());
+
+        if (
+            str_contains($message, 'application-specific password required')
+            || str_contains($message, 'invalidsecondfactor')
+            || str_contains($message, '5.7.9')
+        ) {
+            return 'Gmail rejected the login. Please use a Google App Password in MAIL_PASSWORD instead of the normal Gmail password.';
+        }
+
+        return 'The invoice email could not be sent. Please check the mail settings and try again.';
     }
 }

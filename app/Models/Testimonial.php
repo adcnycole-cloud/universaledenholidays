@@ -14,6 +14,8 @@ class Testimonial extends Model
         'rating',
         'profile_photo_path',
         'is_featured',
+        'display_location',
+        'product_id',
     ];
 
     protected function casts(): array
@@ -21,6 +23,11 @@ class Testimonial extends Model
         return [
             'is_featured' => 'boolean',
         ];
+    }
+
+    public function product()
+    {
+        return $this->belongsTo(Product::class);
     }
 
     public function getProfilePhotoUrlAttribute(): string

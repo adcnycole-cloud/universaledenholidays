@@ -48,8 +48,10 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     Route::get('/packages', [AdminController::class, 'packages'])->name('admin.packages');
     Route::get('/testimonials', [AdminController::class, 'testimonials'])->name('admin.testimonials');
     Route::get('/bookings', [AdminController::class, 'bookings'])->name('admin.bookings');
+    Route::get('/enquiries', [AdminController::class, 'enquiries'])->name('admin.enquiries');
     Route::get('/bookings/export/monthly', [AdminController::class, 'exportMonthlyBookings'])->name('admin.bookings.export');
     Route::get('/bookings/{booking}/invoice', [AdminController::class, 'invoicePdf'])->name('admin.bookings.invoice');
+    Route::post('/bookings/{booking}/invoice-email', [AdminController::class, 'emailInvoice'])->name('admin.bookings.invoice.email');
     Route::post('/products', [AdminController::class, 'storeProduct'])->name('admin.products.store');
     Route::patch('/products/{product}', [AdminController::class, 'updateProduct'])->name('admin.products.update');
     Route::delete('/products/{product}', [AdminController::class, 'destroyProduct'])->name('admin.products.destroy');

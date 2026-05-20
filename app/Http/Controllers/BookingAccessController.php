@@ -65,7 +65,15 @@ class BookingAccessController extends Controller
         }
 
         if ($sendConfirmationEmail) {
-            Mail::to($booking->email)->send(new BookingConfirmationMail($booking));
+            $this->sendMailSafely(
+                $booking->email,
+                new BookingConfirmationMail($booking),
+                'booking confirmation email',
+                [
+                    'booking_id' => $booking->id,
+                    'booking_reference' => $booking->booking_reference,
+                ],
+            );
         }
 
         return $this->redirectToBillplzCheckout($booking);
@@ -102,12 +110,22 @@ class BookingAccessController extends Controller
             $booking->refresh();
         }
 
-        Mail::to($booking->email)->send(new BookingConfirmationMail($booking));
+        $confirmationEmailSent = $this->sendMailSafely(
+            $booking->email,
+            new BookingConfirmationMail($booking),
+            'booking confirmation email',
+            [
+                'booking_id' => $booking->id,
+                'booking_reference' => $booking->booking_reference,
+            ],
+        );
 
         if ((float) $booking->amount_myr <= 0) {
             return redirect()
                 ->route('bookings.track.show', $booking->booking_reference)
-                ->with('success', 'Booking confirmed. This booking does not require payment.');
+                ->with('success', $confirmationEmailSent
+                    ? 'Booking confirmed. This booking does not require payment.'
+                    : 'Booking confirmed. This booking does not require payment, but we could not send the confirmation email right now.');
         }
 
         return $this->redirectToBillplzCheckout($booking);
@@ -269,11 +287,21 @@ class BookingAccessController extends Controller
         $this->issueInvoiceForBooking($booking);
         $booking->refresh();
 
-        Mail::to($booking->email)->send(new PaymentReceiptMail($booking));
+        $receiptEmailSent = $this->sendMailSafely(
+            $booking->email,
+            new PaymentReceiptMail($booking),
+            'payment receipt email',
+            [
+                'booking_id' => $booking->id,
+                'booking_reference' => $booking->booking_reference,
+            ],
+        );
 
         return redirect()
             ->route('bookings.track.show', $booking->booking_reference)
-            ->with('success', 'Sandbox payment recorded successfully. A receipt has been sent to your email.');
+            ->with('success', $receiptEmailSent
+                ? 'Sandbox payment recorded successfully. A receipt has been sent to your email.'
+                : 'Sandbox payment recorded successfully, but we could not send the receipt email right now.');
     }
 
     public function showSetupForm(string $token): View
@@ -378,11 +406,21 @@ class BookingAccessController extends Controller
         $this->issueInvoiceForBooking($booking);
         $booking->refresh();
 
-        Mail::to($booking->email)->send(new PaymentReceiptMail($booking));
+        $receiptEmailSent = $this->sendMailSafely(
+            $booking->email,
+            new PaymentReceiptMail($booking),
+            'payment receipt email',
+            [
+                'booking_id' => $booking->id,
+                'booking_reference' => $booking->booking_reference,
+            ],
+        );
 
         return redirect()
             ->route('profile.bookings')
-            ->with('success', 'Sandbox payment submitted successfully. A payment receipt has been sent to your email.');
+            ->with('success', $receiptEmailSent
+                ? 'Sandbox payment submitted successfully. A payment receipt has been sent to your email.'
+                : 'Sandbox payment submitted successfully, but we could not send the receipt email right now.');
     }
 
     private function resolveBookingFromReference(string $bookingReference): Booking
@@ -537,7 +575,16 @@ class BookingAccessController extends Controller
             $this->issueInvoiceForBooking($booking);
             $booking->refresh();
 
-            Mail::to($booking->email)->send(new PaymentReceiptMail($booking));
+            $this->sendMailSafely(
+                $booking->email,
+                new PaymentReceiptMail($booking),
+                'payment receipt email',
+                [
+                    'booking_id' => $booking->id,
+                    'booking_reference' => $booking->booking_reference,
+                    'source' => $source,
+                ],
+            );
         } else {
             $booking->update([
                 'payment_gateway_status' => $payload['state'] ?? $booking->payment_gateway_status,
@@ -588,5 +635,21 @@ class BookingAccessController extends Controller
         $expectedSignature = hash_hmac('sha256', $signingString, $xSignatureKey);
 
         return hash_equals($expectedSignature, $receivedSignature);
+    }
+
+    private function sendMailSafely(string $email, object $mailable, string $mailType, array $context = []): bool
+    {
+        try {
+            Mail::to($email)->send($mailable);
+
+            return true;
+        } catch (\Throwable $exception) {
+            Log::warning('Unable to send '.$mailType.'.', $context + [
+                'email' => $email,
+                'message' => $exception->getMessage(),
+            ]);
+
+            return false;
+        }
     }
 }

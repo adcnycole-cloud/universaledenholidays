@@ -157,8 +157,8 @@ class BookingAccessController extends Controller
             $this->markBookingAsPaid($booking, $payload, 'redirect');
 
             return redirect()
-                ->route('bookings.track.receipt.show', $booking->booking_reference)
-                ->with('success', 'Payment completed successfully. Your receipt is ready.');
+                ->route('bookings.track.show', $booking->booking_reference)
+                ->with('success', 'Payment completed successfully. You can view your payment details and download your receipt.');
         }
 
         $booking->update([

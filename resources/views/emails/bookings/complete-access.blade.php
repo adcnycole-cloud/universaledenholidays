@@ -30,6 +30,11 @@
                     </a>
                 </div>
 
+                <p style="margin: 14px 0 0; font-size: 13px; line-height: 1.7; color: #57534e;">
+                    Or visit our website directly:
+                    <a href="{{ config('app.url') }}" style="color: #0f766e; text-decoration: underline;">{{ config('app.url') }}</a>
+                </p>
+
                 <p style="margin: 20px 0 0; font-size: 13px; line-height: 1.7; color: #57534e;">
                     This access link expires in 24 hours and can only be used for this booking.
                 </p>

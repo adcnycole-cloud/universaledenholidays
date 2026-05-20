@@ -56,9 +56,12 @@
                 <p class="text-xs uppercase tracking-[0.3em] text-amber-200">Next Step</p>
                 <h2 class="mt-3 text-2xl font-semibold">Confirm and Continue</h2>
                 <p class="mt-4 text-sm leading-7 text-stone-300">
-                    Confirm your booking details to continue with sandbox payment. You will receive booking confirmation by email.
+                    Confirm your booking details to continue with payment.
                 </p>
-
+                <p class="mt-4 text-sm leading-7 text-stone-300">
+                    You will receive a booking confirmation email with your booking details and receipt once payment is completed. If you have already made payment, please allow a few moments for our system to process and update your booking status.
+                </p>
+                
                 @if ((float) $booking->amount_myr > 0 && $booking->payment_status !== 'paid')
                     <form method="POST" action="{{ route('bookings.track.confirm', $booking->booking_reference) }}" class="mt-6">
                         @csrf

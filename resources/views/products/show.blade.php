@@ -203,13 +203,52 @@
 
         @if ($product->category !== 'transport')
             <section class="mt-8 rounded-[2rem] border border-stone-200 bg-white p-6 shadow-sm">
+                <h2 class="text-3xl font-semibold text-stone-900">{{ $product->name }}</h2>
+                <div class="mt-5 rounded-3xl bg-stone-50 p-5 text-sm leading-8 text-stone-600">
+                    <ul class="space-y-2">
+                        <li>The prices shown are quoted in Ringgit Malaysia (MYR).</li>
+                        <li>Malaysia and international rates are shown separately for adult and child guests.</li>
+                        <li>Booking totals will be calculated automatically based on the guest mix entered in the booking form.</li>
+                        <li>Rates may change based on seasonality, park fees, or supplier availability.</li>
+                        <li>Our team will reconfirm all reservations before final fulfillment.</li>
+                    </ul>
+                </div>
+            </section>
+
+            <section class="mt-8 rounded-[2rem] border border-stone-200 bg-white p-6 shadow-sm">
+                <h2 class="text-2xl font-semibold text-stone-900">Service Inclusion</h2>
+                <div class="mt-6 overflow-hidden rounded-3xl border border-stone-200">
+                    <table class="min-w-full text-left text-sm">
+                        <tbody class="bg-white text-stone-700">
+                            <tr class="border-b border-stone-200">
+                                <th class="w-48 bg-stone-50 px-5 py-4 font-semibold">Meals</th>
+                                <td class="px-5 py-4">Subject to package or service arrangement.</td>
+                            </tr>
+                            <tr class="border-b border-stone-200">
+                                <th class="bg-stone-50 px-5 py-4 font-semibold">Inclusion</th>
+                                <td class="px-5 py-4">Core service delivery, support coordination, and supplier-side arrangements as stated.</td>
+                            </tr>
+                            <tr class="border-b border-stone-200">
+                                <th class="bg-stone-50 px-5 py-4 font-semibold">Accommodation</th>
+                                <td class="px-5 py-4">Included where relevant for package and overnight products.</td>
+                            </tr>
+                            <tr>
+                                <th class="bg-stone-50 px-5 py-4 font-semibold">Exclusion</th>
+                                <td class="px-5 py-4">Flights, personal travel insurance, personal spending, and unlisted add-ons.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section class="mt-8 rounded-[2rem] border border-stone-200 bg-white p-6 shadow-sm">
                 <div class="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
                     <div>
                         <h2 class="text-3xl font-semibold text-stone-900">Market Pricing</h2>
                         <p class="mt-2 text-sm leading-6 text-stone-600">Malaysia and international price lists are shown side by side for easier comparison.</p>
                     </div>
                 </div>
-                <div class="mt-6 grid gap-6 xl:grid-cols-2">
+                <div class="mt-6 grid gap-6 lg:grid-cols-2">
                     <div class="overflow-hidden rounded-3xl border border-blue-200">
                         <div class="bg-blue-50 px-5 py-4 text-center text-lg font-semibold text-blue-700">Malaysia Market Pricing</div>
                         <table class="min-w-full text-left text-sm">
@@ -285,63 +324,22 @@
             </section>
 
             <section class="mt-8 rounded-[2rem] border border-stone-200 bg-white p-6 shadow-sm">
-                <h2 class="text-3xl font-semibold text-stone-900">{{ $product->name }}</h2>
-                <div class="mt-5 rounded-3xl bg-stone-50 p-5 text-sm leading-8 text-stone-600">
-                    <ul class="space-y-2">
-                        <li>The prices shown are quoted in Ringgit Malaysia (MYR).</li>
-                        <li>Malaysia and international rates are shown separately for adult and child guests.</li>
-                        <li>Booking totals will be calculated automatically based on the guest mix entered in the booking form.</li>
-                        <li>Rates may change based on seasonality, park fees, or supplier availability.</li>
-                        <li>Our team will reconfirm all reservations before final fulfillment.</li>
-                    </ul>
+                <div class="flex items-center justify-between">
+                    <h2 class="text-2xl font-semibold text-stone-900">Sample Itinerary</h2>
+                    <span class="text-sm font-semibold uppercase tracking-[0.25em] text-sky-700">Flexible</span>
                 </div>
-            </section>
-
-            <section class="mt-8 grid gap-8 lg:grid-cols-[1fr_1fr]">
-                <section class="rounded-[2rem] border border-stone-200 bg-white p-6 shadow-sm">
-                    <div class="flex items-center justify-between">
-                        <h2 class="text-2xl font-semibold text-stone-900">Sample Itinerary</h2>
-                        <span class="text-sm font-semibold uppercase tracking-[0.25em] text-sky-700">Flexible</span>
+                <div class="mt-6 space-y-4">
+                    <div class="rounded-3xl border border-stone-200 bg-stone-50 p-5">
+                        <p class="text-sm font-semibold uppercase tracking-[0.25em] text-emerald-700">Day 1</p>
+                        <p class="mt-2 text-lg font-semibold text-stone-900">Arrival, registration, and guided experience</p>
+                        <p class="mt-3 text-sm leading-7 text-stone-600">Begin in {{ $product->location }} with coordination, transport support, and the core {{ strtolower($product->category) }} program.</p>
                     </div>
-                    <div class="mt-6 space-y-4">
-                        <div class="rounded-3xl border border-stone-200 bg-stone-50 p-5">
-                            <p class="text-sm font-semibold uppercase tracking-[0.25em] text-emerald-700">Day 1</p>
-                            <p class="mt-2 text-lg font-semibold text-stone-900">Arrival, registration, and guided experience</p>
-                            <p class="mt-3 text-sm leading-7 text-stone-600">Begin in {{ $product->location }} with coordination, transport support, and the core {{ strtolower($product->category) }} program.</p>
-                        </div>
-                        <div class="rounded-3xl border border-stone-200 bg-stone-50 p-5">
-                            <p class="text-sm font-semibold uppercase tracking-[0.25em] text-emerald-700">Day 2</p>
-                            <p class="mt-2 text-lg font-semibold text-stone-900">Highlights, wrap-up, and return</p>
-                            <p class="mt-3 text-sm leading-7 text-stone-600">Continue key activities, scenic stops, and return arrangements according to the selected package duration.</p>
-                        </div>
+                    <div class="rounded-3xl border border-stone-200 bg-stone-50 p-5">
+                        <p class="text-sm font-semibold uppercase tracking-[0.25em] text-emerald-700">Day 2</p>
+                        <p class="mt-2 text-lg font-semibold text-stone-900">Highlights, wrap-up, and return</p>
+                        <p class="mt-3 text-sm leading-7 text-stone-600">Continue key activities, scenic stops, and return arrangements according to the selected package duration.</p>
                     </div>
-                </section>
-
-                <section class="rounded-[2rem] border border-stone-200 bg-white p-6 shadow-sm">
-                    <h2 class="text-2xl font-semibold text-stone-900">Service Inclusion</h2>
-                    <div class="mt-6 overflow-hidden rounded-3xl border border-stone-200">
-                        <table class="min-w-full text-left text-sm">
-                            <tbody class="bg-white text-stone-700">
-                                <tr class="border-b border-stone-200">
-                                    <th class="w-48 bg-stone-50 px-5 py-4 font-semibold">Meals</th>
-                                    <td class="px-5 py-4">Subject to package or service arrangement.</td>
-                                </tr>
-                                <tr class="border-b border-stone-200">
-                                    <th class="bg-stone-50 px-5 py-4 font-semibold">Inclusion</th>
-                                    <td class="px-5 py-4">Core service delivery, support coordination, and supplier-side arrangements as stated.</td>
-                                </tr>
-                                <tr class="border-b border-stone-200">
-                                    <th class="bg-stone-50 px-5 py-4 font-semibold">Accommodation</th>
-                                    <td class="px-5 py-4">Included where relevant for package and overnight products.</td>
-                                </tr>
-                                <tr>
-                                    <th class="bg-stone-50 px-5 py-4 font-semibold">Exclusion</th>
-                                    <td class="px-5 py-4">Flights, personal travel insurance, personal spending, and unlisted add-ons.</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </section>
+                </div>
             </section>
         @endif
 

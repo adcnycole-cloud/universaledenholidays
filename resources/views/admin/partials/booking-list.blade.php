@@ -41,7 +41,7 @@
             </div>
         </div>
 
-        <div class="mt-6 grid gap-4 md:grid-cols-3 xl:grid-cols-6">
+        <div class="mt-6 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             <div class="rounded-[1.25rem] bg-white p-4 shadow-sm">
                 <p class="text-xs uppercase tracking-[0.18em] text-stone-500">Bookings</p>
                 <p class="mt-2 text-2xl font-semibold text-stone-900">{{ $bookingReport['totals']['bookings'] }}</p>
@@ -101,118 +101,78 @@
                 </div>
             </div>
         </div>
-        <div class="overflow-x-auto">
-            <table id="admin-booking-table" class="min-w-full divide-y divide-stone-200 text-sm">
+        <div class="overflow-hidden rounded-b-[1.75rem]">
+            <table id="admin-booking-table" class="w-full table-fixed divide-y divide-stone-200 text-xs md:text-sm">
                 <thead class="bg-stone-100/90">
-                    <tr class="text-left text-xs font-semibold uppercase tracking-[0.18em] text-stone-600">
-                        <th class="px-4 py-4">Customer</th>
-                        <th class="px-4 py-4">Booking</th>
-                        <th class="px-4 py-4">Guests</th>
-                        <th class="px-4 py-4">Amount</th>
-                        <th class="px-4 py-4">Status</th>
-                        <th class="px-4 py-4">Invoice</th>
-                        <th class="px-4 py-4">Actions</th>
+                    <tr class="text-left font-semibold uppercase tracking-[0.18em] text-stone-600">
+                        <th class="w-[22%] px-3 py-4 md:px-4">Customer</th>
+                        <th class="w-[23%] px-3 py-4 md:px-4">Booking</th>
+                        <th class="hidden w-[10%] px-3 py-4 md:px-4 lg:table-cell">Guests</th>
+                        <th class="w-[16%] px-3 py-4 md:px-4">Amount</th>
+                        <th class="hidden w-[11%] px-3 py-4 md:px-4 xl:table-cell">Status</th>
+                        <th class="hidden w-[10%] px-3 py-4 md:px-4 lg:table-cell">Invoice</th>
+                        <th class="w-[19%] px-3 py-4 text-right md:px-4">Actions</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-stone-200 bg-white">
                     @forelse ($bookings as $booking)
                         <tr data-admin-booking-item="true" class="align-top text-stone-700">
-                            <td class="px-4 py-4">
-                                <div class="min-w-[14rem]">
-                                    <p class="font-semibold text-stone-900">{{ $booking->full_name }}</p>
-                                    <p class="mt-1 text-xs text-stone-500">{{ $booking->email }}</p>
-                                    <p class="mt-1 text-xs text-stone-500">{{ $booking->phone }}</p>
+                            <td class="px-3 py-4 md:px-4">
+                                <div class="min-w-0">
+                                    <p class="truncate font-semibold text-stone-900">{{ $booking->full_name }}</p>
+                                    <p class="mt-0.5 truncate text-xs text-stone-500">{{ $booking->email }}</p>
                                 </div>
                             </td>
-                            <td class="px-4 py-4">
-                                <div class="min-w-[18rem] space-y-1">
-                                    <p class="font-semibold text-stone-900">{{ $booking->package_name }}</p>
-                                    <p class="text-xs text-stone-500">{{ $booking->destination }}</p>
-                                    <p class="text-xs text-stone-500">Pickup: {{ $booking->pickup_location ?: 'Not set' }}</p>
-                                    <p class="text-xs text-stone-500">{{ ucfirst($booking->service_type) }} | Ref {{ $booking->booking_reference ?: 'N/A' }}</p>
-                                    <p class="text-xs text-stone-500">{{ optional($booking->check_in_date)->format('d M Y') }} to {{ optional($booking->check_out_date)->format('d M Y') }}</p>
+                            <td class="px-3 py-4 md:px-4">
+                                <div class="min-w-0">
+                                    <p class="truncate font-semibold text-stone-900">{{ $booking->package_name }}</p>
+                                    <p class="mt-0.5 truncate text-xs text-stone-500">{{ $booking->destination }}</p>
+                                    <p class="mt-0.5 truncate text-xs text-stone-500">Ref {{ $booking->booking_reference ?: 'N/A' }}</p>
                                 </div>
                             </td>
-                            <td class="px-4 py-4">
-                                <div class="min-w-[10rem] space-y-1 text-xs text-stone-600">
-                                    <p>MY adults: {{ $booking->malaysian_adults }}</p>
-                                    <p>MY kids: {{ $booking->malaysian_kids }}</p>
-                                    <p>INT adults: {{ $booking->international_adults }}</p>
-                                    <p>INT kids: {{ $booking->international_kids }}</p>
-                                    <p class="pt-1 font-semibold text-stone-900">Total: {{ $booking->total_guests }}</p>
-                                </div>
+                            <td class="hidden px-3 py-4 text-xs md:px-4 lg:table-cell">
+                                <p class="font-semibold text-stone-900">{{ $booking->total_guests }}</p>
                             </td>
-                            <td class="px-4 py-4">
+                            <td class="px-3 py-4 md:px-4">
                                 @php($isPaymentPaid = strtolower((string) $booking->payment_status) === 'paid')
-                                <div class="min-w-[9rem]">
-                                    <p class="font-semibold text-stone-900">{{ $booking->currency_code }} {{ number_format((float) $booking->amount_display, 2) }}</p>
-                                    <p class="mt-1 text-xs text-stone-500">MYR {{ number_format((float) $booking->amount_myr, 2) }}</p>
-                                    <div class="mt-1 flex items-center gap-2 text-xs">
-                                        <span class="text-stone-500">Payment:</span>
-                                        <span class="inline-flex rounded-full px-2.5 py-1 font-semibold uppercase tracking-[0.08em] {{ $isPaymentPaid ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700' }}">
-                                            {{ ucwords(str_replace('_', ' ', $booking->payment_status)) }}
-                                        </span>
-                                    </div>
-                                    @if ($booking->payment_gateway)
-                                        <p class="mt-1 text-[11px] uppercase tracking-[0.12em] text-stone-500">
-                                            Gateway: {{ strtoupper($booking->payment_gateway) }}
-                                            @if ($booking->payment_gateway_status)
-                                                ({{ str_replace('_', ' ', $booking->payment_gateway_status) }})
-                                            @endif
-                                        </p>
-                                    @endif
-                                </div>
+                                <p class="break-words font-semibold text-stone-900">{{ $booking->currency_code }} {{ number_format((float) $booking->amount_display, 2) }}</p>
                             </td>
-                            <td class="px-4 py-4">
-                                <div class="min-w-[9rem] space-y-2">
-                                    <span class="inline-flex rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em]
-                                        {{ $booking->status === 'confirmed' ? 'bg-emerald-50 text-emerald-700' : '' }}
-                                        {{ $booking->status === 'completed' ? 'bg-sky-50 text-sky-700' : '' }}
-                                        {{ $booking->status === 'pending' ? 'bg-amber-50 text-amber-700' : '' }}
-                                        {{ $booking->status === 'cancelled' ? 'bg-rose-50 text-rose-700' : '' }}">
-                                        {{ ucfirst($booking->status) }}
-                                    </span>
-                                    @if ($booking->confirmed_at)
-                                        <p class="text-xs text-stone-500">Confirmed {{ $booking->confirmed_at->format('d M Y') }}</p>
-                                    @endif
-                                </div>
+                            <td class="hidden px-3 py-4 md:px-4 xl:table-cell">
+                                <span class="inline-flex rounded-full px-2 py-1 text-xs font-semibold {{ strtolower((string) $booking->status) === 'completed' ? 'bg-emerald-100 text-emerald-700' : (strtolower((string) $booking->status) === 'pending' ? 'bg-amber-100 text-amber-700' : (strtolower((string) $booking->status) === 'confirmed' ? 'bg-sky-100 text-sky-700' : 'bg-stone-100 text-stone-700')) }}">
+                                    {{ ucfirst($booking->status) }}
+                                </span>
                             </td>
-                            <td class="px-4 py-4">
-                                <div class="min-w-[12rem] space-y-2">
-                                    @if ($booking->invoice_number)
-                                        <p class="text-xs font-semibold uppercase tracking-[0.16em] text-emerald-700">{{ $booking->invoice_number }}</p>
-                                    @else
-                                        <p class="text-xs text-stone-400">Not issued yet</p>
-                                    @endif
-
-                                    @if ($booking->status === 'confirmed' || $booking->invoice_number)
-                                        <a href="{{ route('admin.bookings.invoice', $booking) }}" target="_blank" rel="noopener noreferrer" class="inline-flex w-full items-center justify-center rounded-full border border-stone-300 bg-stone-100 px-3 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-stone-900 transition hover:bg-stone-200">
-                                            Print Invoice
+                            <td class="hidden px-3 py-4 md:px-4 lg:table-cell">
+                                @if ($booking->invoice_path)
+                                    <a href="{{ Storage::url($booking->invoice_path) }}" target="_blank" class="inline-flex items-center gap-1 rounded-full border border-sky-300 bg-sky-50 px-2 py-1 text-xs font-semibold text-sky-700 transition hover:border-sky-400 hover:bg-sky-100">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M12 2H7a2 2 0 00-2 2v16a2 2 0 002 2h10a2 2 0 002-2V9z"></path>
+                                            <polyline points="13 2 13 9 20 9"></polyline>
+                                        </svg>
+                                        Invoice
+                                    </a>
+                                @else
+                                    <span class="text-xs text-stone-400">—</span>
+                                @endif
+                            </td>
+                            <td class="px-3 py-4 text-right md:px-4">
+                                <details class="relative inline-block text-left">
+                                    <summary class="ml-auto list-none cursor-pointer rounded-full border border-stone-300 bg-white p-2 transition hover:bg-stone-100">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-stone-600" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <circle cx="12" cy="12" r="1"></circle>
+                                            <circle cx="19" cy="12" r="1"></circle>
+                                            <circle cx="5" cy="12" r="1"></circle>
+                                        </svg>
+                                    </summary>
+                                    <div class="absolute right-0 top-full z-50 mt-2 w-44 space-y-2 rounded-xl border border-stone-200 bg-white p-3 shadow-lg">
+                                        <a href="{{ route('admin.bookings.show', $booking->id) }}" class="block rounded-lg border border-stone-200 px-3 py-2 text-xs font-medium text-stone-700 transition hover:border-sky-200 hover:bg-sky-50 hover:text-sky-700">
+                                            View Details
                                         </a>
-                                        <form method="POST" action="{{ route('admin.bookings.invoice.email', $booking) }}" class="w-full">
-                                            @csrf
-                                            <button type="submit" class="inline-flex w-full items-center justify-center rounded-full border border-emerald-300 bg-emerald-50 px-3 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-emerald-800 transition hover:bg-emerald-100">
-                                                Email PDF Invoice
-                                            </button>
-                                        </form>
-                                    @endif
-                                </div>
-                            </td>
-                            <td class="px-4 py-4">
-                                <div class="min-w-[12rem]">
-                                    <form method="POST" action="{{ route('admin.bookings.update', $booking) }}" class="space-y-2">
-                                        @csrf
-                                        @method('PATCH')
-                                        <select name="status" class="w-full rounded-2xl border border-stone-300 px-4 py-2 text-sm text-stone-800">
-                                            @foreach (['pending', 'confirmed', 'completed', 'cancelled'] as $status)
-                                                <option value="{{ $status }}" @selected($booking->status === $status)>{{ ucfirst($status) }}</option>
-                                            @endforeach
-                                        </select>
-                                        <button type="submit" class="w-full rounded-full border border-stone-300 px-4 py-2 text-sm font-semibold text-stone-700 transition hover:bg-stone-100">
-                                            Update
-                                        </button>
-                                    </form>
-                                </div>
+                                        <a href="{{ route('admin.bookings.edit', $booking->id) }}" class="block rounded-lg border border-stone-200 px-3 py-2 text-xs font-medium text-stone-700 transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700">
+                                            Edit
+                                        </a>
+                                    </div>
+                                </details>
                             </td>
                         </tr>
                     @empty

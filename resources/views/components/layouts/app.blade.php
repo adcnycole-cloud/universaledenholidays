@@ -13,6 +13,7 @@
         <style>
             :root {
                 --app-header-offset: 0px;
+                --admin-sidebar-width: 16rem;
             }
 
             .js-app-header {
@@ -57,9 +58,32 @@
                     width: auto;
                 }
             }
+
+            .admin-shell {
+                min-width: 0;
+            }
+
+            @media (min-width: 768px) {
+                .admin-shell.with-sidebar {
+                    position: relative;
+                    margin-left: var(--admin-sidebar-width);
+                    width: calc(100% - var(--admin-sidebar-width));
+                }
+
+                .admin-shell.with-sidebar::before {
+                    content: '';
+                    position: absolute;
+                    top: 0;
+                    bottom: 0;
+                    left: 0;
+                    width: 1px;
+                    background: #e7e5e4;
+                    pointer-events: none;
+                }
+            }
         </style>
         @php($isAdminRoute = request()->routeIs('admin.*'))
-        @php($hideHeader = request()->routeIs('login', 'admin.login'))
+        @php($hideHeader = $isAdminRoute || request()->routeIs('login', 'admin.login'))
         @php($currencyOptions = ['MYR', 'KRW', 'USD', 'SGD', 'CNY'])
         @php($adminNavBase = 'rounded-full border px-4 py-2 transition')
         @php($adminNavActive = $adminNavBase.' border-emerald-200 bg-emerald-50 text-emerald-700')
@@ -78,23 +102,7 @@
                         @endif
 
                         @if ($isAdminRoute)
-                            <nav class="hidden items-center justify-center gap-2 text-sm font-medium md:flex md:justify-self-center">
-                                <a href="{{ route('admin.dashboard') }}" class="{{ request()->routeIs('admin.dashboard') ? $adminNavActive : $adminNavIdle }}">Overview</a>
-                                <a href="{{ route('admin.profile') }}" class="{{ request()->routeIs('admin.profile') ? $adminNavActive : $adminNavIdle }}">Profile</a>
-                                <a href="{{ route('admin.promos') }}" class="{{ request()->routeIs('admin.promos') ? $adminNavActive : $adminNavIdle }}">Promos</a>
-                                <a href="{{ route('admin.transport') }}" class="{{ request()->routeIs('admin.transport') ? $adminNavActive : $adminNavIdle }}">Transport</a>
-                                <a href="{{ route('admin.packages') }}" class="{{ request()->routeIs('admin.packages') ? $adminNavActive : $adminNavIdle }}">Packages</a>
-                                <a href="{{ route('admin.testimonials') }}" class="{{ request()->routeIs('admin.testimonials') ? $adminNavActive : $adminNavIdle }}">Testimonials</a>
-                                <a href="{{ route('admin.bookings') }}" class="{{ request()->routeIs('admin.bookings', 'admin.bookings.export') ? $adminNavActive : $adminNavIdle }}">Bookings</a>
-                                <a href="{{ route('admin.enquiries') }}" class="{{ request()->routeIs('admin.enquiries') ? $adminNavActive : $adminNavIdle }}">Enquiries</a>
-                                <a href="{{ route('home') }}" class="rounded-full bg-sky-600 px-4 py-2 text-white transition hover:bg-sky-700">View Site</a>
-                                @auth
-                                    <form method="POST" action="{{ route('logout') }}">
-                                        @csrf
-                                        <button type="submit" class="rounded-full border border-stone-300 px-4 py-2 text-sm font-semibold text-stone-700 transition hover:border-stone-400 hover:bg-stone-100">Logout</button>
-                                    </form>
-                                @endauth
-                            </nav>
+                            <p class="hidden md:block text-xs font-semibold uppercase tracking-[0.18em] text-emerald-600">Admin Workspace</p>
                         @else
                             <nav class="hidden items-center gap-6 text-sm font-medium text-stone-600 md:flex">
                                 <a href="{{ route('home') }}" class="inline-flex h-10 w-10 items-center justify-center rounded-full border border-stone-200 bg-white text-stone-600 transition hover:border-sky-200 hover:text-sky-700" aria-label="Home">
@@ -109,11 +117,6 @@
                                 <a href="{{ route('home') }}#testimonials" class="transition hover:text-sky-700">Testimonials</a>
                                 <a href="{{ route('bookings.track.form') }}" class="transition hover:text-sky-700">Track Booking</a>
                                 <a href="{{ route('home') }}#about-us" class="transition hover:text-sky-700">About Us</a>
-                                @auth
-                                    @if (auth()->user()->isAdmin())
-                                        <a href="{{ route('admin.dashboard') }}" class="transition hover:text-sky-700">Admin</a>
-                                    @endif
-                                @endauth
                             </nav>
                         @endif
 
@@ -133,10 +136,31 @@
                             @endif
                             @auth
                                 @if (! $isAdminRoute)
-                                <form method="POST" action="{{ route('logout') }}">
-                                    @csrf
-                                    <button type="submit" class="rounded-full border border-stone-300 px-4 py-2 text-sm font-semibold text-stone-700 transition hover:border-stone-400 hover:bg-stone-100">Logout</button>
-                                </form>
+                                    @if (auth()->user()->isAdmin())
+                                        <details class="relative">
+                                            <summary class="flex h-10 cursor-pointer list-none items-center gap-2 rounded-full border border-emerald-300 bg-emerald-50 px-3 text-emerald-700 transition hover:border-emerald-400 hover:bg-emerald-100">
+                                                <span class="text-xs font-bold uppercase tracking-[0.12em]">Admin</span>
+                                                <span class="sr-only">Open admin session menu</span>
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                                    <path d="M4 6h16" />
+                                                    <path d="M4 12h16" />
+                                                    <path d="M4 18h16" />
+                                                </svg>
+                                            </summary>
+                                            <div class="absolute right-0 z-50 mt-2 w-64 overflow-hidden rounded-2xl border border-emerald-200 bg-white p-3 shadow-xl">
+                                                <a href="{{ route('admin.dashboard') }}" class="mt-3 block rounded-xl border border-stone-200 px-3 py-2 text-sm font-medium text-stone-700 transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700">Dashboard</a>
+                                                <form method="POST" action="{{ route('logout') }}" class="mt-2">
+                                                    @csrf
+                                                    <button type="submit" class="w-full rounded-xl border border-stone-200 px-3 py-2 text-left text-sm font-medium text-stone-700 transition hover:border-rose-200 hover:bg-rose-50 hover:text-rose-700">Logout</button>
+                                                </form>
+                                            </div>
+                                        </details>
+                                    @else
+                                        <form method="POST" action="{{ route('logout') }}">
+                                            @csrf
+                                            <button type="submit" class="rounded-full border border-stone-300 px-4 py-2 text-sm font-semibold text-stone-700 transition hover:border-stone-400 hover:bg-stone-100">Logout</button>
+                                        </form>
+                                    @endif
                                 @endif
                             @else
                             @endauth
@@ -183,7 +207,11 @@
                 </div>
             @endif
 
-            <div style="{{ $hideHeader ? '' : 'padding-top: var(--app-header-offset, 0px);' }}">
+            @if ($isAdminRoute)
+                <x-admin-sidebar />
+            @endif
+
+            <div class="admin-shell {{ $isAdminRoute ? 'with-sidebar' : '' }}" style="{{ $hideHeader ? '' : 'padding-top: var(--app-header-offset, 0px);' }}">
                 {{ $slot }}
 
                 @if ($isAdminRoute)

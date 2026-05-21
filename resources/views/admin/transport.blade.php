@@ -1,5 +1,5 @@
 <x-layouts.app title="Admin Transport | Universal Eden Holidays">
-    <main class="mx-auto max-w-[1700px] px-6 py-6 lg:px-10">
+    <main class="min-h-[calc(100vh-var(--app-header-offset))] w-full bg-gradient-to-br from-white via-stone-50 to-stone-100 px-6 py-8 lg:px-8">
         <section class="mt-5 space-y-8">
             <section class="rounded-[2rem] border border-stone-200 bg-white p-6 shadow-sm">
                 <p class="text-sm uppercase tracking-[0.3em] text-sky-700">Transport</p>

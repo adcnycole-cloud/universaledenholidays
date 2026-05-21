@@ -10,7 +10,7 @@
         </a>
     </div>
 
-    <div class="mt-6 grid gap-4 md:grid-cols-4">
+    <div class="mt-6 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <div class="rounded-[1.25rem] border border-stone-200 bg-stone-50 p-4">
             <p class="text-xs uppercase tracking-[0.18em] text-stone-500">Total enquiries</p>
             <p class="mt-2 text-2xl font-semibold text-stone-900">{{ $enquiries->count() }}</p>
@@ -61,79 +61,73 @@
                 </div>
             </div>
         </div>
-        <div class="overflow-x-auto">
-            <table id="admin-enquiry-table" class="min-w-full divide-y divide-stone-200 text-sm">
+        <div class="overflow-hidden rounded-b-[1.75rem]">
+            <table id="admin-enquiry-table" class="w-full table-fixed divide-y divide-stone-200 text-xs md:text-sm">
                 <thead class="bg-stone-100/90">
-                    <tr class="text-left text-xs font-semibold uppercase tracking-[0.18em] text-stone-600">
-                        <th class="px-4 py-4">Customer</th>
-                        <th class="px-4 py-4">Enquiry</th>
-                        <th class="px-4 py-4">Preference</th>
-                        <th class="px-4 py-4">Message</th>
-                        <th class="px-4 py-4">Status</th>
-                        <th class="px-4 py-4">Actions</th>
+                    <tr class="text-left font-semibold uppercase tracking-[0.18em] text-stone-600">
+                        <th class="w-[28%] px-3 py-4 md:px-4">Customer</th>
+                        <th class="w-[30%] px-3 py-4 md:px-4">Enquiry</th>
+                        <th class="hidden w-[16%] px-3 py-4 md:px-4 lg:table-cell">Date</th>
+                        <th class="hidden w-[12%] px-3 py-4 md:px-4 xl:table-cell">Status</th>
+                        <th class="w-[30%] px-3 py-4 text-right md:px-4 lg:w-[14%]">Actions</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-stone-200 bg-white">
                     @forelse ($enquiries as $enquiry)
                         <tr data-admin-enquiry-item="true" class="align-top text-stone-700">
-                            <td class="px-4 py-4">
-                                <div class="min-w-[14rem]">
-                                    <p class="font-semibold text-stone-900">{{ $enquiry->full_name }}</p>
-                                    <p class="mt-1 text-xs text-stone-500">{{ $enquiry->email }}</p>
-                                    <p class="mt-1 text-xs text-stone-500">{{ $enquiry->phone }}</p>
-                                    <p class="mt-2 text-[11px] uppercase tracking-[0.14em] text-stone-400">Submitted {{ optional($enquiry->created_at)->format('d M Y, h:i A') }}</p>
+                            <td class="px-3 py-4 md:px-4">
+                                <div class="min-w-0">
+                                    <p class="truncate font-semibold text-stone-900">{{ $enquiry->full_name }}</p>
+                                    <p class="mt-0.5 truncate text-xs text-stone-500">{{ $enquiry->email }}</p>
                                 </div>
                             </td>
-                            <td class="px-4 py-4">
-                                <div class="min-w-[16rem] space-y-1">
-                                    <p class="font-semibold text-stone-900">{{ $enquiry->package_name }}</p>
-                                    <p class="text-xs text-stone-500">{{ $enquiry->destination }}</p>
-                                    <p class="text-xs text-stone-500">{{ ucfirst($enquiry->service_type) }} enquiry</p>
-                                    <p class="text-xs text-stone-500">Ref {{ $enquiry->booking_reference ?: 'N/A' }}</p>
+                            <td class="px-3 py-4 md:px-4">
+                                <div class="min-w-0">
+                                    <p class="truncate font-semibold text-stone-900">{{ $enquiry->package_name }}</p>
+                                    <p class="mt-0.5 truncate text-xs text-stone-500">{{ $enquiry->destination }}</p>
+                                    <p class="mt-0.5 truncate text-xs text-stone-500">{{ ucfirst($enquiry->service_type) }}</p>
                                 </div>
                             </td>
-                            <td class="px-4 py-4">
-                                <div class="min-w-[12rem] space-y-1 text-xs text-stone-600">
-                                    <p>Preferred date: {{ optional($enquiry->check_in_date)->format('d M Y') ?: 'Not shared' }}</p>
-                                    <p>Estimated guests: {{ $enquiry->guest_count ?: 'Not shared' }}</p>
-                                </div>
+                            <td class="hidden px-3 py-4 text-xs md:px-4 lg:table-cell">
+                                <p class="font-semibold text-stone-900">{{ optional($enquiry->check_in_date)->format('d M Y') ?: 'N/A' }}</p>
                             </td>
-                            <td class="px-4 py-4">
-                                <div class="min-w-[20rem] max-w-[28rem] whitespace-pre-line text-sm leading-6 text-stone-700">
-                                    {{ $enquiry->special_requests ?: 'No message provided.' }}
-                                </div>
+                            <td class="hidden px-3 py-4 md:px-4 xl:table-cell">
+                                <span class="inline-flex rounded-full px-2 py-1 text-xs font-semibold {{ $enquiry->status === 'pending' ? 'bg-amber-100 text-amber-700' : (strtolower((string) $enquiry->status) === 'confirmed' ? 'bg-emerald-100 text-emerald-700' : 'bg-stone-100 text-stone-700') }}">
+                                    {{ ucfirst($enquiry->status) }}
+                                </span>
                             </td>
-                            <td class="px-4 py-4">
-                                <div class="min-w-[9rem] space-y-2">
-                                    <span class="inline-flex rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em]
-                                        {{ $enquiry->status === 'confirmed' ? 'bg-emerald-50 text-emerald-700' : '' }}
-                                        {{ $enquiry->status === 'completed' ? 'bg-sky-50 text-sky-700' : '' }}
-                                        {{ $enquiry->status === 'pending' ? 'bg-amber-50 text-amber-700' : '' }}
-                                        {{ $enquiry->status === 'cancelled' ? 'bg-rose-50 text-rose-700' : '' }}">
-                                        {{ ucfirst($enquiry->status) }}
-                                    </span>
-                                </div>
-                            </td>
-                            <td class="px-4 py-4">
-                                <div class="min-w-[12rem]">
-                                    <form method="POST" action="{{ route('admin.bookings.update', $enquiry) }}" class="space-y-2">
-                                        @csrf
-                                        @method('PATCH')
-                                        <select name="status" class="w-full rounded-2xl border border-stone-300 px-4 py-2 text-sm text-stone-800">
-                                            @foreach (['pending', 'confirmed', 'completed', 'cancelled'] as $status)
-                                                <option value="{{ $status }}" @selected($enquiry->status === $status)>{{ ucfirst($status) }}</option>
-                                            @endforeach
-                                        </select>
-                                        <button type="submit" class="w-full rounded-full border border-stone-300 px-4 py-2 text-sm font-semibold text-stone-700 transition hover:bg-stone-100">
-                                            Update
-                                        </button>
-                                    </form>
-                                </div>
+                            <td class="px-3 py-4 text-right md:px-4">
+                                <details class="relative inline-block text-left">
+                                    <summary class="ml-auto list-none cursor-pointer rounded-full border border-stone-300 bg-white p-2 transition hover:bg-stone-100">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-stone-600" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <circle cx="12" cy="12" r="1"></circle>
+                                            <circle cx="19" cy="12" r="1"></circle>
+                                            <circle cx="5" cy="12" r="1"></circle>
+                                        </svg>
+                                    </summary>
+                                    <div class="absolute right-0 top-full z-50 mt-2 w-44 space-y-2 rounded-xl border border-stone-200 bg-white p-3 shadow-lg">
+                                        <a href="{{ route('admin.enquiries.show', $enquiry->id) }}" class="block rounded-lg border border-stone-200 px-3 py-2 text-xs font-medium text-stone-700 transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700">
+                                            View Details
+                                        </a>
+                                        <form method="POST" action="{{ route('admin.enquiries.update', $enquiry->id) }}" class="space-y-1">
+                                            @csrf
+                                            @method('PATCH')
+                                            <select name="status" class="w-full rounded-lg border border-stone-200 px-2 py-1.5 text-xs text-stone-800">
+                                                @foreach (['pending', 'confirmed', 'completed', 'cancelled'] as $status)
+                                                    <option value="{{ $status }}" @selected($enquiry->status === $status)>{{ ucfirst($status) }}</option>
+                                                @endforeach
+                                            </select>
+                                            <button type="submit" class="w-full rounded-lg border border-stone-200 px-2 py-1.5 text-xs font-semibold text-stone-700 transition hover:bg-stone-100">
+                                                Update Status
+                                            </button>
+                                        </form>
+                                    </div>
+                                </details>
                             </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="px-4 py-10 text-center text-sm text-stone-500">No enquiries found yet.</td>
+                            <td colspan="5" class="px-4 py-10 text-center text-sm text-stone-500">No enquiries found yet.</td>
                         </tr>
                     @endforelse
                 </tbody>

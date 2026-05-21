@@ -197,85 +197,93 @@
                     </div>
                 </section>
 
-                    <section class="rounded-[2rem] border border-stone-200 bg-white p-6 shadow-sm">
-                        <h2 class="text-2xl font-semibold text-stone-900">Malaysia Market</h2>
-                        <div class="mt-4 overflow-hidden rounded-3xl border border-blue-200">
-                            <div class="bg-blue-50 px-5 py-4 text-center text-lg font-semibold text-blue-700">Malaysia Market Pricing</div>
-                            <table class="min-w-full text-left text-sm">
-                                <thead class="bg-stone-100 text-stone-700">
-                                    <tr>
-                                        <th class="px-5 py-3">Group Size</th>
-                                        <th class="px-5 py-3">Price Per Person</th>
-                                    </tr>
-                                </thead>
-                                <tbody class="bg-white text-stone-700">
-                                    @foreach ($malaysiaPricingTiers as $tier)
-                                        <tr class="border-t border-stone-200">
-                                            <td class="px-5 py-4">
-                                                <div class="font-semibold text-sky-700">Adult / Child</div>
-                                                <div class="mt-1 text-stone-500">{{ $tier['label'] }}</div>
-                                            </td>
-                                            <td class="px-5 py-4">
-                                                @if ($tier['enquire'])
-                                                    <div class="font-semibold text-stone-900">Please Enquire</div>
-                                                @else
-                                                    <div class="font-semibold text-stone-900">MYR {{ number_format($tier['adult_price'], 2) }}</div>
-                                                    @if (($tier['original_adult_price'] ?? null) !== null && $tier['original_adult_price'] > $tier['adult_price'])
-                                                        <div class="mt-1 text-xs text-stone-400 line-through">MYR {{ number_format($tier['original_adult_price'], 2) }}</div>
-                                                    @endif
-                                                    <div class="mt-1 font-semibold text-rose-600">{{ number_format($tier['child_price'], 2) }}</div>
-                                                    @if (($tier['original_child_price'] ?? null) !== null && $tier['original_child_price'] > $tier['child_price'])
-                                                        <div class="mt-1 text-xs text-stone-400 line-through">MYR {{ number_format($tier['original_child_price'], 2) }}</div>
-                                                    @endif
-                                                @endif
-                                            </td>
-                                        </tr>
-                                    @endforeach
-                                </tbody>
-                            </table>
-                        </div>
-
-                        <div class="mt-5 overflow-hidden rounded-3xl border border-amber-200">
-                            <div class="bg-amber-50 px-5 py-4 text-center text-lg font-semibold text-amber-700">International Market Pricing</div>
-                            <table class="min-w-full text-left text-sm">
-                                <thead class="bg-stone-100 text-stone-700">
-                                    <tr>
-                                        <th class="px-5 py-3">Group Size</th>
-                                        <th class="px-5 py-3">Price Per Person</th>
-                                    </tr>
-                                </thead>
-                                <tbody class="bg-white text-stone-700">
-                                    @foreach ($internationalPricingTiers as $tier)
-                                        <tr class="border-t border-stone-200">
-                                            <td class="px-5 py-4">
-                                                <div class="font-semibold text-sky-700">Adult / Child</div>
-                                                <div class="mt-1 text-stone-500">{{ $tier['label'] }}</div>
-                                            </td>
-                                            <td class="px-5 py-4">
-                                                @if ($tier['enquire'])
-                                                    <div class="font-semibold text-stone-900">Please Enquire</div>
-                                                @else
-                                                    <div class="font-semibold text-stone-900">MYR {{ number_format($tier['adult_price'], 2) }}</div>
-                                                    @if (($tier['original_adult_price'] ?? null) !== null && $tier['original_adult_price'] > $tier['adult_price'])
-                                                        <div class="mt-1 text-xs text-stone-400 line-through">MYR {{ number_format($tier['original_adult_price'], 2) }}</div>
-                                                    @endif
-                                                    <div class="mt-1 font-semibold text-rose-600">{{ number_format($tier['child_price'], 2) }}</div>
-                                                    @if (($tier['original_child_price'] ?? null) !== null && $tier['original_child_price'] > $tier['child_price'])
-                                                        <div class="mt-1 text-xs text-stone-400 line-through">MYR {{ number_format($tier['original_child_price'], 2) }}</div>
-                                                    @endif
-                                                @endif
-                                            </td>
-                                        </tr>
-                                    @endforeach
-                                </tbody>
-                            </table>
-                        </div>
-                    </section>
             </aside>
         </section>
         @endif
 
         @if ($product->category !== 'transport')
+            <section class="mt-8 rounded-[2rem] border border-stone-200 bg-white p-6 shadow-sm">
+                <div class="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+                    <div>
+                        <h2 class="text-3xl font-semibold text-stone-900">Market Pricing</h2>
+                        <p class="mt-2 text-sm leading-6 text-stone-600">Malaysia and international price lists are shown side by side for easier comparison.</p>
+                    </div>
+                </div>
+                <div class="mt-6 grid gap-6 xl:grid-cols-2">
+                    <div class="overflow-hidden rounded-3xl border border-blue-200">
+                        <div class="bg-blue-50 px-5 py-4 text-center text-lg font-semibold text-blue-700">Malaysia Market Pricing</div>
+                        <table class="min-w-full text-left text-sm">
+                            <thead class="bg-stone-100 text-stone-700">
+                                <tr>
+                                    <th class="px-5 py-3">Group Size</th>
+                                    <th class="px-5 py-3">Price Per Person</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white text-stone-700">
+                                @foreach ($malaysiaPricingTiers as $tier)
+                                    <tr class="border-t border-stone-200">
+                                        <td class="px-5 py-4">
+                                            <div class="font-semibold text-sky-700">Adult / Child</div>
+                                            <div class="mt-1 text-stone-500">{{ $tier['label'] }}</div>
+                                        </td>
+                                        <td class="px-5 py-4">
+                                            @if ($tier['enquire'])
+                                                <div class="font-semibold text-stone-900">Please Enquire</div>
+                                            @else
+                                                <div class="font-semibold text-stone-900">MYR {{ number_format($tier['adult_price'], 2) }}</div>
+                                                @if (($tier['original_adult_price'] ?? null) !== null && $tier['original_adult_price'] > $tier['adult_price'])
+                                                    <div class="mt-1 text-xs text-stone-400 line-through">MYR {{ number_format($tier['original_adult_price'], 2) }}</div>
+                                                @endif
+                                                <div class="mt-1 font-semibold text-rose-600">{{ number_format($tier['child_price'], 2) }}</div>
+                                                @if (($tier['original_child_price'] ?? null) !== null && $tier['original_child_price'] > $tier['child_price'])
+                                                    <div class="mt-1 text-xs text-stone-400 line-through">MYR {{ number_format($tier['original_child_price'], 2) }}</div>
+                                                @endif
+                                            @endif
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="overflow-hidden rounded-3xl border border-amber-200">
+                        <div class="bg-amber-50 px-5 py-4 text-center text-lg font-semibold text-amber-700">International Market Pricing</div>
+                        <table class="min-w-full text-left text-sm">
+                            <thead class="bg-stone-100 text-stone-700">
+                                <tr>
+                                    <th class="px-5 py-3">Group Size</th>
+                                    <th class="px-5 py-3">Price Per Person</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white text-stone-700">
+                                @foreach ($internationalPricingTiers as $tier)
+                                    <tr class="border-t border-stone-200">
+                                        <td class="px-5 py-4">
+                                            <div class="font-semibold text-sky-700">Adult / Child</div>
+                                            <div class="mt-1 text-stone-500">{{ $tier['label'] }}</div>
+                                        </td>
+                                        <td class="px-5 py-4">
+                                            @if ($tier['enquire'])
+                                                <div class="font-semibold text-stone-900">Please Enquire</div>
+                                            @else
+                                                <div class="font-semibold text-stone-900">MYR {{ number_format($tier['adult_price'], 2) }}</div>
+                                                @if (($tier['original_adult_price'] ?? null) !== null && $tier['original_adult_price'] > $tier['adult_price'])
+                                                    <div class="mt-1 text-xs text-stone-400 line-through">MYR {{ number_format($tier['original_adult_price'], 2) }}</div>
+                                                @endif
+                                                <div class="mt-1 font-semibold text-rose-600">{{ number_format($tier['child_price'], 2) }}</div>
+                                                @if (($tier['original_child_price'] ?? null) !== null && $tier['original_child_price'] > $tier['child_price'])
+                                                    <div class="mt-1 text-xs text-stone-400 line-through">MYR {{ number_format($tier['original_child_price'], 2) }}</div>
+                                                @endif
+                                            @endif
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
             <section class="mt-8 rounded-[2rem] border border-stone-200 bg-white p-6 shadow-sm">
                 <h2 class="text-3xl font-semibold text-stone-900">{{ $product->name }}</h2>
                 <div class="mt-5 rounded-3xl bg-stone-50 p-5 text-sm leading-8 text-stone-600">

@@ -9,7 +9,7 @@
         <link href="https://fonts.googleapis.com/css2?family=Londrina+Solid:wght@400;900&family=Playfair+Display:wght@400;700;900&family=Cinzel:wght@400;500;600;700;900&display=swap" rel="stylesheet" />
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
-    <body class="min-h-screen bg-stone-50 text-stone-900">
+    <body class="min-h-screen bg-stone-50 text-stone-900" data-form-persist-success="{{ session('success') ? 'true' : 'false' }}">
         <style>
             :root {
                 --app-header-offset: 0px;
@@ -104,7 +104,7 @@
                         @if ($isAdminRoute)
                             <p class="hidden md:block text-xs font-semibold uppercase tracking-[0.18em] text-emerald-600">Admin Workspace</p>
                         @else
-                            <nav class="hidden items-center gap-6 text-sm font-medium text-stone-600 md:flex">
+                            <nav class="hidden items-center gap-6 text-sm font-medium text-stone-600 md:flex" style="position: relative; left: -2rem;">
                                 <a href="{{ route('home') }}" class="inline-flex h-10 w-10 items-center justify-center rounded-full border border-stone-200 bg-white text-stone-600 transition hover:border-sky-200 hover:text-sky-700" aria-label="Home">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                                         <path d="M3 10.5 12 3l9 7.5" />
@@ -115,8 +115,8 @@
                                 <a href="{{ route('home') }}#transport" class="transition hover:text-sky-700">Transport</a>
                                 <a href="{{ route('home') }}#packages-showcase" class="transition hover:text-sky-700">Packages</a>
                                 <a href="{{ route('home') }}#testimonials" class="transition hover:text-sky-700">Testimonials</a>
-                                <a href="{{ route('bookings.track.form') }}" class="transition hover:text-sky-700">Track Booking</a>
                                 <a href="{{ route('home') }}#about-us" class="transition hover:text-sky-700">About Us</a>
+                                <a href="{{ route('bookings.track.form') }}" class="transition hover:text-sky-700">Track Booking</a>
                             </nav>
                         @endif
 
@@ -217,7 +217,7 @@
                 @if ($isAdminRoute)
                     <footer class="border-t border-stone-200/80 bg-white/70">
                         <div class="mx-auto max-w-[1700px] px-6 py-4 text-center text-xs font-medium uppercase tracking-[0.18em] text-stone-500 lg:px-10">
-                            Copyright by universaledenholidays @ Adcey
+                            Copyright 2026 by universaledenholidays @ Adcey
                         </div>
                     </footer>
                 @endif
@@ -228,13 +228,65 @@
                 const root = document.documentElement;
                 const header = document.querySelector('.js-app-header');
                 const toasts = Array.from(document.querySelectorAll('.js-app-toast'));
+                const anchorOffsetExtra = 0;
 
                 const updateHeaderOffset = () => {
                     root.style.setProperty('--app-header-offset', `${header?.offsetHeight ?? 0}px`);
                 };
 
+                const scrollToHashTarget = (hash, behavior = 'auto') => {
+                    if (!hash || hash === '#') {
+                        return;
+                    }
+
+                    const target = document.querySelector(hash);
+
+                    if (!target) {
+                        return;
+                    }
+
+                    const headerOffset = header?.offsetHeight ?? 0;
+                    const targetTop = target.getBoundingClientRect().top + window.scrollY;
+                    const scrollTop = Math.max(0, targetTop - headerOffset - anchorOffsetExtra);
+
+                    window.scrollTo({
+                        top: scrollTop,
+                        behavior,
+                    });
+                };
+
                 updateHeaderOffset();
                 window.addEventListener('resize', updateHeaderOffset);
+
+                document.querySelectorAll('a[href*="#"]').forEach((link) => {
+                    link.addEventListener('click', (event) => {
+                        const url = new URL(link.href, window.location.href);
+
+                        if (!url.hash || url.pathname !== window.location.pathname || url.origin !== window.location.origin) {
+                            return;
+                        }
+
+                        const target = document.querySelector(url.hash);
+
+                        if (!target) {
+                            return;
+                        }
+
+                        event.preventDefault();
+                        window.history.pushState({}, '', url.hash);
+                        scrollToHashTarget(url.hash, 'smooth');
+                    });
+                });
+
+                window.addEventListener('hashchange', () => {
+                    scrollToHashTarget(window.location.hash, 'auto');
+                });
+
+                if (window.location.hash) {
+                    window.setTimeout(() => {
+                        scrollToHashTarget(window.location.hash, 'auto');
+                    }, 0);
+                }
 
                 if (!toasts.length) {
                     return;
@@ -260,6 +312,189 @@
                     window.setTimeout(() => {
                         closeToast(toast);
                     }, 5000);
+                });
+            });
+        </script>
+        <script>
+            document.addEventListener('DOMContentLoaded', () => {
+                const storagePrefix = 'ueh-form-draft:';
+                const successFlag = document.body.dataset.formPersistSuccess === 'true';
+                const lastSubmittedKeyStorage = `${storagePrefix}last-submitted`;
+                const lastSubmittedKey = window.sessionStorage.getItem(lastSubmittedKeyStorage);
+
+                const readStoredValue = (key) => {
+                    try {
+                        const rawValue = window.localStorage.getItem(key);
+
+                        return rawValue ? JSON.parse(rawValue) : null;
+                    } catch (error) {
+                        return null;
+                    }
+                };
+
+                const writeStoredValue = (key, value) => {
+                    try {
+                        window.localStorage.setItem(key, JSON.stringify(value));
+                    } catch (error) {
+                        // Ignore localStorage quota and privacy-mode failures.
+                    }
+                };
+
+                const removeStoredValue = (key) => {
+                    try {
+                        window.localStorage.removeItem(key);
+                    } catch (error) {
+                        // Ignore localStorage failures.
+                    }
+                };
+
+                const getPersistKey = (form) => {
+                    const explicitKey = form.dataset.formPersist;
+
+                    if (explicitKey) {
+                        return `${storagePrefix}${explicitKey}`;
+                    }
+
+                    return `${storagePrefix}${form.getAttribute('action') || form.id || 'form'}`;
+                };
+
+                const formHasMeaningfulValues = (form) => Array.from(form.elements).some((field) => {
+                    if (!(field instanceof HTMLInputElement || field instanceof HTMLTextAreaElement || field instanceof HTMLSelectElement)) {
+                        return false;
+                    }
+
+                    if (['file', 'submit', 'button', 'reset', 'hidden'].includes(field.type)) {
+                        return false;
+                    }
+
+                    if (field instanceof HTMLInputElement && ['checkbox', 'radio'].includes(field.type)) {
+                        return field.checked;
+                    }
+
+                    return String(field.value || '').trim() !== '';
+                });
+
+                if (successFlag && lastSubmittedKey) {
+                    removeStoredValue(lastSubmittedKey);
+                    window.sessionStorage.removeItem(lastSubmittedKeyStorage);
+                }
+
+                document.querySelectorAll('form[data-form-persist]').forEach((form) => {
+                    const persistKey = getPersistKey(form);
+                    const storedDraft = readStoredValue(persistKey);
+                    let restoredDraft = false;
+
+                    if (storedDraft && typeof storedDraft === 'object') {
+                        Array.from(form.elements).forEach((field) => {
+                            if (!(field instanceof HTMLInputElement || field instanceof HTMLTextAreaElement || field instanceof HTMLSelectElement)) {
+                                return;
+                            }
+
+                            if (['file', 'submit', 'button', 'reset', 'hidden'].includes(field.type)) {
+                                return;
+                            }
+
+                            const fieldKey = field.name || field.id;
+
+                            if (!fieldKey || !(fieldKey in storedDraft)) {
+                                return;
+                            }
+
+                            const savedValue = storedDraft[fieldKey];
+
+                            if (field instanceof HTMLInputElement && field.type === 'checkbox') {
+                                field.checked = Array.isArray(savedValue)
+                                    ? savedValue.includes(field.value)
+                                    : Boolean(savedValue);
+                                restoredDraft = true;
+                                return;
+                            }
+
+                            if (field instanceof HTMLInputElement && field.type === 'radio') {
+                                field.checked = savedValue === field.value;
+                                restoredDraft = true;
+                                return;
+                            }
+
+                            field.value = savedValue ?? '';
+                            restoredDraft = true;
+                        });
+                    }
+
+                    const persistDraft = () => {
+                        const payload = {};
+
+                        Array.from(form.elements).forEach((field) => {
+                            if (!(field instanceof HTMLInputElement || field instanceof HTMLTextAreaElement || field instanceof HTMLSelectElement)) {
+                                return;
+                            }
+
+                            if (['file', 'submit', 'button', 'reset', 'hidden'].includes(field.type)) {
+                                return;
+                            }
+
+                            const fieldKey = field.name || field.id;
+
+                            if (!fieldKey) {
+                                return;
+                            }
+
+                            if (field instanceof HTMLInputElement && field.type === 'checkbox') {
+                                if (!Array.isArray(payload[fieldKey])) {
+                                    payload[fieldKey] = [];
+                                }
+
+                                if (field.checked) {
+                                    payload[fieldKey].push(field.value);
+                                }
+
+                                return;
+                            }
+
+                            if (field instanceof HTMLInputElement && field.type === 'radio') {
+                                if (field.checked) {
+                                    payload[fieldKey] = field.value;
+                                }
+
+                                return;
+                            }
+
+                            payload[fieldKey] = field.value;
+                        });
+
+                        if (!formHasMeaningfulValues(form)) {
+                            removeStoredValue(persistKey);
+                            return;
+                        }
+
+                        writeStoredValue(persistKey, payload);
+                    };
+
+                    form.addEventListener('input', persistDraft);
+                    form.addEventListener('change', persistDraft);
+                    form.addEventListener('submit', () => {
+                        persistDraft();
+                        window.sessionStorage.setItem(lastSubmittedKeyStorage, persistKey);
+                    });
+                    form.addEventListener('reset', () => {
+                        window.setTimeout(() => removeStoredValue(persistKey), 0);
+                    });
+
+                    if (restoredDraft) {
+                        form.dataset.draftRestored = 'true';
+
+                        const parentDetails = form.closest('details');
+                        if (parentDetails) {
+                            parentDetails.open = true;
+                        }
+
+                        document.dispatchEvent(new CustomEvent('codex:form-draft-restored', {
+                            detail: {
+                                formId: form.id || null,
+                                persistKey,
+                            },
+                        }));
+                    }
                 });
             });
         </script>

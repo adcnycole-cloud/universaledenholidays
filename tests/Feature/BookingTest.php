@@ -89,6 +89,44 @@ class BookingTest extends TestCase
         ]);
     }
 
+    public function test_booking_uses_discounted_product_prices_when_discount_is_active(): void
+    {
+        $product = Product::where('is_active', true)->firstOrFail();
+        $product->update([
+            'is_discounted' => true,
+            'discount_percentage' => 25,
+            'malaysia_adult_price_myr' => 400,
+            'malaysia_child_price_myr' => 200,
+            'international_adult_price_myr' => 500,
+            'international_child_price_myr' => 250,
+        ]);
+
+        $response = $this->post('/bookings', [
+            'product_id' => $product->id,
+            'service_type' => $product->category,
+            'full_name' => 'Discount Guest',
+            'email' => 'discount@gmail.com',
+            'phone' => '+60123456789',
+            'pickup_location' => 'KKIA',
+            'malaysian_adults' => 1,
+            'malaysian_kids' => 1,
+            'international_adults' => 1,
+            'international_kids' => 1,
+            'check_in_date' => now()->addDays(5)->toDateString(),
+            'check_out_date' => now()->addDays(8)->toDateString(),
+            'payment_method' => 'bank_transfer',
+            'currency_code' => 'MYR',
+        ]);
+
+        $response->assertSessionDoesntHaveErrors();
+
+        $this->assertDatabaseHas('bookings', [
+            'email' => 'discount@gmail.com',
+            'amount_myr' => 1012.5,
+            'amount_display' => 1012.5,
+        ]);
+    }
+
     public function test_booking_rejects_invalid_email_and_phone(): void
     {
         $product = Product::where('is_active', true)->firstOrFail();

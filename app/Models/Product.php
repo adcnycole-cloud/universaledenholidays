@@ -14,6 +14,8 @@ class Product extends Model
         'summary',
         'image_url',
         'gallery_images',
+        'itinerary_items',
+        'service_inclusions',
         'description',
         'duration',
         'price_myr',
@@ -34,6 +36,8 @@ class Product extends Model
         return [
             'price_myr' => 'decimal:2',
             'gallery_images' => 'array',
+            'itinerary_items' => 'array',
+            'service_inclusions' => 'array',
             'malaysia_adult_price_myr' => 'decimal:2',
             'malaysia_child_price_myr' => 'decimal:2',
             'international_adult_price_myr' => 'decimal:2',
@@ -51,6 +55,33 @@ class Product extends Model
         return $this->hasMany(Booking::class);
     }
 
+    public function getHasActiveDiscountAttribute(): bool
+    {
+        return $this->is_discounted
+            && $this->discount_percentage !== null
+            && (float) $this->discount_percentage > 0;
+    }
+
+    public function getDiscountedMalaysiaAdultPriceMyrAttribute(): float
+    {
+        return $this->calculateDiscountedPrice($this->malaysia_adult_price_myr);
+    }
+
+    public function getDiscountedMalaysiaChildPriceMyrAttribute(): float
+    {
+        return $this->calculateDiscountedPrice($this->malaysia_child_price_myr);
+    }
+
+    public function getDiscountedInternationalAdultPriceMyrAttribute(): float
+    {
+        return $this->calculateDiscountedPrice($this->international_adult_price_myr);
+    }
+
+    public function getDiscountedInternationalChildPriceMyrAttribute(): float
+    {
+        return $this->calculateDiscountedPrice($this->international_child_price_myr);
+    }
+
     public function getGalleryUrlsAttribute(): array
     {
         $gallery = collect($this->gallery_images ?? [])
@@ -62,5 +93,18 @@ class Product extends Model
         }
 
         return $gallery->values()->all();
+    }
+
+    private function calculateDiscountedPrice(mixed $price): float
+    {
+        $basePrice = round((float) $price, 2);
+
+        if (! $this->has_active_discount) {
+            return $basePrice;
+        }
+
+        $discountMultiplier = max(0, 1 - (((float) $this->discount_percentage) / 100));
+
+        return round($basePrice * $discountMultiplier, 2);
     }
 }

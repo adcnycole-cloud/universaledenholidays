@@ -305,15 +305,21 @@ class AdminController extends Controller
 
     public function storeProduct(Request $request): RedirectResponse
     {
+        $request->merge([
+            'image_url' => $this->normalizeOptionalUrl($request->input('image_url')),
+        ]);
+
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'category' => ['required', 'in:transport,package'],
             'location' => ['required', 'string', 'max:255'],
             'summary' => ['required', 'string', 'max:255'],
-            'image_url' => ['nullable', 'url', 'max:2048'],
+            'image_url' => $this->productImageUrlRules(),
             'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
+            'gallery_images' => ['nullable', 'string', 'max:5000'],
             'gallery_image_files' => ['nullable', 'array', 'max:20'],
             'gallery_image_files.*' => ['image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
+            'itinerary_items_text' => ['nullable', 'string', 'max:5000'],
             'description' => ['required', 'string', 'max:1000'],
             'duration' => ['required', 'string', 'max:100'],
             'malaysia_adult_price_myr' => ['required', 'numeric', 'min:0'],
@@ -327,19 +333,22 @@ class AdminController extends Controller
             'discount_percentage' => ['nullable', 'numeric', 'min:0', 'max:100'],
         ]);
 
-        if ($validated['category'] === 'transport') {
-            return back()->with('success', 'Transport products are fixed for now. Please edit the existing 41/44 bus, 17 seater van, or 9/14 seater van entries below.');
-        }
-
         if ($request->hasFile('image')) {
             $validated['image_url'] = $this->storeProductImage($request->file('image'));
         }
 
-        $galleryImages = $request->hasFile('gallery_image_files')
-            ? $this->storeProductGalleryImages($request->file('gallery_image_files'))
+        $galleryImages = $validated['category'] === 'transport'
+            ? $this->parseGalleryImageUrls($validated['gallery_images'] ?? null)
             : [];
 
-        Product::create($validated + [
+        if ($request->hasFile('gallery_image_files')) {
+            $galleryImages = array_merge(
+                $galleryImages,
+                $this->storeProductGalleryImages($request->file('gallery_image_files')),
+            );
+        }
+
+        $productPayload = $validated + [
             'price_myr' => $validated['malaysia_adult_price_myr'],
             'gallery_images' => $galleryImages,
             'capacity' => $validated['capacity'] ?? null,
@@ -350,23 +359,34 @@ class AdminController extends Controller
                 ? ($validated['discount_percentage'] ?? 0)
                 : null,
             'is_active' => true,
-        ]);
+        ];
+
+        if ($validated['category'] === 'package') {
+            $productPayload['itinerary_items'] = $this->normalizeMultilineEntries($validated['itinerary_items_text'] ?? null);
+        }
+
+        Product::create($productPayload);
 
         return back()->with('success', 'Product saved successfully.');
     }
 
     public function updateProduct(Request $request, Product $product): RedirectResponse
     {
+        $request->merge([
+            'image_url' => $this->normalizeOptionalUrl($request->input('image_url')),
+        ]);
+
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'location' => ['required', 'string', 'max:255'],
             'summary' => ['required', 'string', 'max:255'],
-            'image_url' => ['nullable', 'url', 'max:2048'],
+            'image_url' => $this->productImageUrlRules(),
             'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
             'existing_gallery_images' => ['nullable', 'array', 'max:20'],
             'existing_gallery_images.*' => ['string', 'max:2048'],
             'gallery_image_files' => ['nullable', 'array', 'max:20'],
             'gallery_image_files.*' => ['image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
+            'itinerary_items_text' => ['nullable', 'string', 'max:5000'],
             'description' => ['required', 'string', 'max:1000'],
             'duration' => ['required', 'string', 'max:100'],
             'malaysia_adult_price_myr' => ['required', 'numeric', 'min:0'],
@@ -380,13 +400,6 @@ class AdminController extends Controller
             'discount_percentage' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'is_active' => ['nullable', 'boolean'],
         ]);
-
-        if ($product->category === 'transport') {
-            $allowedTransportNames = collect(self::FIXED_TRANSPORT_PRODUCTS)->pluck('name')->all();
-            if (!in_array($validated['name'], $allowedTransportNames, true)) {
-                return back()->withErrors(['name' => 'Transport products must remain one of the fixed vehicle options.']);
-            }
-        }
 
         if ($request->hasFile('image')) {
             $this->deleteManagedProductImage($product->image_url);
@@ -410,7 +423,7 @@ class AdminController extends Controller
             );
         }
 
-        $product->update($validated + [
+        $productPayload = $validated + [
             'price_myr' => $validated['malaysia_adult_price_myr'],
             'gallery_images' => $galleryImages,
             'capacity' => $validated['capacity'] ?? null,
@@ -421,9 +434,74 @@ class AdminController extends Controller
                 ? ($validated['discount_percentage'] ?? 0)
                 : null,
             'is_active' => $request->boolean('is_active', true),
-        ]);
+        ];
+
+        if ($product->category === 'package') {
+            $productPayload['itinerary_items'] = $this->normalizeMultilineEntries($validated['itinerary_items_text'] ?? null);
+        }
+
+        $product->update($productPayload);
 
         return back()->with('success', 'Product updated successfully.');
+    }
+
+    public function updateProductItinerary(Request $request, Product $product): RedirectResponse
+    {
+        abort_unless($product->category === 'package', 404);
+
+        $validated = $request->validate([
+            'itinerary_day_number' => ['nullable', 'array', 'max:31'],
+            'itinerary_day_number.*' => ['nullable', 'string', 'max:50'],
+            'itinerary_time' => ['nullable', 'array', 'max:31'],
+            'itinerary_time.*' => ['nullable', 'string', 'max:100'],
+            'itinerary_activity' => ['nullable', 'array', 'max:31'],
+            'itinerary_activity.*' => ['nullable', 'string', 'max:1000'],
+        ]);
+
+        $product->update([
+            'itinerary_items' => $this->buildStructuredItinerary($validated),
+        ]);
+
+        return back()->with('success', 'Package itinerary updated successfully.');
+    }
+
+    public function updateProductServiceInclusions(Request $request, Product $product): RedirectResponse
+    {
+        abort_unless($product->category === 'package', 404);
+
+        $validated = $request->validate([
+            'service_inclusion_label' => ['nullable', 'array', 'max:40'],
+            'service_inclusion_label.*' => ['nullable', 'string', 'max:100'],
+            'service_inclusion_value' => ['nullable', 'array', 'max:40'],
+            'service_inclusion_value.*' => ['nullable', 'string', 'max:2000'],
+        ]);
+
+        $product->update([
+            'service_inclusions' => $this->buildStructuredServiceInclusions($validated),
+        ]);
+
+        return back()->with('success', 'Package service inclusions updated successfully.');
+    }
+
+    public function updateProductActive(Request $request, Product $product)
+    {
+        $validated = $request->validate([
+            'is_active' => ['required', 'boolean'],
+        ]);
+
+        $product->update([
+            'is_active' => (bool) $validated['is_active'],
+        ]);
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'is_active' => (bool) $product->is_active,
+                'message' => 'Product visibility updated successfully.',
+            ]);
+        }
+
+        return back()->with('success', 'Product visibility updated successfully.');
     }
 
     public function destroyProduct(Product $product): RedirectResponse
@@ -468,6 +546,114 @@ class AdminController extends Controller
         collect($imageUrls)
             ->filter(fn ($imageUrl) => is_string($imageUrl) && str_starts_with($imageUrl, '/storage/'))
             ->each(fn ($imageUrl) => Storage::disk('public')->delete(substr($imageUrl, strlen('/storage/'))));
+    }
+
+    private function parseGalleryImageUrls(?string $value): array
+    {
+        return collect(preg_split('/\r\n|\r|\n/', (string) $value) ?: [])
+            ->map(fn ($imageUrl) => trim($imageUrl))
+            ->filter(fn ($imageUrl) => filled($imageUrl))
+            ->values()
+            ->all();
+    }
+
+    private function normalizeMultilineEntries(?string $value): array
+    {
+        return collect(preg_split('/\r\n|\r|\n/', (string) $value) ?: [])
+            ->map(fn ($item) => trim($item))
+            ->filter(fn ($item) => filled($item))
+            ->values()
+            ->all();
+    }
+
+    private function buildStructuredItinerary(array $validated): array
+    {
+        $dayNumbers = $validated['itinerary_day_number'] ?? [];
+        $times = $validated['itinerary_time'] ?? [];
+        $activities = $validated['itinerary_activity'] ?? [];
+        $rowCount = max(count($dayNumbers), count($times), count($activities));
+
+        return collect(range(0, max(0, $rowCount - 1)))
+            ->map(function (int $index) use ($dayNumbers, $times, $activities) {
+                $dayNumber = trim((string) ($dayNumbers[$index] ?? ''));
+                $time = trim((string) ($times[$index] ?? ''));
+                $activity = trim((string) ($activities[$index] ?? ''));
+
+                if ($dayNumber === '' && $time === '' && $activity === '') {
+                    return null;
+                }
+
+                return [
+                    'day_number' => $dayNumber,
+                    'time' => $time,
+                    'activity' => $activity,
+                ];
+            })
+            ->filter()
+            ->values()
+            ->all();
+    }
+
+    private function buildStructuredServiceInclusions(array $validated): array
+    {
+        $labels = $validated['service_inclusion_label'] ?? [];
+        $values = $validated['service_inclusion_value'] ?? [];
+        $rowCount = max(count($labels), count($values));
+
+        return collect(range(0, max(0, $rowCount - 1)))
+            ->map(function (int $index) use ($labels, $values) {
+                $label = trim((string) ($labels[$index] ?? ''));
+                $value = trim((string) ($values[$index] ?? ''));
+
+                if ($label === '' && $value === '') {
+                    return null;
+                }
+
+                return [
+                    'label' => $label,
+                    'value' => $value,
+                ];
+            })
+            ->filter()
+            ->values()
+            ->all();
+    }
+
+    private function normalizeOptionalUrl(mixed $value): ?string
+    {
+        if (! is_string($value)) {
+            return null;
+        }
+
+        $trimmed = trim($value);
+
+        return $trimmed !== '' ? $trimmed : null;
+    }
+
+    private function productImageUrlRules(): array
+    {
+        return [
+            'nullable',
+            'string',
+            'max:2048',
+            function (string $attribute, mixed $value, \Closure $fail) {
+                if (! is_string($value) || trim($value) === '') {
+                    return;
+                }
+
+                $imageUrl = trim($value);
+
+                if (str_starts_with($imageUrl, '/storage/')) {
+                    return;
+                }
+
+                if (filter_var($imageUrl, FILTER_VALIDATE_URL) !== false) {
+                    return;
+                }
+
+                $fail('The image url field must be a valid URL or a local storage path.');
+            },
+        ];
     }
 
     public function storeNewsFeature(Request $request): RedirectResponse
@@ -544,6 +730,7 @@ class AdminController extends Controller
     {
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
+            'email' => ['nullable', 'string', 'max:255', 'email:rfc,dns'],
             'location' => ['required', 'string', 'max:255'],
             'trip_name' => ['required', 'string', 'max:255'],
             'quote' => ['required', 'string', 'max:1000'],
@@ -551,6 +738,7 @@ class AdminController extends Controller
             'profile_photo' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
             'display_location' => ['required', 'in:landing,package'],
             'product_id' => ['nullable', 'exists:products,id'],
+            'is_featured' => ['nullable', 'boolean'],
         ]);
 
         if (($validated['display_location'] ?? null) === 'package') {
@@ -576,7 +764,7 @@ class AdminController extends Controller
         Testimonial::create([
             ...$validated,
             'profile_photo_path' => $profilePhotoPath,
-            'is_featured' => ($validated['display_location'] ?? 'landing') === 'landing',
+            'is_featured' => $request->boolean('is_featured'),
             'product_id' => ($validated['display_location'] ?? 'landing') === 'package'
                 ? $validated['product_id']
                 : null,
@@ -589,6 +777,7 @@ class AdminController extends Controller
     {
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
+            'email' => ['nullable', 'string', 'max:255', 'email:rfc,dns'],
             'location' => ['required', 'string', 'max:255'],
             'trip_name' => ['required', 'string', 'max:255'],
             'quote' => ['required', 'string', 'max:1000'],
@@ -596,6 +785,7 @@ class AdminController extends Controller
             'profile_photo' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
             'display_location' => ['required', 'in:landing,package'],
             'product_id' => ['nullable', 'exists:products,id'],
+            'is_featured' => ['nullable', 'boolean'],
         ]);
 
         if (($validated['display_location'] ?? null) === 'package') {
@@ -612,6 +802,7 @@ class AdminController extends Controller
 
         $updates = [
             'name' => $validated['name'],
+            'email' => $validated['email'] ?? null,
             'location' => $validated['location'],
             'trip_name' => $validated['trip_name'],
             'quote' => $validated['quote'],
@@ -620,7 +811,7 @@ class AdminController extends Controller
             'product_id' => $validated['display_location'] === 'package'
                 ? $validated['product_id']
                 : null,
-            'is_featured' => $validated['display_location'] === 'landing',
+            'is_featured' => $request->boolean('is_featured'),
         ];
 
         if ($request->hasFile('profile_photo')) {
@@ -698,9 +889,9 @@ class AdminController extends Controller
 
         return [
             'products' => $products,
-            'transportProducts' => $fixedTransportNames
-                ->map(fn ($name) => $products->first(fn ($product) => $product->category === 'transport' && $product->name === $name))
-                ->filter()
+            'transportProducts' => $products
+                ->where('category', 'transport')
+                ->sortBy(fn ($product) => ($fixedTransportNames->search($product->name) !== false ? $fixedTransportNames->search($product->name) : 9999))
                 ->values(),
             'packageProducts' => $products->where('category', 'package')->values(),
             'newsFeatures' => NewsFeature::latest()->get(),

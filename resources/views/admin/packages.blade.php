@@ -12,6 +12,7 @@
             'searchPlaceholder' => 'Search packages by name, location, or summary',
             'stackLayout' => true,
             'gridColumns' => 2,
+            'collapsibleCreatePanel' => true,
         ])
     </main>
     @include('admin.partials.filter-paginate-script', [
@@ -26,4 +27,36 @@
         'emptyMessage' => 'No package listings match your search.',
         'resultsNoun' => 'package listings',
     ])
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const toggleButton = document.querySelector('[data-create-panel-toggle]');
+            const panelBody = document.querySelector('[data-create-panel-body]');
+
+            if (!toggleButton || !panelBody) {
+                return;
+            }
+
+            const syncLabel = () => {
+                const isOpen = !panelBody.classList.contains('hidden');
+                toggleButton.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+                toggleButton.textContent = isOpen ? 'Hide Form' : 'New Package';
+            };
+
+            toggleButton.addEventListener('click', () => {
+                panelBody.classList.toggle('hidden');
+                syncLabel();
+            });
+
+            document.addEventListener('codex:form-draft-restored', () => {
+                if (!panelBody.querySelector('form[data-draft-restored="true"]')) {
+                    return;
+                }
+
+                panelBody.classList.remove('hidden');
+                syncLabel();
+            });
+
+            syncLabel();
+        });
+    </script>
 </x-layouts.app>

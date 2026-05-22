@@ -8,8 +8,8 @@ use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
-Route::get('/products/{product}', [HomeController::class, 'showProduct'])->name('products.show');
 Route::post('/testimonials', [HomeController::class, 'storeLandingTestimonial'])->name('testimonials.store');
+Route::get('/products/{product}', [HomeController::class, 'showProduct'])->name('products.show');
 Route::post('/products/{product}/testimonials', [HomeController::class, 'storeProductTestimonial'])->name('products.testimonials.store');
 Route::get('/booking', [HomeController::class, 'showBookingForm'])->name('booking.create');
 Route::post('/bookings', [HomeController::class, 'book'])->name('bookings.store');
@@ -58,6 +58,9 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     Route::get('/bookings/{booking}/edit', [AdminController::class, 'editBooking'])->name('admin.bookings.edit');
     Route::post('/products', [AdminController::class, 'storeProduct'])->name('admin.products.store');
     Route::patch('/products/{product}', [AdminController::class, 'updateProduct'])->name('admin.products.update');
+    Route::patch('/products/{product}/itinerary', [AdminController::class, 'updateProductItinerary'])->name('admin.products.itinerary');
+    Route::patch('/products/{product}/service-inclusions', [AdminController::class, 'updateProductServiceInclusions'])->name('admin.products.service-inclusions');
+    Route::patch('/products/{product}/active', [AdminController::class, 'updateProductActive'])->name('admin.products.active');
     Route::delete('/products/{product}', [AdminController::class, 'destroyProduct'])->name('admin.products.destroy');
     Route::post('/news-features', [AdminController::class, 'storeNewsFeature'])->name('admin.news-features.store');
     Route::patch('/news-features/{newsFeature}', [AdminController::class, 'updateNewsFeature'])->name('admin.news-features.update');

@@ -132,6 +132,51 @@
             transform: translateY(-0.05rem);
         }
 
+        .promo-current-layout {
+            display: flex;
+            width: fit-content;
+            align-items: stretch;
+        }
+
+        .promo-inline-card {
+            position: relative;
+        }
+
+        .promo-inline-info-shell {
+            position: relative;
+        }
+
+        .promo-more-info-button {
+            position: absolute;
+        }
+
+        .promo-cards-row {
+            display: flex;
+            flex-wrap: nowrap;
+            align-items: flex-start;
+            justify-content: center;
+            gap: 0.45rem;
+            transition: gap 0.28s ease;
+        }
+
+        .promo-card-column {
+            min-width: 0;
+            flex-shrink: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .promo-card-column--current {
+            width: min(100%, 470px);
+            flex-basis: 470px;
+        }
+
+        .promo-card-column--past {
+            width: min(100%, 470px);
+            flex-basis: 470px;
+        }
+
         #promos,
         #testimonials,
         #about-us {
@@ -323,7 +368,11 @@
 
             .popular-package-card {
                 width: min(100%, 390px) !important;
-                min-height: auto !important;
+                min-height: 35rem !important;
+            }
+
+            .package-showcase-card {
+                min-height: 35rem !important;
             }
 
             .popular-picks-mobile-nav {
@@ -344,12 +393,13 @@
             }
 
             .transport-shell {
-                padding: 1rem 1rem 1.5rem !important;
+                padding: 1rem 1.4rem 1.5rem !important;
             }
 
             .transport-copy {
                 margin-left: 0 !important;
                 max-width: 100% !important;
+                padding: 0 0.15rem !important;
             }
 
             .transport-box {
@@ -409,6 +459,49 @@
             .package-section-card > a:first-child {
                 min-height: 0 !important;
             }
+
+            .promo-current-layout {
+                width: 100% !important;
+                flex-direction: row !important;
+            }
+
+            .promo-cards-row {
+                flex-wrap: wrap !important;
+                justify-content: center !important;
+            }
+
+            .promo-card-column--current,
+            .promo-card-column--past {
+                flex-basis: auto !important;
+                width: min(100%, 470px) !important;
+            }
+
+            .promo-inline-card {
+                padding: 0.9rem !important;
+            }
+
+            .promo-inline-info-shell {
+                position: absolute !important;
+                inset: 0.9rem !important;
+                z-index: 4 !important;
+                height: calc(100% - 1.8rem) !important;
+                max-width: none !important;
+                margin: 0 !important;
+                border-radius: 0.8rem !important;
+                box-shadow: 0 16px 30px rgba(15, 23, 42, 0.18) !important;
+            }
+
+            .promo-more-info-button {
+                right: 50% !important;
+                top: auto !important;
+                bottom: -0.8rem !important;
+                transform: translateX(50%) !important;
+                padding: 0.7rem 1.2rem !important;
+                writing-mode: horizontal-tb !important;
+                text-orientation: mixed !important;
+                font-size: 0.72rem !important;
+                letter-spacing: 0.1em !important;
+            }
         }
 
         @media (max-width: 1280px) {
@@ -451,24 +544,20 @@
         <div class="pointer-events-none absolute inset-x-0 top-8 -z-10 h-72 rounded-[3rem] bg-[radial-gradient(circle_at_top_left,_rgba(134,239,172,0.16),_transparent_38%),radial-gradient(circle_at_top_right,_rgba(190,242,100,0.14),_transparent_34%)]"></div>
 
         <div>
-            <section id="promos" class="bg-white px-6 py-8 shadow-[0_20px_60px_rgba(15,23,42,0.08)] md:px-8 md:py-10 lg:px-10" style="margin-left: calc(50% - 50vw); margin-right: calc(50% - 50vw);">
+            <section id="promos" class="px-6 pt-8 pb-14 md:px-8 md:pt-10 md:pb-16 lg:px-10" style="margin-left: calc(50% - 50vw); margin-right: calc(50% - 50vw);">
                 @php
-                    $promoSlides = collect();
+                    $currentPromoSlide = $currentPromo ? [
+                        'title' => $currentPromo->title,
+                        'summary' => $currentPromo->summary,
+                        'poster_url' => $currentPromo->poster_url,
+                        'promo_label' => $currentPromo->promo_label ?: 'Discover Sabah',
+                        'date_label' => $currentPromo->ends_at ? 'Until '.$currentPromo->ends_at->format('d M Y') : null,
+                        'range_label' => ($currentPromo->starts_at?->format('d M Y') ?: 'Available now').' - '.($currentPromo->ends_at?->format('d M Y') ?: 'While active'),
+                        'status' => 'Current Promotion',
+                    ] : null;
 
-                    if ($currentPromo) {
-                        $promoSlides->push([
-                            'title' => $currentPromo->title,
-                            'summary' => $currentPromo->summary,
-                            'poster_url' => $currentPromo->poster_url,
-                            'promo_label' => $currentPromo->promo_label ?: 'Discover Sabah',
-                            'date_label' => $currentPromo->ends_at ? 'Until '.$currentPromo->ends_at->format('d M Y') : null,
-                            'range_label' => ($currentPromo->starts_at?->format('d M Y') ?: 'Available now').' - '.($currentPromo->ends_at?->format('d M Y') ?: 'While active'),
-                            'status' => 'Current Promotion',
-                        ]);
-                    }
-
-                    foreach ($pastPromos as $promo) {
-                        $promoSlides->push([
+                    $pastPromoSlides = $pastPromos->map(function ($promo) {
+                        return [
                             'title' => $promo->title,
                             'summary' => $promo->summary,
                             'poster_url' => $promo->poster_url,
@@ -476,113 +565,170 @@
                             'date_label' => $promo->ends_at ? 'Ended '.$promo->ends_at->format('d M Y') : null,
                             'range_label' => ($promo->starts_at?->format('d M Y') ?: 'Available now').' - '.($promo->ends_at?->format('d M Y') ?: 'While active'),
                             'status' => 'Past Promotion',
-                        ]);
-                    }
+                        ];
+                    })->values();
+
+                    $initialPastPromo = $pastPromoSlides->first();
                 @endphp
 
-                <h2 class="text-center font-['Prata'] text-3xl text-stone-900 md:text-4xl">
+                <h2 class="text-center font-['Oswald'] text-4xl font-bold uppercase tracking-[0.22em] text-[#315fbd] md:text-5xl lg:text-6xl">
                     Promotion & News
                 </h2>
 
-                <div class="mx-auto mt-8 max-w-[1280px] px-6 py-8 md:px-10">
-                    <div style="position: relative;">
-                        <div class="promo-prev-wrap" style="position: absolute; left: -1.1rem; top: 50%; z-index: 20; display: flex; align-items: center; justify-content: center; transform: translateY(-50%);">
-                            <button
-                                id="promo-prev-button"
-                                type="button"
-                                style="display: inline-flex; height: 3.2rem; width: 3.2rem; align-items: center; justify-content: center; border: none; border-radius: 999px; background: rgba(255,255,255,0.9); box-shadow: 0 8px 18px rgba(15,23,42,0.12); font-size: 2.8rem; font-weight: 300; line-height: 1; color: #8aa0d7; transition: transform 0.2s ease, color 0.2s ease;"
-                                onmouseover="this.style.transform='scale(1.05)'; this.style.color='#6e87c9';"
-                                onmouseout="this.style.transform='scale(1)'; this.style.color='#8aa0d7';"
-                                aria-label="Show previous promotion"
-                            >&lsaquo;</button>
-                        </div>
+                <div class="relative mx-auto mt-8 px-4 md:px-8" style="max-width: 1920px;">
+                    <div style="width: 100%; margin: 0 auto; border-radius: 1.75rem; background: #ffffff; padding: 2.4rem 1.6rem 3rem; box-shadow: 0 18px 40px rgba(15,23,42,0.08);">
+                        @if ($currentPromoSlide || $initialPastPromo)
+                            <div id="promo-cards-row" class="promo-cards-row">
+                                <div class="promo-card-column promo-card-column--current">
+                                    <p class="text-center font-['Oswald'] text-2xl uppercase tracking-[0.18em] md:text-3xl" style="color: #2563eb;">Current Promotion</p>
+                                    @if ($currentPromoSlide)
+                                        <div id="promo-current-card-shell" class="promo-inline-card" style="position: relative; margin-top: 1rem; width: fit-content; max-width: 100%; border-radius: 1rem; background: #d0d0d0; padding: 1.15rem; transition: width 0.28s ease, max-width 0.28s ease;">
+                                            <div class="promo-current-layout" id="promo-current-layout">
+                                                <button
+                                                    id="promo-current-poster"
+                                                    type="button"
+                                                    class="promo-poster-trigger"
+                                                    data-promo-title="{{ $currentPromoSlide['title'] }}"
+                                                    data-promo-summary="{{ $currentPromoSlide['summary'] }}"
+                                                    data-promo-poster="{{ $currentPromoSlide['poster_url'] }}"
+                                                    data-promo-label="{{ $currentPromoSlide['promo_label'] }}"
+                                                    data-promo-date="{{ $currentPromoSlide['date_label'] }}"
+                                                    data-promo-range="{{ $currentPromoSlide['range_label'] }}"
+                                                    data-promo-status="{{ $currentPromoSlide['status'] }}"
+                                                    style="display: block; width: min(100%, 470px); max-width: 470px; overflow: hidden; border: none; border-radius: 0.8rem; background: #ffffff; padding: 0; text-align: left; cursor: pointer;"
+                                                >
+                                                    <img src="{{ $currentPromoSlide['poster_url'] }}" alt="{{ $currentPromoSlide['title'] }}" style="display: block; height: 29rem; width: 100%; object-fit: cover; background: #fff;">
+                                                </button>
 
-                        <div style="width: 100%; max-width: 980px; margin: 0 auto;">
-                            <h3 style="text-align: left; font-size: 1.15rem; font-weight: 600; color: rgb(41 37 36);">
-                                Latest promos and limited-time offers
-                            </h3>
+                                                <div id="promo-current-info-shell" class="promo-inline-info-shell" style="position: relative; display: none; min-width: 0; max-width: 0; height: 29rem; margin: 0; overflow: hidden; border-radius: 0.8rem; background: #ffffff; opacity: 0; transition: max-width 0.28s ease, opacity 0.25s ease, margin 0.25s ease;">
+                                                    <div id="promo-current-info" style="height: 100%; padding: 1rem 1rem 1rem 1rem;">
+                                                        <button
+                                                            id="promo-current-collapse"
+                                                            type="button"
+                                                            style="position: absolute; right: 0.45rem; top: 0.4rem; display: inline-flex; height: 1.45rem; width: 1.45rem; align-items: center; justify-content: center; border: none; border-radius: 999px; background: rgba(255,255,255,0.96); font-size: 0.95rem; color: #94a3b8; cursor: pointer;"
+                                                            aria-label="Collapse current promotion details"
+                                                        >&times;</button>
 
-                            @if ($promoSlides->isNotEmpty())
-                                <div id="promo-carousel" style="position: relative; margin-top: 1.25rem; min-height: clamp(38rem, 70vh, 48rem);">
-                                    @foreach ($promoSlides as $index => $promoSlide)
-                                        <article
-                                            class="promo-slide-item"
-                                            data-promo-slide-index="{{ $index }}"
-                                            data-promo-status="{{ $promoSlide['status'] }}"
-                                            style="position: absolute; inset: 0; overflow: hidden; border-radius: 1.25rem; border: 1px solid rgb(231 229 228); background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,0.05); opacity: {{ $index === 0 ? '1' : '0' }}; transform: translateX({{ $index === 0 ? '0' : '70px' }}); pointer-events: {{ $index === 0 ? 'auto' : 'none' }}; transition: transform 0.4s ease, opacity 0.4s ease;"
-                                        >
+                                                        <p style="margin: 0; font-family: 'Oswald', sans-serif; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.18em; color: #2563eb;">Current Promotion</p>
+                                                        <div style="margin-top: 0.5rem; display: flex; flex-wrap: wrap; gap: 0.35rem; font-size: 0.62rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.18em; color: #d87a5c;">
+                                                            <span>{{ $currentPromoSlide['promo_label'] }}</span>
+                                                            @if ($currentPromoSlide['date_label'])
+                                                                <span>{{ $currentPromoSlide['date_label'] }}</span>
+                                                            @endif
+                                                        </div>
+                                                        <h3 style="margin-top: 0.7rem; font-size: clamp(1.35rem, 1.5vw, 1.85rem); font-weight: 600; line-height: 1.15; color: #1c1917;">{{ $currentPromoSlide['title'] }}</h3>
+                                                        @if ($currentPromoSlide['summary'])
+                                                            <p style="margin-top: 0.8rem; font-size: 0.86rem; line-height: 1.72; color: #57534e;">{{ \Illuminate\Support\Str::limit($currentPromoSlide['summary'], 520) }}</p>
+                                                        @endif
+                                                        <p style="margin-top: 0.8rem; font-size: 0.72rem; line-height: 1.6; color: #57534e;">{{ $currentPromoSlide['range_label'] }}</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <button
+                                                id="promo-current-expand"
+                                                class="promo-more-info-button"
+                                                type="button"
+                                                style="position: absolute; right: -0.55rem; top: 50%; display: inline-flex; transform: translateY(-50%); border: none; border-radius: 999px; background: #315fbd; padding: 0.95rem 0.42rem; writing-mode: vertical-rl; text-orientation: mixed; font-size: 0.7rem; font-weight: 700; letter-spacing: 0.12em; color: #ffffff; box-shadow: 0 8px 18px rgba(49,95,189,0.24); cursor: pointer;"
+                                            >
+                                                More Info
+                                            </button>
+                                        </div>
+                                    @else
+                                        <div style="margin-top: 1rem; border-radius: 1.5rem; border: 1px dashed rgb(214 211 209); background: rgb(250 250 249); padding: 2.5rem 1.5rem; text-align: center; font-size: 0.95rem; line-height: 1.6rem; color: rgb(87 83 78);">
+                                            No current promotion is available right now.
+                                        </div>
+                                    @endif
+                                </div>
+
+                                <div class="promo-card-column promo-card-column--past">
+                                    <p class="text-center font-['Oswald'] text-2xl uppercase tracking-[0.18em] md:text-3xl" style="color: #2563eb;">Past Promotion</p>
+                                    @if ($initialPastPromo)
+                                        <div id="promo-past-card-shell" class="promo-inline-card" style="position: relative; margin-top: 1rem; width: fit-content; max-width: 100%; border-radius: 1rem; background: #d0d0d0; padding: 1.15rem; transition: width 0.28s ease, max-width 0.28s ease;">
+                                            <div class="promo-current-layout">
+                                                <div style="position: relative;">
+                                                    <button
+                                                        type="button"
+                                                        id="promo-past-prev-button"
+                                                        style="position: absolute; left: 0.5rem; top: 50%; z-index: 2; display: inline-flex; height: 3rem; width: 3rem; transform: translateY(-50%); align-items: center; justify-content: center; border: none; border-radius: 999px; background: rgba(255,255,255,0.98); box-shadow: 0 8px 18px rgba(15,23,42,0.12); font-size: 2.4rem; font-weight: 300; line-height: 1; color: #8aa0d7; cursor: pointer;"
+                                                        aria-label="Show previous past promotion"
+                                                    >&lsaquo;</button>
+                                                    <div>
+                                                        <button
+                                                            type="button"
+                                                            id="promo-past-trigger"
+                                                            class="promo-poster-trigger"
+                                                            data-promo-title="{{ $initialPastPromo['title'] }}"
+                                                            data-promo-summary="{{ $initialPastPromo['summary'] }}"
+                                                            data-promo-poster="{{ $initialPastPromo['poster_url'] }}"
+                                                            data-promo-label="{{ $initialPastPromo['promo_label'] }}"
+                                                            data-promo-date="{{ $initialPastPromo['date_label'] }}"
+                                                            data-promo-range="{{ $initialPastPromo['range_label'] }}"
+                                                            data-promo-status="{{ $initialPastPromo['status'] }}"
+                                                            style="display: block; width: 100%; border: none; background: transparent; padding: 0; cursor: pointer;"
+                                                        >
+                                                            <img id="promo-past-image" src="{{ $initialPastPromo['poster_url'] }}" alt="{{ $initialPastPromo['title'] }}" style="display: block; height: 29rem; width: 100%; border-radius: 0.8rem; object-fit: cover; background: #fff;">
+                                                        </button>
+                                                    </div>
+                                                    <button
+                                                        type="button"
+                                                        id="promo-past-next-button"
+                                                        style="position: absolute; right: 0.5rem; top: 50%; z-index: 2; display: inline-flex; height: 3rem; width: 3rem; transform: translateY(-50%); align-items: center; justify-content: center; border: none; border-radius: 999px; background: rgba(255,255,255,0.98); box-shadow: 0 8px 18px rgba(15,23,42,0.12); font-size: 2.4rem; font-weight: 300; line-height: 1; color: #8aa0d7; cursor: pointer;"
+                                                        aria-label="Show next past promotion"
+                                                    >&rsaquo;</button>
+                                                </div>
+                                                <div id="promo-past-info-shell" class="promo-inline-info-shell" style="position: relative; display: none; min-width: 0; max-width: 0; height: 29rem; margin: 0; overflow: hidden; border-radius: 0.8rem; background: #ffffff; opacity: 0; transition: max-width 0.28s ease, opacity 0.25s ease, margin 0.25s ease;">
+                                                    <div style="height: 100%; padding: 1rem 1rem 1rem 1rem;">
+                                                        <button
+                                                            id="promo-past-collapse"
+                                                            type="button"
+                                                            style="position: absolute; right: 0.45rem; top: 0.4rem; display: inline-flex; height: 1.45rem; width: 1.45rem; align-items: center; justify-content: center; border: none; border-radius: 999px; background: rgba(255,255,255,0.96); font-size: 0.95rem; color: #94a3b8; cursor: pointer;"
+                                                            aria-label="Collapse past promotion details"
+                                                        >&times;</button>
+
+                                                        <p style="margin: 0; font-family: 'Oswald', sans-serif; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.18em; color: #2563eb;">Past Promotion</p>
+                                                        <div style="margin-top: 0.5rem; display: flex; flex-wrap: wrap; gap: 0.35rem; font-size: 0.62rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.18em; color: #d87a5c;">
+                                                            <span id="promo-past-label">{{ $initialPastPromo['promo_label'] }}</span>
+                                                            <span id="promo-past-date">{{ $initialPastPromo['date_label'] }}</span>
+                                                        </div>
+                                                        <h3 id="promo-past-title" style="margin-top: 0.7rem; font-size: clamp(1.35rem, 1.5vw, 1.85rem); font-weight: 600; line-height: 1.15; color: #1c1917;">{{ $initialPastPromo['title'] }}</h3>
+                                                        <p id="promo-past-summary" style="margin-top: 0.8rem; font-size: 0.86rem; line-height: 1.72; color: #57534e;">{{ \Illuminate\Support\Str::limit($initialPastPromo['summary'], 520) }}</p>
+                                                        <p id="promo-past-range" style="margin-top: 0.8rem; font-size: 0.72rem; line-height: 1.6; color: #57534e;">{{ $initialPastPromo['range_label'] }}</p>
+                                                    </div>
+                                                </div>
+                                            </div>
                                             <button
                                                 type="button"
-                                                class="promo-poster-trigger"
-                                                data-promo-title="{{ $promoSlide['title'] }}"
-                                                data-promo-summary="{{ $promoSlide['summary'] }}"
-                                                data-promo-poster="{{ $promoSlide['poster_url'] }}"
-                                                data-promo-label="{{ $promoSlide['promo_label'] }}"
-                                                data-promo-date="{{ $promoSlide['date_label'] }}"
-                                                data-promo-range="{{ $promoSlide['range_label'] }}"
-                                                data-promo-status="{{ $promoSlide['status'] }}"
-                                                style="display: block; width: 100%; border: none; background: transparent; padding: 0; cursor: pointer;"
+                                                id="promo-past-more-info"
+                                                class="promo-more-info-button"
+                                                style="position: absolute; right: -0.55rem; top: 50%; transform: translateY(-50%); border: none; border-radius: 999px; background: #315fbd; padding: 0.95rem 0.42rem; writing-mode: vertical-rl; text-orientation: mixed; font-size: 0.7rem; font-weight: 700; letter-spacing: 0.12em; color: #ffffff; box-shadow: 0 8px 18px rgba(49,95,189,0.24); cursor: pointer;"
                                             >
-                                                <img src="{{ $promoSlide['poster_url'] }}" alt="{{ $promoSlide['title'] }}" style="height: clamp(20rem, 42vh, 28rem); width: 100%; object-fit: contain; background: #fff;">
+                                                More Info
                                             </button>
-                                            <div style="border-top: 1px solid rgb(245 245 244); padding: 1.25rem 1.5rem 1.5rem;">
-                                                <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.22em; color: #d65f6d;">
-                                                    <span>{{ $promoSlide['promo_label'] }}</span>
-                                                    @if ($promoSlide['date_label'])
-                                                        <span style="color: #d6a24b;">{{ $promoSlide['date_label'] }}</span>
-                                                    @endif
-                                                </div>
-                                                <h4 style="margin-top: 0.85rem; font-size: 1.95rem; font-weight: 600; color: rgb(28 25 23);">{{ $promoSlide['title'] }}</h4>
-                                                @if ($promoSlide['summary'])
-                                                    <div style="margin-top: 0.85rem;">
-                                                        <p style="font-size: 1rem; line-height: 1.7rem; color: rgb(87 83 78);">{{ \Illuminate\Support\Str::limit($promoSlide['summary'], 360) }}</p>
-                                                        @if (\Illuminate\Support\Str::length($promoSlide['summary']) > 360)
-                                                            <details style="margin-top: 0.65rem;">
-                                                                <summary style="cursor: pointer; list-style: none; font-size: 0.9rem; font-weight: 600; color: #d65f6d;">
-                                                                    See more
-                                                                </summary>
-                                                                <div style="margin-top: 0.7rem; max-height: 210px; overflow-y: auto; padding-right: 0.35rem;">
-                                                                    <p style="font-size: 1rem; line-height: 1.7rem; color: rgb(87 83 78);">{{ $promoSlide['summary'] }}</p>
-                                                                </div>
-                                                            </details>
-                                                        @endif
-                                                    </div>
-                                                @endif
-                                                <p style="margin-top: 1.1rem; font-size: 0.76rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.18em; color: rgb(168 162 158);">
-                                                    {{ $promoSlide['range_label'] }}
-                                                </p>
-                                            </div>
-                                        </article>
-                                    @endforeach
+                                        </div>
+                                    @else
+                                        <div style="margin-top: 1rem; border-radius: 1.5rem; border: 1px dashed rgb(214 211 209); background: rgb(250 250 249); padding: 2.5rem 1.5rem; text-align: center; font-size: 0.95rem; line-height: 1.6rem; color: rgb(87 83 78);">
+                                            No past promotions are available yet.
+                                        </div>
+                                    @endif
                                 </div>
-                            @else
-                                <div style="margin-top: 1.25rem; border-radius: 1.25rem; border: 1px dashed rgb(214 211 209); background: rgb(250 250 249); padding: 2.5rem 1.25rem; text-align: center; font-size: 0.875rem; line-height: 1.5rem; color: rgb(87 83 78);">
-                                    No promotion is available yet.
-                                </div>
-                            @endif
-                        </div>
-
-                        <div class="promo-next-wrap" style="position: absolute; right: -1.1rem; top: 50%; z-index: 20; display: flex; align-items: center; justify-content: center; transform: translateY(-50%);">
-                            <button
-                                id="promo-next-button"
-                                type="button"
-                                style="display: inline-flex; height: 3.2rem; width: 3.2rem; align-items: center; justify-content: center; border: none; border-radius: 999px; background: rgba(255,255,255,0.9); box-shadow: 0 8px 18px rgba(15,23,42,0.12); font-size: 2.8rem; font-weight: 300; line-height: 1; color: #8aa0d7; transition: transform 0.2s ease, color 0.2s ease;"
-                                onmouseover="this.style.transform='scale(1.05)'; this.style.color='#6e87c9';"
-                                onmouseout="this.style.transform='scale(1)'; this.style.color='#8aa0d7';"
-                                aria-label="Show next promotion"
-                            >&rsaquo;</button>
-                        </div>
+                            </div>
+                        @else
+                            <div style="margin-top: 1.25rem; border-radius: 1.25rem; border: 1px dashed rgb(214 211 209); background: rgb(250 250 249); padding: 2.5rem 1.25rem; text-align: center; font-size: 0.875rem; line-height: 1.5rem; color: rgb(87 83 78);">
+                                No promotion is available yet.
+                            </div>
+                        @endif
                     </div>
                 </div>
             </section>
 
             <div
                 id="promo-detail-modal"
-                style="position: fixed; inset: 0; z-index: 80; display: none; align-items: center; justify-content: center; background: rgba(15,23,42,0.72); padding: 2rem;"
+                style="position: fixed; inset: 0; z-index: 80; display: none; align-items: flex-start; justify-content: center; background: rgba(15,23,42,0.72); padding: 4.5rem 2rem 2rem;"
             >
                 <div
                     id="promo-detail-panel"
-                    style="position: relative; width: min(1120px, 100%); max-height: 90vh; overflow-y: auto; border-radius: 1.5rem; background: #fff; box-shadow: 0 24px 60px rgba(15,23,42,0.24);"
+                    style="position: relative; width: min(1120px, 100%); height: min(760px, 88vh); margin-top: 2.25rem; border-radius: 1.5rem; background: #fff; box-shadow: 0 24px 60px rgba(15,23,42,0.24); overflow: hidden;"
                 >
                     <button
                         id="promo-detail-close"
@@ -591,12 +737,12 @@
                         aria-label="Close promotion details"
                     >&times;</button>
 
-                    <div class="promo-detail-layout" style="display: grid; gap: 0; grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);">
-                        <div class="promo-detail-media" style="display: flex; min-height: 78vh; align-items: center; justify-content: center; background: #fff; padding: 1.5rem;">
-                            <img id="promo-detail-image" src="" alt="" style="display: block; width: 100%; max-height: 72vh; object-fit: contain; background: #fff;">
+                    <div class="promo-detail-layout" style="display: grid; height: 100%; gap: 0; grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);">
+                        <div class="promo-detail-media" style="display: flex; height: 100%; align-items: center; justify-content: center; background: #fff; padding: 1.5rem;">
+                            <img id="promo-detail-image" src="" alt="" style="display: block; width: 100%; height: 100%; max-height: 680px; object-fit: contain; background: #fff;">
                         </div>
-                        <div style="padding: 1.75rem 1.75rem 2rem;">
-                            <p id="promo-detail-status" style="margin: 0; font-family: 'Oswald', sans-serif; font-size: 1rem; text-transform: uppercase; letter-spacing: 0.16em; color: #2f63bc;"></p>
+                        <div style="height: 100%; overflow-y: auto; padding: 1.75rem 1.75rem 2rem;">
+                            <p id="promo-detail-status" style="margin: 0; font-family: 'Oswald', sans-serif; font-size: 1rem; text-transform: uppercase; letter-spacing: 0.16em; color: #2563eb;"></p>
                             <div style="margin-top: 1rem; display: flex; flex-wrap: wrap; gap: 0.5rem; font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.18em; color: #d65f6d;">
                                 <span id="promo-detail-label"></span>
                                 <span id="promo-detail-date" style="color: #d6a24b;"></span>
@@ -610,7 +756,7 @@
             </div>
         </div>
 
-        <section id="popular-picks" class="-mt-14 home-screen-section relative overflow-hidden md:overflow-visible px-6 pb-8 pt-0 md:px-8 md:pb-10 md:pt-0">
+        <section id="popular-picks" class="-mt-20 home-screen-section relative overflow-hidden md:overflow-visible px-6 pb-8 pt-0 md:px-8 md:pb-10 md:pt-0">
 
                 <div class="mb-4 flex flex-col gap-4 md:flex-row md:items-center">
                     <div class="hidden md:block md:w-[18rem]"></div>
@@ -625,7 +771,7 @@
                     </div>
                 </div>
 
-            <div class="relative mx-auto rounded-[2rem] bg-white px-5 py-3 shadow-[0_18px_40px_rgba(15,23,42,0.10)] md:overflow-visible md:px-8 md:py-7" style="max-width: 1920px;">
+            <div class="relative mx-auto rounded-[2rem] bg-white px-5 py-3 md:overflow-visible md:px-8 md:py-7" style="max-width: 1920px;">
                 <div class="popular-picks-mobile-nav hidden items-center justify-between px-2 pb-2 md:hidden">
                     <button
                         type="button"
@@ -703,10 +849,10 @@
             </div>
         </section>
 
-        <section
+<section
     class="home-screen-section"
     id="transport"
-    style="position: relative; overflow: hidden; box-sizing: border-box; min-height: calc(100svh - var(--home-header-offset, 0px) + 40px); margin-top: -1.5rem; margin-left: calc(50% - 50vw); margin-right: calc(50% - 50vw); box-shadow: 0 20px 60px rgba(15,23,42,0.18);"
+    style="position: relative; overflow: hidden; box-sizing: border-box; min-height: calc(100svh - var(--home-header-offset, 0px) + 40px); margin-top: -0.75rem; margin-left: calc(50% - 50vw); margin-right: calc(50% - 50vw);"
 >
     @php
         $transportImageMap = [
@@ -733,8 +879,6 @@
     @endphp
 
     <div style="position: absolute; inset: 0; background-image: url('{{ asset('images/transport.png') }}'); background-size: cover; background-position: center center; background-repeat: no-repeat;"></div>
-    <div style="position: absolute; inset: 0; background: linear-gradient(180deg, rgba(7,29,58,0.18), rgba(7,29,58,0.08));"></div>
-
     <div class="transport-shell" style="position: relative; z-index: 2; min-height: 100%; width: 100%; padding: 1.5rem 3rem calc(2.25rem + 20px);">
 
     <div style="display: flex; min-height: 100%; width: 100%; align-items: center; justify-content: flex-start;">
@@ -1432,99 +1576,137 @@
     </script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            const promoCarousel = document.getElementById('promo-carousel');
-            const prevButton = document.getElementById('promo-prev-button');
-            const nextButton = document.getElementById('promo-next-button');
+            const pastPromos = @json($pastPromoSlides ?? []);
+            const pastTrigger = document.getElementById('promo-past-trigger');
+            const pastImage = document.getElementById('promo-past-image');
+            const pastMoreInfoButton = document.getElementById('promo-past-more-info');
+            const prevButton = document.getElementById('promo-past-prev-button');
+            const nextButton = document.getElementById('promo-past-next-button');
+            const promoCardsRow = document.getElementById('promo-cards-row');
+            const pastCardShell = document.getElementById('promo-past-card-shell');
+            const pastInfoShell = document.getElementById('promo-past-info-shell');
+            const pastCollapseButton = document.getElementById('promo-past-collapse');
+            const pastLabel = document.getElementById('promo-past-label');
+            const pastDate = document.getElementById('promo-past-date');
+            const pastTitle = document.getElementById('promo-past-title');
+            const pastSummary = document.getElementById('promo-past-summary');
+            const pastRange = document.getElementById('promo-past-range');
+            const currentCardShell = document.getElementById('promo-current-card-shell');
+            const currentPoster = document.getElementById('promo-current-poster');
+            const currentInfoShell = document.getElementById('promo-current-info-shell');
+            const currentCollapseButton = document.getElementById('promo-current-collapse');
+            const currentExpandButton = document.getElementById('promo-current-expand');
 
-            if (!promoCarousel || !prevButton || !nextButton) {
+            const syncPromoRowGap = () => {
+                if (!promoCardsRow) {
+                    return;
+                }
+
+                const currentOpen = currentInfoShell && currentInfoShell.style.maxWidth && currentInfoShell.style.maxWidth !== '0';
+                const pastOpen = pastInfoShell && pastInfoShell.style.maxWidth && pastInfoShell.style.maxWidth !== '0';
+                promoCardsRow.style.gap = currentOpen || pastOpen ? '1.1rem' : '0.45rem';
+            };
+
+            if (currentCardShell && currentPoster && currentInfoShell && currentCollapseButton && currentExpandButton) {
+                const collapseCurrentInfo = () => {
+                    currentInfoShell.style.display = 'none';
+                    currentInfoShell.style.maxWidth = '0';
+                    currentInfoShell.style.opacity = '0';
+                    currentInfoShell.style.margin = '0';
+                    currentCardShell.style.width = 'fit-content';
+                    currentCardShell.style.maxWidth = '100%';
+                    currentExpandButton.style.display = 'inline-flex';
+                    syncPromoRowGap();
+                };
+
+                const expandCurrentInfo = () => {
+                    currentInfoShell.style.display = 'block';
+                    currentInfoShell.style.maxWidth = '34rem';
+                    currentInfoShell.style.opacity = '1';
+                    currentInfoShell.style.margin = '0 0 0 0.8rem';
+                    currentCardShell.style.width = 'fit-content';
+                    currentCardShell.style.maxWidth = '100%';
+                    currentExpandButton.style.display = 'none';
+                    syncPromoRowGap();
+                };
+
+                currentCollapseButton.addEventListener('click', collapseCurrentInfo);
+                currentExpandButton.addEventListener('click', expandCurrentInfo);
+                collapseCurrentInfo();
+            }
+
+            if (pastCardShell && pastInfoShell && pastCollapseButton && pastMoreInfoButton) {
+                const collapsePastInfo = () => {
+                    pastInfoShell.style.display = 'none';
+                    pastInfoShell.style.maxWidth = '0';
+                    pastInfoShell.style.opacity = '0';
+                    pastInfoShell.style.margin = '0';
+                    pastCardShell.style.width = 'fit-content';
+                    pastCardShell.style.maxWidth = '100%';
+                    pastMoreInfoButton.style.display = 'inline-flex';
+                    syncPromoRowGap();
+                };
+
+                const expandPastInfo = () => {
+                    pastInfoShell.style.display = 'block';
+                    pastInfoShell.style.maxWidth = '34rem';
+                    pastInfoShell.style.opacity = '1';
+                    pastInfoShell.style.margin = '0 0 0 0.8rem';
+                    pastCardShell.style.width = 'fit-content';
+                    pastCardShell.style.maxWidth = '100%';
+                    pastMoreInfoButton.style.display = 'none';
+                    syncPromoRowGap();
+                };
+
+                pastCollapseButton.addEventListener('click', collapsePastInfo);
+                pastMoreInfoButton.addEventListener('click', expandPastInfo);
+                collapsePastInfo();
+            }
+
+            if (!pastPromos.length || !pastTrigger || !pastImage || !prevButton || !nextButton) {
                 return;
             }
 
-            const promoItems = Array.from(promoCarousel.querySelectorAll('.promo-slide-item'));
-            let isAnimating = false;
             let activePromoIndex = 0;
 
-            const renderPromo = (index) => {
-                activePromoIndex = (index + promoItems.length) % promoItems.length;
+            const syncPastPromo = (promo) => {
+                pastImage.src = promo.poster_url ?? '';
+                pastImage.alt = promo.title ?? 'Past promotion poster';
 
-                promoItems.forEach((item, itemIndex) => {
-                    const isActive = itemIndex === activePromoIndex;
-                    item.style.opacity = isActive ? '1' : '0';
-                    item.style.transform = isActive ? 'translateX(0)' : 'translateX(70px)';
-                    item.style.pointerEvents = isActive ? 'auto' : 'none';
-                });
+                pastTrigger.dataset.promoTitle = promo.title ?? '';
+                pastTrigger.dataset.promoSummary = promo.summary ?? '';
+                pastTrigger.dataset.promoPoster = promo.poster_url ?? '';
+                pastTrigger.dataset.promoLabel = promo.promo_label ?? '';
+                pastTrigger.dataset.promoDate = promo.date_label ?? '';
+                pastTrigger.dataset.promoRange = promo.range_label ?? '';
+                pastTrigger.dataset.promoStatus = promo.status ?? 'Past Promotion';
+
+                if (pastLabel) pastLabel.textContent = promo.promo_label ?? '';
+                if (pastDate) pastDate.textContent = promo.date_label ?? '';
+                if (pastTitle) pastTitle.textContent = promo.title ?? '';
+                if (pastSummary) pastSummary.textContent = promo.summary ?? '';
+                if (pastRange) pastRange.textContent = promo.range_label ?? '';
             };
 
-            const animateToPromo = (index, direction = 1) => {
-                if (!promoItems.length || isAnimating) {
-                    return;
-                }
-
-                const nextIndex = (index + promoItems.length) % promoItems.length;
-
-                if (nextIndex === activePromoIndex) {
-                    return;
-                }
-
-                isAnimating = true;
-
-                const currentItem = promoItems[activePromoIndex];
-                const nextItem = promoItems[nextIndex];
-
-                nextItem.style.transition = 'none';
-                nextItem.style.opacity = '0';
-                nextItem.style.transform = 'translateX(70px)';
-                nextItem.style.pointerEvents = 'none';
-
-                requestAnimationFrame(() => {
-                    nextItem.style.transition = 'transform 0.4s ease, opacity 0.4s ease';
-                    currentItem.style.transition = 'transform 0.4s ease, opacity 0.4s ease';
-
-                    currentItem.style.opacity = '0';
-                    currentItem.style.transform = direction > 0 ? 'translateX(-70px)' : 'translateX(70px)';
-                    currentItem.style.pointerEvents = 'none';
-
-                    nextItem.style.opacity = '1';
-                    nextItem.style.transform = 'translateX(0)';
-                    nextItem.style.pointerEvents = 'auto';
-
-                    window.setTimeout(() => {
-                        promoItems.forEach((item, itemIndex) => {
-                            if (itemIndex !== nextIndex) {
-                                item.style.opacity = '0';
-                                item.style.transform = 'translateX(70px)';
-                                item.style.pointerEvents = 'none';
-                            }
-                        });
-
-                        activePromoIndex = nextIndex;
-                        isAnimating = false;
-                    }, 420);
-                });
+            const renderPastPromo = (nextIndex) => {
+                activePromoIndex = (nextIndex + pastPromos.length) % pastPromos.length;
+                syncPastPromo(pastPromos[activePromoIndex]);
             };
 
-            if (promoItems.length <= 1) {
-                renderPromo(0);
-                return;
+            if (pastPromos.length <= 1) {
+                prevButton.style.display = 'none';
+                nextButton.style.display = 'none';
             }
 
             nextButton.addEventListener('click', () => {
-                if (promoItems.length <= 1) {
-                    return;
-                }
-
-                animateToPromo(activePromoIndex + 1, 1);
+                renderPastPromo(activePromoIndex + 1);
             });
 
             prevButton.addEventListener('click', () => {
-                if (promoItems.length <= 1) {
-                    return;
-                }
-
-                animateToPromo(activePromoIndex - 1, -1);
+                renderPastPromo(activePromoIndex - 1);
             });
 
-            renderPromo(0);
+            renderPastPromo(0);
         });
     </script>
     <script>

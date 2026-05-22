@@ -14,6 +14,23 @@
         $bookingSubmitLabel = $isReserveForm
             ? 'Submit Reserve Form'
             : ($isInstantBookForm ? 'Submit Instant Booking' : 'Submit Booking');
+        $rawPhoneValue = old('phone', auth()->user()->phone ?? '');
+        $defaultPhoneCountryCode = '+60';
+        $selectedPhoneCountryCode = old('phone_country_code');
+        $phoneLocalNumber = old('phone_local_number');
+
+        if (!$selectedPhoneCountryCode && is_string($rawPhoneValue) && $rawPhoneValue !== '') {
+            foreach (array_keys($phoneCountryCodes ?? []) as $phoneCountryCode) {
+                if (str_starts_with($rawPhoneValue, $phoneCountryCode)) {
+                    $selectedPhoneCountryCode = $phoneCountryCode;
+                    $phoneLocalNumber = ltrim(substr($rawPhoneValue, strlen($phoneCountryCode)), " \t\n\r\0\x0B-()");
+                    break;
+                }
+            }
+        }
+
+        $selectedPhoneCountryCode = $selectedPhoneCountryCode ?: $defaultPhoneCountryCode;
+        $phoneLocalNumber = is_string($phoneLocalNumber) ? $phoneLocalNumber : '';
     @endphp
     <main class="mx-auto max-w-[96rem] px-5 py-8 lg:px-10">
         <div class="mb-6 flex items-start justify-between gap-4">
@@ -46,7 +63,7 @@
                 </div>
             @endif
 
-            <form method="POST" action="{{ route('bookings.store') }}" class="mt-6 space-y-6">
+            <form method="POST" action="{{ route('bookings.store') }}" class="mt-6 space-y-6" data-form-persist="customer-booking-{{ $isEnquiry ? 'enquiry' : ($actionType ?? 'booking') }}">
                 @csrf
                 <input type="hidden" name="form_mode" value="{{ $isEnquiry ? 'enquiry' : 'booking' }}">
                 <input type="hidden" name="action_type" value="{{ $actionType }}">
@@ -68,10 +85,10 @@
                                     data-category="{{ $selectedProduct->category }}"
                                     data-name="{{ $selectedProduct->name }}"
                                     data-duration="{{ $selectedProduct->duration }}"
-                                    data-malaysia-adult="{{ $selectedProduct->malaysia_adult_price_myr }}"
-                                    data-malaysia-child="{{ $selectedProduct->malaysia_child_price_myr }}"
-                                    data-international-adult="{{ $selectedProduct->international_adult_price_myr }}"
-                                    data-international-child="{{ $selectedProduct->international_child_price_myr }}"
+                                    data-malaysia-adult="{{ $selectedProduct->discounted_malaysia_adult_price_myr }}"
+                                    data-malaysia-child="{{ $selectedProduct->discounted_malaysia_child_price_myr }}"
+                                    data-international-adult="{{ $selectedProduct->discounted_international_adult_price_myr }}"
+                                    data-international-child="{{ $selectedProduct->discounted_international_child_price_myr }}"
                                     selected
                                 >{{ $selectedProduct->name }} - {{ ucfirst($selectedProduct->category) }}</option>
                             </select>
@@ -85,10 +102,10 @@
                                         data-category="transport"
                                         data-name="{{ $product->name }}"
                                         data-duration="{{ $product->duration }}"
-                                        data-malaysia-adult="{{ $product->malaysia_adult_price_myr }}"
-                                        data-malaysia-child="{{ $product->malaysia_child_price_myr }}"
-                                        data-international-adult="{{ $product->international_adult_price_myr }}"
-                                        data-international-child="{{ $product->international_child_price_myr }}"
+                                        data-malaysia-adult="{{ $product->discounted_malaysia_adult_price_myr }}"
+                                        data-malaysia-child="{{ $product->discounted_malaysia_child_price_myr }}"
+                                        data-international-adult="{{ $product->discounted_international_adult_price_myr }}"
+                                        data-international-child="{{ $product->discounted_international_child_price_myr }}"
                                         @selected(old('product_id') == $product->id || ($selectedProduct && $selectedProduct->id == $product->id))
                                     >{{ $product->name }} - Transport</option>
                                 @endforeach
@@ -98,10 +115,10 @@
                                         data-category="package"
                                         data-name="{{ $product->name }}"
                                         data-duration="{{ $product->duration }}"
-                                        data-malaysia-adult="{{ $product->malaysia_adult_price_myr }}"
-                                        data-malaysia-child="{{ $product->malaysia_child_price_myr }}"
-                                        data-international-adult="{{ $product->international_adult_price_myr }}"
-                                        data-international-child="{{ $product->international_child_price_myr }}"
+                                        data-malaysia-adult="{{ $product->discounted_malaysia_adult_price_myr }}"
+                                        data-malaysia-child="{{ $product->discounted_malaysia_child_price_myr }}"
+                                        data-international-adult="{{ $product->discounted_international_adult_price_myr }}"
+                                        data-international-child="{{ $product->discounted_international_child_price_myr }}"
                                         @selected(old('product_id') == $product->id || ($selectedProduct && $selectedProduct->id == $product->id))
                                     >{{ $product->name }} - Package</option>
                                 @endforeach
@@ -141,8 +158,16 @@
                             </div>
                         </div>
                         <div class="mt-3">
-                            <label for="phone" class="mb-2 block text-sm font-medium text-stone-700">Phone <span class="text-rose-600">*</span></label>
-                            <input id="phone" name="phone" type="tel" value="{{ old('phone', auth()->user()->phone ?? '') }}" class="w-full rounded-2xl border border-stone-300 bg-white px-4 py-3 text-stone-800" autocomplete="tel" inputmode="tel" pattern="^\+[0-9\s\-()]{8,25}$" maxlength="25" placeholder="+60 12-345 6789" required>
+                            <label for="phone_local_number" class="mb-2 block text-sm font-medium text-stone-700">Phone <span class="text-rose-600">*</span></label>
+                            <div class="grid gap-3 sm:grid-cols-[12rem_minmax(0,1fr)]">
+                                <select id="phone_country_code" name="phone_country_code" class="w-full rounded-2xl border border-stone-300 bg-white px-4 py-3 text-stone-800" autocomplete="tel-country-code" required>
+                                    @foreach ($phoneCountryCodes as $code => $label)
+                                        <option value="{{ $code }}" @selected($selectedPhoneCountryCode === $code)>{{ $label }}</option>
+                                    @endforeach
+                                </select>
+                                <input id="phone_local_number" name="phone_local_number" type="tel" value="{{ $phoneLocalNumber }}" class="w-full rounded-2xl border border-stone-300 bg-white px-4 py-3 text-stone-800" autocomplete="tel-national" inputmode="tel" maxlength="20" placeholder="12-345 6789" required>
+                            </div>
+                            <p class="mt-2 text-xs text-stone-500">Choose the country code, then enter the rest of your phone number without the leading `+`.</p>
                         </div>
                     </div>
 
@@ -187,8 +212,16 @@
                             </div>
                         </div>
                         <div class="mt-3">
-                            <label for="phone" class="mb-2 block text-sm font-medium text-stone-700">Phone <span class="text-rose-600">*</span></label>
-                            <input id="phone" name="phone" type="tel" value="{{ old('phone', auth()->user()->phone ?? '') }}" class="w-full rounded-2xl border border-stone-300 bg-white px-4 py-3 text-stone-800" autocomplete="tel" inputmode="tel" pattern="^\+[0-9\s\-()]{8,25}$" maxlength="25" placeholder="+60 12-345 6789" required>
+                            <label for="phone_local_number" class="mb-2 block text-sm font-medium text-stone-700">Phone <span class="text-rose-600">*</span></label>
+                            <div class="grid gap-3 sm:grid-cols-[12rem_minmax(0,1fr)]">
+                                <select id="phone_country_code" name="phone_country_code" class="w-full rounded-2xl border border-stone-300 bg-white px-4 py-3 text-stone-800" autocomplete="tel-country-code" required>
+                                    @foreach ($phoneCountryCodes as $code => $label)
+                                        <option value="{{ $code }}" @selected($selectedPhoneCountryCode === $code)>{{ $label }}</option>
+                                    @endforeach
+                                </select>
+                                <input id="phone_local_number" name="phone_local_number" type="tel" value="{{ $phoneLocalNumber }}" class="w-full rounded-2xl border border-stone-300 bg-white px-4 py-3 text-stone-800" autocomplete="tel-national" inputmode="tel" maxlength="20" placeholder="12-345 6789" required>
+                            </div>
+                            <p class="mt-2 text-xs text-stone-500">Choose the country code, then enter the rest of your phone number without the leading `+`.</p>
                         </div>
                         <div class="mt-3">
                             <label for="pickup_location" class="mb-2 block text-sm font-medium text-stone-700">Pickup location <span class="text-rose-600">*</span></label>
@@ -266,7 +299,7 @@
                                 {{ $selectedProduct?->name ? $selectedProduct->name.' pricing' : 'Select a product to view pricing' }}
                             </h2>
                         </div>
-                        <p class="text-xs text-stone-500">Rates shown in MYR before currency conversion.</p>
+                        <p class="text-xs text-stone-500">Rates shown in MYR before currency conversion, with package discounts applied automatically when available.</p>
                     </div>
                     <div class="mt-4 grid gap-3 md:grid-cols-2">
                         <div class="rounded-[1.25rem] border border-blue-200 bg-white p-4">
@@ -275,13 +308,13 @@
                                 <div>
                                     <p class="text-sm text-stone-500">Adult</p>
                                     <p class="mt-1 text-xl font-semibold text-stone-900" id="booking-malaysia-adult">
-                                        {{ $selectedProduct ? 'RM '.number_format((float) $selectedProduct->malaysia_adult_price_myr, 2) : '--' }}
+                                        {{ $selectedProduct ? 'RM '.number_format((float) $selectedProduct->discounted_malaysia_adult_price_myr, 2) : '--' }}
                                     </p>
                                 </div>
                                 <div>
                                     <p class="text-sm text-stone-500">Child</p>
                                     <p class="mt-1 text-xl font-semibold text-stone-900" id="booking-malaysia-child">
-                                        {{ $selectedProduct ? 'RM '.number_format((float) $selectedProduct->malaysia_child_price_myr, 2) : '--' }}
+                                        {{ $selectedProduct ? 'RM '.number_format((float) $selectedProduct->discounted_malaysia_child_price_myr, 2) : '--' }}
                                     </p>
                                 </div>
                             </div>
@@ -292,13 +325,13 @@
                                 <div>
                                     <p class="text-sm text-stone-500">Adult</p>
                                     <p class="mt-1 text-xl font-semibold text-stone-900" id="booking-international-adult">
-                                        {{ $selectedProduct ? 'RM '.number_format((float) $selectedProduct->international_adult_price_myr, 2) : '--' }}
+                                        {{ $selectedProduct ? 'RM '.number_format((float) $selectedProduct->discounted_international_adult_price_myr, 2) : '--' }}
                                     </p>
                                 </div>
                                 <div>
                                     <p class="text-sm text-stone-500">Child</p>
                                     <p class="mt-1 text-xl font-semibold text-stone-900" id="booking-international-child">
-                                        {{ $selectedProduct ? 'RM '.number_format((float) $selectedProduct->international_child_price_myr, 2) : '--' }}
+                                        {{ $selectedProduct ? 'RM '.number_format((float) $selectedProduct->discounted_international_child_price_myr, 2) : '--' }}
                                     </p>
                                 </div>
                             </div>
@@ -420,6 +453,47 @@
             </div>
         </section>
     </main>
+
+    <footer class="border-t border-stone-200/80 bg-stone-950 text-stone-200">
+        <div class="mx-auto grid max-w-[1700px] gap-8 px-6 py-12 lg:grid-cols-[1.2fr_0.8fr_0.8fr] lg:px-10">
+            <div>
+                <div class="flex items-center gap-4">
+                    <img src="{{ asset('images/ue_logo.jpg') }}" alt="Universal Eden Logo" class="h-12 w-12 rounded-full object-cover ring-2 ring-white/10">
+                    <div>
+                        <p class="font-['Prata'] text-xl text-white">Universal Eden Holidays</p>
+                        <p class="text-sm uppercase tracking-[0.28em] text-sky-200/80">Sabah Packages & Transport</p>
+                    </div>
+                </div>
+                <p class="mt-4 max-w-xl text-sm leading-7 text-stone-300">
+                    Plan your Sabah trip with transport services, curated travel packages, and support from our local team. Use this form to send an enquiry, reserve your slot, or complete a booking request.
+                </p>
+            </div>
+
+            <div>
+                <p class="text-sm font-semibold uppercase tracking-[0.26em] text-white">Explore</p>
+                <div class="mt-4 space-y-3 text-sm text-stone-300">
+                    <a href="{{ route('home') }}#promos" class="block transition hover:text-white">Promos</a>
+                    <a href="{{ route('home') }}#transport" class="block transition hover:text-white">Transport</a>
+                    <a href="{{ route('home') }}#packages-showcase" class="block transition hover:text-white">Packages</a>
+                    <a href="{{ route('home') }}#testimonials" class="block transition hover:text-white">Testimonials</a>
+                    <a href="{{ route('home') }}#about-us" class="block transition hover:text-white">About Us</a>
+                </div>
+            </div>
+
+            <div>
+                <p class="text-sm font-semibold uppercase tracking-[0.26em] text-white">Booking Help</p>
+                <div class="mt-4 space-y-3 text-sm text-stone-300">
+                    <a href="{{ route('bookings.track.form') }}" class="block transition hover:text-white">Track Booking ID</a>
+                    <a href="{{ route('home') }}" class="block transition hover:text-white">Back to Home</a>
+                    <p>Support hours: 9:00 AM - 6:00 PM</p>
+                    <p>Email: support@universaledenholidays.com</p>
+                </div>
+            </div>
+        </div>
+        <div class="border-t border-white/10 px-6 py-4 text-center text-xs uppercase tracking-[0.22em] text-stone-400 lg:px-10">
+            <p>Adcey &copy; Universal Eden Holidays - {{ now()->year }}</p>
+        </div>
+    </footer>
 
     <style>
         .calendar-card {

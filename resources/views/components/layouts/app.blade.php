@@ -112,6 +112,7 @@
                                         <path d="M9 21v-6h6v6" />
                                     </svg>
                                 </a>
+                                <a href="{{ route('home') }}#promos" class="transition hover:text-sky-700">Promotion</a>
                                 <a href="{{ route('home') }}#transport" class="transition hover:text-sky-700">Transport</a>
                                 <a href="{{ route('home') }}#packages-showcase" class="transition hover:text-sky-700">Packages</a>
                                 <a href="{{ route('home') }}#testimonials" class="transition hover:text-sky-700">Testimonials</a>

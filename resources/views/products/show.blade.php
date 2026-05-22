@@ -24,6 +24,14 @@
                         : $product->name.' gallery image '.($index + 1),
                 ])
                 ->values();
+            $serviceInclusions = is_array($product->service_inclusions) ? $product->service_inclusions : [];
+            $structuredServiceInclusions = collect($serviceInclusions)
+                ->filter(fn ($item) => is_array($item) && array_key_exists('value', $item))
+                ->values();
+            $itineraryItems = collect($product->itinerary_items ?? [])->filter()->values();
+            $structuredItineraryItems = $itineraryItems
+                ->filter(fn ($item) => is_array($item) && array_key_exists('activity', $item))
+                ->values();
         @endphp
 
         @if ($isTransport)
@@ -99,6 +107,7 @@
                         <div class="rounded-[1.25rem] border border-stone-200 bg-stone-50 px-4 py-3 text-sm leading-6 text-stone-600">
                             Transport listings are information-only here. Please review the vehicle details and contact the team directly for arrangement support.
                         </div>
+                        <a href="{{ route('booking.create', ['product_id' => $product->id, 'mode' => 'enquiry']) }}" class="rounded-full border border-amber-400 px-5 py-3 text-sm font-semibold text-amber-600 transition hover:bg-amber-50">Send Enquiry</a>
                     </div>
                 </section>
             </aside>
@@ -197,50 +206,80 @@
                     </div>
                 </section>
 
+                <section class="rounded-[2rem] border border-stone-200 bg-white p-6 shadow-sm">
+                    <h2 class="text-2xl font-semibold text-stone-900">Service Inclusion</h2>
+                    <div class="mt-6 overflow-hidden rounded-3xl border border-stone-200">
+                        <table class="min-w-full text-left text-sm">
+                            <tbody class="bg-white text-stone-700">
+                                @if ($structuredServiceInclusions->isNotEmpty())
+                                    @foreach ($structuredServiceInclusions as $item)
+                                        <tr class="{{ $loop->last ? '' : 'border-b border-stone-200' }}">
+                                            <th class="w-48 bg-stone-50 px-5 py-4 font-semibold">{{ $item['label'] ?: 'Item '.$loop->iteration }}</th>
+                                            <td class="px-5 py-4">{{ $item['value'] ?: '--' }}</td>
+                                        </tr>
+                                    @endforeach
+                                @else
+                                    <tr class="border-b border-stone-200">
+                                        <th class="w-48 bg-stone-50 px-5 py-4 font-semibold">Meals</th>
+                                        <td class="px-5 py-4">{{ ($serviceInclusions['meals'] ?? '') ?: 'Subject to package or service arrangement.' }}</td>
+                                    </tr>
+                                    <tr class="border-b border-stone-200">
+                                        <th class="bg-stone-50 px-5 py-4 font-semibold">Inclusion</th>
+                                        <td class="px-5 py-4">{{ ($serviceInclusions['inclusion'] ?? '') ?: 'Core service delivery, support coordination, and supplier-side arrangements as stated.' }}</td>
+                                    </tr>
+                                    <tr class="border-b border-stone-200">
+                                        <th class="bg-stone-50 px-5 py-4 font-semibold">Accommodation</th>
+                                        <td class="px-5 py-4">{{ ($serviceInclusions['accommodation'] ?? '') ?: 'Included where relevant for package and overnight products.' }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th class="bg-stone-50 px-5 py-4 font-semibold">Exclusion</th>
+                                        <td class="px-5 py-4">{{ ($serviceInclusions['exclusion'] ?? '') ?: 'Flights, personal travel insurance, personal spending, and unlisted add-ons.' }}</td>
+                                    </tr>
+                                @endif
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
             </aside>
         </section>
         @endif
 
         @if ($product->category !== 'transport')
-            <section class="mt-8 rounded-[2rem] border border-stone-200 bg-white p-6 shadow-sm">
-                <h2 class="text-3xl font-semibold text-stone-900">{{ $product->name }}</h2>
-                <div class="mt-5 rounded-3xl bg-stone-50 p-5 text-sm leading-8 text-stone-600">
-                    <ul class="space-y-2">
-                        <li>The prices shown are quoted in Ringgit Malaysia (MYR).</li>
-                        <li>Malaysia and international rates are shown separately for adult and child guests.</li>
-                        <li>Booking totals will be calculated automatically based on the guest mix entered in the booking form.</li>
-                        <li>Rates may change based on seasonality, park fees, or supplier availability.</li>
-                        <li>Our team will reconfirm all reservations before final fulfillment.</li>
-                    </ul>
-                </div>
-            </section>
-
-            <section class="mt-8 rounded-[2rem] border border-stone-200 bg-white p-6 shadow-sm">
-                <h2 class="text-2xl font-semibold text-stone-900">Service Inclusion</h2>
-                <div class="mt-6 overflow-hidden rounded-3xl border border-stone-200">
-                    <table class="min-w-full text-left text-sm">
-                        <tbody class="bg-white text-stone-700">
-                            <tr class="border-b border-stone-200">
-                                <th class="w-48 bg-stone-50 px-5 py-4 font-semibold">Meals</th>
-                                <td class="px-5 py-4">Subject to package or service arrangement.</td>
-                            </tr>
-                            <tr class="border-b border-stone-200">
-                                <th class="bg-stone-50 px-5 py-4 font-semibold">Inclusion</th>
-                                <td class="px-5 py-4">Core service delivery, support coordination, and supplier-side arrangements as stated.</td>
-                            </tr>
-                            <tr class="border-b border-stone-200">
-                                <th class="bg-stone-50 px-5 py-4 font-semibold">Accommodation</th>
-                                <td class="px-5 py-4">Included where relevant for package and overnight products.</td>
-                            </tr>
-                            <tr>
-                                <th class="bg-stone-50 px-5 py-4 font-semibold">Exclusion</th>
-                                <td class="px-5 py-4">Flights, personal travel insurance, personal spending, and unlisted add-ons.</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </section>
-
+            @if ($itineraryItems->isNotEmpty())
+                <section class="mt-8 rounded-[2rem] border border-stone-200 bg-white p-6 shadow-sm">
+                    <h2 class="text-3xl font-semibold text-stone-900">Itinerary</h2>
+                    @if ($structuredItineraryItems->isNotEmpty())
+                        <div class="mt-6 overflow-hidden rounded-3xl border border-stone-200">
+                            <table class="min-w-full text-left text-sm">
+                                <thead class="bg-stone-100 text-stone-700">
+                                    <tr>
+                                        <th class="w-40 px-5 py-4 font-semibold">Day Number</th>
+                                        <th class="w-44 px-5 py-4 font-semibold">Time</th>
+                                        <th class="px-5 py-4 font-semibold">Activity</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white text-stone-700">
+                                    @foreach ($structuredItineraryItems as $item)
+                                        <tr class="border-t border-stone-200">
+                                            <td class="px-5 py-4 font-semibold text-stone-900">{{ $item['day_number'] ?? 'Day '.$loop->iteration }}</td>
+                                            <td class="px-5 py-4">{{ $item['time'] ?: '--' }}</td>
+                                            <td class="px-5 py-4">{{ $item['activity'] ?? '' }}</td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    @else
+                        <div class="mt-6 grid gap-4">
+                            @foreach ($itineraryItems as $item)
+                                <div class="rounded-[1.5rem] border border-stone-200 bg-stone-50 px-5 py-4 text-sm leading-7 text-stone-700">
+                                    {{ $item }}
+                                </div>
+                            @endforeach
+                        </div>
+                    @endif
+                </section>
+            @endif
             <section class="mt-8 rounded-[2rem] border border-stone-200 bg-white p-6 shadow-sm">
                 <div class="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
                     <div>
@@ -573,8 +612,8 @@
         </div>
     </footer>
 
-    <div id="product-image-preview-modal" class="fixed inset-0 z-[260] hidden items-center justify-center bg-stone-950/80 px-4 py-6">
-        <div class="w-full max-w-6xl rounded-[1.75rem] bg-white shadow-[0_24px_60px_rgba(15,23,42,0.28)]">
+    <div id="product-image-preview-modal" class="fixed inset-0 z-[260] hidden items-center justify-center bg-stone-950/80 px-2 py-6">
+        <div class="w-full rounded-[1.75rem] bg-white shadow-[0_24px_60px_rgba(15,23,42,0.28)]" style="max-width: min(1100px, calc(100vw - 1rem));">
             <div class="flex items-center justify-between border-b border-stone-200 px-4 py-3">
                 <div>
                     <p class="text-sm font-semibold text-stone-800">Image preview</p>
@@ -582,10 +621,12 @@
                 </div>
                 <button type="button" id="product-image-preview-close" class="inline-flex h-9 w-9 items-center justify-center rounded-full border border-stone-200 bg-white text-lg leading-none text-stone-500 transition hover:bg-stone-100" aria-label="Close image preview">&times;</button>
             </div>
-            <div class="relative flex max-h-[80vh] items-center justify-center overflow-auto p-4">
+            <div class="relative flex max-h-[88vh] items-center justify-center overflow-auto p-2">
                 <button type="button" id="product-image-preview-prev" class="absolute left-4 top-1/2 z-20 inline-flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-2xl leading-none text-stone-700 shadow-lg transition hover:bg-white" aria-label="Previous image">&#8249;</button>
-                <img id="product-image-preview-image" src="" alt="" class="max-h-[72vh] w-auto max-w-full rounded-[1.25rem] object-contain">
-                <img src="{{ asset('images/UE.png') }}" alt="Universal Eden trademark" class="pointer-events-none absolute z-10 h-14 w-auto opacity-90" style="right: 1.5rem; bottom: 1.5rem;">
+                <div id="product-image-preview-frame" class="relative inline-flex items-center justify-center" style="width: min(56vw, 980px); height: 68vh;">
+                    <img id="product-image-preview-image" src="" alt="" class="rounded-[1.25rem] object-contain" style="width: min(56vw, 980px); height: 68vh;">
+                    <img id="product-image-preview-trademark" src="{{ asset('images/UE.png') }}" alt="Universal Eden trademark" class="pointer-events-none absolute z-10 h-14 w-auto opacity-90" style="right: 1.5rem; bottom: 1.5rem;">
+                </div>
                 <button type="button" id="product-image-preview-next" class="absolute right-4 top-1/2 z-20 inline-flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-2xl leading-none text-stone-700 shadow-lg transition hover:bg-white" aria-label="Next image">&#8250;</button>
             </div>
         </div>
@@ -595,16 +636,49 @@
         document.addEventListener('DOMContentLoaded', () => {
             const previewImages = @json($previewImages);
             const modal = document.getElementById('product-image-preview-modal');
+            const imageFrame = document.getElementById('product-image-preview-frame');
             const modalImage = document.getElementById('product-image-preview-image');
+            const trademark = document.getElementById('product-image-preview-trademark');
             const closeButton = document.getElementById('product-image-preview-close');
             const prevButton = document.getElementById('product-image-preview-prev');
             const nextButton = document.getElementById('product-image-preview-next');
             const countLabel = document.getElementById('product-image-preview-count');
             let activeIndex = 0;
 
-            if (!modal || !modalImage || !closeButton || !prevButton || !nextButton || !countLabel || !previewImages.length) {
+            if (!modal || !imageFrame || !modalImage || !trademark || !closeButton || !prevButton || !nextButton || !countLabel || !previewImages.length) {
                 return;
             }
+
+            const positionTrademark = () => {
+                const naturalWidth = modalImage.naturalWidth;
+                const naturalHeight = modalImage.naturalHeight;
+                const frameWidth = imageFrame.clientWidth;
+                const frameHeight = imageFrame.clientHeight;
+
+                if (!naturalWidth || !naturalHeight || !frameWidth || !frameHeight) {
+                    trademark.style.right = '1.5rem';
+                    trademark.style.bottom = '1.5rem';
+                    return;
+                }
+
+                const imageRatio = naturalWidth / naturalHeight;
+                const frameRatio = frameWidth / frameHeight;
+
+                let renderedWidth = frameWidth;
+                let renderedHeight = frameHeight;
+
+                if (imageRatio > frameRatio) {
+                    renderedHeight = frameWidth / imageRatio;
+                } else {
+                    renderedWidth = frameHeight * imageRatio;
+                }
+
+                const offsetX = (frameWidth - renderedWidth) / 2;
+                const offsetY = (frameHeight - renderedHeight) / 2;
+
+                trademark.style.right = `${offsetX + 24}px`;
+                trademark.style.bottom = `${offsetY + 24}px`;
+            };
 
             const renderImage = () => {
                 const currentImage = previewImages[activeIndex];
@@ -616,6 +690,9 @@
                 modalImage.src = currentImage.src;
                 modalImage.alt = currentImage.alt;
                 countLabel.textContent = `Image ${activeIndex + 1} of ${previewImages.length}`;
+                modalImage.onload = () => {
+                    positionTrademark();
+                };
             };
 
             const closeModal = () => {
@@ -671,6 +748,12 @@
                     showPrevious();
                 } else if (event.key === 'ArrowRight') {
                     showNext();
+                }
+            });
+
+            window.addEventListener('resize', () => {
+                if (!modal.classList.contains('hidden')) {
+                    positionTrademark();
                 }
             });
         });

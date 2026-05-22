@@ -1,11 +1,36 @@
 @php($searchIdPrefix = $searchIdPrefix ?? 'admin-product')
 @php($stackLayout = $stackLayout ?? false)
+@php($collapsibleCreatePanel = $collapsibleCreatePanel ?? false)
 
 <section id="{{ $searchIdPrefix }}-listings" class="mt-5 {{ $stackLayout ? 'space-y-8' : 'grid gap-8 lg:grid-cols-[1.2fr_0.8fr]' }}" data-product-management-stack>
     <section class="rounded-[2rem] border border-stone-200 bg-white p-6 shadow-sm" data-product-create-panel>
-        <p class="text-sm uppercase tracking-[0.3em] {{ $labelColor }}">{{ $sectionLabel }}</p>
-        <h1 class="mt-2 text-3xl font-semibold text-stone-900">{{ $heading }}</h1>
-        @include('admin.partials.product-form', ['category' => $category, 'title' => $title])
+        <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+            <div>
+                <p class="text-sm uppercase tracking-[0.3em] {{ $labelColor }}">{{ $sectionLabel }}</p>
+                <h1 class="mt-2 text-2xl font-semibold text-stone-900">{{ $heading }}</h1>
+            </div>
+            @if ($collapsibleCreatePanel)
+                <button
+                    type="button"
+                    class="inline-flex items-center justify-center rounded-full border border-stone-300 bg-white px-4 py-2.5 text-sm font-semibold uppercase tracking-[0.18em] text-stone-700 transition hover:bg-stone-100"
+                    data-create-panel-toggle
+                    aria-expanded="false"
+                    aria-controls="{{ $searchIdPrefix }}-create-panel-body"
+                >
+                    New Package
+                </button>
+            @endif
+        </div>
+        <div
+            id="{{ $searchIdPrefix }}-create-panel-body"
+            @class([
+                'mt-6',
+                'hidden' => $collapsibleCreatePanel,
+            ])
+            data-create-panel-body
+        >
+            @include('admin.partials.product-form', ['category' => $category, 'title' => $title])
+        </div>
     </section>
     <section class="rounded-[2rem] border border-stone-200 bg-white p-6 shadow-sm">
         <div class="flex flex-col gap-4">

@@ -16,6 +16,22 @@ use Illuminate\View\View;
 
 class HomeController extends Controller
 {
+    private const PHONE_COUNTRY_CODES = [
+        '+60' => 'Malaysia (+60)',
+        '+65' => 'Singapore (+65)',
+        '+82' => 'South Korea (+82)',
+        '+1' => 'United States / Canada (+1)',
+        '+86' => 'China (+86)',
+    ];
+
+    private const SUPPORTED_PHONE_PATTERNS = [
+        '60' => '/^(?:60)(?:1\d{8,9}|[3-9]\d{7,8})$/',
+        '65' => '/^(?:65)(?:[3689]\d{7})$/',
+        '82' => '/^(?:82)(?:1\d{8,9}|[2-6]\d{7,9})$/',
+        '1' => '/^(?:1)(?:[2-9]\d{2}[2-9]\d{6})$/',
+        '86' => '/^(?:86)(?:1[3-9]\d{9})$/',
+    ];
+
     private const PICKUP_LOCATIONS = [
         'KKIA' => 'KKIA',
         'Universal Motor Sdn Bhd' => 'Universal Motor Sdn Bhd',
@@ -64,6 +80,7 @@ class HomeController extends Controller
             'actionType' => in_array($actionType, ['reserve', 'instant_book', 'book_now'], true) ? $actionType : null,
             'currencyRates' => self::CURRENCY_RATES,
             'currencySymbols' => self::CURRENCY_SYMBOLS,
+            'phoneCountryCodes' => self::PHONE_COUNTRY_CODES,
             'pickupLocations' => self::PICKUP_LOCATIONS,
         ]);
     }
@@ -72,12 +89,14 @@ class HomeController extends Controller
     {
         $relatedProducts = Product::where('is_active', true)
             ->where('id', '!=', $product->id)
+            ->where('category', 'package')
             ->where('category', $product->category)
             ->take(3)
             ->get();
 
         $recommendedProducts = Product::where('is_active', true)
             ->where('id', '!=', $product->id)
+            ->where('category', 'package')
             ->where('is_featured', true)
             ->take(3)
             ->get();
@@ -88,59 +107,103 @@ class HomeController extends Controller
             'recommendedProducts' => $recommendedProducts,
             'testimonials' => Testimonial::where('display_location', 'package')
                 ->where('product_id', $product->id)
+                ->where('is_featured', true)
                 ->orderByDesc('rating')
                 ->take(3)
                 ->get(),
             'currencyRates' => self::CURRENCY_RATES,
             'currencySymbols' => self::CURRENCY_SYMBOLS,
             'malaysiaPricingTiers' => $this->buildPricingTiers(
+                (float) $product->discounted_malaysia_adult_price_myr,
+                (float) $product->discounted_malaysia_child_price_myr,
                 (float) $product->malaysia_adult_price_myr,
                 (float) $product->malaysia_child_price_myr,
             ),
             'internationalPricingTiers' => $this->buildPricingTiers(
+                (float) $product->discounted_international_adult_price_myr,
+                (float) $product->discounted_international_child_price_myr,
                 (float) $product->international_adult_price_myr,
                 (float) $product->international_child_price_myr,
             ),
         ]);
     }
 
-    private function buildPricingTiers(float $adultPrice, float $childPrice): array
+    public function storeLandingTestimonial(Request $request): RedirectResponse
+    {
+        $this->storePublicTestimonial($request, null);
+
+        return redirect()->to(route('home').'#testimonials')->with(
+            'success',
+            'Thanks for sharing your review. Our team will check it before publishing it on the landing page.',
+        );
+    }
+
+    public function storeProductTestimonial(Request $request, Product $product): RedirectResponse
+    {
+        abort_if($product->category !== 'package', 404);
+
+        $this->storePublicTestimonial($request, $product);
+
+        return redirect()->to(route('products.show', $product).'#reviews')->with(
+            'success',
+            'Thanks for sharing your package review. Our team will check it before publishing it on this page.',
+        );
+    }
+
+    private function buildPricingTiers(
+        float $adultPrice,
+        float $childPrice,
+        ?float $originalAdultPrice = null,
+        ?float $originalChildPrice = null,
+    ): array
     {
         return [
             [
                 'label' => 'I have a Group of 16 - 29 Pax',
                 'adult_price' => round($adultPrice * 0.78, 2),
                 'child_price' => round($childPrice * 0.78, 2),
+                'original_adult_price' => $originalAdultPrice !== null ? round($originalAdultPrice * 0.78, 2) : null,
+                'original_child_price' => $originalChildPrice !== null ? round($originalChildPrice * 0.78, 2) : null,
                 'enquire' => false,
             ],
             [
                 'label' => 'I have a Group of 7 - 15 Pax',
                 'adult_price' => round($adultPrice * 0.84, 2),
                 'child_price' => round($childPrice * 0.84, 2),
+                'original_adult_price' => $originalAdultPrice !== null ? round($originalAdultPrice * 0.84, 2) : null,
+                'original_child_price' => $originalChildPrice !== null ? round($originalChildPrice * 0.84, 2) : null,
                 'enquire' => false,
             ],
             [
                 'label' => 'I have a Group of 4 - 6 Pax',
                 'adult_price' => round($adultPrice * 0.9, 2),
                 'child_price' => round($childPrice * 0.9, 2),
+                'original_adult_price' => $originalAdultPrice !== null ? round($originalAdultPrice * 0.9, 2) : null,
+                'original_child_price' => $originalChildPrice !== null ? round($originalChildPrice * 0.9, 2) : null,
                 'enquire' => false,
             ],
             [
                 'label' => 'I have a Group of 2 - 3 Pax',
                 'adult_price' => round($adultPrice * 0.96, 2),
                 'child_price' => round($childPrice * 0.96, 2),
+                'original_adult_price' => $originalAdultPrice !== null ? round($originalAdultPrice * 0.96, 2) : null,
+                'original_child_price' => $originalChildPrice !== null ? round($originalChildPrice * 0.96, 2) : null,
                 'enquire' => false,
             ],
             [
                 'label' => 'I am a Single Traveler',
                 'adult_price' => round($adultPrice, 2),
                 'child_price' => round($childPrice, 2),
+                'original_adult_price' => $originalAdultPrice !== null ? round($originalAdultPrice, 2) : null,
+                'original_child_price' => $originalChildPrice !== null ? round($originalChildPrice, 2) : null,
                 'enquire' => false,
             ],
             [
                 'label' => 'I have a Group of 30 Pax & Above',
                 'adult_price' => null,
                 'child_price' => null,
+                'original_adult_price' => null,
+                'original_child_price' => null,
                 'enquire' => true,
             ],
         ];
@@ -183,7 +246,10 @@ class HomeController extends Controller
             'pastPromo' => $pastPromos->first(),
             'pastPromos' => $pastPromos,
             'newsFeatures' => (clone $activeNewsQuery)->latest()->take(6)->get(),
-            'testimonials' => Testimonial::where('display_location', 'landing')->orderByDesc('rating')->get(),
+            'testimonials' => Testimonial::where('display_location', 'landing')
+                ->where('is_featured', true)
+                ->orderByDesc('rating')
+                ->get(),
             'recentBookings' => Booking::with('product')->latest()->take(5)->get(),
             'currencyRates' => self::CURRENCY_RATES,
             'currencySymbols' => self::CURRENCY_SYMBOLS,
@@ -192,6 +258,13 @@ class HomeController extends Controller
 
     public function book(Request $request): RedirectResponse
     {
+        $request->merge([
+            'phone' => $this->composePhoneNumber(
+                (string) $request->input('phone_country_code', '+60'),
+                (string) $request->input('phone_local_number', $request->input('phone', '')),
+            ),
+        ]);
+
         $formMode = $request->input('form_mode') === 'enquiry' ? 'enquiry' : 'booking';
 
         $baseRules = [
@@ -201,6 +274,8 @@ class HomeController extends Controller
             'locked_product_id' => ['nullable', 'exists:products,id'],
             'full_name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'max:255', 'email:rfc,dns'],
+            'phone_country_code' => ['required', 'string', 'in:'.implode(',', array_keys(self::PHONE_COUNTRY_CODES))],
+            'phone_local_number' => ['required', 'string', 'max:20'],
             'phone' => $this->phoneRules(),
             'special_requests' => ['nullable', 'string', 'max:1000'],
         ];
@@ -289,10 +364,10 @@ class HomeController extends Controller
         }
 
         $amountMyr =
-            ((float) $product->malaysia_adult_price_myr * (int) $validated['malaysian_adults']) +
-            ((float) $product->malaysia_child_price_myr * (int) $validated['malaysian_kids']) +
-            ((float) $product->international_adult_price_myr * (int) $validated['international_adults']) +
-            ((float) $product->international_child_price_myr * (int) $validated['international_kids']);
+            ((float) $product->discounted_malaysia_adult_price_myr * (int) $validated['malaysian_adults']) +
+            ((float) $product->discounted_malaysia_child_price_myr * (int) $validated['malaysian_kids']) +
+            ((float) $product->discounted_international_adult_price_myr * (int) $validated['international_adults']) +
+            ((float) $product->discounted_international_child_price_myr * (int) $validated['international_kids']);
 
         $amountDisplay = $amountMyr * self::CURRENCY_RATES[$validated['currency_code']];
 
@@ -416,6 +491,33 @@ class HomeController extends Controller
         }
     }
 
+    private function storePublicTestimonial(Request $request, ?Product $product): void
+    {
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'string', 'max:255', 'email:rfc,dns'],
+            'location' => ['required', 'string', 'max:255'],
+            'trip_name' => ['required', 'string', 'max:255'],
+            'rating' => ['required', 'integer', 'min:1', 'max:5'],
+            'quote' => ['required', 'string', 'max:1000'],
+            'profile_photo' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
+        ]);
+
+        $profilePhotoPath = null;
+
+        if ($request->hasFile('profile_photo')) {
+            $profilePhotoPath = $request->file('profile_photo')->store('testimonial-profiles', 'public');
+        }
+
+        Testimonial::create([
+            ...$validated,
+            'display_location' => $product ? 'package' : 'landing',
+            'product_id' => $product?->id,
+            'is_featured' => false,
+            'profile_photo_path' => $profilePhotoPath,
+        ]);
+    }
+
     private function phoneRules(): array
     {
         return [
@@ -446,15 +548,7 @@ class HomeController extends Controller
                     return;
                 }
 
-                $supportedPatterns = [
-                    '60' => '/^(?:60)(?:1\d{8,9}|[3-9]\d{7,8})$/',
-                    '65' => '/^(?:65)(?:[3689]\d{7})$/',
-                    '82' => '/^(?:82)(?:1\d{8,9}|[2-6]\d{7,9})$/',
-                    '1' => '/^(?:1)(?:[2-9]\d{2}[2-9]\d{6})$/',
-                    '86' => '/^(?:86)(?:1[3-9]\d{9})$/',
-                ];
-
-                $matchesSupportedCountry = collect($supportedPatterns)
+                $matchesSupportedCountry = collect(self::SUPPORTED_PHONE_PATTERNS)
                     ->contains(fn ($pattern) => preg_match($pattern, $digitsOnly) === 1);
 
                 if (! $matchesSupportedCountry) {
@@ -462,6 +556,27 @@ class HomeController extends Controller
                 }
             },
         ];
+    }
+
+    private function composePhoneNumber(string $countryCode, string $localNumber): string
+    {
+        $countryCode = array_key_exists($countryCode, self::PHONE_COUNTRY_CODES) ? $countryCode : '+60';
+        $normalizedCountryCode = ltrim($countryCode, '+');
+        $digitsOnly = preg_replace('/\D+/', '', $localNumber) ?? '';
+
+        if ($digitsOnly === '') {
+            return $countryCode;
+        }
+
+        if (str_starts_with($digitsOnly, $normalizedCountryCode)) {
+            $digitsOnly = substr($digitsOnly, strlen($normalizedCountryCode));
+        }
+
+        if ($countryCode !== '+1') {
+            $digitsOnly = ltrim($digitsOnly, '0');
+        }
+
+        return '+'.$normalizedCountryCode.$digitsOnly;
     }
 
     private function generateUniqueBookingReference(): string

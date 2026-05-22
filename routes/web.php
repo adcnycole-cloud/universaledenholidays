@@ -9,6 +9,8 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/products/{product}', [HomeController::class, 'showProduct'])->name('products.show');
+Route::post('/testimonials', [HomeController::class, 'storeLandingTestimonial'])->name('testimonials.store');
+Route::post('/products/{product}/testimonials', [HomeController::class, 'storeProductTestimonial'])->name('products.testimonials.store');
 Route::get('/booking', [HomeController::class, 'showBookingForm'])->name('booking.create');
 Route::post('/bookings', [HomeController::class, 'book'])->name('bookings.store');
 Route::get('/booking-tracker', [BookingAccessController::class, 'showTrackingForm'])->name('bookings.track.form');
@@ -52,6 +54,8 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     Route::get('/bookings/export/monthly', [AdminController::class, 'exportMonthlyBookings'])->name('admin.bookings.export');
     Route::get('/bookings/{booking}/invoice', [AdminController::class, 'invoicePdf'])->name('admin.bookings.invoice');
     Route::post('/bookings/{booking}/invoice-email', [AdminController::class, 'emailInvoice'])->name('admin.bookings.invoice.email');
+    Route::get('/bookings/{booking}', [AdminController::class, 'showBooking'])->name('admin.bookings.show');
+    Route::get('/bookings/{booking}/edit', [AdminController::class, 'editBooking'])->name('admin.bookings.edit');
     Route::post('/products', [AdminController::class, 'storeProduct'])->name('admin.products.store');
     Route::patch('/products/{product}', [AdminController::class, 'updateProduct'])->name('admin.products.update');
     Route::delete('/products/{product}', [AdminController::class, 'destroyProduct'])->name('admin.products.destroy');

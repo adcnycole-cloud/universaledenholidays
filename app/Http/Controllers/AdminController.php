@@ -117,23 +117,54 @@ class AdminController extends Controller
 
     public function bookings(): View
     {
+        $searchTerm = trim((string) request('q', ''));
         $reportType = request('report_type', 'monthly');
         $reportPeriod = $this->resolveReportPeriod($reportType, request('period'));
         $data = $this->sharedAdminData();
+        $bookingsQuery = Booking::activeBookings()->with(['user', 'product']);
+
+        if ($searchTerm !== '') {
+            $bookingsQuery->where(function ($query) use ($searchTerm) {
+                $query->where('full_name', 'like', '%'.$searchTerm.'%')
+                    ->orWhere('email', 'like', '%'.$searchTerm.'%')
+                    ->orWhere('booking_reference', 'like', '%'.$searchTerm.'%')
+                    ->orWhere('package_name', 'like', '%'.$searchTerm.'%');
+            });
+        }
+
+        $bookings = $bookingsQuery
+            ->latest()
+            ->paginate(7)
+            ->withQueryString();
+
+        $bookingSearchSuggestions = Booking::activeBookings()
+            ->select('full_name')
+            ->whereNotNull('full_name')
+            ->where('full_name', '!=', '')
+            ->when($searchTerm !== '', function ($query) use ($searchTerm) {
+                $query->where('full_name', 'like', $searchTerm.'%');
+            })
+            ->distinct()
+            ->orderBy('full_name')
+            ->limit(8)
+            ->pluck('full_name');
+
         $reportBookings = Booking::activeBookings()
             ->with(['user', 'product'])
             ->whereBetween('created_at', [$reportPeriod['start'], $reportPeriod['end']])
             ->latest()
             ->get();
 
-        return view('admin.bookings', $data + [
+        return view('admin.bookings', array_merge($data, [
+            'bookings' => $bookings,
+            'bookingSearchSuggestions' => $bookingSearchSuggestions,
             'reportType' => $reportType,
             'reportPeriodValue' => $reportPeriod['value'],
             'reportPeriodOptions' => $reportType === 'yearly'
                 ? $this->bookingYearOptions()
                 : $this->bookingMonthOptions(),
             'bookingReport' => $this->buildBookingReport($reportBookings, $reportPeriod),
-        ]);
+        ]));
     }
 
     public function enquiries(): View
@@ -204,6 +235,16 @@ class AdminController extends Controller
         }, ($reportType === 'yearly' ? 'yearly-bookings-' : 'monthly-bookings-').$report['period_value'].'.xlsx', [
             'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         ]);
+    }
+
+    public function showBooking(Booking $booking): RedirectResponse
+    {
+        return redirect()->route('bookings.track.show', $booking->booking_reference);
+    }
+
+    public function editBooking(Booking $booking): RedirectResponse
+    {
+        return redirect()->route('bookings.track.show', $booking->booking_reference);
     }
 
     public function invoicePdf(Booking $booking)

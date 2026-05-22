@@ -70,79 +70,82 @@
     </div>
 
     <div class="mt-6 overflow-hidden rounded-[1.75rem] border border-stone-200 bg-white">
-        <div class="flex flex-col gap-4 border-b border-stone-200 px-5 py-4 lg:flex-row lg:items-center lg:justify-between">
-            <p id="admin-booking-results" class="sr-only">Showing booking entries</p>
-            <div class="flex w-full items-center gap-3">
-                <label class="relative block min-w-0 flex-1">
-                    <input
-                        id="admin-booking-search"
-                        type="search"
-                        placeholder="Search by customer, package, email, ref, or destination"
-                        class="w-full rounded-full border border-stone-300 bg-stone-50 px-4 py-3 text-sm text-stone-800 outline-none transition focus:border-sky-400 focus:bg-white"
-                    >
-                </label>
-                <div class="ml-auto flex shrink-0 items-center gap-2">
-                    <button
-                        id="admin-booking-prev"
-                        type="button"
-                        class="inline-flex h-10 w-10 items-center justify-center rounded-full border border-stone-300 bg-white text-stone-700 transition hover:bg-stone-100"
-                        aria-label="Previous bookings page"
-                    >
-                        <span class="text-lg leading-none">&#8249;</span>
-                    </button>
-                    <button
-                        id="admin-booking-next"
-                        type="button"
-                        class="inline-flex h-10 w-10 items-center justify-center rounded-full border border-stone-300 bg-white text-stone-700 transition hover:bg-stone-100"
-                        aria-label="Next bookings page"
-                    >
-                        <span class="text-lg leading-none">&#8250;</span>
-                    </button>
-                </div>
+        <div class="flex flex-col gap-2 border-b border-stone-200 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+            <div class="min-w-0">
+                <p class="text-sm font-medium text-stone-700">
+                    Showing {{ $bookings->firstItem() ?? 0 }}-{{ $bookings->lastItem() ?? 0 }} of {{ $bookings->total() }} bookings
+                </p>
+                <p class="text-xs text-stone-500">Page {{ $bookings->currentPage() }} of {{ $bookings->lastPage() }}</p>
             </div>
+            <form id="admin-booking-search-form" method="GET" action="{{ route('admin.bookings') }}" class="flex w-full max-w-xl items-center gap-2 sm:w-auto">
+                <input type="hidden" name="report_type" value="{{ $reportType }}">
+                <input type="hidden" name="period" value="{{ $reportPeriodValue }}">
+                <label for="admin-booking-search" class="sr-only">Search bookings</label>
+                <input
+                    id="admin-booking-search"
+                    name="q"
+                    type="search"
+                    value="{{ request('q', '') }}"
+                    list="admin-booking-search-suggestions"
+                    placeholder="Search name, email, ref"
+                    class="w-full rounded-xl border border-stone-300 bg-white px-3 py-2 text-sm text-stone-800 outline-none transition focus:border-sky-400"
+                    autocomplete="off"
+                >
+                <datalist id="admin-booking-search-suggestions">
+                    @foreach ($bookingSearchSuggestions ?? [] as $suggestion)
+                        <option value="{{ $suggestion }}"></option>
+                    @endforeach
+                </datalist>
+                <button type="submit" class="inline-flex shrink-0 items-center rounded-lg border border-sky-200 bg-sky-50 px-3 py-2 text-xs font-semibold text-sky-700 transition hover:border-sky-300 hover:bg-sky-100">Search</button>
+                @if (request('q'))
+                    <a href="{{ route('admin.bookings', ['report_type' => $reportType, 'period' => $reportPeriodValue]) }}" class="inline-flex shrink-0 items-center rounded-lg border border-stone-300 bg-white px-3 py-2 text-xs font-semibold text-stone-700 transition hover:bg-stone-100">Clear</a>
+                @endif
+            </form>
         </div>
-        <div class="overflow-hidden rounded-b-[1.75rem]">
-            <table id="admin-booking-table" class="w-full table-fixed divide-y divide-stone-200 text-xs md:text-sm">
+        <div class="overflow-x-auto rounded-b-[1.75rem]">
+            <table id="admin-booking-table" class="w-full table-fixed divide-y divide-stone-200 text-[15px]">
                 <thead class="bg-stone-100/90">
                     <tr class="text-left font-semibold uppercase tracking-[0.18em] text-stone-600">
-                        <th class="w-[22%] px-3 py-4 md:px-4">Customer</th>
-                        <th class="w-[23%] px-3 py-4 md:px-4">Booking</th>
-                        <th class="hidden w-[10%] px-3 py-4 md:px-4 lg:table-cell">Guests</th>
-                        <th class="w-[16%] px-3 py-4 md:px-4">Amount</th>
-                        <th class="hidden w-[11%] px-3 py-4 md:px-4 xl:table-cell">Status</th>
-                        <th class="hidden w-[10%] px-3 py-4 md:px-4 lg:table-cell">Invoice</th>
-                        <th class="w-[19%] px-3 py-4 text-right md:px-4">Actions</th>
+                        <th class="w-[19%] px-2 py-3 md:px-3">Customer</th>
+                        <th class="w-[31%] px-2 py-3 md:px-3">Booking</th>
+                        <th class="hidden w-[8%] px-2 py-3 md:px-3 xl:table-cell">Guests</th>
+                        <th class="w-[12%] px-2 py-3 md:px-3">Amount</th>
+                        <th class="hidden w-[8%] px-2 py-3 md:px-3 xl:table-cell">Invoice</th>
+                        <th class="w-[22%] px-2 py-3 text-right md:px-3">Actions</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-stone-200 bg-white">
                     @forelse ($bookings as $booking)
-                        <tr data-admin-booking-item="true" class="align-top text-stone-700">
-                            <td class="px-3 py-4 md:px-4">
+                        <tr class="align-top text-stone-700">
+                            <td class="px-2 py-3 md:px-3">
                                 <div class="min-w-0">
                                     <p class="truncate font-semibold text-stone-900">{{ $booking->full_name }}</p>
-                                    <p class="mt-0.5 truncate text-xs text-stone-500">{{ $booking->email }}</p>
+                                    <p class="mt-0.5 truncate text-[14px] text-stone-500">{{ $booking->email }}</p>
                                 </div>
                             </td>
-                            <td class="px-3 py-4 md:px-4">
+                            <td class="px-2 py-3 md:px-3">
                                 <div class="min-w-0">
                                     <p class="truncate font-semibold text-stone-900">{{ $booking->package_name }}</p>
-                                    <p class="mt-0.5 truncate text-xs text-stone-500">{{ $booking->destination }}</p>
-                                    <p class="mt-0.5 truncate text-xs text-stone-500">Ref {{ $booking->booking_reference ?: 'N/A' }}</p>
+                                    <p class="mt-0.5 truncate text-[14px] text-stone-500">{{ $booking->destination }}</p>
+                                    <p class="mt-0.5 truncate text-[14px] text-stone-500">Ref {{ $booking->booking_reference ?: 'N/A' }}</p>
+                                    <div class="mt-1.5 flex flex-wrap items-center gap-1.5">
+                                        <span class="inline-flex rounded-full px-2.5 py-1 text-[11px] font-semibold {{ strtolower((string) $booking->status) === 'completed' ? 'bg-emerald-100 text-emerald-700' : (strtolower((string) $booking->status) === 'pending' ? 'bg-amber-100 text-amber-700' : (strtolower((string) $booking->status) === 'confirmed' ? 'bg-sky-100 text-sky-700' : 'bg-stone-100 text-stone-700')) }}">
+                                            {{ ucfirst($booking->status) }}
+                                        </span>
+                                        <span class="inline-flex rounded-full px-2.5 py-1 text-[11px] font-semibold {{ strtolower((string) $booking->payment_status) === 'paid' ? 'bg-emerald-100 text-emerald-700' : (strtolower((string) $booking->payment_status) === 'awaiting_confirmation' ? 'bg-amber-100 text-amber-700' : 'bg-stone-100 text-stone-700') }}">
+                                            {{ ucwords(str_replace('_', ' ', (string) $booking->payment_status)) }}
+                                        </span>
+                                    </div>
                                 </div>
                             </td>
-                            <td class="hidden px-3 py-4 text-xs md:px-4 lg:table-cell">
+                            <td class="hidden px-2 py-3 text-xs md:px-3 xl:table-cell">
                                 <p class="font-semibold text-stone-900">{{ $booking->total_guests }}</p>
                             </td>
-                            <td class="px-3 py-4 md:px-4">
+                            <td class="px-2 py-3 md:px-3">
                                 @php($isPaymentPaid = strtolower((string) $booking->payment_status) === 'paid')
                                 <p class="break-words font-semibold text-stone-900">{{ $booking->currency_code }} {{ number_format((float) $booking->amount_display, 2) }}</p>
                             </td>
-                            <td class="hidden px-3 py-4 md:px-4 xl:table-cell">
-                                <span class="inline-flex rounded-full px-2 py-1 text-xs font-semibold {{ strtolower((string) $booking->status) === 'completed' ? 'bg-emerald-100 text-emerald-700' : (strtolower((string) $booking->status) === 'pending' ? 'bg-amber-100 text-amber-700' : (strtolower((string) $booking->status) === 'confirmed' ? 'bg-sky-100 text-sky-700' : 'bg-stone-100 text-stone-700')) }}">
-                                    {{ ucfirst($booking->status) }}
-                                </span>
-                            </td>
-                            <td class="hidden px-3 py-4 md:px-4 lg:table-cell">
+                            <td class="hidden px-2 py-3 md:px-3 xl:table-cell">
                                 @if ($booking->invoice_path)
                                     <a href="{{ Storage::url($booking->invoice_path) }}" target="_blank" class="inline-flex items-center gap-1 rounded-full border border-sky-300 bg-sky-50 px-2 py-1 text-xs font-semibold text-sky-700 transition hover:border-sky-400 hover:bg-sky-100">
                                         <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -155,33 +158,58 @@
                                     <span class="text-xs text-stone-400">—</span>
                                 @endif
                             </td>
-                            <td class="px-3 py-4 text-right md:px-4">
-                                <details class="relative inline-block text-left">
-                                    <summary class="ml-auto list-none cursor-pointer rounded-full border border-stone-300 bg-white p-2 transition hover:bg-stone-100">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-stone-600" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                            <circle cx="12" cy="12" r="1"></circle>
-                                            <circle cx="19" cy="12" r="1"></circle>
-                                            <circle cx="5" cy="12" r="1"></circle>
-                                        </svg>
-                                    </summary>
-                                    <div class="absolute right-0 top-full z-50 mt-2 w-44 space-y-2 rounded-xl border border-stone-200 bg-white p-3 shadow-lg">
-                                        <a href="{{ route('admin.bookings.show', $booking->id) }}" class="block rounded-lg border border-stone-200 px-3 py-2 text-xs font-medium text-stone-700 transition hover:border-sky-200 hover:bg-sky-50 hover:text-sky-700">
-                                            View Details
+                            <td class="px-2 py-3 text-right md:px-3">
+                                @php($canManageInvoice = in_array(strtolower((string) $booking->status), ['confirmed', 'completed'], true))
+                                <div class="space-y-2">
+                                    <div class="flex flex-wrap justify-end gap-2">
+                                        <a href="{{ route('admin.bookings.show', $booking->id) }}" class="inline-flex items-center rounded-lg border border-sky-200 bg-sky-50 px-3 py-2 text-sm font-semibold text-sky-700 transition hover:border-sky-300 hover:bg-sky-100">
+                                        View
                                         </a>
-                                        <a href="{{ route('admin.bookings.edit', $booking->id) }}" class="block rounded-lg border border-stone-200 px-3 py-2 text-xs font-medium text-stone-700 transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700">
-                                            Edit
-                                        </a>
+                                        @if ($canManageInvoice)
+                                            <a href="{{ route('admin.bookings.invoice', $booking->id) }}" target="_blank" class="inline-flex items-center rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-700 transition hover:border-emerald-300 hover:bg-emerald-100">
+                                                Download
+                                            </a>
+                                            <form method="POST" action="{{ route('admin.bookings.invoice.email', $booking->id) }}" class="inline-flex">
+                                                @csrf
+                                                <button type="submit" class="inline-flex items-center rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm font-semibold text-amber-700 transition hover:border-amber-300 hover:bg-amber-100">
+                                                    Send Email
+                                                </button>
+                                            </form>
+                                        @else
+                                            <span class="inline-flex cursor-not-allowed items-center rounded-lg border border-dashed border-stone-300 bg-stone-50 px-3 py-2 text-sm font-semibold text-stone-400">
+                                                Download
+                                            </span>
+                                            <span class="inline-flex cursor-not-allowed items-center rounded-lg border border-dashed border-stone-300 bg-stone-50 px-3 py-2 text-sm font-semibold text-stone-400">
+                                                Send Email
+                                            </span>
+                                        @endif
                                     </div>
-                                </details>
+
+                                    <form method="POST" action="{{ route('admin.bookings.update', $booking->id) }}" class="ml-auto flex w-full max-w-[12rem] items-center justify-end gap-1.5">
+                                        @csrf
+                                        @method('PATCH')
+                                        <select name="status" class="min-w-0 flex-1 rounded-lg border border-stone-300 bg-white px-2 py-2 text-sm text-stone-800">
+                                            @foreach (['pending', 'confirmed', 'completed', 'cancelled'] as $status)
+                                                <option value="{{ $status }}" @selected($booking->status === $status)>{{ ucfirst($status) }}</option>
+                                            @endforeach
+                                        </select>
+                                        <button type="submit" class="inline-flex items-center rounded-lg border border-stone-300 bg-white px-2 py-2 text-sm font-semibold text-stone-700 transition hover:bg-stone-100">
+                                            Update
+                                        </button>
+                                    </form>
+                                </div>
                             </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="7" class="px-4 py-10 text-center text-sm text-stone-500">No bookings found yet.</td>
+                            <td colspan="6" class="px-4 py-10 text-center text-sm text-stone-500">No bookings found yet.</td>
                         </tr>
                     @endforelse
                 </tbody>
             </table>
+        </div>
+        <div class="border-t border-stone-200 px-4 py-4">
+            {{ $bookings->onEachSide(1)->links() }}
         </div>
     </div>
 </section>

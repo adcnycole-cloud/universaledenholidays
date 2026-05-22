@@ -15,7 +15,7 @@
                 </h1>
                 <p style="margin: 18px 0 0; font-size: 15px; line-height: 1.8; color: #44403c;">
                     Hi {{ $booking->full_name }}, your booking reference is <strong>{{ $booking->booking_reference }}</strong>.
-                    Use the secure link below to connect this booking to your profile, and continue to payment.
+                    Use the secure link below to   connect this booking to your profile, and continue to payment.
                 </p>
 
                 <div style="margin-top: 24px; border-radius: 18px; background: #f8fafc; padding: 18px 20px;">

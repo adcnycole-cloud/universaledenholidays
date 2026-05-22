@@ -348,6 +348,58 @@ class HomeController extends Controller
         );
     }
 
+    public function storeLandingTestimonial(Request $request): RedirectResponse
+    {
+        $this->storePublicTestimonial($request, null);
+
+        return redirect()->route('home')->with('success', 'Thank you for your review. Our team will verify it before publishing.');
+    }
+
+    public function storeProductTestimonial(Request $request, Product $product): RedirectResponse
+    {
+        if ($product->category !== 'package') {
+            return redirect()->route('products.show', $product)
+                ->withErrors(['product' => 'Reviews can only be submitted for package products.'])
+                ->withInput();
+        }
+
+        $this->storePublicTestimonial($request, $product);
+
+        return redirect()->route('products.show', $product)
+            ->with('success', 'Thank you for your review. Our team will verify it before publishing.');
+    }
+
+    private function storePublicTestimonial(Request $request, ?Product $product): void
+    {
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'string', 'max:255', 'email:rfc,dns'],
+            'location' => ['required', 'string', 'max:255'],
+            'trip_name' => ['required', 'string', 'max:255'],
+            'quote' => ['required', 'string', 'max:1000'],
+            'rating' => ['required', 'integer', 'min:1', 'max:5'],
+            'profile_photo' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
+        ]);
+
+        $profilePhotoPath = null;
+
+        if ($request->hasFile('profile_photo')) {
+            $profilePhotoPath = $request->file('profile_photo')->store('testimonial-profiles', 'public');
+        }
+
+        Testimonial::create([
+            'name' => $validated['name'],
+            'location' => $validated['location'],
+            'trip_name' => $validated['trip_name'],
+            'quote' => $validated['quote'],
+            'rating' => $validated['rating'],
+            'profile_photo_path' => $profilePhotoPath,
+            'display_location' => $product ? 'package' : 'landing',
+            'product_id' => $product?->id,
+            'is_featured' => $product === null,
+        ]);
+    }
+
     private function sendMailSafely(string $email, object $mailable, string $mailType, array $context = []): bool
     {
         try {

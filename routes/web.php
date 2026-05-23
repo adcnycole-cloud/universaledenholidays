@@ -5,6 +5,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BookingAccessController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ProfileController;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
@@ -38,6 +39,20 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'show'])->name('profile.show');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::get('/profile/bookings', [ProfileController::class, 'bookings'])->name('profile.bookings');
+    Route::get('/profile/test-email', function () {
+        $recipient = auth()->user()?->email;
+
+        if (! $recipient) {
+            abort(403, 'No email found for authenticated user.');
+        }
+
+        Mail::raw('This is a direct test email from Universal Eden Holidays.', function ($message) use ($recipient) {
+            $message->to($recipient)
+                ->subject('Direct Email Delivery Test');
+        });
+
+        return 'Test email sent to: ' . $recipient;
+    })->name('profile.test-email');
     Route::get('/bookings/{booking}/payment', [BookingAccessController::class, 'showPaymentPage'])->name('bookings.payment.show');
     Route::post('/bookings/{booking}/payment', [BookingAccessController::class, 'submitPayment'])->name('bookings.payment.submit');
 });

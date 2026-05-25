@@ -378,7 +378,7 @@
                                                 <thead class="bg-stone-100 text-stone-700">
                                                     <tr>
                                                         <th class="w-40 px-4 py-3 font-semibold">Day Number</th>
-                                                        <th class="w-36 px-4 py-3 font-semibold">Time</th>
+                                                        <th class="w-48 px-4 py-3 font-semibold">Time</th>
                                                         <th class="px-4 py-3 font-semibold">Activity</th>
                                                         <th class="px-4 py-3 font-semibold">Notes</th>
                                                         <th class="w-24 px-4 py-3 font-semibold text-center"></th>
@@ -401,9 +401,9 @@
                                                                     </td>
                                                                 @endif
                                                                 <td class="px-4 py-3 align-top">
-                                                                    <div class="flex h-[96px] items-stretch rounded-xl border border-stone-200 bg-stone-50 p-2.5" data-itinerary-time-slot>
+                                                                    <div class="flex h-[96px] min-w-[11rem] items-stretch rounded-xl border border-stone-200 bg-stone-50 p-2.5" data-itinerary-time-slot>
                                                                         <input type="hidden" name="itinerary_day_number[]" value="{{ $dayLabel }}" data-itinerary-day-hidden>
-                                                                        <select name="itinerary_time[]" class="h-full w-full rounded-lg border border-stone-300 bg-white px-2.5 py-1.5 text-sm text-stone-800">
+                                                                        <select name="itinerary_time[]" class="h-full w-full min-w-[9.5rem] rounded-lg border border-stone-300 bg-white px-2.5 py-1.5 text-sm text-stone-800">
                                                                             <option value="">Select time</option>
                                                                             @foreach ($itineraryTimeOptions as $timeOption)
                                                                                 <option value="{{ $timeOption }}" @selected($row['time'] === $timeOption)>{{ $timeOption }}</option>
@@ -452,9 +452,9 @@
                                                     </div>
                                                 </td>
                                                 <td class="px-4 py-3 align-top">
-                                                    <div class="flex h-[96px] items-stretch rounded-xl border border-stone-200 bg-stone-50 p-2.5" data-itinerary-time-slot>
+                                                    <div class="flex h-[96px] min-w-[11rem] items-stretch rounded-xl border border-stone-200 bg-stone-50 p-2.5" data-itinerary-time-slot>
                                                         <input type="hidden" name="itinerary_day_number[]" value="" data-itinerary-day-hidden>
-                                                        <select name="itinerary_time[]" class="h-full w-full rounded-lg border border-stone-300 bg-white px-2.5 py-1.5 text-sm text-stone-800">
+                                                        <select name="itinerary_time[]" class="h-full w-full min-w-[9.5rem] rounded-lg border border-stone-300 bg-white px-2.5 py-1.5 text-sm text-stone-800">
                                                             <option value="">Select time</option>
                                                             @foreach ($itineraryTimeOptions as $timeOption)
                                                                 <option value="{{ $timeOption }}">{{ $timeOption }}</option>
@@ -597,12 +597,11 @@
                                     </button>
                                 </div>
                             </form>
-                            <details class="group block w-full">
-                                <summary class="cursor-pointer list-none rounded-full border border-stone-300 bg-white px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-stone-700 transition hover:bg-stone-100 inline-flex w-full items-center justify-center">
-                                    <span class="group-open:hidden">Edit</span>
-                                    <span class="hidden group-open:inline">Close</span>
-                                </summary>
-                                <form method="POST" action="{{ route('admin.products.update', $product) }}" enctype="multipart/form-data" class="absolute left-0 right-0 top-0 z-20 mt-0 w-full min-w-[320px] space-y-3 rounded-2xl border border-stone-200 bg-white p-4 shadow-[0_18px_40px_rgba(15,23,42,0.16)]" data-form-persist="admin-products-floating-update-{{ $product->id }}">
+                            <button type="button" class="w-full rounded-full border border-stone-300 bg-white px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-stone-700 transition hover:bg-stone-100" data-transport-edit-open>
+                                Edit
+                            </button>
+                            <div class="fixed inset-0 z-[410] hidden items-center justify-center overflow-y-auto bg-stone-950/55 px-8 py-6" data-transport-edit-modal>
+                                <form method="POST" action="{{ route('admin.products.update', $product) }}" enctype="multipart/form-data" class="w-full max-w-5xl space-y-3 rounded-2xl border border-stone-200 bg-white p-4 shadow-[0_18px_40px_rgba(15,23,42,0.16)]" data-form-persist="admin-products-floating-update-{{ $product->id }}">
                                 @csrf
                                 @method('PATCH')
                                 <div class="grid gap-3 md:grid-cols-2">
@@ -780,7 +779,7 @@
                                         <button
                                             type="button"
                                             class="rounded-full border border-stone-300 bg-white px-4 py-3 text-sm font-semibold uppercase tracking-[0.2em] text-stone-700 transition hover:bg-stone-100"
-                                            onclick="this.closest('details')?.removeAttribute('open')"
+                                            data-transport-edit-close
                                         >
                                             Cancel
                                         </button>
@@ -790,7 +789,7 @@
                                     </button>
                                 </div>
                                 </form>
-                            </details>
+                            </div>
                         @endif
 
                         <form method="POST" action="{{ route('admin.products.destroy', $product) }}" onsubmit="return confirm('Delete this product?');" class="{{ $isPackage ? '' : 'w-full' }}">
@@ -1429,6 +1428,37 @@
                     button.disabled = false;
                     button.classList.remove('opacity-70');
                 }
+            });
+        });
+
+        document.querySelectorAll('[data-admin-transport-item]').forEach((item) => {
+            const openButton = item.querySelector('[data-transport-edit-open]');
+            const modal = item.querySelector('[data-transport-edit-modal]');
+            const closeButtons = item.querySelectorAll('[data-transport-edit-close]');
+
+            if (!openButton || !modal) {
+                return;
+            }
+
+            openButton.addEventListener('click', () => {
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+            });
+
+            closeButtons.forEach((button) => {
+                button.addEventListener('click', () => {
+                    modal.classList.add('hidden');
+                    modal.classList.remove('flex');
+                });
+            });
+
+            modal.addEventListener('click', (event) => {
+                if (event.target !== modal) {
+                    return;
+                }
+
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
             });
         });
     });

@@ -89,7 +89,7 @@
         <div id="admin-promo-list" class="mt-6 space-y-4">
             @forelse ($newsFeatures as $feature)
                 @php($promoEnded = $feature->ends_at && $feature->ends_at->isPast())
-                <article data-admin-promo-item="true" class="overflow-hidden rounded-3xl border border-stone-200 bg-stone-50">
+                <article data-admin-promo-item="true" class="rounded-3xl border border-stone-200 bg-stone-50">
                     <div style="display: grid; gap: 0; grid-template-columns: 226px minmax(0, 1fr);">
                         <div class="border-b border-stone-200 bg-white md:border-b-0 md:border-r" style="padding: 0.35rem;">
                             <a href="{{ $feature->poster_url }}" target="_blank" rel="noopener noreferrer" class="block">
@@ -105,14 +105,18 @@
                                 </span>
                             </div>
                             <div class="flex flex-wrap gap-2">
-                                <details class="group">
-                                    <summary class="cursor-pointer list-none rounded-full border border-stone-300 bg-white px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-stone-700 transition hover:bg-stone-100">
-                                        <span class="group-open:hidden">Edit</span>
-                                        <span class="hidden group-open:inline">Close</span>
-                                    </summary>
-                                    <form method="POST" action="{{ route('admin.news-features.update', $feature) }}" enctype="multipart/form-data" class="mt-4 space-y-3 rounded-2xl border border-stone-200 bg-white p-4" data-form-persist="admin-promos-update-{{ $feature->id }}">
+                                <button type="button" class="rounded-full border border-stone-300 bg-white px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-stone-700 transition hover:bg-stone-100" data-promo-edit-open>
+                                    Edit
+                                </button>
+
+                                <div class="hidden items-center justify-center overflow-y-auto bg-stone-950/55 px-8 py-6" data-promo-edit-modal style="position: fixed; inset: 0; z-index: 5000;">
+                                    <form method="POST" action="{{ route('admin.news-features.update', $feature) }}" enctype="multipart/form-data" class="w-full max-w-4xl space-y-3 rounded-2xl border border-stone-200 bg-white p-4 shadow-[0_18px_40px_rgba(15,23,42,0.16)]" data-form-persist="admin-promos-update-{{ $feature->id }}">
                                         @csrf
                                         @method('PATCH')
+                                        <div class="flex items-center justify-between gap-3">
+                                            <h4 class="text-lg font-semibold text-stone-900">Edit Promo</h4>
+                                            <button type="button" class="inline-flex h-8 w-8 items-center justify-center rounded-full border border-stone-300 bg-white text-lg leading-none text-stone-700 transition hover:bg-stone-100" data-promo-edit-close aria-label="Close edit modal">&times;</button>
+                                        </div>
                                         <div class="grid gap-3 md:grid-cols-2">
                                             <div>
                                                 <label class="mb-1 block text-xs font-medium uppercase tracking-[0.18em] text-stone-500">Promo label</label>
@@ -145,9 +149,16 @@
                                             <input type="checkbox" name="is_active" value="1" @checked($feature->is_active) class="rounded border-stone-300">
                                             Show this promo on the homepage
                                         </label>
-                                        <button type="submit" class="w-full rounded-full bg-sky-600 px-4 py-3 text-sm font-semibold uppercase tracking-[0.2em] text-white transition hover:bg-sky-700">Update Promo</button>
+                                        <div class="flex flex-wrap justify-end gap-3">
+                                            <button type="button" class="rounded-full border border-stone-300 bg-white px-4 py-3 text-sm font-semibold uppercase tracking-[0.2em] text-stone-700 transition hover:bg-stone-100" data-promo-edit-close>
+                                                Cancel
+                                            </button>
+                                            <button type="submit" class="rounded-full bg-sky-600 px-4 py-3 text-sm font-semibold uppercase tracking-[0.2em] text-white transition hover:bg-sky-700">
+                                                Update Promo
+                                            </button>
+                                        </div>
                                     </form>
-                                </details>
+                                </div>
 
                                 <form method="POST" action="{{ route('admin.news-features.destroy', $feature) }}" onsubmit="return confirm('Delete this promo?');">
                                     @csrf
@@ -177,3 +188,38 @@
         </div>
     </section>
 </section>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        document.querySelectorAll('[data-admin-promo-item]').forEach((item) => {
+            const openButton = item.querySelector('[data-promo-edit-open]');
+            const modal = item.querySelector('[data-promo-edit-modal]');
+            const closeButtons = item.querySelectorAll('[data-promo-edit-close]');
+
+            if (!openButton || !modal) {
+                return;
+            }
+
+            openButton.addEventListener('click', () => {
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+            });
+
+            closeButtons.forEach((button) => {
+                button.addEventListener('click', () => {
+                    modal.classList.add('hidden');
+                    modal.classList.remove('flex');
+                });
+            });
+
+            modal.addEventListener('click', (event) => {
+                if (event.target !== modal) {
+                    return;
+                }
+
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            });
+        });
+    });
+</script>

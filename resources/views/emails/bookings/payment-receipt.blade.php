@@ -12,7 +12,7 @@
                 </p>
                 <h1 style="margin: 0; font-size: 28px; line-height: 1.2; color: #0f172a;">Payment receipt</h1>
                 <p style="margin: 18px 0 0; font-size: 15px; line-height: 1.8; color: #44403c;">
-                    We recorded your sandbox payment for Booking ID <strong>{{ $booking->booking_reference }}</strong>.
+                    We recorded your payment for Booking ID <strong>{{ $booking->booking_reference }}</strong>.
                 </p>
 
                 <div style="margin-top: 24px; border-radius: 18px; background: #f8fafc; padding: 18px 20px;">

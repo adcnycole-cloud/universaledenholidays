@@ -12,7 +12,7 @@
                 </p>
                 <h1 style="margin: 0; font-size: 28px; line-height: 1.2; color: #0f172a;">Your booking is confirmed</h1>
                 <p style="margin: 18px 0 0; font-size: 15px; line-height: 1.8; color: #44403c;">
-                    Booking ID strong>{{ $booking->booking_reference }}</strong> is confirmed.
+                    Booking ID <strong>{{ $booking->booking_reference }}</strong> is confirmed.
                     You can continue your payment from the booking tracker.
                 </p>
 
@@ -20,6 +20,12 @@
                     <p style="margin: 0; font-size: 14px; line-height: 1.8;"><strong>Package:</strong> {{ $booking->package_name }}</p>
                     <p style="margin: 6px 0 0; font-size: 14px; line-height: 1.8;"><strong>Status:</strong> {{ ucfirst($booking->status) }}</p>
                     <p style="margin: 6px 0 0; font-size: 14px; line-height: 1.8;"><strong>Amount:</strong> {{ $booking->currency_code }} {{ number_format((float) $booking->amount_display, 2) }}</p>
+                </div>
+
+                <div style="margin-top: 28px;">
+                    <a href="{{ route('bookings.track.show', $booking->booking_reference) }}" style="display: inline-block; border-radius: 999px; background: #0f766e; padding: 14px 24px; color: #ffffff; text-decoration: none; font-size: 14px; font-weight: 700;">
+                        Open Booking Tracker
+                    </a>
                 </div>
             </div>
         </div>

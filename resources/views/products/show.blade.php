@@ -399,8 +399,8 @@
         @if ($product->category === 'package')
             <section id="reviews" class="mt-8 rounded-[2rem] border border-stone-200 bg-white p-6 shadow-sm">
                 <h2 class="text-2xl font-semibold text-stone-900">Reviews</h2>
-                <div class="mt-6 grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
-                    <div class="grid gap-5 md:grid-cols-3">
+                <div class="mt-6 grid gap-6 md:grid-cols-2">
+                    <div class="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
                         @forelse ($testimonials as $testimonial)
                             <article class="rounded-3xl border border-stone-200 bg-stone-50 p-5">
                                 <div class="flex items-center justify-between gap-4">

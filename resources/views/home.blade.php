@@ -1236,7 +1236,7 @@
                 </div>
                 <div class="rounded-full bg-amber-50 px-4 py-2 text-sm font-semibold text-amber-700">Average rating 4.7/5</div>
             </div>
-            <div class="mt-3 grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
+            <div class="mt-3 grid gap-4 md:grid-cols-2">
                 <div class="space-y-3">
                     @forelse ($testimonials as $testimonial)
                         <article class="rounded-3xl border border-stone-200 bg-stone-50 p-4 shadow-sm">

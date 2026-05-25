@@ -2,6 +2,8 @@
 
 namespace Tests\Feature;
 
+use App\Mail\PaymentReceiptMail;
+use App\Models\Booking;
 use App\Models\Product;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Mail;
@@ -200,5 +202,55 @@ class BookingTest extends TestCase
 
         $response->assertRedirect('/booking');
         $response->assertSessionHasErrors(['phone']);
+    }
+
+    public function test_payment_receipt_email_contains_working_receipt_links_after_payment(): void
+    {
+        Mail::fake();
+
+        $booking = Booking::create([
+            'booking_reference' => 'UEH-TST-0001',
+            'service_type' => 'package',
+            'full_name' => 'Receipt Tester',
+            'email' => 'receipt@example.com',
+            'phone' => '+60112233445',
+            'pickup_location' => 'KKIA',
+            'destination' => 'Kota Kinabalu',
+            'package_name' => 'Kinabalu Day Tour',
+            'guest_count' => 2,
+            'check_in_date' => now()->addDays(7)->toDateString(),
+            'check_out_date' => now()->addDays(8)->toDateString(),
+            'payment_method' => 'bank_transfer',
+            'currency_code' => 'MYR',
+            'amount_myr' => 350,
+            'amount_display' => 350,
+            'status' => 'confirmed',
+            'payment_status' => 'awaiting_payment',
+            'malaysian_adults' => 2,
+            'malaysian_kids' => 0,
+            'international_adults' => 0,
+            'international_kids' => 0,
+        ]);
+
+        $response = $this->post(route('bookings.track.payment.submit', $booking->booking_reference), [
+            'sandbox_reference' => 'SBX-12345',
+        ]);
+
+        $response->assertRedirect(route('bookings.track.show', $booking->booking_reference));
+
+        $booking->refresh();
+        $this->assertSame('paid', $booking->payment_status);
+        $this->assertNotNull($booking->invoice_number);
+
+        Mail::assertSent(PaymentReceiptMail::class, function (PaymentReceiptMail $mail) use ($booking) {
+            if (! $mail->hasTo($booking->email)) {
+                return false;
+            }
+
+            $html = $mail->render();
+
+            return str_contains($html, route('bookings.track.receipt.show', $booking->booking_reference))
+                && str_contains($html, route('bookings.track.receipt.pdf', $booking->booking_reference));
+        });
     }
 }

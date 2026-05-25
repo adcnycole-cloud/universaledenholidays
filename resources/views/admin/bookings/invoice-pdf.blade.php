@@ -259,106 +259,6 @@
 </head>
 
 <body>
-<<<<<<< Updated upstream
-    @php
-        $tripDuration = $booking->product?->duration ?: 'Custom duration';
-        preg_match('/(\d+)\s*day/i', (string) $tripDuration, $durationMatches);
-        $durationDays = isset($durationMatches[1]) ? (int) $durationMatches[1] : null;
-        $travelStart = $booking->check_in_date;
-        $travelEnd = $durationDays && $travelStart
-            ? $travelStart->copy()->addDays($durationDays)
-            : $booking->check_out_date;
-    @endphp
-    <div class="header card">
-        <table>
-            <tr>
-                <td style="width: 58%; border: none;">
-                    <div class="title">Universal Eden Holidays</div>
-                    <div class="muted">Sabah Packages and Transport</div>
-                    <div style="margin-top: 10px;">Kota Kinabalu, Sabah, Malaysia</div>
-                    <div>info@universaledenholiday.com</div>
-                    <div>+60 88 212 345</div>
-                </td>
-                <td style="width: 42%; border: none;">
-                    <div style="font-size: 20px; font-weight: bold;">Invoice</div>
-                    <div><strong>Invoice No:</strong> {{ $booking->invoice_number_or_reference }}</div>
-                    <div><strong>Booking Ref:</strong> {{ $booking->booking_reference ?: 'N/A' }}</div>
-                    <div><strong>Issued:</strong> {{ optional($booking->invoice_issued_at ?: $booking->confirmed_at ?: $booking->created_at)->format('d M Y') }}</div>
-                    <div><strong>Status:</strong> {{ ucfirst($booking->status) }}</div>
-                </td>
-            </tr>
-        </table>
-    </div>
-
-    <div class="section">
-        <table>
-            <tr>
-                <td class="card" style="width: 50%; border: none;">
-                    <strong>Billed To</strong><br>
-                    {{ $booking->full_name }}<br>
-                    {{ $booking->email }}<br>
-                    {{ $booking->phone }}
-                </td>
-                <td class="card" style="width: 50%; border: none;">
-                    <strong>Trip Details</strong><br>
-                    Service: {{ ucfirst($booking->service_type) }}<br>
-                    Package: {{ $booking->package_name }}<br>
-                    Destination: {{ $booking->destination }}<br>
-                    Trip Duration: {{ $tripDuration }}<br>
-                    Travel Dates: {{ optional($travelStart)->format('d M Y') }} to {{ optional($travelEnd)->format('d M Y') }}{{ $tripDuration ? ' ('.$tripDuration.')' : '' }}<br>
-                    Pickup: {{ $booking->pickup_location ?: 'Not set' }}
-                </td>
-            </tr>
-        </table>
-    </div>
-
-    <div class="section card">
-        <table>
-            <thead>
-                <tr>
-                    <th>Description</th>
-                    <th>Guests</th>
-                    <th>Currency</th>
-                    <th>Amount</th>
-                    <th>Amount (MYR)</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td>{{ $booking->package_name }} booking</td>
-                    <td>{{ $booking->total_guests }}</td>
-                    <td>{{ $booking->currency_code }}</td>
-                    <td>{{ number_format((float) $booking->amount_display, 2) }}</td>
-                    <td>{{ number_format((float) $booking->amount_myr, 2) }}</td>
-                </tr>
-                <tr>
-                    <td>Malaysian guests</td>
-                    <td>{{ $booking->malaysian_adults + $booking->malaysian_kids }}</td>
-                    <td>-</td>
-                    <td>-</td>
-                    <td>-</td>
-                </tr>
-                <tr>
-                    <td>International guests</td>
-                    <td>{{ $booking->international_adults + $booking->international_kids }}</td>
-                    <td>-</td>
-                    <td>-</td>
-                    <td>-</td>
-                </tr>
-                <tr class="total-row">
-                    <td colspan="3">Total</td>
-                    <td>{{ $booking->currency_code }} {{ number_format((float) $booking->amount_display, 2) }}</td>
-                    <td>MYR {{ number_format((float) $booking->amount_myr, 2) }}</td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
-
-    @if ($booking->special_requests)
-        <div class="section card">
-            <strong>Special Requests</strong>
-            <div style="margin-top: 8px;">{{ $booking->special_requests }}</div>
-=======
     <div class="page">
         <div class="logo-section">
             @if ($logoSrc)
@@ -366,7 +266,6 @@
             @else
                 <h1 class="company-title">UNIVERSAL EDEN HOLIDAYS</h1>
             @endif
->>>>>>> Stashed changes
         </div>
 
         <div class="company-info">

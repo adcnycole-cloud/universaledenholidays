@@ -95,7 +95,6 @@ class Product extends Model
         return $gallery->values()->all();
     }
 
-<<<<<<< Updated upstream
     private function calculateDiscountedPrice(mixed $price): float
     {
         $basePrice = round((float) $price, 2);
@@ -107,41 +106,5 @@ class Product extends Model
         $discountMultiplier = max(0, 1 - (((float) $this->discount_percentage) / 100));
 
         return round($basePrice * $discountMultiplier, 2);
-=======
-    public function getHasActiveDiscountAttribute(): bool
-    {
-        return (bool) $this->is_discounted && (float) ($this->discount_percentage ?? 0) > 0;
-    }
-
-    public function getDiscountedMalaysiaAdultPriceMyrAttribute(): float
-    {
-        return $this->calculateDiscountedPrice((float) $this->malaysia_adult_price_myr);
-    }
-
-    public function getDiscountedMalaysiaChildPriceMyrAttribute(): float
-    {
-        return $this->calculateDiscountedPrice((float) $this->malaysia_child_price_myr);
-    }
-
-    public function getDiscountedInternationalAdultPriceMyrAttribute(): float
-    {
-        return $this->calculateDiscountedPrice((float) $this->international_adult_price_myr);
-    }
-
-    public function getDiscountedInternationalChildPriceMyrAttribute(): float
-    {
-        return $this->calculateDiscountedPrice((float) $this->international_child_price_myr);
-    }
-
-    private function calculateDiscountedPrice(float $basePrice): float
-    {
-        if (! $this->has_active_discount) {
-            return round($basePrice, 2);
-        }
-
-        $discountPercentage = max(0, min(100, (float) $this->discount_percentage));
-
-        return round($basePrice * ((100 - $discountPercentage) / 100), 2);
->>>>>>> Stashed changes
     }
 }

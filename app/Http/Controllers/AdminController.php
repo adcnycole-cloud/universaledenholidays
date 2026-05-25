@@ -456,6 +456,8 @@ class AdminController extends Controller
             'itinerary_time.*' => ['nullable', 'string', 'max:100'],
             'itinerary_activity' => ['nullable', 'array', 'max:31'],
             'itinerary_activity.*' => ['nullable', 'string', 'max:1000'],
+            'itinerary_notes' => ['nullable', 'array', 'max:31'],
+            'itinerary_notes.*' => ['nullable', 'string', 'max:1000'],
         ]);
 
         $product->update([
@@ -571,15 +573,17 @@ class AdminController extends Controller
         $dayNumbers = $validated['itinerary_day_number'] ?? [];
         $times = $validated['itinerary_time'] ?? [];
         $activities = $validated['itinerary_activity'] ?? [];
-        $rowCount = max(count($dayNumbers), count($times), count($activities));
+        $notes = $validated['itinerary_notes'] ?? [];
+        $rowCount = max(count($dayNumbers), count($times), count($activities), count($notes));
 
         return collect(range(0, max(0, $rowCount - 1)))
-            ->map(function (int $index) use ($dayNumbers, $times, $activities) {
+            ->map(function (int $index) use ($dayNumbers, $times, $activities, $notes) {
                 $dayNumber = trim((string) ($dayNumbers[$index] ?? ''));
                 $time = trim((string) ($times[$index] ?? ''));
                 $activity = trim((string) ($activities[$index] ?? ''));
+                $note = trim((string) ($notes[$index] ?? ''));
 
-                if ($dayNumber === '' && $time === '' && $activity === '') {
+                if ($dayNumber === '' && $time === '' && $activity === '' && $note === '') {
                     return null;
                 }
 
@@ -587,6 +591,7 @@ class AdminController extends Controller
                     'day_number' => $dayNumber,
                     'time' => $time,
                     'activity' => $activity,
+                    'notes' => $note,
                 ];
             })
             ->filter()

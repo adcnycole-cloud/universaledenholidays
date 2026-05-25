@@ -324,8 +324,11 @@
                         @else
                             <div class="flex flex-wrap items-center gap-2">
                                 <h4 class="text-xl font-semibold text-stone-900">{{ $product->name }}</h4>
-                                <span class="rounded-full bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] {{ $product->is_active ? 'text-emerald-700' : 'text-stone-500' }}">
-                                    {{ $product->is_active ? 'Active' : 'Hidden' }}
+                                <span
+                                    class="rounded-full bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] {{ $product->is_active ? 'text-emerald-700' : 'text-stone-500' }}"
+                                    data-transport-status-badge
+                                >
+                                    {{ $product->is_active ? 'Active' : 'Inactive' }}
                                 </span>
                             </div>
                             @if ($product->capacity)
@@ -377,6 +380,7 @@
                                                         <th class="w-40 px-4 py-3 font-semibold">Day Number</th>
                                                         <th class="w-36 px-4 py-3 font-semibold">Time</th>
                                                         <th class="px-4 py-3 font-semibold">Activity</th>
+                                                        <th class="px-4 py-3 font-semibold">Notes</th>
                                                         <th class="w-24 px-4 py-3 font-semibold text-center"></th>
                                                     </tr>
                                                 </thead>
@@ -410,6 +414,11 @@
                                                                 <td class="px-4 py-3 align-top">
                                                                     <div class="flex h-[96px] items-stretch gap-2 rounded-xl border border-stone-200 bg-stone-50 p-2.5" data-itinerary-activity-slot>
                                                                         <textarea name="itinerary_activity[]" rows="2" class="h-full flex-1 resize-none rounded-lg border border-stone-300 bg-white px-2.5 py-1.5 text-sm text-stone-800" placeholder="Arrival, transfer, check-in, and evening city walk">{{ $row['activity'] }}</textarea>
+                                                                    </div>
+                                                                </td>
+                                                                <td class="px-4 py-3 align-top">
+                                                                    <div class="flex h-[96px] items-stretch gap-2 rounded-xl border border-stone-200 bg-stone-50 p-2.5">
+                                                                        <textarea name="itinerary_notes[]" rows="2" class="h-full flex-1 resize-none rounded-lg border border-stone-300 bg-white px-2.5 py-1.5 text-sm text-stone-800" placeholder="Meeting point, what to bring, extra detail">{{ $row['notes'] ?? '' }}</textarea>
                                                                     </div>
                                                                 </td>
                                                                 <td class="px-4 py-3 align-top text-center">
@@ -456,6 +465,11 @@
                                                 <td class="px-4 py-3 align-top">
                                                     <div class="flex h-[96px] items-stretch gap-2 rounded-xl border border-stone-200 bg-stone-50 p-2.5" data-itinerary-activity-slot>
                                                         <textarea name="itinerary_activity[]" rows="2" class="h-full flex-1 resize-none rounded-lg border border-stone-300 bg-white px-2.5 py-1.5 text-sm text-stone-800" placeholder="Arrival, transfer, check-in, and evening city walk"></textarea>
+                                                    </div>
+                                                </td>
+                                                <td class="px-4 py-3 align-top">
+                                                    <div class="flex h-[96px] items-stretch gap-2 rounded-xl border border-stone-200 bg-stone-50 p-2.5">
+                                                        <textarea name="itinerary_notes[]" rows="2" class="h-full flex-1 resize-none rounded-lg border border-stone-300 bg-white px-2.5 py-1.5 text-sm text-stone-800" placeholder="Meeting point, what to bring, extra detail"></textarea>
                                                     </div>
                                                 </td>
                                                 <td class="px-4 py-3 align-top text-center">
@@ -1366,6 +1380,7 @@
             const input = form.querySelector('[data-transport-active-input]');
             const button = form.querySelector('[data-transport-active-button]');
             const label = form.querySelector('[data-transport-active-label]');
+            const statusBadge = form.closest('[data-admin-transport-item]')?.querySelector('[data-transport-status-badge]');
 
             if (!input || !button || !label) {
                 return;
@@ -1375,6 +1390,12 @@
                 input.value = isActive ? '0' : '1';
                 label.textContent = isActive ? 'On' : 'Off';
                 button.setAttribute('aria-label', isActive ? 'Deactivate transport listing' : 'Activate transport listing');
+
+                if (statusBadge) {
+                    statusBadge.textContent = isActive ? 'Active' : 'Inactive';
+                    statusBadge.classList.toggle('text-emerald-700', isActive);
+                    statusBadge.classList.toggle('text-stone-500', !isActive);
+                }
             };
 
             form.addEventListener('submit', async (event) => {

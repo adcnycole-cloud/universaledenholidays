@@ -32,6 +32,13 @@
             $structuredItineraryItems = $itineraryItems
                 ->filter(fn ($item) => is_array($item) && array_key_exists('activity', $item))
                 ->values();
+            $groupedItineraryDays = $structuredItineraryItems
+                ->groupBy(fn ($item, $index) => trim((string) ($item['day_number'] ?? '')) ?: 'Day '.($index + 1))
+                ->map(fn ($items, $dayLabel) => [
+                    'label' => $dayLabel,
+                    'items' => $items->values(),
+                ])
+                ->values();
         @endphp
 
         @if ($isTransport)
@@ -247,27 +254,52 @@
         @if ($product->category !== 'transport')
             @if ($itineraryItems->isNotEmpty())
                 <section class="mt-8 rounded-[2rem] border border-stone-200 bg-white p-6 shadow-sm">
-                    <h2 class="text-3xl font-semibold text-stone-900">Itinerary</h2>
+                    <h2 class="text-3xl font-semibold text-stone-900">Package Itinerary</h2>
                     @if ($structuredItineraryItems->isNotEmpty())
-                        <div class="mt-6 overflow-hidden rounded-3xl border border-stone-200">
-                            <table class="min-w-full text-left text-sm">
-                                <thead class="bg-stone-100 text-stone-700">
-                                    <tr>
-                                        <th class="w-40 px-5 py-4 font-semibold">Day Number</th>
-                                        <th class="w-44 px-5 py-4 font-semibold">Time</th>
-                                        <th class="px-5 py-4 font-semibold">Activity</th>
-                                    </tr>
-                                </thead>
-                                <tbody class="bg-white text-stone-700">
-                                    @foreach ($structuredItineraryItems as $item)
-                                        <tr class="border-t border-stone-200">
-                                            <td class="px-5 py-4 font-semibold text-stone-900">{{ $item['day_number'] ?? 'Day '.$loop->iteration }}</td>
-                                            <td class="px-5 py-4">{{ $item['time'] ?: '--' }}</td>
-                                            <td class="px-5 py-4">{{ $item['activity'] ?? '' }}</td>
-                                        </tr>
-                                    @endforeach
-                                </tbody>
-                            </table>
+                        <div class="mt-6 space-y-4">
+                            @foreach ($groupedItineraryDays as $day)
+                                <section class="overflow-hidden rounded-[1.5rem] border border-stone-200 bg-stone-50">
+                                    <div class="flex items-center justify-between gap-4 border-b border-stone-200 bg-white px-4 py-3">
+                                        <div>
+                                            <h3 class="text-xl font-semibold text-stone-900">{{ $day['label'] }}</h3>
+                                        </div>
+                                        <span class="rounded-full bg-emerald-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-emerald-700">
+                                            {{ $day['items']->count() }} stop{{ $day['items']->count() === 1 ? '' : 's' }}
+                                        </span>
+                                    </div>
+                                    <div class="overflow-hidden">
+                                        <table class="w-full table-fixed text-sm">
+                                            <colgroup>
+                                                <col style="width: 180px;">
+                                                <col style="width: 44%;">
+                                                <col style="width: auto;">
+                                            </colgroup>
+                                            <thead class="bg-stone-100/80 text-stone-600">
+                                                <tr>
+                                                    <th class="px-4 py-3 text-center text-xs font-semibold uppercase tracking-[0.18em]">Time</th>
+                                                    <th class="px-4 py-3 text-center text-xs font-semibold uppercase tracking-[0.18em]">Activity</th>
+                                                    <th class="px-4 py-3 text-center text-xs font-semibold uppercase tracking-[0.18em]">Notes</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody class="bg-white text-stone-700">
+                                                @foreach ($day['items'] as $item)
+                                                    <tr class="{{ $loop->last ? '' : 'border-b border-stone-200' }}">
+                                                        <td class="px-4 py-3 text-center align-top font-semibold text-sky-700 whitespace-nowrap">
+                                                            {{ filled($item['time'] ?? null) ? $item['time'] : 'Flexible time' }}
+                                                        </td>
+                                                        <td class="px-4 py-3 text-justify leading-6">
+                                                            {{ $item['activity'] ?? '' }}
+                                                        </td>
+                                                        <td class="px-4 py-3 text-justify leading-6 text-stone-600">
+                                                            {{ filled($item['notes'] ?? null) ? $item['notes'] : '--' }}
+                                                        </td>
+                                                    </tr>
+                                                @endforeach
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </section>
+                            @endforeach
                         </div>
                     @else
                         <div class="mt-6 grid gap-4">
@@ -362,24 +394,6 @@
                 </div>
             </section>
 
-            <section class="mt-8 rounded-[2rem] border border-stone-200 bg-white p-6 shadow-sm">
-                <div class="flex items-center justify-between">
-                    <h2 class="text-2xl font-semibold text-stone-900">Sample Itinerary</h2>
-                    <span class="text-sm font-semibold uppercase tracking-[0.25em] text-sky-700">Flexible</span>
-                </div>
-                <div class="mt-6 space-y-4">
-                    <div class="rounded-3xl border border-stone-200 bg-stone-50 p-5">
-                        <p class="text-sm font-semibold uppercase tracking-[0.25em] text-emerald-700">Day 1</p>
-                        <p class="mt-2 text-lg font-semibold text-stone-900">Arrival, registration, and guided experience</p>
-                        <p class="mt-3 text-sm leading-7 text-stone-600">Begin in {{ $product->location }} with coordination, transport support, and the core {{ strtolower($product->category) }} program.</p>
-                    </div>
-                    <div class="rounded-3xl border border-stone-200 bg-stone-50 p-5">
-                        <p class="text-sm font-semibold uppercase tracking-[0.25em] text-emerald-700">Day 2</p>
-                        <p class="mt-2 text-lg font-semibold text-stone-900">Highlights, wrap-up, and return</p>
-                        <p class="mt-3 text-sm leading-7 text-stone-600">Continue key activities, scenic stops, and return arrangements according to the selected package duration.</p>
-                    </div>
-                </div>
-            </section>
         @endif
 
         @if ($product->category === 'package')

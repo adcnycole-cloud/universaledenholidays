@@ -1,43 +1,58 @@
 <section id="admin-promo-listings" class="mt-5 space-y-8">
     <section class="rounded-[2rem] border border-stone-200 bg-white p-6 shadow-sm">
-        <p class="text-sm uppercase tracking-[0.3em] text-rose-600">Promos</p>
-        <h1 class="mt-2 text-2xl font-semibold text-stone-900">Upload posters for special offers</h1>
-        <form method="POST" action="{{ route('admin.news-features.store') }}" enctype="multipart/form-data" class="mt-6 space-y-4" data-form-persist="admin-promos-create">
-            @csrf
-            <div class="grid gap-4 lg:grid-cols-3">
-                <div>
-                    <label for="promo_label" class="mb-2 block text-sm font-medium text-stone-700">Promo label</label>
-                    <input id="promo_label" name="promo_label" type="text" value="{{ old('promo_label') }}" placeholder="Hari Raya Promo" class="w-full rounded-2xl border border-stone-300 px-4 py-3 text-stone-800">
-                </div>
-                <div>
-                    <label for="title" class="mb-2 block text-sm font-medium text-stone-700">Title</label>
-                    <input id="title" name="title" type="text" value="{{ old('title') }}" placeholder="Limited Days Offer" class="w-full rounded-2xl border border-stone-300 px-4 py-3 text-stone-800">
-                </div>
-                <div>
-                    <label for="poster" class="mb-2 block text-sm font-medium text-stone-700">Poster image</label>
-                    <input id="poster" name="poster" type="file" accept=".jpg,.jpeg,.png,.webp" class="w-full rounded-2xl border border-dashed border-stone-300 px-4 py-3 text-stone-700">
-                </div>
-            </div>
+        <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div>
-                <label for="summary" class="mb-2 block text-sm font-medium text-stone-700">Summary</label>
-                <textarea id="summary" name="summary" rows="3" class="w-full rounded-2xl border border-stone-300 px-4 py-3 text-stone-800">{{ old('summary') }}</textarea>
+                <p class="text-sm uppercase tracking-[0.3em] text-rose-600">Promos</p>
+                <h1 class="mt-2 text-2xl font-semibold text-stone-900">Upload posters for special offers</h1>
             </div>
-            <div class="grid gap-4 lg:grid-cols-[1fr_1fr_auto] lg:items-end">
-                <div>
-                    <label for="starts_at" class="mb-2 block text-sm font-medium text-stone-700">Start date</label>
-                    <input id="starts_at" name="starts_at" type="date" value="{{ old('starts_at') }}" class="w-full rounded-2xl border border-stone-300 px-4 py-3 text-stone-800">
+            <button
+                type="button"
+                class="inline-flex items-center justify-center rounded-full border border-stone-300 bg-white px-4 py-2.5 text-sm font-semibold uppercase tracking-[0.18em] text-stone-700 transition hover:bg-stone-100"
+                data-create-panel-toggle
+                aria-expanded="false"
+                aria-controls="admin-promo-create-panel-body"
+            >
+                New Promo
+            </button>
+        </div>
+        <div id="admin-promo-create-panel-body" class="mt-6 hidden" data-create-panel-body>
+            <form method="POST" action="{{ route('admin.news-features.store') }}" enctype="multipart/form-data" class="space-y-4" data-form-persist="admin-promos-create">
+                @csrf
+                <div class="grid gap-4 lg:grid-cols-3">
+                    <div>
+                        <label for="promo_label" class="mb-2 block text-sm font-medium text-stone-700">Promo label</label>
+                        <input id="promo_label" name="promo_label" type="text" value="{{ old('promo_label') }}" placeholder="Hari Raya Promo" class="w-full rounded-2xl border border-stone-300 px-4 py-3 text-stone-800">
+                    </div>
+                    <div>
+                        <label for="title" class="mb-2 block text-sm font-medium text-stone-700">Title</label>
+                        <input id="title" name="title" type="text" value="{{ old('title') }}" placeholder="Limited Days Offer" class="w-full rounded-2xl border border-stone-300 px-4 py-3 text-stone-800">
+                    </div>
+                    <div>
+                        <label for="poster" class="mb-2 block text-sm font-medium text-stone-700">Poster image</label>
+                        <input id="poster" name="poster" type="file" accept=".jpg,.jpeg,.png,.webp" class="w-full rounded-2xl border border-dashed border-stone-300 px-4 py-3 text-stone-700">
+                    </div>
                 </div>
                 <div>
-                    <label for="ends_at" class="mb-2 block text-sm font-medium text-stone-700">End date</label>
-                    <input id="ends_at" name="ends_at" type="date" value="{{ old('ends_at') }}" class="w-full rounded-2xl border border-stone-300 px-4 py-3 text-stone-800">
+                    <label for="summary" class="mb-2 block text-sm font-medium text-stone-700">Summary</label>
+                    <textarea id="summary" name="summary" rows="3" class="w-full rounded-2xl border border-stone-300 px-4 py-3 text-stone-800">{{ old('summary') }}</textarea>
                 </div>
-                <label class="flex items-center gap-2 text-sm text-stone-600 lg:pb-3">
-                    <input type="checkbox" name="is_active" value="1" @checked(old('is_active', true)) class="rounded border-stone-300">
-                    Show this promo on the homepage
-                </label>
-            </div>
-            <button type="submit" class="w-full rounded-full bg-rose-600 px-5 py-3 text-sm font-semibold uppercase tracking-[0.25em] text-white transition hover:bg-rose-700">Save Promo</button>
-        </form>
+                <div class="grid gap-4 lg:grid-cols-[1fr_1fr_auto] lg:items-end">
+                    <div>
+                        <label for="starts_at" class="mb-2 block text-sm font-medium text-stone-700">Start date</label>
+                        <input id="starts_at" name="starts_at" type="date" value="{{ old('starts_at') }}" class="w-full rounded-2xl border border-stone-300 px-4 py-3 text-stone-800">
+                    </div>
+                    <div>
+                        <label for="ends_at" class="mb-2 block text-sm font-medium text-stone-700">End date</label>
+                        <input id="ends_at" name="ends_at" type="date" value="{{ old('ends_at') }}" class="w-full rounded-2xl border border-stone-300 px-4 py-3 text-stone-800">
+                    </div>
+                    <label class="flex items-center gap-2 text-sm text-stone-600 lg:pb-3">
+                        <input type="checkbox" name="is_active" value="1" @checked(old('is_active', true)) class="rounded border-stone-300">
+                        Show this promo on the homepage
+                    </label>
+                </div>
+                <button type="submit" class="w-full rounded-full bg-rose-600 px-5 py-3 text-sm font-semibold uppercase tracking-[0.25em] text-white transition hover:bg-rose-700">Save Promo</button>
+            </form>
+        </div>
     </section>
 
     <section class="rounded-[2rem] border border-stone-200 bg-white p-6 shadow-sm">

@@ -85,6 +85,12 @@
             transform-origin: center center;
         }
 
+        .package-card-copy {
+            display: flex;
+            flex: 1;
+            flex-direction: column;
+        }
+
         .package-section-card:hover .package-showcase-card {
             box-shadow: 0 24px 40px rgba(15, 23, 42, 0.16) !important;
         }
@@ -454,10 +460,24 @@
             .package-section-card {
                 width: min(100%, 320px) !important;
                 min-width: min(100%, 320px) !important;
+                align-self: stretch !important;
             }
 
             .package-section-card > a:first-child {
-                min-height: 0 !important;
+                min-height: 38rem !important;
+                height: 38rem !important;
+            }
+
+            .package-card-copy {
+                padding: 1rem 1rem 0.9rem !important;
+            }
+
+            .package-card-title {
+                min-height: 4.15rem !important;
+            }
+
+            .package-card-description {
+                min-height: 7.25rem !important;
             }
 
             .promo-current-layout {
@@ -1123,12 +1143,12 @@
                                                     @endif
                                                 </div>
 
-                                                <div style="display: flex; flex: 1; flex-direction: column; padding: 0.95rem 0.95rem 0.8rem;">
+                                                <div class="package-card-copy" style="padding: 0.95rem 0.95rem 0.8rem;">
                                                     <p style="margin: 0; font-family: 'Oswald', sans-serif; font-size: 2rem; font-weight: 700; line-height: 1; color: #ff1d0d;">{{ $tripCode }}</p>
-                                                    <h3 style="margin-top: 0.35rem; font-family: 'Oswald', sans-serif; font-size: 1.65rem; font-weight: 700; line-height: 1.04; color: #1c2f7d;">
+                                                    <h3 class="package-card-title" style="margin-top: 0.35rem; font-family: 'Oswald', sans-serif; font-size: 1.65rem; font-weight: 700; line-height: 1.04; color: #1c2f7d;">
                                                         {{ strtoupper($package->name) }}
                                                     </h3>
-                                                    <p style="margin-top: 0.45rem; flex: 1; min-height: 5.8rem; font-size: 0.86rem; line-height: 1.3; color: #111827;">
+                                                    <p class="package-card-description" style="margin-top: 0.45rem; flex: 1; min-height: 5.8rem; font-size: 0.86rem; line-height: 1.3; color: #111827;">
                                                         {{ \Illuminate\Support\Str::limit($package->description, 170) }}
                                                     </p>
                                                     <div style="margin-top: auto; padding-top: 0.7rem;">

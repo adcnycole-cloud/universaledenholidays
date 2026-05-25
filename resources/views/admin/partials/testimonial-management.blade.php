@@ -3,7 +3,7 @@
         <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
             <div>
                 <p class="text-sm uppercase tracking-[0.3em] text-amber-600">Testimonials</p>
-                <h1 class="mt-2 text-3xl font-semibold text-stone-900">Customer review moderation</h1>
+                <h1 class="mt-2 text-2xl font-semibold text-stone-900">Customer review moderation</h1>
                 <p class="mt-3 max-w-3xl text-sm leading-7 text-stone-600">
                     Reviews come from customers. Use this page to decide whether each review should appear on the landing page or a specific product package page.
                 </p>

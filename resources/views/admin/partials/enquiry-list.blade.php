@@ -2,7 +2,7 @@
     <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div>
             <p class="text-sm uppercase tracking-[0.3em] text-emerald-700">Enquiries</p>
-            <h1 class="mt-2 text-3xl font-semibold text-stone-900">Customer enquiry inbox</h1>
+            <h1 class="mt-2 text-2xl font-semibold text-stone-900">Customer enquiry inbox</h1>
             <p class="mt-3 max-w-3xl text-sm leading-7 text-stone-600">Review customers who asked for more details before making a reservation or booking. Use this page to follow up and keep those enquiries separate from the booking queue.</p>
         </div>
         <a href="{{ route('admin.bookings') }}" class="inline-flex items-center justify-center rounded-full border border-stone-300 bg-white px-5 py-3 text-sm font-semibold text-stone-700 transition hover:bg-stone-50">

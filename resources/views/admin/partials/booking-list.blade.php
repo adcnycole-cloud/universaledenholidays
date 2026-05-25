@@ -1,6 +1,6 @@
 <section class="mt-5 rounded-[2rem] border border-stone-200 bg-white p-6 shadow-sm">
     <p class="text-sm uppercase tracking-[0.3em] text-sky-700">Bookings</p>
-    <h1 class="mt-2 text-3xl font-semibold text-stone-900">Incoming booking requests</h1>
+    <h1 class="mt-2 text-2xl font-semibold text-stone-900">Incoming booking requests</h1>
     <p class="mt-3 max-w-3xl text-sm leading-7 text-stone-600">This queue now shows reservations and bookings only. Customer questions submitted through the enquiry form are handled separately in the admin enquiries page.</p>
     <div class="mt-6 rounded-[1.75rem] border border-sky-100 bg-sky-50 p-4">
         <div class="flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">

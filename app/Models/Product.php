@@ -103,8 +103,8 @@ class Product extends Model
             return $basePrice;
         }
 
-        $discountMultiplier = max(0, 1 - (((float) $this->discount_percentage) / 100));
+        $discountPercentage = max(0, min(100, (float) $this->discount_percentage));
 
-        return round($basePrice * $discountMultiplier, 2);
+        return round($basePrice * ((100 - $discountPercentage) / 100), 2);
     }
 }

@@ -183,6 +183,494 @@
             flex-basis: 470px;
         }
 
+        .promo-book-shell {
+            position: relative;
+            overflow: hidden;
+            border-radius: 1rem;
+            width: min(100%, 1760px);
+            margin: 0 auto;
+            background: transparent;
+            box-shadow: none;
+        }
+
+        .promo-book-shell::after {
+            content: "";
+            position: absolute;
+            left: 4.5rem;
+            right: 4.5rem;
+            bottom: -0.2rem;
+            height: 2.9rem;
+            border-radius: 999px;
+            background: radial-gradient(ellipse at center, rgba(15,23,42,0.18) 0%, rgba(15,23,42,0.1) 38%, rgba(15,23,42,0) 76%);
+            filter: blur(16px);
+            opacity: 0.62;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .promo-book-toolbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            padding: 0.2rem 1.25rem 0;
+        }
+
+        .promo-book-nav {
+            display: inline-flex;
+            height: 3rem;
+            width: 3rem;
+            align-items: center;
+            justify-content: center;
+            border: none;
+            border-radius: 999px;
+            background: #ffffff;
+            box-shadow: 0 10px 24px rgba(15,23,42,0.1);
+            font-size: 2rem;
+            font-weight: 300;
+            line-height: 1;
+            color: #7b93c8;
+            cursor: pointer;
+            transition: transform 0.22s ease, box-shadow 0.22s ease, opacity 0.22s ease;
+        }
+
+        .promo-book-nav:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 14px 28px rgba(15,23,42,0.14);
+        }
+
+        .promo-book-status {
+            min-width: 0;
+            flex: 1;
+            text-align: center;
+        }
+
+        .promo-book-mobile {
+            display: none;
+        }
+
+        .promo-book-desktop {
+            display: block;
+            padding: 1.1rem 3rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .promo-book-cover {
+            position: absolute;
+            inset: 0.9rem 2.35rem 0.9rem;
+            border-radius: 0.85rem;
+            background:
+                linear-gradient(145deg, #405735 0%, #5f7f49 34%, #7b9860 56%, #33492b 100%);
+            box-shadow:
+                inset 0 0 0 1px rgba(248,250,252,0.14),
+                inset 0 1px 0 rgba(255,255,255,0.14),
+                inset 1.1rem 0 1.8rem rgba(24,43,20,0.28),
+                inset -0.9rem 0 1.5rem rgba(24,42,20,0.24),
+                0 20px 34px rgba(15,23,42,0.16),
+                0 34px 48px rgba(15,23,42,0.08);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .promo-book-cover::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            left: calc(50% - 0.45rem);
+            width: 0.9rem;
+            background:
+                linear-gradient(90deg, rgba(27,47,22,0.96), rgba(97,126,72,0.78) 42%, rgba(25,43,20,0.96));
+            box-shadow:
+                inset 1px 0 0 rgba(255,255,255,0.1),
+                inset -1px 0 0 rgba(0,0,0,0.2);
+        }
+
+        .promo-book-cover::after {
+            content: "";
+            position: absolute;
+            inset: 0.65rem;
+            border: 1px solid rgba(255,255,255,0.08);
+            opacity: 0.7;
+            pointer-events: none;
+        }
+
+        .promo-book-spread {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+            gap: 0;
+            height: 36rem;
+            min-height: 36rem;
+            overflow: hidden;
+            border-radius: 0.7rem;
+            margin: 0.7rem;
+            background:
+                linear-gradient(180deg, rgba(255,255,255,0.99), rgba(247,244,237,0.98));
+            box-shadow:
+                inset 0 0 0 1px rgba(231,229,228,0.9),
+                inset 0 18px 28px rgba(255,255,255,0.4),
+                inset 0 -10px 18px rgba(120,113,108,0.04),
+                0 16px 26px rgba(15,23,42,0.1),
+                0 30px 42px rgba(15,23,42,0.06);
+            position: relative;
+            z-index: 1;
+            perspective: 2400px;
+            transform-style: preserve-3d;
+        }
+
+        .promo-book-spread.is-turning .promo-book-page--info {
+            opacity: 0;
+        }
+
+        .promo-book-spread.is-updating .promo-book-page--poster,
+        .promo-book-spread.is-updating .promo-book-page--info {
+            opacity: 0.58;
+            transform: translateY(0.35rem);
+        }
+
+        .promo-book-turn-zone {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 4.75rem;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            z-index: 4;
+        }
+
+        .promo-book-turn-zone--prev {
+            left: 0;
+        }
+
+        .promo-book-turn-zone--next {
+            right: 0;
+        }
+
+        .promo-book-turn-zone::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 100%;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+            pointer-events: none;
+        }
+
+        .promo-book-turn-zone--prev::before {
+            left: 0;
+            background: linear-gradient(90deg, rgba(49,95,189,0.08), rgba(49,95,189,0));
+        }
+
+        .promo-book-turn-zone--next::before {
+            right: 0;
+            background: linear-gradient(270deg, rgba(49,95,189,0.08), rgba(49,95,189,0));
+        }
+
+        .promo-book-turn-zone:hover::before {
+            opacity: 1;
+        }
+
+        .promo-book-page-corner {
+            position: absolute;
+            right: 0.85rem;
+            bottom: 0.8rem;
+            z-index: 4;
+            height: 0.95rem;
+            width: 0.95rem;
+            background: linear-gradient(135deg, rgba(255,255,255,1) 0 50%, rgba(228,232,236,0.98) 50% 100%);
+            box-shadow:
+                -1px -1px 0 rgba(255,255,255,0.95),
+                -3px -3px 8px rgba(15,23,42,0.05);
+            pointer-events: none;
+            clip-path: polygon(100% 0, 0 100%, 100% 100%);
+            opacity: 0.72;
+            transition: transform 0.2s ease, opacity 0.2s ease;
+        }
+
+        .promo-book-spread:hover .promo-book-page-corner {
+            transform: translate(-1px, -1px);
+            opacity: 1;
+        }
+
+        .promo-book-page {
+            min-width: 0;
+            height: 100%;
+        }
+
+        .promo-book-page--poster {
+            display: flex;
+            align-items: stretch;
+            justify-content: center;
+            border: none;
+            border-right: 1px solid rgba(214,211,209,0.5);
+            background: linear-gradient(180deg, #fffefb, #fcfaf6);
+            padding: 0;
+            text-align: left;
+            cursor: pointer;
+            position: relative;
+            z-index: 1;
+            transition: opacity 0.22s ease, transform 0.22s ease;
+        }
+
+        .promo-book-page--poster::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            width: 0.9rem;
+            background: linear-gradient(90deg, rgba(15,23,42,0), rgba(15,23,42,0.055));
+            pointer-events: none;
+        }
+
+        .promo-book-page--poster::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(90deg, rgba(15,23,42,0.02), rgba(15,23,42,0.22));
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.56s ease;
+        }
+
+        .promo-book-page--poster img {
+            display: block;
+            height: auto;
+            width: 100%;
+            max-height: 36rem;
+            max-width: 100%;
+            border-radius: 0;
+            object-fit: contain;
+            background: #fff;
+            box-shadow: 0 10px 18px rgba(15,23,42,0.05);
+        }
+
+        .promo-book-page--poster.is-landscape {
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            position: relative;
+            top: -3px;
+        }
+
+        .promo-book-page--poster.is-landscape img {
+            height: auto;
+            width: 100%;
+            max-height: none;
+            max-width: 100%;
+            object-fit: contain;
+            object-position: center;
+        }
+
+        .promo-book-page--poster.is-portrait {
+            align-items: flex-start;
+            align-self: start;
+            padding-top: 0;
+            padding-bottom: 0;
+        }
+
+        .promo-book-page--poster.is-portrait img {
+            height: auto !important;
+            max-height: 36rem !important;
+            width: auto !important;
+            max-width: none;
+            border-radius: 0;
+            object-fit: contain;
+            box-shadow: 0 16px 34px rgba(15,23,42,0.12);
+        }
+
+        .promo-book-page--info {
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            padding: 2rem 2.2rem;
+            background:
+                linear-gradient(180deg, rgba(255,255,255,0.99), rgba(250,247,240,0.98)),
+                radial-gradient(circle at top right, rgba(203,213,225,0.22), transparent 36%);
+            position: relative;
+            z-index: 1;
+            transition: opacity 0.18s ease;
+            transition: opacity 0.22s ease, transform 0.22s ease;
+        }
+
+        .promo-book-page--info::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            width: 0.9rem;
+            background: linear-gradient(90deg, rgba(15,23,42,0.055), rgba(15,23,42,0));
+            pointer-events: none;
+        }
+
+        .promo-book-turn-sheet {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            left: 50%;
+            width: 50%;
+            transform-origin: left bottom;
+            transform-style: preserve-3d;
+            pointer-events: none;
+            z-index: 5;
+            opacity: 0;
+            transform: perspective(1800px) rotateY(0deg);
+        }
+
+        .promo-book-turn-sheet.is-active {
+            opacity: 1;
+        }
+
+        .promo-book-turn-sheet.is-flipping {
+            transform: perspective(2000px) rotateY(-180deg);
+        }
+
+        .promo-book-turn-face {
+            position: absolute;
+            inset: 0;
+            backface-visibility: hidden;
+            overflow: hidden;
+            background: linear-gradient(90deg, #e1ddd8 0%, #fffbf6 12%, #ffffff 100%);
+            box-shadow:
+                inset 0 -1px 2px rgba(50,50,50,0.08),
+                inset -1px 0 1px rgba(150,150,150,0.16),
+                0 16px 30px rgba(15,23,42,0.12);
+        }
+
+        .promo-book-turn-face--front {
+            transform: rotateY(0deg);
+        }
+
+        .promo-book-turn-face--front::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            width: 1rem;
+            background: linear-gradient(90deg, rgba(15,23,42,0.1), rgba(15,23,42,0));
+            pointer-events: none;
+        }
+
+        .promo-book-turn-face--back {
+            transform: rotateY(180deg);
+            background: #ffffff;
+        }
+
+        .promo-book-turn-face--back::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            width: 1rem;
+            background: linear-gradient(270deg, rgba(15,23,42,0.12), rgba(15,23,42,0));
+            pointer-events: none;
+        }
+
+        .promo-book-turn-info {
+            height: 100%;
+            padding: 2rem 2.2rem;
+        }
+
+        .promo-book-turn-poster {
+            display: flex;
+            height: 100%;
+            align-items: stretch;
+            justify-content: center;
+            background: #ffffff;
+        }
+
+        .promo-book-turn-poster img {
+            display: block;
+            height: auto;
+            width: 100%;
+            max-height: 36rem;
+            max-width: 100%;
+            object-fit: contain;
+            background: #fff;
+        }
+
+        .promo-book-turn-poster.is-landscape {
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            position: relative;
+            top: -3px;
+        }
+
+        .promo-book-turn-poster.is-portrait {
+            align-items: flex-start;
+            padding-top: 0;
+            padding-bottom: 0;
+        }
+
+        .promo-book-turn-poster.is-portrait img {
+            height: auto !important;
+            max-height: 36rem !important;
+            width: auto !important;
+            max-width: none;
+            object-fit: contain;
+            box-shadow: 0 16px 34px rgba(15,23,42,0.12);
+        }
+
+        .promo-book-turn-sheet {
+            display: none;
+        }
+
+        .promo-book-mobile-card {
+            position: relative;
+            perspective: 1400px;
+        }
+
+        .promo-book-mobile-inner {
+            position: relative;
+            min-height: 28rem;
+            transform-style: preserve-3d;
+            transition: transform 0.7s ease;
+        }
+
+        .promo-book-mobile-card.is-flipped .promo-book-mobile-inner {
+            transform: rotateY(180deg);
+        }
+
+        .promo-book-face {
+            position: absolute;
+            inset: 0;
+            backface-visibility: hidden;
+            overflow: hidden;
+            border-radius: 0;
+            background: #fff;
+            box-shadow: 0 18px 36px rgba(15,23,42,0.1);
+        }
+
+        .promo-book-face--front {
+            background: linear-gradient(145deg, #4f6f42 0%, #709458 46%, #36502f 100%);
+        }
+
+        .promo-book-face--front.is-portrait > div {
+            padding-top: 0.8rem !important;
+            padding-bottom: 0.8rem !important;
+            background: linear-gradient(145deg, #4f6f42 0%, #709458 46%, #36502f 100%) !important;
+        }
+
+        .promo-book-face--front.is-portrait img {
+            height: 98% !important;
+            object-fit: contain !important;
+        }
+
+        .promo-book-face--back {
+            transform: rotateY(180deg);
+            background:
+                linear-gradient(180deg, rgba(255,255,255,0.98), rgba(248,250,252,0.98)),
+                radial-gradient(circle at top right, rgba(191,219,254,0.35), transparent 34%);
+            overflow-y: auto;
+        }
+
         #promos,
         #testimonials,
         #about-us {
@@ -480,47 +968,43 @@
                 min-height: 7.25rem !important;
             }
 
-            .promo-current-layout {
-                width: 100% !important;
-                flex-direction: row !important;
+            .promo-book-toolbar {
+                padding: 0.9rem 0.9rem 0 !important;
             }
 
-            .promo-cards-row {
-                flex-wrap: wrap !important;
-                justify-content: center !important;
+            .promo-book-nav {
+                height: 2.7rem !important;
+                width: 2.7rem !important;
+                font-size: 2rem !important;
             }
 
-            .promo-card-column--current,
-            .promo-card-column--past {
-                flex-basis: auto !important;
-                width: min(100%, 470px) !important;
+            .promo-book-desktop {
+                display: none !important;
             }
 
-            .promo-inline-card {
-                padding: 0.9rem !important;
+            .promo-book-mobile {
+                display: block !important;
+                padding: 0.9rem 0.9rem 1rem !important;
             }
 
-            .promo-inline-info-shell {
-                position: absolute !important;
-                inset: 0.9rem !important;
-                z-index: 4 !important;
-                height: calc(100% - 1.8rem) !important;
-                max-width: none !important;
-                margin: 0 !important;
-                border-radius: 0.8rem !important;
-                box-shadow: 0 16px 30px rgba(15, 23, 42, 0.18) !important;
+            .promo-book-mobile-inner {
+                min-height: 26rem !important;
+            }
+        }
+
+        @media (min-width: 768px) {
+            .promo-book-nav {
+                display: none !important;
             }
 
-            .promo-more-info-button {
-                right: 50% !important;
-                top: auto !important;
-                bottom: -0.8rem !important;
-                transform: translateX(50%) !important;
-                padding: 0.7rem 1.2rem !important;
-                writing-mode: horizontal-tb !important;
-                text-orientation: mixed !important;
-                font-size: 0.72rem !important;
-                letter-spacing: 0.1em !important;
+            .promo-book-toolbar {
+                justify-content: center;
+                padding-left: 0;
+                padding-right: 0;
+            }
+
+            .promo-book-status {
+                flex: 0 1 auto;
             }
         }
 
@@ -564,7 +1048,7 @@
         <div class="pointer-events-none absolute inset-x-0 top-8 -z-10 h-72 rounded-[3rem] bg-[radial-gradient(circle_at_top_left,_rgba(134,239,172,0.16),_transparent_38%),radial-gradient(circle_at_top_right,_rgba(190,242,100,0.14),_transparent_34%)]"></div>
 
         <div>
-            <section id="promos" class="px-6 pt-8 pb-14 md:px-8 md:pt-10 md:pb-16 lg:px-10" style="margin-left: calc(50% - 50vw); margin-right: calc(50% - 50vw);">
+            <section id="promos" class="bg-white px-5 pt-14 pb-24 md:px-7 md:pt-20 md:pb-28 lg:px-8" style="margin-left: calc(50% - 50vw); margin-right: calc(50% - 50vw);">
                 @php
                     $currentPromoSlide = $currentPromo ? [
                         'title' => $currentPromo->title,
@@ -588,157 +1072,103 @@
                         ];
                     })->values();
 
-                    $initialPastPromo = $pastPromoSlides->first();
+                    $promoBookSlides = collect();
+
+                    if ($currentPromoSlide) {
+                        $promoBookSlides->push($currentPromoSlide);
+                    }
+
+                    $promoBookSlides = $promoBookSlides->concat($pastPromoSlides)->values();
+                    $initialPromoBookSlide = $promoBookSlides->first();
                 @endphp
 
-                <h2 class="text-center font-['Oswald'] text-4xl font-bold uppercase tracking-[0.22em] text-[#315fbd] md:text-5xl lg:text-6xl">
-                    Promotion & News
-                </h2>
+                <div class="relative mx-auto pt-6 md:pt-8" style="max-width: 1920px; height: 780px;">
+                    <h2 class="mb-2 text-center font-['Oswald'] text-4xl font-bold uppercase tracking-[0.22em] text-[#315fbd] md:mb-3 md:text-5xl lg:text-6xl">
+                        Promotion & News
+                    </h2>
+                    @if ($initialPromoBookSlide)
+                            <div id="promo-book-shell" class="promo-book-shell" style="margin-bottom: 3rem;">
+                                <div class="promo-book-toolbar">
+                                    <button id="promo-book-prev" type="button" class="promo-book-nav" aria-label="Show previous promo offer">&lsaquo;</button>
+                                    <div class="promo-book-status">
+                                        <p id="promo-book-count" class="text-xs font-semibold uppercase tracking-[0.18em] text-stone-500">1 / {{ $promoBookSlides->count() }}</p>
+                                    </div>
+                                    <button id="promo-book-next" type="button" class="promo-book-nav" aria-label="Show next promo offer">&rsaquo;</button>
+                                </div>
 
-                <div class="relative mx-auto mt-8 px-4 md:px-8" style="max-width: 1920px;">
-                    <div style="width: 100%; margin: 0 auto; border-radius: 1.75rem; background: #ffffff; padding: 2.4rem 1.6rem 3rem; box-shadow: 0 18px 40px rgba(15,23,42,0.08);">
-                        @if ($currentPromoSlide || $initialPastPromo)
-                            <div id="promo-cards-row" class="promo-cards-row">
-                                <div class="promo-card-column promo-card-column--current">
-                                    <p class="text-center font-['Oswald'] text-2xl uppercase tracking-[0.18em] md:text-3xl" style="color: #2563eb;">Current Promotion</p>
-                                    @if ($currentPromoSlide)
-                                        <div id="promo-current-card-shell" class="promo-inline-card" style="position: relative; margin-top: 1rem; width: fit-content; max-width: 100%; border-radius: 1rem; background: #d0d0d0; padding: 1.15rem; transition: width 0.28s ease, max-width 0.28s ease;">
-                                            <div class="promo-current-layout" id="promo-current-layout">
-                                                <button
-                                                    id="promo-current-poster"
-                                                    type="button"
-                                                    class="promo-poster-trigger"
-                                                    data-promo-title="{{ $currentPromoSlide['title'] }}"
-                                                    data-promo-summary="{{ $currentPromoSlide['summary'] }}"
-                                                    data-promo-poster="{{ $currentPromoSlide['poster_url'] }}"
-                                                    data-promo-label="{{ $currentPromoSlide['promo_label'] }}"
-                                                    data-promo-date="{{ $currentPromoSlide['date_label'] }}"
-                                                    data-promo-range="{{ $currentPromoSlide['range_label'] }}"
-                                                    data-promo-status="{{ $currentPromoSlide['status'] }}"
-                                                    style="display: block; width: min(100%, 470px); max-width: 470px; overflow: hidden; border: none; border-radius: 0.8rem; background: #ffffff; padding: 0; text-align: left; cursor: pointer;"
-                                                >
-                                                    <img src="{{ $currentPromoSlide['poster_url'] }}" alt="{{ $currentPromoSlide['title'] }}" style="display: block; height: 29rem; width: 100%; object-fit: cover; background: #fff;">
-                                                </button>
-
-                                                <div id="promo-current-info-shell" class="promo-inline-info-shell" style="position: relative; display: none; min-width: 0; max-width: 0; height: 29rem; margin: 0; overflow: hidden; border-radius: 0.8rem; background: #ffffff; opacity: 0; transition: max-width 0.28s ease, opacity 0.25s ease, margin 0.25s ease;">
-                                                    <div id="promo-current-info" style="height: 100%; padding: 1rem 1rem 1rem 1rem;">
-                                                        <button
-                                                            id="promo-current-collapse"
-                                                            type="button"
-                                                            style="position: absolute; right: 0.45rem; top: 0.4rem; display: inline-flex; height: 1.45rem; width: 1.45rem; align-items: center; justify-content: center; border: none; border-radius: 999px; background: rgba(255,255,255,0.96); font-size: 0.95rem; color: #94a3b8; cursor: pointer;"
-                                                            aria-label="Collapse current promotion details"
-                                                        >&times;</button>
-
-                                                        <p style="margin: 0; font-family: 'Oswald', sans-serif; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.18em; color: #2563eb;">Current Promotion</p>
-                                                        <div style="margin-top: 0.5rem; display: flex; flex-wrap: wrap; gap: 0.35rem; font-size: 0.62rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.18em; color: #d87a5c;">
-                                                            <span>{{ $currentPromoSlide['promo_label'] }}</span>
-                                                            @if ($currentPromoSlide['date_label'])
-                                                                <span>{{ $currentPromoSlide['date_label'] }}</span>
-                                                            @endif
-                                                        </div>
-                                                        <h3 style="margin-top: 0.7rem; font-size: clamp(1.35rem, 1.5vw, 1.85rem); font-weight: 600; line-height: 1.15; color: #1c1917;">{{ $currentPromoSlide['title'] }}</h3>
-                                                        @if ($currentPromoSlide['summary'])
-                                                            <p style="margin-top: 0.8rem; font-size: 0.86rem; line-height: 1.72; color: #57534e;">{{ \Illuminate\Support\Str::limit($currentPromoSlide['summary'], 520) }}</p>
-                                                        @endif
-                                                        <p style="margin-top: 0.8rem; font-size: 0.72rem; line-height: 1.6; color: #57534e;">{{ $currentPromoSlide['range_label'] }}</p>
+                                <div class="promo-book-mobile">
+                                    <div id="promo-mobile-card" class="promo-book-mobile-card">
+                                        <div id="promo-mobile-inner" class="promo-book-mobile-inner">
+                                            <div class="promo-book-face promo-book-face--front">
+                                                <div style="position: relative; height: 100%; background: linear-gradient(145deg, #4f6f42 0%, #709458 46%, #36502f 100%); padding: 0.95rem;">
+                                                    <img id="promo-mobile-image" src="{{ $initialPromoBookSlide['poster_url'] }}" alt="{{ $initialPromoBookSlide['title'] }}" style="display: block; height: 100%; width: 100%; border-radius: 0; object-fit: cover; background: #fff;">
+                                                    <div style="position: absolute; left: 1.6rem; top: 1.55rem; right: 1.6rem; display: flex; align-items: flex-start; justify-content: space-between; gap: 0.75rem;">
+                                                        <span id="promo-mobile-label" style="border-radius: 999px; background: rgba(255,255,255,0.94); padding: 0.55rem 0.8rem; font-size: 0.64rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: #315fbd;">{{ $initialPromoBookSlide['promo_label'] }}</span>
+                                                        <span id="promo-mobile-date" style="border-radius: 999px; background: rgba(255,255,255,0.94); padding: 0.55rem 0.8rem; font-size: 0.6rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: #b45309;">{{ $initialPromoBookSlide['date_label'] }}</span>
+                                                    </div>
+                                                    <div style="position: absolute; left: 1.6rem; right: 1.6rem; bottom: 1.55rem; border-radius: 0; background: linear-gradient(180deg, rgba(15,23,42,0), rgba(15,23,42,0.72)); padding: 2.3rem 1rem 1rem;">
+                                                        <p id="promo-mobile-status-front" style="margin: 0; font-family: 'Oswald', sans-serif; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.18em; color: #bfdbfe;">{{ $initialPromoBookSlide['status'] }}</p>
+                                                        <h3 id="promo-mobile-title-front" style="margin: 0.45rem 0 0; font-size: 1.6rem; font-weight: 700; line-height: 1.08; color: #fff;">{{ $initialPromoBookSlide['title'] }}</h3>
                                                     </div>
                                                 </div>
                                             </div>
-
-                                            <button
-                                                id="promo-current-expand"
-                                                class="promo-more-info-button"
-                                                type="button"
-                                                style="position: absolute; right: -0.55rem; top: 50%; display: inline-flex; transform: translateY(-50%); border: none; border-radius: 999px; background: #315fbd; padding: 0.95rem 0.42rem; writing-mode: vertical-rl; text-orientation: mixed; font-size: 0.7rem; font-weight: 700; letter-spacing: 0.12em; color: #ffffff; box-shadow: 0 8px 18px rgba(49,95,189,0.24); cursor: pointer;"
-                                            >
-                                                More Info
-                                            </button>
-                                        </div>
-                                    @else
-                                        <div style="margin-top: 1rem; border-radius: 1.5rem; border: 1px dashed rgb(214 211 209); background: rgb(250 250 249); padding: 2.5rem 1.5rem; text-align: center; font-size: 0.95rem; line-height: 1.6rem; color: rgb(87 83 78);">
-                                            No current promotion is available right now.
-                                        </div>
-                                    @endif
-                                </div>
-
-                                <div class="promo-card-column promo-card-column--past">
-                                    <p class="text-center font-['Oswald'] text-2xl uppercase tracking-[0.18em] md:text-3xl" style="color: #2563eb;">Past Promotion</p>
-                                    @if ($initialPastPromo)
-                                        <div id="promo-past-card-shell" class="promo-inline-card" style="position: relative; margin-top: 1rem; width: fit-content; max-width: 100%; border-radius: 1rem; background: #d0d0d0; padding: 1.15rem; transition: width 0.28s ease, max-width 0.28s ease;">
-                                            <div class="promo-current-layout">
-                                                <div style="position: relative;">
-                                                    <button
-                                                        type="button"
-                                                        id="promo-past-prev-button"
-                                                        style="position: absolute; left: 0.5rem; top: 50%; z-index: 2; display: inline-flex; height: 3rem; width: 3rem; transform: translateY(-50%); align-items: center; justify-content: center; border: none; border-radius: 999px; background: rgba(255,255,255,0.98); box-shadow: 0 8px 18px rgba(15,23,42,0.12); font-size: 2.4rem; font-weight: 300; line-height: 1; color: #8aa0d7; cursor: pointer;"
-                                                        aria-label="Show previous past promotion"
-                                                    >&lsaquo;</button>
-                                                    <div>
-                                                        <button
-                                                            type="button"
-                                                            id="promo-past-trigger"
-                                                            class="promo-poster-trigger"
-                                                            data-promo-title="{{ $initialPastPromo['title'] }}"
-                                                            data-promo-summary="{{ $initialPastPromo['summary'] }}"
-                                                            data-promo-poster="{{ $initialPastPromo['poster_url'] }}"
-                                                            data-promo-label="{{ $initialPastPromo['promo_label'] }}"
-                                                            data-promo-date="{{ $initialPastPromo['date_label'] }}"
-                                                            data-promo-range="{{ $initialPastPromo['range_label'] }}"
-                                                            data-promo-status="{{ $initialPastPromo['status'] }}"
-                                                            style="display: block; width: 100%; border: none; background: transparent; padding: 0; cursor: pointer;"
-                                                        >
-                                                            <img id="promo-past-image" src="{{ $initialPastPromo['poster_url'] }}" alt="{{ $initialPastPromo['title'] }}" style="display: block; height: 29rem; width: 100%; border-radius: 0.8rem; object-fit: cover; background: #fff;">
-                                                        </button>
+                                            <div class="promo-book-face promo-book-face--back">
+                                                <div style="display: flex; height: 100%; flex-direction: column; padding: 1.35rem 1.2rem 1.2rem;">
+                                                    <p id="promo-mobile-status-back" style="margin: 0; font-family: 'Oswald', sans-serif; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.18em; color: #315fbd;">{{ $initialPromoBookSlide['status'] }}</p>
+                                                    <h3 id="promo-mobile-title-back" style="margin: 0.7rem 0 0; font-size: 1.65rem; font-weight: 700; line-height: 1.08; color: #1c1917;">{{ $initialPromoBookSlide['title'] }}</h3>
+                                                    <div style="margin-top: 0.8rem; display: flex; flex-wrap: wrap; gap: 0.4rem; font-size: 0.63rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.14em; color: #a16207;">
+                                                        <span id="promo-mobile-range">{{ $initialPromoBookSlide['range_label'] }}</span>
                                                     </div>
-                                                    <button
-                                                        type="button"
-                                                        id="promo-past-next-button"
-                                                        style="position: absolute; right: 0.5rem; top: 50%; z-index: 2; display: inline-flex; height: 3rem; width: 3rem; transform: translateY(-50%); align-items: center; justify-content: center; border: none; border-radius: 999px; background: rgba(255,255,255,0.98); box-shadow: 0 8px 18px rgba(15,23,42,0.12); font-size: 2.4rem; font-weight: 300; line-height: 1; color: #8aa0d7; cursor: pointer;"
-                                                        aria-label="Show next past promotion"
-                                                    >&rsaquo;</button>
-                                                </div>
-                                                <div id="promo-past-info-shell" class="promo-inline-info-shell" style="position: relative; display: none; min-width: 0; max-width: 0; height: 29rem; margin: 0; overflow: hidden; border-radius: 0.8rem; background: #ffffff; opacity: 0; transition: max-width 0.28s ease, opacity 0.25s ease, margin 0.25s ease;">
-                                                    <div style="height: 100%; padding: 1rem 1rem 1rem 1rem;">
-                                                        <button
-                                                            id="promo-past-collapse"
-                                                            type="button"
-                                                            style="position: absolute; right: 0.45rem; top: 0.4rem; display: inline-flex; height: 1.45rem; width: 1.45rem; align-items: center; justify-content: center; border: none; border-radius: 999px; background: rgba(255,255,255,0.96); font-size: 0.95rem; color: #94a3b8; cursor: pointer;"
-                                                            aria-label="Collapse past promotion details"
-                                                        >&times;</button>
-
-                                                        <p style="margin: 0; font-family: 'Oswald', sans-serif; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.18em; color: #2563eb;">Past Promotion</p>
-                                                        <div style="margin-top: 0.5rem; display: flex; flex-wrap: wrap; gap: 0.35rem; font-size: 0.62rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.18em; color: #d87a5c;">
-                                                            <span id="promo-past-label">{{ $initialPastPromo['promo_label'] }}</span>
-                                                            <span id="promo-past-date">{{ $initialPastPromo['date_label'] }}</span>
-                                                        </div>
-                                                        <h3 id="promo-past-title" style="margin-top: 0.7rem; font-size: clamp(1.35rem, 1.5vw, 1.85rem); font-weight: 600; line-height: 1.15; color: #1c1917;">{{ $initialPastPromo['title'] }}</h3>
-                                                        <p id="promo-past-summary" style="margin-top: 0.8rem; font-size: 0.86rem; line-height: 1.72; color: #57534e;">{{ \Illuminate\Support\Str::limit($initialPastPromo['summary'], 520) }}</p>
-                                                        <p id="promo-past-range" style="margin-top: 0.8rem; font-size: 0.72rem; line-height: 1.6; color: #57534e;">{{ $initialPastPromo['range_label'] }}</p>
+                                                    <p id="promo-mobile-summary" style="margin-top: 1rem; flex: 1; font-size: 0.94rem; line-height: 1.72; color: #57534e;">{{ \Illuminate\Support\Str::limit($initialPromoBookSlide['summary'], 420) }}</p>
+                                                    <div style="display: flex; align-items: center; justify-content: space-between; gap: 0.8rem;">
+                                                        <button id="promo-mobile-flip-toggle" type="button" style="display: inline-flex; min-width: 8rem; align-items: center; justify-content: center; border: none; border-radius: 999px; background: #315fbd; padding: 0.8rem 1rem; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: #fff;">Back to Poster</button>
+                                                        <button id="promo-mobile-view-poster" type="button" class="promo-poster-trigger" data-promo-title="{{ $initialPromoBookSlide['title'] }}" data-promo-summary="{{ $initialPromoBookSlide['summary'] }}" data-promo-poster="{{ $initialPromoBookSlide['poster_url'] }}" data-promo-label="{{ $initialPromoBookSlide['promo_label'] }}" data-promo-date="{{ $initialPromoBookSlide['date_label'] }}" data-promo-range="{{ $initialPromoBookSlide['range_label'] }}" data-promo-status="{{ $initialPromoBookSlide['status'] }}" style="display: inline-flex; min-width: 8rem; align-items: center; justify-content: center; border: 1px solid #cbd5e1; border-radius: 999px; background: #fff; padding: 0.8rem 1rem; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: #475569;">Open Poster</button>
                                                     </div>
                                                 </div>
                                             </div>
-                                            <button
-                                                type="button"
-                                                id="promo-past-more-info"
-                                                class="promo-more-info-button"
-                                                style="position: absolute; right: -0.55rem; top: 50%; transform: translateY(-50%); border: none; border-radius: 999px; background: #315fbd; padding: 0.95rem 0.42rem; writing-mode: vertical-rl; text-orientation: mixed; font-size: 0.7rem; font-weight: 700; letter-spacing: 0.12em; color: #ffffff; box-shadow: 0 8px 18px rgba(49,95,189,0.24); cursor: pointer;"
-                                            >
-                                                More Info
-                                            </button>
                                         </div>
-                                    @else
-                                        <div style="margin-top: 1rem; border-radius: 1.5rem; border: 1px dashed rgb(214 211 209); background: rgb(250 250 249); padding: 2.5rem 1.5rem; text-align: center; font-size: 0.95rem; line-height: 1.6rem; color: rgb(87 83 78);">
-                                            No past promotions are available yet.
+                                    </div>
+                                    <button id="promo-mobile-flip-front" type="button" style="margin-top: 0.5rem; display: inline-flex; width: 100%; align-items: center; justify-content: center; border: none; border-radius: 999px; background: #315fbd; padding: 0.85rem 1rem; font-size: 0.76rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: #fff;">Flip for Details</button>
+                                </div>
+
+                                <div class="promo-book-desktop">
+                                    <div class="promo-book-cover" aria-hidden="true"></div>
+                                    <div class="promo-book-spread">
+                                        <div id="promo-desktop-turn-sheet" class="promo-book-turn-sheet" aria-hidden="true">
+                                            <div class="promo-book-turn-face promo-book-turn-face--front">
+                                                <div id="promo-desktop-turn-info" class="promo-book-turn-info"></div>
+                                            </div>
+                                            <div class="promo-book-turn-face promo-book-turn-face--back">
+                                                <div id="promo-desktop-turn-poster" class="promo-book-turn-poster"></div>
+                                            </div>
                                         </div>
-                                    @endif
+                                        <button id="promo-desktop-prev-zone" type="button" class="promo-book-turn-zone promo-book-turn-zone--prev" aria-label="Show previous promo offer"></button>
+                                        <button id="promo-desktop-poster" type="button" class="promo-book-page promo-book-page--poster promo-poster-trigger" data-promo-title="{{ $initialPromoBookSlide['title'] }}" data-promo-summary="{{ $initialPromoBookSlide['summary'] }}" data-promo-poster="{{ $initialPromoBookSlide['poster_url'] }}" data-promo-label="{{ $initialPromoBookSlide['promo_label'] }}" data-promo-date="{{ $initialPromoBookSlide['date_label'] }}" data-promo-range="{{ $initialPromoBookSlide['range_label'] }}" data-promo-status="{{ $initialPromoBookSlide['status'] }}">
+                                            <img id="promo-desktop-image" src="{{ $initialPromoBookSlide['poster_url'] }}" alt="{{ $initialPromoBookSlide['title'] }}">
+                                        </button>
+                                        <div class="promo-book-page promo-book-page--info">
+                                            <p id="promo-desktop-status" style="margin: 0; font-family: 'Oswald', sans-serif; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.2em; color: #315fbd;">{{ $initialPromoBookSlide['status'] }}</p>
+                                            <div style="margin-top: 1rem; display: flex; flex-wrap: wrap; gap: 0.45rem; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.14em; color: #b45309;">
+                                                <span id="promo-desktop-label" style="border-radius: 999px; background: #eff6ff; padding: 0.45rem 0.75rem; color: #315fbd;">{{ $initialPromoBookSlide['promo_label'] }}</span>
+                                                <span id="promo-desktop-date" style="border-radius: 999px; background: #fff7ed; padding: 0.45rem 0.75rem; color: #b45309;">{{ $initialPromoBookSlide['date_label'] }}</span>
+                                            </div>
+                                            <h3 id="promo-desktop-title" style="margin: 1.15rem 0 0; font-size: clamp(2rem, 2.4vw, 2.8rem); font-weight: 700; line-height: 1.04; color: #1c1917;">{{ $initialPromoBookSlide['title'] }}</h3>
+                                            <p id="promo-desktop-summary" style="margin: 1.15rem 0 0; font-size: 1rem; line-height: 1.85; color: #57534e;">{{ \Illuminate\Support\Str::limit($initialPromoBookSlide['summary'], 620) }}</p>
+                                            <div style="margin-top: 1.5rem; padding-top: 0;">
+                                                <p style="margin: 0; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.18em; color: #94a3b8;">Offer Window</p>
+                                                <p id="promo-desktop-range" style="margin: 0.55rem 0 0; font-size: 0.95rem; line-height: 1.7; color: #57534e;">{{ $initialPromoBookSlide['range_label'] }}</p>
+                                            </div>
+                                        </div>
+                                        <span class="promo-book-page-corner" aria-hidden="true"></span>
+                                        <button id="promo-desktop-next-zone" type="button" class="promo-book-turn-zone promo-book-turn-zone--next" aria-label="Show next promo offer"></button>
+                                    </div>
                                 </div>
                             </div>
-                        @else
-                            <div style="margin-top: 1.25rem; border-radius: 1.25rem; border: 1px dashed rgb(214 211 209); background: rgb(250 250 249); padding: 2.5rem 1.25rem; text-align: center; font-size: 0.875rem; line-height: 1.5rem; color: rgb(87 83 78);">
-                                No promotion is available yet.
-                            </div>
-                        @endif
-                    </div>
+                    @else
+                        <div style="margin-top: 1.25rem; border-radius: 1.25rem; border: 1px dashed rgb(214 211 209); background: rgb(250 250 249); padding: 2.5rem 1.25rem; text-align: center; font-size: 0.875rem; line-height: 1.5rem; color: rgb(87 83 78);">
+                            No promotion is available yet.
+                        </div>
+                    @endif
                 </div>
             </section>
 
@@ -818,6 +1248,8 @@
                                     : null;
                                 $currentPrice = (float) $package->discounted_malaysia_adult_price_myr;
                                 $originalPrice = (float) $package->malaysia_adult_price_myr;
+                                $packageRating = $package->package_review_average;
+                                $packageReviewCount = (int) ($package->package_review_count ?? 0);
                             @endphp
                             <div class="popular-package-shell flex h-full flex-col items-center">
                                 <a href="{{ route('products.show', $package) }}" class="popular-package-card flex h-full flex-col overflow-hidden text-left shadow-[0_14px_26px_rgba(15,23,42,0.08)] duration-300" style="width: 390px; min-height: 580px; border-radius: 1.6rem 1.6rem 0 0; background: #f1f0e9;">
@@ -837,10 +1269,13 @@
                                     <div class="flex flex-1 flex-col p-4">
                                         <div class="flex items-center justify-between gap-3">
                                             <p class="font-['Oswald'] text-4xl font-bold leading-none" style="color: #ff1d0d;">{{ $tripCode }}</p>
-                                            <div class="flex items-center gap-1.5" style="color: #ffd84d;">
-                                                @for ($star = 0; $star < 5; $star++)
-                                                    <span class="text-2xl leading-none">&#9733;</span>
-                                                @endfor
+                                            <div class="rounded-full bg-white/80 px-3 py-1.5 text-right shadow-sm">
+                                                @if ($packageRating !== null && $packageReviewCount > 0)
+                                                    <div class="text-lg font-bold leading-none text-amber-500">{{ number_format($packageRating, 1) }}/5</div>
+                                                    <div class="mt-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-stone-500">{{ $packageReviewCount }} review{{ $packageReviewCount === 1 ? '' : 's' }}</div>
+                                                @else
+                                                    <div class="text-sm font-semibold leading-none text-stone-500">No reviews</div>
+                                                @endif
                                             </div>
                                         </div>
                                         <h3 class="mt-3 font-['Oswald'] text-2xl font-bold uppercase leading-tight text-[#1c2f7d]">{{ $package->name }}</h3>
@@ -1121,6 +1556,8 @@
                                                 : null;
                                             $currentPrice = (float) $package->discounted_malaysia_adult_price_myr;
                                             $originalPrice = (float) $package->malaysia_adult_price_myr;
+                                            $packageRating = $package->package_review_average;
+                                            $packageReviewCount = (int) ($package->package_review_count ?? 0);
                                         @endphp
                                         <div class="package-section-card" data-package-card="{{ $section['key'] }}" style="display: flex; width: 390px; min-width: 390px; flex-direction: column; align-items: center;">
                                             <a href="{{ route('products.show', $package) }}" class="package-showcase-card" style="display: flex; width: 100%; max-width: 390px; min-height: 520px; flex-direction: column; overflow: hidden; border-radius: 1.6rem 1.6rem 0 0; background: #fff; text-decoration: none; box-shadow: 0 18px 30px rgba(15,23,42,0.22);">
@@ -1144,7 +1581,17 @@
                                                 </div>
 
                                                 <div class="package-card-copy" style="padding: 0.95rem 0.95rem 0.8rem;">
-                                                    <p style="margin: 0; font-family: 'Oswald', sans-serif; font-size: 2rem; font-weight: 700; line-height: 1; color: #ff1d0d;">{{ $tripCode }}</p>
+                                                    <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 0.8rem;">
+                                                        <p style="margin: 0; font-family: 'Oswald', sans-serif; font-size: 2rem; font-weight: 700; line-height: 1; color: #ff1d0d;">{{ $tripCode }}</p>
+                                                        <div style="min-width: 84px; border-radius: 999px; background: rgba(255,255,255,0.92); padding: 0.42rem 0.7rem; text-align: right; box-shadow: 0 8px 18px rgba(15,23,42,0.08);">
+                                                            @if ($packageRating !== null && $packageReviewCount > 0)
+                                                                <div style="font-size: 1rem; font-weight: 700; line-height: 1; color: #f59e0b;">{{ number_format($packageRating, 1) }}/5</div>
+                                                                <div style="margin-top: 0.22rem; font-size: 0.55rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #78716c;">{{ $packageReviewCount }} review{{ $packageReviewCount === 1 ? '' : 's' }}</div>
+                                                            @else
+                                                                <div style="font-size: 0.7rem; font-weight: 700; line-height: 1.1; color: #78716c;">No reviews</div>
+                                                            @endif
+                                                        </div>
+                                                    </div>
                                                     <h3 class="package-card-title" style="margin-top: 0.35rem; font-family: 'Oswald', sans-serif; font-size: 1.65rem; font-weight: 700; line-height: 1.04; color: #1c2f7d;">
                                                         {{ strtoupper($package->name) }}
                                                     </h3>
@@ -1596,137 +2043,306 @@
     </script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            const pastPromos = @json($pastPromoSlides ?? []);
-            const pastTrigger = document.getElementById('promo-past-trigger');
-            const pastImage = document.getElementById('promo-past-image');
-            const pastMoreInfoButton = document.getElementById('promo-past-more-info');
-            const prevButton = document.getElementById('promo-past-prev-button');
-            const nextButton = document.getElementById('promo-past-next-button');
-            const promoCardsRow = document.getElementById('promo-cards-row');
-            const pastCardShell = document.getElementById('promo-past-card-shell');
-            const pastInfoShell = document.getElementById('promo-past-info-shell');
-            const pastCollapseButton = document.getElementById('promo-past-collapse');
-            const pastLabel = document.getElementById('promo-past-label');
-            const pastDate = document.getElementById('promo-past-date');
-            const pastTitle = document.getElementById('promo-past-title');
-            const pastSummary = document.getElementById('promo-past-summary');
-            const pastRange = document.getElementById('promo-past-range');
-            const currentCardShell = document.getElementById('promo-current-card-shell');
-            const currentPoster = document.getElementById('promo-current-poster');
-            const currentInfoShell = document.getElementById('promo-current-info-shell');
-            const currentCollapseButton = document.getElementById('promo-current-collapse');
-            const currentExpandButton = document.getElementById('promo-current-expand');
+            const promoSlides = @json($promoBookSlides ?? []);
+            const prevButton = document.getElementById('promo-book-prev');
+            const nextButton = document.getElementById('promo-book-next');
+            const statusLabel = document.getElementById('promo-book-status');
+            const countLabel = document.getElementById('promo-book-count');
+            const desktopSpread = document.querySelector('.promo-book-spread');
+            const desktopTurnSheet = document.getElementById('promo-desktop-turn-sheet');
+            const desktopTurnInfo = document.getElementById('promo-desktop-turn-info');
+            const desktopTurnPoster = document.getElementById('promo-desktop-turn-poster');
+            const desktopPrevZone = document.getElementById('promo-desktop-prev-zone');
+            const desktopNextZone = document.getElementById('promo-desktop-next-zone');
+            const desktopPoster = document.getElementById('promo-desktop-poster');
+            const desktopInfoPage = document.querySelector('.promo-book-page--info');
+            const desktopImage = document.getElementById('promo-desktop-image');
+            const desktopStatus = document.getElementById('promo-desktop-status');
+            const desktopLabel = document.getElementById('promo-desktop-label');
+            const desktopDate = document.getElementById('promo-desktop-date');
+            const desktopTitle = document.getElementById('promo-desktop-title');
+            const desktopSummary = document.getElementById('promo-desktop-summary');
+            const desktopRange = document.getElementById('promo-desktop-range');
+            const mobileCard = document.getElementById('promo-mobile-card');
+            const mobileFrontFace = mobileCard?.querySelector('.promo-book-face--front');
+            const mobileImage = document.getElementById('promo-mobile-image');
+            const mobileLabel = document.getElementById('promo-mobile-label');
+            const mobileDate = document.getElementById('promo-mobile-date');
+            const mobileStatusFront = document.getElementById('promo-mobile-status-front');
+            const mobileTitleFront = document.getElementById('promo-mobile-title-front');
+            const mobileStatusBack = document.getElementById('promo-mobile-status-back');
+            const mobileTitleBack = document.getElementById('promo-mobile-title-back');
+            const mobileRange = document.getElementById('promo-mobile-range');
+            const mobileSummary = document.getElementById('promo-mobile-summary');
+            const mobileFlipFront = document.getElementById('promo-mobile-flip-front');
+            const mobileFlipBack = document.getElementById('promo-mobile-flip-toggle');
+            const mobileViewPoster = document.getElementById('promo-mobile-view-poster');
 
-            const syncPromoRowGap = () => {
-                if (!promoCardsRow) {
-                    return;
-                }
-
-                const currentOpen = currentInfoShell && currentInfoShell.style.maxWidth && currentInfoShell.style.maxWidth !== '0';
-                const pastOpen = pastInfoShell && pastInfoShell.style.maxWidth && pastInfoShell.style.maxWidth !== '0';
-                promoCardsRow.style.gap = currentOpen || pastOpen ? '1.1rem' : '0.45rem';
-            };
-
-            if (currentCardShell && currentPoster && currentInfoShell && currentCollapseButton && currentExpandButton) {
-                const collapseCurrentInfo = () => {
-                    currentInfoShell.style.display = 'none';
-                    currentInfoShell.style.maxWidth = '0';
-                    currentInfoShell.style.opacity = '0';
-                    currentInfoShell.style.margin = '0';
-                    currentCardShell.style.width = 'fit-content';
-                    currentCardShell.style.maxWidth = '100%';
-                    currentExpandButton.style.display = 'inline-flex';
-                    syncPromoRowGap();
-                };
-
-                const expandCurrentInfo = () => {
-                    currentInfoShell.style.display = 'block';
-                    currentInfoShell.style.maxWidth = '34rem';
-                    currentInfoShell.style.opacity = '1';
-                    currentInfoShell.style.margin = '0 0 0 0.8rem';
-                    currentCardShell.style.width = 'fit-content';
-                    currentCardShell.style.maxWidth = '100%';
-                    currentExpandButton.style.display = 'none';
-                    syncPromoRowGap();
-                };
-
-                currentCollapseButton.addEventListener('click', collapseCurrentInfo);
-                currentExpandButton.addEventListener('click', expandCurrentInfo);
-                collapseCurrentInfo();
-            }
-
-            if (pastCardShell && pastInfoShell && pastCollapseButton && pastMoreInfoButton) {
-                const collapsePastInfo = () => {
-                    pastInfoShell.style.display = 'none';
-                    pastInfoShell.style.maxWidth = '0';
-                    pastInfoShell.style.opacity = '0';
-                    pastInfoShell.style.margin = '0';
-                    pastCardShell.style.width = 'fit-content';
-                    pastCardShell.style.maxWidth = '100%';
-                    pastMoreInfoButton.style.display = 'inline-flex';
-                    syncPromoRowGap();
-                };
-
-                const expandPastInfo = () => {
-                    pastInfoShell.style.display = 'block';
-                    pastInfoShell.style.maxWidth = '34rem';
-                    pastInfoShell.style.opacity = '1';
-                    pastInfoShell.style.margin = '0 0 0 0.8rem';
-                    pastCardShell.style.width = 'fit-content';
-                    pastCardShell.style.maxWidth = '100%';
-                    pastMoreInfoButton.style.display = 'none';
-                    syncPromoRowGap();
-                };
-
-                pastCollapseButton.addEventListener('click', collapsePastInfo);
-                pastMoreInfoButton.addEventListener('click', expandPastInfo);
-                collapsePastInfo();
-            }
-
-            if (!pastPromos.length || !pastTrigger || !pastImage || !prevButton || !nextButton) {
+            if (
+                !promoSlides.length ||
+                !prevButton ||
+                !nextButton ||
+                !countLabel ||
+                !desktopTurnSheet ||
+                !desktopTurnInfo ||
+                !desktopTurnPoster ||
+                !desktopPoster ||
+                !desktopInfoPage ||
+                !desktopImage ||
+                !desktopStatus ||
+                !desktopLabel ||
+                !desktopDate ||
+                !desktopTitle ||
+                !desktopSummary ||
+                !desktopRange ||
+                !mobileCard ||
+                !mobileImage ||
+                !mobileLabel ||
+                !mobileDate ||
+                !mobileStatusFront ||
+                !mobileTitleFront ||
+                !mobileStatusBack ||
+                !mobileTitleBack ||
+                !mobileRange ||
+                !mobileSummary ||
+                !mobileFlipFront ||
+                !mobileFlipBack ||
+                !mobileViewPoster
+            ) {
                 return;
             }
 
             let activePromoIndex = 0;
+            let desktopFlipStartTimeout = null;
+            let desktopFlipTimeout = null;
+            let desktopFlipResetTimeout = null;
+            let isDesktopFlipping = false;
 
-            const syncPastPromo = (promo) => {
-                pastImage.src = promo.poster_url ?? '';
-                pastImage.alt = promo.title ?? 'Past promotion poster';
+            const isDesktopPromoView = () => window.matchMedia('(min-width: 768px)').matches;
 
-                pastTrigger.dataset.promoTitle = promo.title ?? '';
-                pastTrigger.dataset.promoSummary = promo.summary ?? '';
-                pastTrigger.dataset.promoPoster = promo.poster_url ?? '';
-                pastTrigger.dataset.promoLabel = promo.promo_label ?? '';
-                pastTrigger.dataset.promoDate = promo.date_label ?? '';
-                pastTrigger.dataset.promoRange = promo.range_label ?? '';
-                pastTrigger.dataset.promoStatus = promo.status ?? 'Past Promotion';
+            const syncMobileCardHeight = () => {
+                const mobileInner = document.getElementById('promo-mobile-inner');
 
-                if (pastLabel) pastLabel.textContent = promo.promo_label ?? '';
-                if (pastDate) pastDate.textContent = promo.date_label ?? '';
-                if (pastTitle) pastTitle.textContent = promo.title ?? '';
-                if (pastSummary) pastSummary.textContent = promo.summary ?? '';
-                if (pastRange) pastRange.textContent = promo.range_label ?? '';
+                if (!mobileCard || !mobileInner || !mobileFrontFace) {
+                    return;
+                }
+
+                const frontHeight = mobileFrontFace.scrollHeight;
+                const nextHeight = Math.max(frontHeight, 380);
+
+                mobileCard.style.minHeight = `${nextHeight}px`;
+                mobileInner.style.minHeight = `${nextHeight}px`;
+                mobileCard.style.height = `${nextHeight}px`;
+                mobileInner.style.height = `${nextHeight}px`;
             };
 
-            const renderPastPromo = (nextIndex) => {
-                activePromoIndex = (nextIndex + pastPromos.length) % pastPromos.length;
-                syncPastPromo(pastPromos[activePromoIndex]);
+            const syncTriggerData = (element, promo) => {
+                element.dataset.promoTitle = promo.title ?? '';
+                element.dataset.promoSummary = promo.summary ?? '';
+                element.dataset.promoPoster = promo.poster_url ?? '';
+                element.dataset.promoLabel = promo.promo_label ?? '';
+                element.dataset.promoDate = promo.date_label ?? '';
+                element.dataset.promoRange = promo.range_label ?? '';
+                element.dataset.promoStatus = promo.status ?? '';
             };
 
-            if (pastPromos.length <= 1) {
-                prevButton.style.display = 'none';
-                nextButton.style.display = 'none';
+            const setFlipped = (isFlipped) => {
+                mobileCard.classList.toggle('is-flipped', isFlipped);
+                mobileFlipFront.style.display = isFlipped ? 'none' : 'inline-flex';
+                requestAnimationFrame(syncMobileCardHeight);
+            };
+
+            const clearDesktopFlipTimers = () => {
+                if (desktopFlipStartTimeout) {
+                    window.clearTimeout(desktopFlipStartTimeout);
+                    desktopFlipStartTimeout = null;
+                }
+
+                if (desktopFlipTimeout) {
+                    window.clearTimeout(desktopFlipTimeout);
+                    desktopFlipTimeout = null;
+                }
+
+                if (desktopFlipResetTimeout) {
+                    window.clearTimeout(desktopFlipResetTimeout);
+                    desktopFlipResetTimeout = null;
+                }
+            };
+
+            const clearDesktopTurnClasses = () => {
+                desktopSpread.classList.remove('is-turning', 'is-updating');
+                desktopTurnSheet.classList.remove('is-active', 'is-flipping');
+                desktopTurnInfo.innerHTML = '';
+                desktopTurnPoster.innerHTML = '';
+            };
+
+            const buildDesktopInfoHtml = (promo) => `
+                <p style="margin: 0; font-family: 'Oswald', sans-serif; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.2em; color: #315fbd;">${promo.status ?? ''}</p>
+                <div style="margin-top: 1rem; display: flex; flex-wrap: wrap; gap: 0.45rem; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.14em; color: #b45309;">
+                    <span style="border-radius: 999px; background: #eff6ff; padding: 0.45rem 0.75rem; color: #315fbd;">${promo.promo_label ?? ''}</span>
+                    <span style="border-radius: 999px; background: #fff7ed; padding: 0.45rem 0.75rem; color: #b45309;">${promo.date_label ?? ''}</span>
+                </div>
+                <h3 style="margin: 1.15rem 0 0; font-size: clamp(2rem, 2.4vw, 2.8rem); font-weight: 700; line-height: 1.04; color: #1c1917;">${promo.title ?? ''}</h3>
+                <p style="margin: 1.15rem 0 0; font-size: 1rem; line-height: 1.85; color: #57534e;">${promo.summary ?? ''}</p>
+                <div style="margin-top: 1.5rem; padding-top: 0;">
+                    <p style="margin: 0; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.18em; color: #94a3b8;">Offer Window</p>
+                    <p style="margin: 0.55rem 0 0; font-size: 0.95rem; line-height: 1.7; color: #57534e;">${promo.range_label ?? ''}</p>
+                </div>
+            `;
+
+            const buildDesktopTurnPoster = (promo) => {
+                desktopTurnPoster.classList.remove('is-portrait', 'is-landscape');
+                const img = document.createElement('img');
+                img.src = promo.poster_url ?? '';
+                img.alt = promo.title ?? 'Promotion poster';
+                img.addEventListener('load', () => {
+                    if (!img.naturalWidth || !img.naturalHeight) {
+                        return;
+                    }
+
+                    desktopTurnPoster.classList.toggle('is-portrait', img.naturalHeight > img.naturalWidth);
+                    desktopTurnPoster.classList.toggle('is-landscape', img.naturalWidth >= img.naturalHeight);
+                }, { once: true });
+                desktopTurnPoster.replaceChildren(img);
+            };
+
+            const applyPromoOrientation = (imageElement, containerElement) => {
+                if (!imageElement || !containerElement) {
+                    return;
+                }
+
+                const update = () => {
+                    if (!imageElement.naturalWidth || !imageElement.naturalHeight) {
+                        return;
+                    }
+
+                    const isPortrait = imageElement.naturalHeight > imageElement.naturalWidth;
+                    containerElement.classList.toggle('is-portrait', isPortrait);
+                    containerElement.classList.toggle('is-landscape', !isPortrait);
+                };
+
+                if (imageElement.complete) {
+                    update();
+                } else {
+                    imageElement.addEventListener('load', update, { once: true });
+                }
+            };
+
+            const renderPromo = (nextIndex) => {
+                activePromoIndex = (nextIndex + promoSlides.length) % promoSlides.length;
+                const promo = promoSlides[activePromoIndex];
+
+                if (statusLabel) {
+                    statusLabel.textContent = promo.status ?? 'Promotion';
+                }
+                countLabel.textContent = `${activePromoIndex + 1} / ${promoSlides.length}`;
+
+                desktopImage.src = promo.poster_url ?? '';
+                desktopImage.alt = promo.title ?? 'Promotion poster';
+                desktopStatus.textContent = promo.status ?? '';
+                desktopLabel.textContent = promo.promo_label ?? '';
+                desktopDate.textContent = promo.date_label ?? '';
+                desktopTitle.textContent = promo.title ?? '';
+                desktopSummary.textContent = promo.summary ?? '';
+                desktopRange.textContent = promo.range_label ?? '';
+
+                mobileImage.src = promo.poster_url ?? '';
+                mobileImage.alt = promo.title ?? 'Promotion poster';
+                mobileLabel.textContent = promo.promo_label ?? '';
+                mobileDate.textContent = promo.date_label ?? '';
+                mobileStatusFront.textContent = promo.status ?? '';
+                mobileTitleFront.textContent = promo.title ?? '';
+                mobileStatusBack.textContent = promo.status ?? '';
+                mobileTitleBack.textContent = promo.title ?? '';
+                mobileRange.textContent = promo.range_label ?? '';
+                mobileSummary.textContent = promo.summary ?? '';
+
+                syncTriggerData(desktopPoster, promo);
+                syncTriggerData(mobileViewPoster, promo);
+                applyPromoOrientation(desktopImage, desktopPoster);
+                applyPromoOrientation(mobileImage, mobileFrontFace);
+                setFlipped(false);
+                requestAnimationFrame(syncMobileCardHeight);
+            };
+
+            const animateDesktopPromoTurn = (direction) => {
+                if (!desktopSpread || !isDesktopPromoView()) {
+                    renderPromo(activePromoIndex + direction);
+                    return;
+                }
+
+                if (isDesktopFlipping) {
+                    return;
+                }
+
+                isDesktopFlipping = true;
+                clearDesktopFlipTimers();
+                clearDesktopTurnClasses();
+                desktopSpread.classList.add('is-updating');
+
+                desktopFlipTimeout = window.setTimeout(() => {
+                    renderPromo(activePromoIndex + direction);
+                }, 110);
+
+                desktopFlipResetTimeout = window.setTimeout(() => {
+                    clearDesktopTurnClasses();
+                    isDesktopFlipping = false;
+                }, 240);
+            };
+
+            if (promoSlides.length <= 1) {
+                prevButton.style.opacity = '0.45';
+                nextButton.style.opacity = '0.45';
             }
 
             nextButton.addEventListener('click', () => {
-                renderPastPromo(activePromoIndex + 1);
+                animateDesktopPromoTurn(1);
             });
 
             prevButton.addEventListener('click', () => {
-                renderPastPromo(activePromoIndex - 1);
+                animateDesktopPromoTurn(-1);
             });
 
-            renderPastPromo(0);
+            desktopNextZone?.addEventListener('click', () => {
+                animateDesktopPromoTurn(1);
+            });
+
+            desktopPrevZone?.addEventListener('click', () => {
+                animateDesktopPromoTurn(-1);
+            });
+
+            mobileFlipFront.addEventListener('click', () => {
+                setFlipped(true);
+            });
+
+            mobileFlipBack.addEventListener('click', (event) => {
+                event.stopPropagation();
+                setFlipped(false);
+            });
+
+            mobileViewPoster.addEventListener('click', (event) => {
+                event.stopPropagation();
+            });
+
+            mobileCard.addEventListener('click', (event) => {
+                if (event.target.closest('button') || event.target.closest('.promo-poster-trigger')) {
+                    return;
+                }
+
+                setFlipped(!mobileCard.classList.contains('is-flipped'));
+            });
+
+            mobileImage.addEventListener('load', syncMobileCardHeight);
+            window.addEventListener('resize', () => {
+                syncMobileCardHeight();
+
+                if (!isDesktopPromoView() && desktopSpread) {
+                    clearDesktopFlipTimers();
+                    clearDesktopTurnClasses();
+                    isDesktopFlipping = false;
+                }
+            });
+            renderPromo(0);
         });
     </script>
     <script>

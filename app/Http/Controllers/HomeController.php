@@ -212,6 +212,22 @@ class HomeController extends Controller
     private function sharedPageData(): array
     {
         $products = Product::where('is_active', true)->orderBy('category')->orderBy('price_myr')->get();
+        $packageReviewStats = Testimonial::query()
+            ->selectRaw('product_id, AVG(rating) as average_rating, COUNT(*) as reviews_count')
+            ->where('display_location', 'package')
+            ->where('is_featured', true)
+            ->whereNotNull('product_id')
+            ->groupBy('product_id')
+            ->get()
+            ->keyBy('product_id');
+
+        $products->each(function (Product $product) use ($packageReviewStats) {
+            $stats = $packageReviewStats->get($product->id);
+
+            $product->setAttribute('package_review_average', $stats ? round((float) $stats->average_rating, 1) : null);
+            $product->setAttribute('package_review_count', $stats ? (int) $stats->reviews_count : 0);
+        });
+
         $travelPackages = $products->where('category', 'package')->values();
         $popularPackages = $travelPackages->where('is_featured', true)->take(3)->values();
 

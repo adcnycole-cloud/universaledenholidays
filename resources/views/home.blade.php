@@ -1681,38 +1681,97 @@
                 <div>
                     <h2 class="font-['Prata'] text-3xl text-stone-900">Customer reviews</h2>
                 </div>
-                <div class="rounded-full bg-amber-50 px-4 py-2 text-sm font-semibold text-amber-700">Average rating 4.7/5</div>
+                <div class="flex flex-wrap gap-2">
+                    @if (($googleReviewData['reviews_count'] ?? 0) > 0 && !is_null($googleReviewData['rating'] ?? null))
+                        <a
+                            href="{{ $googleReviewData['place_url'] }}"
+                            target="_blank"
+                            rel="noreferrer"
+                            class="rounded-full bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-700 transition hover:bg-rose-100"
+                        >
+                            Google {{ number_format((float) $googleReviewData['rating'], 1) }}/5 from {{ $googleReviewData['reviews_count'] }} review{{ $googleReviewData['reviews_count'] === 1 ? '' : 's' }}
+                        </a>
+                    @endif
+                    @if (($websiteReviewStats['reviews_count'] ?? 0) > 0 && !is_null($websiteReviewStats['average_rating'] ?? null))
+                        <div class="rounded-full bg-amber-50 px-4 py-2 text-sm font-semibold text-amber-700">
+                            Website {{ number_format((float) $websiteReviewStats['average_rating'], 1) }}/5 from {{ $websiteReviewStats['reviews_count'] }} review{{ $websiteReviewStats['reviews_count'] === 1 ? '' : 's' }}
+                        </div>
+                    @endif
+                </div>
             </div>
             <div class="mt-3 grid gap-4 md:grid-cols-2">
                 <div class="space-y-3">
-                    @forelse ($testimonials as $testimonial)
-                        <article class="rounded-3xl border border-stone-200 bg-stone-50 p-4 shadow-sm">
-                            <div class="flex items-center justify-between gap-4">
-                                <div class="flex items-center gap-4">
-                                    <img
-                                        src="{{ $testimonial->profile_photo_url }}"
-                                        alt="{{ $testimonial->name }}"
-                                        class="h-14 w-14 shrink-0 rounded-full object-cover shadow-sm ring-2 ring-white"
-                                        style="aspect-ratio: 1 / 1; border-radius: 9999px;"
-                                    >
-                                    <div>
-                                        <h3 class="text-lg font-semibold text-stone-900">{{ $testimonial->name }}</h3>
-                                        <p class="text-sm text-stone-500">{{ $testimonial->location }} &middot; {{ $testimonial->trip_name }}</p>
-                                    </div>
+                    @if (!empty($googleReviewData['landscape_photo_url']))
+                        <article class="overflow-hidden rounded-[1.75rem] border border-stone-200 bg-white shadow-sm">
+                            <a href="{{ $googleReviewData['place_url'] }}" target="_blank" rel="noreferrer" class="block">
+                                <img
+                                    src="{{ $googleReviewData['landscape_photo_url'] }}"
+                                    alt="{{ $googleReviewData['place_name'] ?: 'Universal Eden Holidays' }}"
+                                    class="h-56 w-full object-cover"
+                                >
+                            </a>
+                            <div class="flex flex-wrap items-center justify-between gap-3 p-4">
+                                <div>
+                                    <p class="text-sm font-semibold text-stone-900">{{ $googleReviewData['place_name'] ?: 'Universal Eden Holidays' }}</p>
+                                    <p class="mt-1 text-xs uppercase tracking-[0.16em] text-stone-500">Google business photo</p>
                                 </div>
-                                <div class="flex items-center gap-1 text-amber-500">
-                                    @for ($star = 0; $star < $testimonial->rating; $star++)
-                                        <span class="text-lg leading-none">&#9733;</span>
-                                    @endfor
-                                </div>
+                                <a href="{{ $googleReviewData['place_url'] }}" target="_blank" rel="noreferrer" class="text-sm font-semibold text-sky-700 transition hover:text-sky-800">
+                                    Open on Google
+                                </a>
                             </div>
-                            <p class="mt-3 text-sm leading-6 text-stone-600">"{{ $testimonial->quote }}"</p>
+                            @if (!empty($googleReviewData['landscape_photo_attribution']))
+                                <div class="border-t border-stone-200 px-4 py-3 text-xs text-stone-500">
+                                    Photo:
+                                    @foreach ($googleReviewData['landscape_photo_attribution'] as $author)
+                                        @if (!empty($author['uri']))
+                                            <a href="{{ $author['uri'] }}" target="_blank" rel="noreferrer" class="font-medium text-stone-700 hover:text-sky-700">{{ $author['name'] }}</a>@if (! $loop->last), @endif
+                                        @else
+                                            <span class="font-medium text-stone-700">{{ $author['name'] }}</span>@if (! $loop->last), @endif
+                                        @endif
+                                    @endforeach
+                                </div>
+                            @endif
                         </article>
-                    @empty
-                        <div class="rounded-3xl border border-dashed border-stone-300 bg-stone-50 p-6 text-sm text-stone-600">
-                            No customer reviews have been approved for the landing page yet.
+                    @endif
+
+                    <section class="rounded-[1.75rem] border border-rose-200 bg-rose-50/60 p-4 shadow-sm">
+                        <div class="flex flex-wrap items-center justify-between gap-3">
+                            <div>
+                                <p class="text-sm uppercase tracking-[0.28em] text-rose-600">Google Reviews</p>
+                                <h3 class="mt-2 font-['Prata'] text-2xl text-stone-900">Live from Google Maps</h3>
+                            </div>
+                            @if (!empty($googleReviewData['place_url']))
+                                <a href="{{ $googleReviewData['place_url'] }}" target="_blank" rel="noreferrer" class="rounded-full border border-rose-200 bg-white px-4 py-2 text-sm font-semibold text-rose-700 transition hover:bg-rose-100">
+                                    Open Google page
+                                </a>
+                            @endif
                         </div>
-                    @endforelse
+                        <div class="mt-4 space-y-3">
+                            @forelse ($googleReviews as $review)
+                                @include('partials.public-review-card', ['review' => $review])
+                            @empty
+                                <div class="rounded-3xl border border-dashed border-rose-200 bg-white/80 p-5 text-sm text-stone-600">
+                                    Google reviews will appear here after the Google Places API key is connected and reviews are enabled.
+                                </div>
+                            @endforelse
+                        </div>
+                    </section>
+
+                    <section class="rounded-[1.75rem] border border-sky-200 bg-sky-50/50 p-4 shadow-sm">
+                        <div>
+                            <p class="text-sm uppercase tracking-[0.28em] text-sky-600">Website Reviews</p>
+                            <h3 class="mt-2 font-['Prata'] text-2xl text-stone-900">Customer reviews from this website</h3>
+                        </div>
+                        <div class="mt-4 space-y-3">
+                            @forelse ($websiteReviews as $review)
+                                @include('partials.public-review-card', ['review' => $review])
+                            @empty
+                                <div class="rounded-3xl border border-dashed border-sky-200 bg-white/80 p-5 text-sm text-stone-600">
+                                    No website customer reviews are available yet.
+                                </div>
+                            @endforelse
+                        </div>
+                    </section>
                 </div>
 
                 <section class="rounded-[1.75rem] border border-stone-200 bg-stone-50/80 p-4 shadow-sm">

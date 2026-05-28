@@ -31,6 +31,7 @@
 
         $selectedPhoneCountryCode = $selectedPhoneCountryCode ?: $defaultPhoneCountryCode;
         $phoneLocalNumber = is_string($phoneLocalNumber) ? $phoneLocalNumber : '';
+        $selectedBookingPurpose = old('booking_purpose', '');
     @endphp
     <main class="mx-auto max-w-[96rem] px-5 py-8 lg:px-10">
         <div class="mb-6 flex items-start justify-between gap-4">
@@ -200,37 +201,67 @@
                 @else
                 <div class="grid gap-6 lg:grid-cols-2 lg:items-start">
                     <div class="rounded-[1.5rem] border border-stone-200 bg-stone-50/70 p-5 shadow-sm">
-                        <p class="mb-4 text-sm font-semibold uppercase tracking-[0.25em] text-stone-600">Your Details</p>
-                        <div class="grid gap-4 md:grid-cols-2">
-                            <div>
-                                <label for="full_name" class="mb-2 block text-sm font-medium text-stone-700">Full name <span class="text-rose-600">*</span></label>
-                                <input id="full_name" name="full_name" type="text" value="{{ old('full_name', auth()->user()->name ?? '') }}" class="w-full rounded-2xl border border-stone-300 bg-white px-4 py-3 text-stone-800" required>
-                            </div>
-                            <div>
-                                <label for="email" class="mb-2 block text-sm font-medium text-stone-700">Email <span class="text-rose-600">*</span></label>
-                                <input id="email" name="email" type="email" value="{{ old('email', auth()->user()->email ?? '') }}" class="w-full rounded-2xl border border-stone-300 bg-white px-4 py-3 text-stone-800" autocomplete="email" inputmode="email" spellcheck="false" required>
-                            </div>
+                        <p class="mb-4 text-sm font-semibold uppercase tracking-[0.25em] text-stone-600">Booking Purpose</p>
+                        <div class="grid gap-3 md:grid-cols-2" data-booking-purpose-switcher>
+                            <label class="block cursor-pointer">
+                                <input type="radio" name="booking_purpose" value="leisure" class="sr-only" @checked($selectedBookingPurpose === 'leisure')>
+                                <div class="rounded-[1.35rem] border border-stone-300 bg-white px-4 py-4 text-center text-stone-700 shadow-sm transition" data-booking-purpose-card="leisure">
+                                    <p class="text-sm font-semibold uppercase tracking-[0.22em] text-inherit">Leisure</p>
+                                </div>
+                            </label>
+                            <label class="block cursor-pointer">
+                                <input type="radio" name="booking_purpose" value="business" class="sr-only" @checked($selectedBookingPurpose === 'business')>
+                                <div class="rounded-[1.35rem] border border-stone-300 bg-white px-4 py-4 text-center text-stone-700 shadow-sm transition" data-booking-purpose-card="business">
+                                    <p class="text-sm font-semibold uppercase tracking-[0.22em] text-inherit">Business</p>
+                                </div>
+                            </label>
                         </div>
-                        <div class="mt-3">
-                            <label for="phone_local_number" class="mb-2 block text-sm font-medium text-stone-700">Phone <span class="text-rose-600">*</span></label>
-                            <div class="grid gap-3 sm:grid-cols-[12rem_minmax(0,1fr)]">
-                                <select id="phone_country_code" name="phone_country_code" class="w-full rounded-2xl border border-stone-300 bg-white px-4 py-3 text-stone-800" autocomplete="tel-country-code" required>
-                                    @foreach ($phoneCountryCodes as $code => $label)
-                                        <option value="{{ $code }}" @selected($selectedPhoneCountryCode === $code)>{{ $label }}</option>
+
+                        <div class="mt-5 hidden" data-booking-personal-details>
+                            <p class="mb-4 text-sm font-semibold uppercase tracking-[0.25em] text-stone-600">Your Details</p>
+                            <div class="grid gap-4 md:grid-cols-2">
+                                <div>
+                                    <label for="full_name" class="mb-2 block text-sm font-medium text-stone-700">Full name <span class="text-rose-600">*</span></label>
+                                    <input id="full_name" name="full_name" type="text" value="{{ old('full_name', auth()->user()->name ?? '') }}" class="w-full rounded-2xl border border-stone-300 bg-white px-4 py-3 text-stone-800">
+                                </div>
+                                <div>
+                                    <label for="email" class="mb-2 block text-sm font-medium text-stone-700">Email <span class="text-rose-600">*</span></label>
+                                    <input id="email" name="email" type="email" value="{{ old('email', auth()->user()->email ?? '') }}" class="w-full rounded-2xl border border-stone-300 bg-white px-4 py-3 text-stone-800" autocomplete="email" inputmode="email" spellcheck="false">
+                                </div>
+                            </div>
+                            <div class="mt-3">
+                                <label for="phone_local_number" class="mb-2 block text-sm font-medium text-stone-700">Phone <span class="text-rose-600">*</span></label>
+                                <div class="grid gap-3 sm:grid-cols-[12rem_minmax(0,1fr)]">
+                                    <select id="phone_country_code" name="phone_country_code" class="w-full rounded-2xl border border-stone-300 bg-white px-4 py-3 text-stone-800" autocomplete="tel-country-code">
+                                        @foreach ($phoneCountryCodes as $code => $label)
+                                            <option value="{{ $code }}" @selected($selectedPhoneCountryCode === $code)>{{ $label }}</option>
+                                        @endforeach
+                                    </select>
+                                    <input id="phone_local_number" name="phone_local_number" type="tel" value="{{ $phoneLocalNumber }}" class="w-full rounded-2xl border border-stone-300 bg-white px-4 py-3 text-stone-800" autocomplete="tel-national" inputmode="tel" maxlength="20" placeholder="12-345 6789">
+                                </div>
+                                <p class="mt-2 text-xs text-stone-500">Choose the country code, then enter the rest of your phone number without the leading `+`.</p>
+                            </div>
+                            <div class="mt-3 rounded-[1.25rem] border border-stone-200 bg-white p-4 hidden" data-booking-purpose-panel="leisure">
+                            <div class="mt-3">
+                                <label for="identity_document_number" class="mb-2 block text-sm font-medium text-stone-700">IC Number / Passport Number <span class="text-rose-600">*</span></label>
+                                <input id="identity_document_number" name="identity_document_number" type="text" value="{{ old('identity_document_number') }}" class="w-full rounded-2xl border border-stone-300 bg-white px-4 py-3 text-stone-800" placeholder="Example: 900101-12-1234 or P12345678">
+                            </div>
+                            </div>
+                            <div class="mt-3 rounded-[1.25rem] border border-stone-200 bg-white p-4 hidden" data-booking-purpose-panel="business">
+                                <div class="mt-3">
+                                    <label for="company_number" class="mb-2 block text-sm font-medium text-stone-700">Company Number <span class="text-rose-600">*</span></label>
+                                    <input id="company_number" name="company_number" type="text" value="{{ old('company_number') }}" class="w-full rounded-2xl border border-stone-300 bg-white px-4 py-3 text-stone-800" placeholder="Example: 202401012345">
+                                </div>
+                            </div>
+                            <div class="mt-3">
+                                <label for="pickup_location" class="mb-2 block text-sm font-medium text-stone-700">Pickup location <span class="text-rose-600">*</span></label>
+                                <select id="pickup_location" name="pickup_location" class="w-full rounded-2xl border border-stone-300 bg-white px-4 py-3 text-stone-800">
+                                    <option value="">Select pickup location</option>
+                                    @foreach ($pickupLocations as $value => $label)
+                                        <option value="{{ $value }}" @selected(old('pickup_location') === $value)>{{ $label }}</option>
                                     @endforeach
                                 </select>
-                                <input id="phone_local_number" name="phone_local_number" type="tel" value="{{ $phoneLocalNumber }}" class="w-full rounded-2xl border border-stone-300 bg-white px-4 py-3 text-stone-800" autocomplete="tel-national" inputmode="tel" maxlength="20" placeholder="12-345 6789" required>
                             </div>
-                            <p class="mt-2 text-xs text-stone-500">Choose the country code, then enter the rest of your phone number without the leading `+`.</p>
-                        </div>
-                        <div class="mt-3">
-                            <label for="pickup_location" class="mb-2 block text-sm font-medium text-stone-700">Pickup location <span class="text-rose-600">*</span></label>
-                            <select id="pickup_location" name="pickup_location" class="w-full rounded-2xl border border-stone-300 bg-white px-4 py-3 text-stone-800" required>
-                                <option value="">Select pickup location</option>
-                                @foreach ($pickupLocations as $value => $label)
-                                    <option value="{{ $value }}" @selected(old('pickup_location') === $value)>{{ $label }}</option>
-                                @endforeach
-                            </select>
                         </div>
                     </div>
 
@@ -836,6 +867,57 @@
             syncBookingCurrency();
             syncServiceTypeToProduct();
             updateBookingEstimate();
+
+            const bookingPurposeInputs = Array.from(document.querySelectorAll('input[name="booking_purpose"]'));
+            const bookingPurposePanels = Array.from(document.querySelectorAll('[data-booking-purpose-panel]'));
+            const bookingPurposeCards = Array.from(document.querySelectorAll('[data-booking-purpose-card]'));
+            const bookingPersonalDetails = document.querySelector('[data-booking-personal-details]');
+            const identityDocumentInput = document.getElementById('identity_document_number');
+            const companyNumberInput = document.getElementById('company_number');
+            const fullNameInput = document.getElementById('full_name');
+            const emailInput = document.getElementById('email');
+            const phoneCountryCodeInput = document.getElementById('phone_country_code');
+            const phoneLocalNumberInput = document.getElementById('phone_local_number');
+            const pickupLocationInput = document.getElementById('pickup_location');
+
+            const syncBookingPurposePanels = () => {
+                const selectedPurpose = bookingPurposeInputs.find((input) => input.checked)?.value || '';
+
+                if (bookingPersonalDetails) {
+                    bookingPersonalDetails.classList.toggle('hidden', selectedPurpose === '');
+                }
+
+                bookingPurposePanels.forEach((panel) => {
+                    panel.classList.toggle('hidden', panel.dataset.bookingPurposePanel !== selectedPurpose);
+                });
+
+                bookingPurposeCards.forEach((card) => {
+                    const isSelected = card.dataset.bookingPurposeCard === selectedPurpose;
+                    card.dataset.selected = isSelected ? 'true' : 'false';
+                    card.classList.toggle('border-emerald-600', isSelected);
+                    card.classList.toggle('bg-emerald-600', isSelected);
+                    card.classList.toggle('text-white', isSelected);
+                    card.classList.toggle('shadow-[0_16px_30px_rgba(5,150,105,0.28)]', isSelected);
+                    card.classList.toggle('border-stone-300', !isSelected);
+                    card.classList.toggle('bg-white', !isSelected);
+                    card.classList.toggle('text-stone-700', !isSelected);
+                    card.classList.toggle('shadow-sm', !isSelected);
+                });
+
+                if (fullNameInput) fullNameInput.required = selectedPurpose !== '';
+                if (emailInput) emailInput.required = selectedPurpose !== '';
+                if (phoneCountryCodeInput) phoneCountryCodeInput.required = selectedPurpose !== '';
+                if (phoneLocalNumberInput) phoneLocalNumberInput.required = selectedPurpose !== '';
+                if (pickupLocationInput) pickupLocationInput.required = selectedPurpose !== '';
+                if (identityDocumentInput) identityDocumentInput.required = selectedPurpose === 'leisure';
+                if (companyNumberInput) companyNumberInput.required = selectedPurpose === 'business';
+            };
+
+            bookingPurposeInputs.forEach((input) => {
+                input.addEventListener('change', syncBookingPurposePanels);
+            });
+
+            syncBookingPurposePanels();
 
             const datePicker = document.querySelector('[data-date-picker]');
 

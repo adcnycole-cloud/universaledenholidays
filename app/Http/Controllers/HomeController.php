@@ -7,6 +7,9 @@ use App\Models\Booking;
 use App\Models\NewsFeature;
 use App\Models\Product;
 use App\Models\Testimonial;
+use App\Services\GooglePlaceReviewService;
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
+use Illuminate\Support\Collection;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -16,6 +19,10 @@ use Illuminate\View\View;
 
 class HomeController extends Controller
 {
+    public function __construct(
+        private readonly GooglePlaceReviewService $googlePlaceReviewService,
+    ) {}
+
     private const PHONE_COUNTRY_CODES = [
         '+60' => 'Malaysia (+60)',
         '+65' => 'Singapore (+65)',
@@ -87,6 +94,15 @@ class HomeController extends Controller
 
     public function showProduct(Product $product): View
     {
+        $packageTestimonials = Testimonial::where('display_location', 'package')
+            ->where('product_id', $product->id)
+            ->where('is_featured', true)
+            ->orderByDesc('rating')
+            ->take(3)
+            ->get();
+
+        $googleReviewData = $this->googlePlaceReviewService->getPlaceReviews();
+
         $relatedProducts = Product::where('is_active', true)
             ->where('id', '!=', $product->id)
             ->where('category', 'package')
@@ -105,12 +121,8 @@ class HomeController extends Controller
             'product' => $product,
             'relatedProducts' => $relatedProducts,
             'recommendedProducts' => $recommendedProducts,
-            'testimonials' => Testimonial::where('display_location', 'package')
-                ->where('product_id', $product->id)
-                ->where('is_featured', true)
-                ->orderByDesc('rating')
-                ->take(3)
-                ->get(),
+            'reviews' => $this->mergePublicReviews($packageTestimonials, $googleReviewData),
+            'googleReviewData' => $googleReviewData,
             'currencyRates' => self::CURRENCY_RATES,
             'currencySymbols' => self::CURRENCY_SYMBOLS,
             'malaysiaPricingTiers' => $this->buildPricingTiers(
@@ -212,6 +224,11 @@ class HomeController extends Controller
     private function sharedPageData(): array
     {
         $products = Product::where('is_active', true)->orderBy('category')->orderBy('price_myr')->get();
+        $landingTestimonials = Testimonial::where('display_location', 'landing')
+            ->where('is_featured', true)
+            ->orderByDesc('rating')
+            ->get();
+        $googleReviewData = $this->googlePlaceReviewService->getPlaceReviews();
         $packageReviewStats = Testimonial::query()
             ->selectRaw('product_id, AVG(rating) as average_rating, COUNT(*) as reviews_count')
             ->where('display_location', 'package')
@@ -262,23 +279,59 @@ class HomeController extends Controller
             'pastPromo' => $pastPromos->first(),
             'pastPromos' => $pastPromos,
             'newsFeatures' => (clone $activeNewsQuery)->latest()->take(6)->get(),
-            'testimonials' => Testimonial::where('display_location', 'landing')
-                ->where('is_featured', true)
-                ->orderByDesc('rating')
-                ->get(),
+            'reviews' => $this->mergePublicReviews($landingTestimonials, $googleReviewData),
+            'websiteReviews' => $this->mapWebsiteReviews($landingTestimonials),
+            'googleReviews' => collect($googleReviewData['reviews'] ?? []),
+            'websiteReviewStats' => [
+                'average_rating' => $landingTestimonials->isNotEmpty() ? round((float) $landingTestimonials->avg('rating'), 1) : null,
+                'reviews_count' => $landingTestimonials->count(),
+            ],
+            'googleReviewData' => $googleReviewData,
             'recentBookings' => Booking::with('product')->latest()->take(5)->get(),
             'currencyRates' => self::CURRENCY_RATES,
             'currencySymbols' => self::CURRENCY_SYMBOLS,
         ];
     }
 
+    private function mergePublicReviews(EloquentCollection $websiteTestimonials, array $googleReviewData): Collection
+    {
+        $websiteReviews = $this->mapWebsiteReviews($websiteTestimonials);
+
+        return $websiteReviews
+            ->concat(collect($googleReviewData['reviews'] ?? []))
+            ->values();
+    }
+
+    private function mapWebsiteReviews(EloquentCollection $websiteTestimonials): Collection
+    {
+        return $websiteTestimonials->map(function (Testimonial $testimonial) {
+            return [
+                'source' => 'website',
+                'source_label' => 'Website review',
+                'name' => $testimonial->name,
+                'location' => $testimonial->location,
+                'trip_name' => $testimonial->trip_name,
+                'quote' => $testimonial->quote,
+                'rating' => $testimonial->rating,
+                'profile_photo_url' => $testimonial->profile_photo_url,
+                'published_label' => '',
+                'review_url' => null,
+            ];
+        });
+    }
+
     public function book(Request $request): RedirectResponse
     {
+        [$resolvedCountryCode, $resolvedLocalNumber] = $this->resolvePhoneInputParts(
+            (string) $request->input('phone_country_code', ''),
+            (string) $request->input('phone_local_number', ''),
+            (string) $request->input('phone', ''),
+        );
+
         $request->merge([
-            'phone' => $this->composePhoneNumber(
-                (string) $request->input('phone_country_code', '+60'),
-                (string) $request->input('phone_local_number', $request->input('phone', '')),
-            ),
+            'phone_country_code' => $resolvedCountryCode,
+            'phone_local_number' => $resolvedLocalNumber,
+            'phone' => $this->composePhoneNumber($resolvedCountryCode, $resolvedLocalNumber),
         ]);
 
         $formMode = $request->input('form_mode') === 'enquiry' ? 'enquiry' : 'booking';
@@ -286,10 +339,13 @@ class HomeController extends Controller
         $baseRules = [
             'product_id' => ['required', 'exists:products,id'],
             'service_type' => ['required', 'in:transport,package'],
+            'booking_purpose' => ['nullable', 'in:leisure,business'],
             'action_type' => ['nullable', 'in:reserve,instant_book,book_now'],
             'locked_product_id' => ['nullable', 'exists:products,id'],
             'full_name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'max:255', 'email:rfc,dns'],
+            'identity_document_number' => ['nullable', 'string', 'max:100'],
+            'company_number' => ['nullable', 'string', 'max:100'],
             'phone_country_code' => ['required', 'string', 'in:'.implode(',', array_keys(self::PHONE_COUNTRY_CODES))],
             'phone_local_number' => ['required', 'string', 'max:20'],
             'phone' => $this->phoneRules(),
@@ -314,6 +370,19 @@ class HomeController extends Controller
         ];
 
         $validated = $request->validate($baseRules + ($formMode === 'enquiry' ? $enquiryRules : $bookingRules));
+        $bookingPurpose = ($validated['booking_purpose'] ?? 'leisure') === 'business' ? 'business' : 'leisure';
+
+        if ($formMode !== 'enquiry' && $bookingPurpose === 'leisure' && blank($validated['identity_document_number'] ?? null)) {
+            return back()->withErrors([
+                'identity_document_number' => 'Please provide the IC Number / Passport Number for leisure bookings.',
+            ])->withInput();
+        }
+
+        if ($formMode !== 'enquiry' && $bookingPurpose === 'business' && blank($validated['company_number'] ?? null)) {
+            return back()->withErrors([
+                'company_number' => 'Please provide the company number for business bookings.',
+            ])->withInput();
+        }
 
         $product = Product::findOrFail($validated['product_id']);
 
@@ -343,8 +412,11 @@ class HomeController extends Controller
                 'product_id' => $product->id,
                 'booking_reference' => $this->generateUniqueBookingReference(),
                 'service_type' => $validated['service_type'],
+                'booking_purpose' => $bookingPurpose,
                 'full_name' => $validated['full_name'],
                 'email' => $validated['email'],
+                'identity_document_number' => null,
+                'company_number' => null,
                 'phone' => $validated['phone'],
                 'pickup_location' => null,
                 'destination' => $product->location,
@@ -392,8 +464,15 @@ class HomeController extends Controller
             'product_id' => $product->id,
             'booking_reference' => $this->generateUniqueBookingReference(),
             'service_type' => $validated['service_type'],
+            'booking_purpose' => $bookingPurpose,
             'full_name' => $validated['full_name'],
             'email' => $validated['email'],
+            'identity_document_number' => $bookingPurpose === 'leisure'
+                ? trim((string) ($validated['identity_document_number'] ?? ''))
+                : null,
+            'company_number' => $bookingPurpose === 'business'
+                ? trim((string) ($validated['company_number'] ?? ''))
+                : null,
             'phone' => $validated['phone'],
             'pickup_location' => $validated['pickup_location'],
             'destination' => $product->location,
@@ -512,6 +591,23 @@ class HomeController extends Controller
                     return;
                 }
 
+                $hasRepeatedLocalNumber = collect(array_keys(self::SUPPORTED_PHONE_PATTERNS))
+                    ->contains(function (string $countryCode) use ($digitsOnly) {
+                        if (! str_starts_with($digitsOnly, $countryCode)) {
+                            return false;
+                        }
+
+                        $localDigits = substr($digitsOnly, strlen($countryCode));
+
+                        return $localDigits !== '' && preg_match('/^(\d)\1+$/', $localDigits) === 1;
+                    });
+
+                if ($hasRepeatedLocalNumber) {
+                    $fail('Please enter a real phone number, not a repeated-digit number.');
+
+                    return;
+                }
+
                 $matchesSupportedCountry = collect(self::SUPPORTED_PHONE_PATTERNS)
                     ->contains(fn ($pattern) => preg_match($pattern, $digitsOnly) === 1);
 
@@ -541,6 +637,35 @@ class HomeController extends Controller
         }
 
         return '+'.$normalizedCountryCode.$digitsOnly;
+    }
+
+    private function resolvePhoneInputParts(string $countryCode, string $localNumber, string $rawPhone): array
+    {
+        $countryCode = array_key_exists($countryCode, self::PHONE_COUNTRY_CODES) ? $countryCode : '';
+        $localNumber = trim($localNumber);
+
+        if ($countryCode !== '' && $localNumber !== '') {
+            return [$countryCode, $localNumber];
+        }
+
+        $rawPhone = trim($rawPhone);
+
+        if ($rawPhone === '') {
+            return [$countryCode ?: '+60', $localNumber];
+        }
+
+        foreach (array_keys(self::PHONE_COUNTRY_CODES) as $supportedCode) {
+            if (! str_starts_with($rawPhone, $supportedCode)) {
+                continue;
+            }
+
+            return [
+                $supportedCode,
+                ltrim(substr($rawPhone, strlen($supportedCode)), " \t\n\r\0\x0B-()"),
+            ];
+        }
+
+        return [$countryCode ?: '+60', $localNumber !== '' ? $localNumber : $rawPhone];
     }
 
     private function generateUniqueBookingReference(): string

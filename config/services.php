@@ -49,4 +49,13 @@ return [
         'verify_ssl' => env('BILLPLZ_VERIFY_SSL', true),
     ],
 
+    'google_places' => [
+        'api_key' => env('GOOGLE_PLACES_API_KEY'),
+        'place_id' => env('GOOGLE_PLACES_PLACE_ID'),
+        'place_query' => env('GOOGLE_PLACES_PLACE_QUERY'),
+        'reviews_enabled' => env('GOOGLE_PLACES_REVIEWS_ENABLED', false),
+        'reviews_limit' => env('GOOGLE_PLACES_REVIEWS_LIMIT', 3),
+        'cache_minutes' => env('GOOGLE_PLACES_CACHE_MINUTES', 360),
+    ],
+
 ];

@@ -28,8 +28,10 @@ class BookingTest extends TestCase
         $response = $this->post('/bookings', [
             'product_id' => $product->id,
             'service_type' => $product->category,
+            'booking_purpose' => 'leisure',
             'full_name' => 'Ava Tan',
             'email' => 'ava@gmail.com',
+            'identity_document_number' => 'A12345678',
             'phone' => '+60123456789',
             'pickup_location' => 'KKIA',
             'malaysian_adults' => 2,
@@ -50,6 +52,8 @@ class BookingTest extends TestCase
         $this->assertDatabaseHas('bookings', [
             'full_name' => 'Ava Tan',
             'email' => 'ava@gmail.com',
+            'booking_purpose' => 'leisure',
+            'identity_document_number' => 'A12345678',
             'status' => 'pending',
             'payment_status' => 'awaiting_confirmation',
             'product_id' => $product->id,
@@ -66,8 +70,10 @@ class BookingTest extends TestCase
         $response = $this->post('/bookings', [
             'product_id' => $product->id,
             'service_type' => $product->category,
+            'booking_purpose' => 'business',
             'full_name' => 'Noah Lim',
             'email' => 'noah@gmail.com',
+            'company_number' => '202401099999',
             'phone' => '+60111222333',
             'pickup_location' => 'KKIA',
             'malaysian_adults' => 1,
@@ -87,7 +93,94 @@ class BookingTest extends TestCase
 
         $this->assertDatabaseHas('bookings', [
             'email' => 'noah@gmail.com',
+            'booking_purpose' => 'business',
+            'company_number' => '202401099999',
             'product_id' => $product->id,
+        ]);
+    }
+
+    public function test_leisure_booking_requires_identity_document_number(): void
+    {
+        $product = Product::where('is_active', true)->firstOrFail();
+
+        $response = $this->from('/booking')->post('/bookings', [
+            'product_id' => $product->id,
+            'service_type' => $product->category,
+            'booking_purpose' => 'leisure',
+            'full_name' => 'Leisure Guest',
+            'email' => 'leisureguest@gmail.com',
+            'phone' => '+60123456789',
+            'pickup_location' => 'KKIA',
+            'malaysian_adults' => 1,
+            'malaysian_kids' => 0,
+            'international_adults' => 0,
+            'international_kids' => 0,
+            'check_in_date' => now()->addDays(5)->toDateString(),
+            'check_out_date' => now()->addDays(8)->toDateString(),
+            'payment_method' => 'bank_transfer',
+            'currency_code' => 'MYR',
+        ]);
+
+        $response->assertRedirect('/booking');
+        $response->assertSessionHasErrors(['identity_document_number']);
+    }
+
+    public function test_business_booking_requires_company_number(): void
+    {
+        $product = Product::where('is_active', true)->firstOrFail();
+
+        $response = $this->from('/booking')->post('/bookings', [
+            'product_id' => $product->id,
+            'service_type' => $product->category,
+            'booking_purpose' => 'business',
+            'full_name' => 'Business Guest',
+            'email' => 'businessguest@gmail.com',
+            'phone' => '+60123456789',
+            'pickup_location' => 'KKIA',
+            'malaysian_adults' => 1,
+            'malaysian_kids' => 0,
+            'international_adults' => 0,
+            'international_kids' => 0,
+            'check_in_date' => now()->addDays(5)->toDateString(),
+            'check_out_date' => now()->addDays(8)->toDateString(),
+            'payment_method' => 'bank_transfer',
+            'currency_code' => 'MYR',
+        ]);
+
+        $response->assertRedirect('/booking');
+        $response->assertSessionHasErrors(['company_number']);
+    }
+
+    public function test_business_booking_can_be_created_with_company_number(): void
+    {
+        $product = Product::where('is_active', true)->firstOrFail();
+
+        $response = $this->post('/bookings', [
+            'product_id' => $product->id,
+            'service_type' => $product->category,
+            'booking_purpose' => 'business',
+            'full_name' => 'Business Guest',
+            'email' => 'businessguest@gmail.com',
+            'company_number' => '202400011122',
+            'phone' => '+60123456789',
+            'pickup_location' => 'KKIA',
+            'malaysian_adults' => 1,
+            'malaysian_kids' => 0,
+            'international_adults' => 0,
+            'international_kids' => 0,
+            'check_in_date' => now()->addDays(5)->toDateString(),
+            'check_out_date' => now()->addDays(8)->toDateString(),
+            'payment_method' => 'bank_transfer',
+            'currency_code' => 'MYR',
+        ]);
+
+        $response->assertSessionDoesntHaveErrors();
+
+        $this->assertDatabaseHas('bookings', [
+            'email' => 'businessguest@gmail.com',
+            'booking_purpose' => 'business',
+            'identity_document_number' => null,
+            'company_number' => '202400011122',
         ]);
     }
 
@@ -106,8 +199,10 @@ class BookingTest extends TestCase
         $response = $this->post('/bookings', [
             'product_id' => $product->id,
             'service_type' => $product->category,
+            'booking_purpose' => 'leisure',
             'full_name' => 'Discount Guest',
             'email' => 'discount@gmail.com',
+            'identity_document_number' => 'K99887766',
             'phone' => '+60123456789',
             'pickup_location' => 'KKIA',
             'malaysian_adults' => 1,
@@ -161,8 +256,10 @@ class BookingTest extends TestCase
         $response = $this->from('/booking')->post('/bookings', [
             'product_id' => $product->id,
             'service_type' => $product->category,
+            'booking_purpose' => 'leisure',
             'full_name' => 'Dummy Number',
             'email' => 'dummy@gmail.com',
+            'identity_document_number' => 'P1234567',
             'phone' => '1111111111',
             'pickup_location' => 'KKIA',
             'malaysian_adults' => 1,

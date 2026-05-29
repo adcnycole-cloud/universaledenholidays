@@ -1681,54 +1681,31 @@
                 <div>
                     <h2 class="font-['Prata'] text-3xl text-stone-900">Customer reviews</h2>
                 </div>
-                <div class="flex flex-wrap gap-2">
-                    @if (($googleReviewData['reviews_count'] ?? 0) > 0 && !is_null($googleReviewData['rating'] ?? null))
-                        <a
-                            href="{{ $googleReviewData['place_url'] }}"
-                            target="_blank"
-                            rel="noreferrer"
-                            class="rounded-full bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-700 transition hover:bg-rose-100"
-                        >
-                            Google {{ number_format((float) $googleReviewData['rating'], 1) }}/5 from {{ $googleReviewData['reviews_count'] }} review{{ $googleReviewData['reviews_count'] === 1 ? '' : 's' }}
-                        </a>
-                    @endif
-                    @if (($websiteReviewStats['reviews_count'] ?? 0) > 0 && !is_null($websiteReviewStats['average_rating'] ?? null))
-                        <div class="rounded-full bg-amber-50 px-4 py-2 text-sm font-semibold text-amber-700">
-                            Website {{ number_format((float) $websiteReviewStats['average_rating'], 1) }}/5 from {{ $websiteReviewStats['reviews_count'] }} review{{ $websiteReviewStats['reviews_count'] === 1 ? '' : 's' }}
-                        </div>
-                    @endif
+                <div class="rounded-full bg-amber-50 px-4 py-2 text-sm font-semibold text-amber-700">
+                    Average rating {{ $averageRating !== null ? number_format($averageRating, 1) . '/5' : 'Not available' }}
                 </div>
             </div>
             <div class="mt-3 grid gap-4 md:grid-cols-2">
                 <div class="space-y-3">
-                    @if (!empty($googleReviewData['landscape_photo_url']))
-                        <article class="overflow-hidden rounded-[1.75rem] border border-stone-200 bg-white shadow-sm">
-                            <a href="{{ $googleReviewData['place_url'] }}" target="_blank" rel="noreferrer" class="block">
-                                <img
-                                    src="{{ $googleReviewData['landscape_photo_url'] }}"
-                                    alt="{{ $googleReviewData['place_name'] ?: 'Universal Eden Holidays' }}"
-                                    class="h-56 w-full object-cover"
-                                >
-                            </a>
-                            <div class="flex flex-wrap items-center justify-between gap-3 p-4">
-                                <div>
-                                    <p class="text-sm font-semibold text-stone-900">{{ $googleReviewData['place_name'] ?: 'Universal Eden Holidays' }}</p>
-                                    <p class="mt-1 text-xs uppercase tracking-[0.16em] text-stone-500">Google business photo</p>
+                    @forelse ($testimonials as $testimonial)
+                        <article class="rounded-3xl border border-stone-200 bg-stone-50 p-4 shadow-sm">
+                            <div class="flex items-center justify-between gap-4">
+                                <div class="flex items-center gap-4">
+                                    <img
+                                        src="{{ $testimonial->profile_photo_url }}"
+                                        alt="{{ $testimonial->name }}"
+                                        class="h-14 w-14 shrink-0 rounded-full object-cover shadow-sm ring-2 ring-white"
+                                        style="aspect-ratio: 1 / 1; border-radius: 9999px;"
+                                    >
+                                    <div>
+                                        <h3 class="text-lg font-semibold text-stone-900">{{ $testimonial->name }}</h3>
+                                        <p class="text-sm text-stone-500">{{ $testimonial->location }} &middot; {{ $testimonial->trip_name }}</p>
+                                    </div>
                                 </div>
-                                <a href="{{ $googleReviewData['place_url'] }}" target="_blank" rel="noreferrer" class="text-sm font-semibold text-sky-700 transition hover:text-sky-800">
-                                    Open on Google
-                                </a>
-                            </div>
-                            @if (!empty($googleReviewData['landscape_photo_attribution']))
-                                <div class="border-t border-stone-200 px-4 py-3 text-xs text-stone-500">
-                                    Photo:
-                                    @foreach ($googleReviewData['landscape_photo_attribution'] as $author)
-                                        @if (!empty($author['uri']))
-                                            <a href="{{ $author['uri'] }}" target="_blank" rel="noreferrer" class="font-medium text-stone-700 hover:text-sky-700">{{ $author['name'] }}</a>@if (! $loop->last), @endif
-                                        @else
-                                            <span class="font-medium text-stone-700">{{ $author['name'] }}</span>@if (! $loop->last), @endif
-                                        @endif
-                                    @endforeach
+                                <div class="flex items-center gap-1 text-amber-500">
+                                    @for ($star = 0; $star < $testimonial->rating; $star++)
+                                        <span class="text-lg leading-none">&#9733;</span>
+                                    @endfor
                                 </div>
                             @endif
                         </article>
@@ -1777,6 +1754,11 @@
                 <section class="rounded-[1.75rem] border border-stone-200 bg-stone-50/80 p-4 shadow-sm">
                     <p class="text-sm uppercase tracking-[0.28em] text-amber-600">Add Reviews</p>
                     <p class="mt-3 text-sm leading-6 text-stone-600">If you have travelled with Universal Eden Holidays before, you can leave a short review here. We will check it before showing it on the landing page.</p>
+                    @if (!empty($googleWriteReviewUrl))
+                        <a href="{{ $googleWriteReviewUrl }}" target="_blank" rel="noopener noreferrer" class="mt-3 inline-flex w-full items-center justify-center rounded-full border border-emerald-300 bg-emerald-50 px-5 py-3 text-sm font-semibold uppercase tracking-[0.2em] text-emerald-700 transition hover:bg-emerald-100">
+                            Also Leave a Review on Google
+                        </a>
+                    @endif
 
                     <form method="POST" action="{{ route('testimonials.store') }}" enctype="multipart/form-data" class="mt-4 space-y-3" data-form-persist="landing-testimonial-review">
                         @csrf

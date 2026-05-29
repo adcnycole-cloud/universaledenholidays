@@ -6,6 +6,7 @@ use App\Mail\BookingReferenceMail;
 use App\Models\Booking;
 use App\Models\NewsFeature;
 use App\Models\Product;
+use App\Services\GoogleReviewsService;
 use App\Models\Testimonial;
 use App\Services\GooglePlaceReviewService;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
@@ -271,6 +272,16 @@ class HomeController extends Controller
             ->take(12)
             ->get();
 
+        $landingTestimonials = Testimonial::where('display_location', 'landing')
+            ->where('is_featured', true)
+            ->orderByDesc('rating')
+            ->get();
+
+        $googleReviewsData = app(GoogleReviewsService::class)->getPublicReviewData();
+        $localAverageRating = $landingTestimonials->count() > 0
+            ? round((float) $landingTestimonials->avg('rating'), 1)
+            : null;
+
         return [
             'transportServices' => $products->where('category', 'transport')->values(),
             'travelPackages' => $travelPackages,
@@ -279,14 +290,14 @@ class HomeController extends Controller
             'pastPromo' => $pastPromos->first(),
             'pastPromos' => $pastPromos,
             'newsFeatures' => (clone $activeNewsQuery)->latest()->take(6)->get(),
-            'reviews' => $this->mergePublicReviews($landingTestimonials, $googleReviewData),
-            'websiteReviews' => $this->mapWebsiteReviews($landingTestimonials),
-            'googleReviews' => collect($googleReviewData['reviews'] ?? []),
-            'websiteReviewStats' => [
-                'average_rating' => $landingTestimonials->isNotEmpty() ? round((float) $landingTestimonials->avg('rating'), 1) : null,
-                'reviews_count' => $landingTestimonials->count(),
-            ],
-            'googleReviewData' => $googleReviewData,
+            'testimonials' => $landingTestimonials,
+            'googleReviews' => $googleReviewsData['reviews'],
+            'googleRating' => $googleReviewsData['rating'],
+            'googleReviewCount' => $googleReviewsData['review_count'],
+            'googlePlaceName' => $googleReviewsData['place_name'],
+            'googleMapsUrl' => $googleReviewsData['maps_url'],
+            'googleWriteReviewUrl' => $googleReviewsData['write_review_url'],
+            'averageRating' => $googleReviewsData['rating'] ?? $localAverageRating,
             'recentBookings' => Booking::with('product')->latest()->take(5)->get(),
             'currencyRates' => self::CURRENCY_RATES,
             'currencySymbols' => self::CURRENCY_SYMBOLS,

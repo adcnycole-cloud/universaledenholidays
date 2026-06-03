@@ -155,6 +155,23 @@ class HomeController extends Controller
         ]);
     }
 
+    public function showBlogIndex(): View
+    {
+        abort_unless(Schema::hasTable('blog_posts'), 404);
+
+        return view('blog.index', [
+            'blogPosts' => BlogPost::query()
+                ->where('is_published', true)
+                ->where(function ($query) {
+                    $query->whereNull('published_at')
+                        ->orWhere('published_at', '<=', now());
+                })
+                ->orderByDesc('published_at')
+                ->latest()
+                ->get(),
+        ]);
+    }
+
     public function showBlogPost(BlogPost $blogPost): View
     {
         abort_unless(Schema::hasTable('blog_posts'), 404);
@@ -305,18 +322,6 @@ class HomeController extends Controller
             });
 
         $currentPromo = (clone $activeNewsQuery)->latest()->first();
-        $latestBlogPosts = Schema::hasTable('blog_posts')
-            ? BlogPost::query()
-                ->where('is_published', true)
-                ->where(function ($query) {
-                    $query->whereNull('published_at')
-                        ->orWhere('published_at', '<=', now());
-                })
-                ->orderByDesc('published_at')
-                ->latest()
-                ->take(3)
-                ->get()
-            : collect();
         $pastPromos = NewsFeature::query()
             ->whereNotNull('ends_at')
             ->whereDate('ends_at', '<', now()->toDateString())
@@ -345,7 +350,6 @@ class HomeController extends Controller
                 'reviews_count' => $landingTestimonials->count(),
             ],
             'googleReviewData' => $googleReviewData,
-            'latestBlogPosts' => $latestBlogPosts,
             'recentBookings' => Booking::with('product')->latest()->take(5)->get(),
             'currencyRates' => self::CURRENCY_RATES,
             'currencySymbols' => self::CURRENCY_SYMBOLS,

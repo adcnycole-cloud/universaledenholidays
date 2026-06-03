@@ -116,9 +116,9 @@
                                 <a href="{{ route('home') }}#popular-picks" class="transition hover:text-sky-700">Popular Picks</a>
                                 <a href="{{ route('home') }}#transport" class="transition hover:text-sky-700">Transport</a>
                                 <a href="{{ route('home') }}#packages-showcase" class="transition hover:text-sky-700">Packages</a>
-                                <a href="{{ route('home') }}#blog" class="transition hover:text-sky-700">Blog</a>
                                 <a href="{{ route('home') }}#testimonials" class="transition hover:text-sky-700">Testimonials</a>
                                 <a href="{{ route('home') }}#about-us" class="transition hover:text-sky-700">About Us</a>
+                                <a href="{{ route('blog.index') }}" class="transition hover:text-sky-700">Blog</a>
                                 <a href="{{ route('bookings.track.form') }}" class="transition hover:text-sky-700">Track Booking</a>
                             </nav>
                         @endif

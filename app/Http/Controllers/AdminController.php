@@ -810,25 +810,36 @@ class AdminController extends Controller
 
         $validated = $request->validate([
             'title' => ['required', 'string', 'max:255'],
+            'destination' => ['nullable', 'string', 'max:255'],
+            'author_name' => ['nullable', 'string', 'max:255'],
             'description' => ['required', 'string', 'max:20000'],
             'credits' => ['nullable', 'string', 'max:2000'],
             'cover_image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
             'social_media_url' => ['nullable', 'url', 'max:2048'],
             'video_url' => ['nullable', 'url', 'max:2048'],
             'published_at' => ['nullable', 'date'],
+            'sections' => ['nullable', 'array'],
+            'sections.*.title' => ['nullable', 'string', 'max:255'],
+            'sections.*.description' => ['nullable', 'string', 'max:20000'],
+            'sections.*.image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
         ]);
 
         $coverImagePath = $request->hasFile('cover_image')
             ? $request->file('cover_image')->store('blog-covers', 'public')
             : null;
+        $descriptionHtml = $this->sanitizeBlogHtml($validated['description']);
+        $sectionItems = $this->prepareBlogSections($request);
 
         BlogPost::create($this->filterBlogPostAttributes([
             'title' => $validated['title'],
             'slug' => BlogPost::generateUniqueSlug($validated['title']),
-            'description' => $validated['description'],
+            'destination' => $validated['destination'] ?? null,
+            'author_name' => $validated['author_name'] ?? null,
+            'description' => $descriptionHtml,
             'credits' => $validated['credits'] ?? null,
-            'excerpt' => Str::limit($validated['description'], 500, ''),
-            'content' => $validated['description'],
+            'sections' => $sectionItems,
+            'excerpt' => Str::limit(strip_tags($descriptionHtml), 500, ''),
+            'content' => $descriptionHtml,
             'cover_image_path' => $coverImagePath,
             'social_media_url' => $validated['social_media_url'] ?? null,
             'video_url' => $validated['video_url'] ?? null,
@@ -849,21 +860,38 @@ class AdminController extends Controller
 
         $validated = $request->validate([
             'title' => ['required', 'string', 'max:255'],
+            'destination' => ['nullable', 'string', 'max:255'],
+            'author_name' => ['nullable', 'string', 'max:255'],
             'description' => ['required', 'string', 'max:20000'],
             'credits' => ['nullable', 'string', 'max:2000'],
             'cover_image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
             'social_media_url' => ['nullable', 'url', 'max:2048'],
             'video_url' => ['nullable', 'url', 'max:2048'],
             'published_at' => ['nullable', 'date'],
+            'sections' => ['nullable', 'array'],
+            'sections.*.title' => ['nullable', 'string', 'max:255'],
+            'sections.*.description' => ['nullable', 'string', 'max:20000'],
+            'sections.*.image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
+            'sections.*.existing_image_path' => ['nullable', 'string', 'max:2048'],
         ]);
+        $descriptionHtml = $this->sanitizeBlogHtml($validated['description']);
+        $existingSectionImages = collect($blogPost->sections ?? [])
+            ->pluck('image_path')
+            ->filter()
+            ->values()
+            ->all();
+        $sectionItems = $this->prepareBlogSections($request, $blogPost);
 
         $updates = $this->filterBlogPostAttributes([
             'title' => $validated['title'],
             'slug' => BlogPost::generateUniqueSlug($validated['title'], $blogPost->id),
-            'description' => $validated['description'],
+            'destination' => $validated['destination'] ?? null,
+            'author_name' => $validated['author_name'] ?? null,
+            'description' => $descriptionHtml,
             'credits' => $validated['credits'] ?? null,
-            'excerpt' => Str::limit($validated['description'], 500, ''),
-            'content' => $validated['description'],
+            'sections' => $sectionItems,
+            'excerpt' => Str::limit(strip_tags($descriptionHtml), 500, ''),
+            'content' => $descriptionHtml,
             'social_media_url' => $validated['social_media_url'] ?? null,
             'video_url' => $validated['video_url'] ?? null,
             'published_at' => $validated['published_at'] ?? now(),
@@ -878,6 +906,16 @@ class AdminController extends Controller
             $updates['cover_image_path'] = $request->file('cover_image')->store('blog-covers', 'public');
         }
 
+        $activeSectionImages = collect($sectionItems)
+            ->pluck('image_path')
+            ->filter()
+            ->values()
+            ->all();
+
+        collect($existingSectionImages)
+            ->diff($activeSectionImages)
+            ->each(fn ($path) => Storage::disk('public')->delete($path));
+
         $blogPost->update($updates);
 
         return back()->with('success', 'Blog post updated successfully.');
@@ -888,6 +926,11 @@ class AdminController extends Controller
         if ($blogPost->cover_image_path) {
             Storage::disk('public')->delete($blogPost->cover_image_path);
         }
+
+        collect($blogPost->sections ?? [])
+            ->pluck('image_path')
+            ->filter()
+            ->each(fn ($path) => Storage::disk('public')->delete($path));
 
         $blogPost->delete();
 
@@ -1095,6 +1138,60 @@ class AdminController extends Controller
         return collect($attributes)
             ->filter(fn ($value, $key) => array_key_exists($key, $availableColumns))
             ->all();
+    }
+
+    private function prepareBlogSections(Request $request, ?BlogPost $blogPost = null): array
+    {
+        $rawSections = $request->input('sections', []);
+
+        if (! is_array($rawSections)) {
+            return [];
+        }
+
+        $sections = [];
+
+        foreach ($rawSections as $index => $section) {
+            if (! is_array($section)) {
+                continue;
+            }
+
+            $title = trim((string) ($section['title'] ?? ''));
+            $description = $this->sanitizeBlogHtml((string) ($section['description'] ?? ''));
+            $existingImagePath = is_string($section['existing_image_path'] ?? null)
+                ? trim((string) $section['existing_image_path'])
+                : null;
+
+            $imagePath = $existingImagePath ?: null;
+
+            if ($request->hasFile("sections.$index.image")) {
+                if ($existingImagePath) {
+                    Storage::disk('public')->delete($existingImagePath);
+                }
+
+                $imagePath = $request->file("sections.$index.image")->store('blog-sections', 'public');
+            }
+
+            if ($title === '' && $description === '' && blank($imagePath)) {
+                continue;
+            }
+
+            $sections[] = [
+                'title' => $title !== '' ? $title : null,
+                'description' => $description !== '' ? $description : null,
+                'image_path' => $imagePath,
+            ];
+        }
+
+        return $sections;
+    }
+
+    private function sanitizeBlogHtml(?string $html): string
+    {
+        $clean = strip_tags((string) $html, '<p><br><strong><b><em><i><ul><ol><li><h2><h3><blockquote><a>');
+        $clean = str_replace(["\r\n", "\r"], "\n", $clean);
+        $clean = preg_replace("/\n{3,}/", "\n\n", $clean);
+
+        return str_replace("\n", "<br>\n", trim($clean));
     }
 
     private function resolveReportPeriod(?string $reportType, ?string $period): array

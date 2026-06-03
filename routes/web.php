@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
+Route::get('/blog', [HomeController::class, 'showBlogIndex'])->name('blog.index');
 Route::get('/blog/{blogPost}', [HomeController::class, 'showBlogPost'])->name('blog.show');
 Route::post('/testimonials', [HomeController::class, 'storeLandingTestimonial'])->name('testimonials.store');
 Route::get('/products/{product}', [HomeController::class, 'showProduct'])->name('products.show');

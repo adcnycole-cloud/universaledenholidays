@@ -11,8 +11,11 @@ class BlogPost extends Model
     protected $fillable = [
         'title',
         'slug',
+        'destination',
+        'author_name',
         'description',
         'credits',
+        'sections',
         'excerpt',
         'content',
         'cover_image_path',
@@ -27,6 +30,7 @@ class BlogPost extends Model
         return [
             'published_at' => 'datetime',
             'is_published' => 'boolean',
+            'sections' => 'array',
         ];
     }
 
@@ -42,6 +46,28 @@ class BlogPost extends Model
     public function getCoverImageUrlAttribute(): ?string
     {
         return $this->cover_image_path ? asset('storage/'.$this->cover_image_path) : null;
+    }
+
+    public function getSectionItemsAttribute(): array
+    {
+        return collect($this->sections ?? [])
+            ->map(function ($section) {
+                if (! is_array($section)) {
+                    return null;
+                }
+
+                $imagePath = $section['image_path'] ?? null;
+
+                return [
+                    'image_path' => $imagePath,
+                    'image_url' => $imagePath ? asset('storage/'.$imagePath) : null,
+                    'title' => $section['title'] ?? null,
+                    'description' => $section['description'] ?? null,
+                ];
+            })
+            ->filter()
+            ->values()
+            ->all();
     }
 
     public function getDescriptionAttribute($value): ?string

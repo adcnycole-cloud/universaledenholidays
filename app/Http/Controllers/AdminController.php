@@ -4,17 +4,23 @@ namespace App\Http\Controllers;
 
 use App\Mail\BookingInvoiceMail;
 use Barryvdh\DomPDF\Facade\Pdf;
+use App\Models\BlogPost;
 use App\Models\Booking;
 use App\Models\NewsFeature;
 use App\Models\Product;
 use App\Models\Testimonial;
+use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
@@ -100,6 +106,11 @@ class AdminController extends Controller
         return view('admin.promos', $this->sharedAdminData());
     }
 
+    public function blogs(): View
+    {
+        return view('admin.blogs', $this->sharedAdminData());
+    }
+
     public function transport(): View
     {
         return view('admin.transport', $this->sharedAdminData());
@@ -170,6 +181,64 @@ class AdminController extends Controller
     public function enquiries(): View
     {
         return view('admin.enquiries', $this->sharedAdminData());
+    }
+
+    public function storeAdminUser(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'string', 'email:rfc,dns', 'max:255', 'unique:users,email'],
+            'phone' => ['nullable', 'string', 'max:50'],
+            'password' => ['required', 'string', 'min:8', 'confirmed'],
+        ]);
+
+        User::create([
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+            'phone' => $validated['phone'] ?? null,
+            'password' => Hash::make($validated['password']),
+            'role' => 'admin',
+            'preferred_currency' => 'MYR',
+            'email_verified_at' => now(),
+        ]);
+
+        return back()->with('success', 'New admin account created successfully.');
+    }
+
+    public function updateAdminUser(Request $request, User $user): RedirectResponse
+    {
+        abort_if(! $user->isAdmin(), 404);
+
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'string', 'email:rfc,dns', 'max:255', Rule::unique('users', 'email')->ignore($user->id)],
+            'phone' => ['nullable', 'string', 'max:50'],
+            'password' => ['nullable', 'string', 'min:8', 'confirmed'],
+        ]);
+
+        $updates = [
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+            'phone' => $validated['phone'] ?? null,
+        ];
+
+        if (! empty($validated['password'])) {
+            $updates['password'] = Hash::make($validated['password']);
+        }
+
+        $user->update($updates);
+
+        return back()->with('success', 'Admin account updated successfully.');
+    }
+
+    public function destroyAdminUser(User $user): RedirectResponse
+    {
+        abort_if(! $user->isAdmin(), 404);
+        abort_if(auth()->id() === $user->id, 422, 'You cannot remove your own admin account.');
+
+        $user->delete();
+
+        return back()->with('success', 'Admin account removed successfully.');
     }
 
     public function exportMonthlyBookings(Request $request): StreamedResponse
@@ -731,6 +800,100 @@ class AdminController extends Controller
         return back()->with('success', 'Promo news deleted successfully.');
     }
 
+    public function storeBlogPost(Request $request): RedirectResponse
+    {
+        if (! Schema::hasTable('blog_posts')) {
+            return back()->withErrors([
+                'blog_posts' => 'Blog storage is not ready yet. Please run php artisan migrate first.',
+            ])->withInput();
+        }
+
+        $validated = $request->validate([
+            'title' => ['required', 'string', 'max:255'],
+            'description' => ['required', 'string', 'max:20000'],
+            'credits' => ['nullable', 'string', 'max:2000'],
+            'cover_image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
+            'social_media_url' => ['nullable', 'url', 'max:2048'],
+            'video_url' => ['nullable', 'url', 'max:2048'],
+            'published_at' => ['nullable', 'date'],
+        ]);
+
+        $coverImagePath = $request->hasFile('cover_image')
+            ? $request->file('cover_image')->store('blog-covers', 'public')
+            : null;
+
+        BlogPost::create($this->filterBlogPostAttributes([
+            'title' => $validated['title'],
+            'slug' => BlogPost::generateUniqueSlug($validated['title']),
+            'description' => $validated['description'],
+            'credits' => $validated['credits'] ?? null,
+            'excerpt' => Str::limit($validated['description'], 500, ''),
+            'content' => $validated['description'],
+            'cover_image_path' => $coverImagePath,
+            'social_media_url' => $validated['social_media_url'] ?? null,
+            'video_url' => $validated['video_url'] ?? null,
+            'published_at' => $validated['published_at'] ?? now(),
+            'is_published' => $request->boolean('is_published'),
+        ]));
+
+        return back()->with('success', 'Blog post saved successfully.');
+    }
+
+    public function updateBlogPost(Request $request, BlogPost $blogPost): RedirectResponse
+    {
+        if (! Schema::hasTable('blog_posts')) {
+            return back()->withErrors([
+                'blog_posts' => 'Blog storage is not ready yet. Please run php artisan migrate first.',
+            ])->withInput();
+        }
+
+        $validated = $request->validate([
+            'title' => ['required', 'string', 'max:255'],
+            'description' => ['required', 'string', 'max:20000'],
+            'credits' => ['nullable', 'string', 'max:2000'],
+            'cover_image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
+            'social_media_url' => ['nullable', 'url', 'max:2048'],
+            'video_url' => ['nullable', 'url', 'max:2048'],
+            'published_at' => ['nullable', 'date'],
+        ]);
+
+        $updates = $this->filterBlogPostAttributes([
+            'title' => $validated['title'],
+            'slug' => BlogPost::generateUniqueSlug($validated['title'], $blogPost->id),
+            'description' => $validated['description'],
+            'credits' => $validated['credits'] ?? null,
+            'excerpt' => Str::limit($validated['description'], 500, ''),
+            'content' => $validated['description'],
+            'social_media_url' => $validated['social_media_url'] ?? null,
+            'video_url' => $validated['video_url'] ?? null,
+            'published_at' => $validated['published_at'] ?? now(),
+            'is_published' => $request->boolean('is_published'),
+        ]);
+
+        if ($request->hasFile('cover_image')) {
+            if ($blogPost->cover_image_path) {
+                Storage::disk('public')->delete($blogPost->cover_image_path);
+            }
+
+            $updates['cover_image_path'] = $request->file('cover_image')->store('blog-covers', 'public');
+        }
+
+        $blogPost->update($updates);
+
+        return back()->with('success', 'Blog post updated successfully.');
+    }
+
+    public function destroyBlogPost(BlogPost $blogPost): RedirectResponse
+    {
+        if ($blogPost->cover_image_path) {
+            Storage::disk('public')->delete($blogPost->cover_image_path);
+        }
+
+        $blogPost->delete();
+
+        return back()->with('success', 'Blog post deleted successfully.');
+    }
+
     public function storeTestimonial(Request $request): RedirectResponse
     {
         $validated = $request->validate([
@@ -900,10 +1063,14 @@ class AdminController extends Controller
                 ->values(),
             'packageProducts' => $products->where('category', 'package')->values(),
             'newsFeatures' => NewsFeature::latest()->get(),
+            'blogPosts' => Schema::hasTable('blog_posts')
+                ? BlogPost::latest('published_at')->latest()->get()
+                : collect(),
             'testimonials' => Testimonial::with('product')->latest()->get(),
             'bookings' => Booking::activeBookings()->with(['user', 'product'])->latest()->get(),
             'enquiries' => Booking::enquiries()->with(['user', 'product'])->latest()->get(),
             'adminUser' => auth()->user(),
+            'adminUsers' => User::where('role', 'admin')->orderBy('name')->get(),
             'stats' => [
                 'products' => Product::count(),
                 'bookings' => Booking::activeBookings()->count(),
@@ -911,9 +1078,23 @@ class AdminController extends Controller
                 'enquiries' => Booking::enquiries()->count(),
                 'customers' => \App\Models\User::where('role', 'customer')->count(),
                 'promos' => NewsFeature::count(),
+                'blogPosts' => Schema::hasTable('blog_posts') ? BlogPost::count() : 0,
                 'testimonials' => Testimonial::count(),
             ],
         ];
+    }
+
+    private function filterBlogPostAttributes(array $attributes): array
+    {
+        if (! Schema::hasTable('blog_posts')) {
+            return [];
+        }
+
+        $availableColumns = array_flip(Schema::getColumnListing('blog_posts'));
+
+        return collect($attributes)
+            ->filter(fn ($value, $key) => array_key_exists($key, $availableColumns))
+            ->all();
     }
 
     private function resolveReportPeriod(?string $reportType, ?string $period): array

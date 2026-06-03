@@ -1,5 +1,5 @@
 <x-layouts.app title="Universal Eden Holidays | Sabah Packages and Transport">
-    <div style="background-color: #f1f0e9;">
+    <div class="flex min-h-[calc(100vh-var(--app-header-offset,0px))] flex-col" style="background-color: #f0f0e9;">
     <style>
         html,
         body {
@@ -1044,11 +1044,10 @@
         </div>
     </section>
 
-    <main class="relative mx-auto flex max-w-7xl flex-col gap-14 rounded-[2.5rem] bg-[#e6eee8] px-6 pb-20 pt-0 lg:px-10 lg:max-w-[1900px]" style="overflow-x: clip;">
         <div class="pointer-events-none absolute inset-x-0 top-8 -z-10 h-72 rounded-[3rem] bg-[radial-gradient(circle_at_top_left,_rgba(134,239,172,0.16),_transparent_38%),radial-gradient(circle_at_top_right,_rgba(190,242,100,0.14),_transparent_34%)]"></div>
 
         <div>
-            <section id="promos" class="bg-white px-5 pt-14 pb-24 md:px-7 md:pt-20 md:pb-28 lg:px-8" style="margin-left: calc(50% - 50vw); margin-right: calc(50% - 50vw);">
+            <section id="promos" class="bg-white px-5 pt-3 pb-24 md:px-7 md:pt-5 md:pb-28 lg:px-8" style="margin-left: calc(50% - 50vw); margin-right: calc(50% - 50vw);">
                 @php
                     $currentPromoSlide = $currentPromo ? [
                         'title' => $currentPromo->title,
@@ -1082,7 +1081,7 @@
                     $initialPromoBookSlide = $promoBookSlides->first();
                 @endphp
 
-                <div class="relative mx-auto pt-6 md:pt-8" style="max-width: 1920px; height: 780px;">
+                <div class="relative mx-auto pt-6 md:pt-8" style="max-width: 1920px; height: 730px;">
                     <h2 class="mb-2 text-center font-['Oswald'] text-4xl font-bold uppercase tracking-[0.22em] text-[#315fbd] md:mb-3 md:text-5xl lg:text-6xl">
                         Promotion & News
                     </h2>
@@ -1206,7 +1205,108 @@
             </div>
         </div>
 
-        <section id="popular-picks" class="-mt-20 home-screen-section relative overflow-hidden md:overflow-visible px-6 pb-8 pt-0 md:px-8 md:pb-10 md:pt-0">
+        @if (false)
+        <div>
+            <section id="blog" class="home-screen-section relative bg-white px-6 pb-10 pt-12 md:px-8 md:pb-12 md:pt-16">
+                <div class="mb-4 flex flex-col gap-4 md:flex-row md:items-center">
+                    <div class="hidden md:block md:w-[18rem]"></div>
+                    <div class="flex-1 text-center">
+                        <p class="font-['Oswald'] text-sm font-semibold uppercase tracking-[0.28em] text-[#315fbd]">Travel Channel</p>
+                        <h2 class="mt-2 font-['Oswald'] text-4xl font-bold uppercase tracking-[0.22em] text-stone-900 md:text-5xl lg:text-6xl">
+                            Latest Blog
+                        </h2>
+                    </div>
+                    <div class="flex justify-center md:w-[18rem] md:justify-end"></div>
+                </div>
+
+                <div class="relative mx-auto rounded-[2rem] bg-white px-5 py-5 md:px-8 md:py-7" style="max-width: 1920px;">
+                    <div class="mx-auto max-w-[1500px]">
+                        <div class="mb-6 flex flex-col gap-3 rounded-[1.75rem] border border-stone-200 bg-[#f7f9fc] px-5 py-5 md:flex-row md:items-end md:justify-between md:px-7">
+                            <div class="max-w-3xl">
+                                <p class="text-[0.72rem] font-semibold uppercase tracking-[0.24em] text-[#315fbd]">Fresh Stories</p>
+                                <h3 class="mt-2 font-['Prata'] text-2xl text-stone-900 md:text-3xl">Travel updates presented like a video feed</h3>
+                                <p class="mt-3 text-sm leading-7 text-stone-500 md:text-base">
+                                    Browse the newest posts with large thumbnails, clean titles, and publish dates for a familiar YouTube-style browsing experience.
+                                </p>
+                            </div>
+                            <p class="text-sm font-medium text-stone-500">
+                                {{ $latestBlogPosts->count() }} {{ \Illuminate\Support\Str::plural('post', $latestBlogPosts->count()) }} available
+                            </p>
+                        </div>
+
+                        @if ($latestBlogPosts->isNotEmpty())
+                            <div class="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+                                @foreach ($latestBlogPosts->take(6) as $post)
+                                        <a href="{{ route('blog.show', $post) }}" class="group overflow-hidden rounded-[1.6rem] border border-stone-200 bg-white shadow-[0_10px_22px_rgba(15,23,42,0.08)] transition hover:-translate-y-1 hover:shadow-[0_18px_32px_rgba(15,23,42,0.14)]">
+                                            <div class="relative aspect-video overflow-hidden bg-stone-200">
+                                                @if ($post->cover_image_url)
+                                                    <img src="{{ $post->cover_image_url }}" alt="{{ $post->title }}" class="h-full w-full object-cover transition duration-300 group-hover:scale-[1.04]">
+                                                @else
+                                                    <div class="flex h-full w-full items-center justify-center bg-[linear-gradient(145deg,#77a6d8_0%,#5f8fcb_45%,#315fbd_100%)] px-8 text-center">
+                                                        <span class="font-['Prata'] text-2xl leading-tight text-white">{{ $post->title }}</span>
+                                                    </div>
+                                                @endif
+                                                <div class="absolute bottom-3 right-3 rounded-md bg-stone-950/85 px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-white">
+                                                    Blog
+                                                </div>
+                                            </div>
+                                            <div class="flex gap-4 px-5 py-4">
+                                                <div class="mt-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#e9f0ff] text-xs font-bold uppercase tracking-[0.16em] text-[#315fbd]">
+                                                    UE
+                                                </div>
+                                                <div class="min-w-0">
+                                                    <h3 class="line-clamp-2 text-base font-semibold leading-6 text-stone-900 md:text-lg">{{ $post->title }}</h3>
+                                                    <p class="mt-2 text-sm font-medium text-stone-500">Universal Eden Holidays</p>
+                                                    <p class="mt-1 text-sm text-stone-400">{{ $post->published_at?->format('d M Y') ?? 'Latest post' }}</p>
+                                                </div>
+                                            </div>
+                                        </a>
+                                    @endforeach
+                                </div>
+                            @else
+                                <div class="flex min-h-[250px] items-center justify-center rounded-[1.6rem] border border-dashed border-stone-300 bg-white px-6 text-center text-sm leading-7 text-stone-600">
+                                    No travel updates are available yet.
+                                </div>
+                            @endif
+                        </div>
+
+                        <div class="mt-5 grid gap-3 border-t border-stone-200 pt-4 md:grid-cols-2 xl:grid-cols-4">
+                            <div class="flex items-start gap-3 rounded-[1rem] bg-white px-4 py-3">
+                                <span class="text-lg text-stone-500">✈</span>
+                                <div>
+                                    <p class="text-[0.62rem] font-semibold uppercase tracking-[0.16em] text-stone-700">Travel Stories</p>
+                                    <p class="mt-1 text-xs text-stone-500">Fresh inspiration from Sabah and beyond</p>
+                                </div>
+                            </div>
+                            <div class="flex items-start gap-3 rounded-[1rem] bg-white px-4 py-3">
+                                <span class="text-lg text-stone-500">🗺</span>
+                                <div>
+                                    <p class="text-[0.62rem] font-semibold uppercase tracking-[0.16em] text-stone-700">Local Tips</p>
+                                    <p class="mt-1 text-xs text-stone-500">Helpful ideas for planning your route</p>
+                                </div>
+                            </div>
+                            <div class="flex items-start gap-3 rounded-[1rem] bg-white px-4 py-3">
+                                <span class="text-lg text-stone-500">🎥</span>
+                                <div>
+                                    <p class="text-[0.62rem] font-semibold uppercase tracking-[0.16em] text-stone-700">Video Updates</p>
+                                    <p class="mt-1 text-xs text-stone-500">Attach social links and video highlights</p>
+                                </div>
+                            </div>
+                            <div class="flex items-start gap-3 rounded-[1rem] bg-white px-4 py-3">
+                                <span class="text-lg text-stone-500">🧳</span>
+                                <div>
+                                    <p class="text-[0.62rem] font-semibold uppercase tracking-[0.16em] text-stone-700">Daily Posts</p>
+                                    <p class="mt-1 text-xs text-stone-500">New blog entries from the admin dashboard</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+        @endif
+
+        <section id="popular-picks" class="mt-10 home-screen-section relative overflow-hidden md:overflow-visible px-6 pb-8 pt-0 md:mt-12 md:px-8 md:pb-10 md:pt-0">
 
                 <div class="mb-4 flex flex-col gap-4 md:flex-row md:items-center">
                     <div class="hidden md:block md:w-[18rem]"></div>
@@ -1221,7 +1321,7 @@
                     </div>
                 </div>
 
-            <div class="relative mx-auto rounded-[2rem] bg-white px-5 py-3 md:overflow-visible md:px-8 md:py-7" style="max-width: 1920px;">
+            <div class="relative mx-auto rounded-[2rem] bg-white px-5 py-2 md:overflow-visible md:px-8 md:py-4" style="max-width: 1920px;">
                 <div class="popular-picks-mobile-nav hidden items-center justify-between px-2 pb-2 md:hidden">
                     <button
                         type="button"
@@ -1237,7 +1337,7 @@
                     >&rsaquo;</button>
                 </div>
 
-                <div class="mt-2 overflow-hidden px-2 py-6 md:overflow-visible md:py-10">
+                <div class="mt-1 overflow-hidden px-2 py-4 md:overflow-visible md:py-6">
                     <div class="popular-picks-track flex flex-wrap justify-center" data-popular-picks-track style="gap: 2.5rem;">
                         @foreach ($popularPackages as $package)
                             @php
@@ -1307,7 +1407,7 @@
 <section
     class="home-screen-section"
     id="transport"
-    style="position: relative; overflow: hidden; box-sizing: border-box; min-height: calc(100svh - var(--home-header-offset, 0px) + 40px); margin-top: -0.75rem; margin-left: calc(50% - 50vw); margin-right: calc(50% - 50vw);"
+    style="position: relative; overflow: hidden; box-sizing: border-box; min-height: calc(100svh - var(--home-header-offset, 0px) + 90px); margin-top: -0.75rem; margin-left: calc(50% - 50vw); margin-right: calc(50% - 50vw);"
 >
     @php
         $transportImageMap = [
@@ -1339,7 +1439,7 @@
     <div style="display: flex; min-height: 100%; width: 100%; align-items: center; justify-content: flex-start;">
 
             <!-- LEFT SIDE -->
-            <div class="transport-copy" style="position: relative; z-index: 10; width: 100%; max-width: 980px; flex-shrink: 0; margin-top: 3rem; margin-left: 6rem;">
+            <div class="transport-copy" style="position: relative; z-index: 10; width: 100%; max-width: 980px; flex-shrink: 0; margin-top: 1.75rem; margin-left: 6rem;">
                 <!-- TRANSPORT BOX -->
                 <div class="transport-box" style="border-radius: 1rem; background: rgba(255,255,255,0.85); padding: 2rem 2.5rem; min-height: 390px; box-shadow: 0 14px 30px rgba(15,23,42,0.12); backdrop-filter: blur(4px);">
 
@@ -1361,7 +1461,7 @@
                                 onmouseover="this.style.transform='translateY(-6px)'"
                                 onmouseout="this.style.transform='translateY(0)'"
                             >
-                                <div style="display: flex; height: 8.5rem; width: 100%; align-items: flex-end; justify-content: center;">
+                                <div style="display: flex; height: 7.5rem; width: 100%; align-items: flex-end; justify-content: center;">
                                     <img
                                         src="{{ $option['image'] }}"
                                         alt="{{ $option['name'] }}"
@@ -1474,7 +1574,7 @@
             $packagePageSize = 3;
         @endphp
 
-        <section id="packages-showcase" style="box-sizing: border-box; margin-top: -4.5rem; margin-left: calc(50% - 50vw); margin-right: calc(50% - 50vw);">
+        <section id="packages-showcase" style="box-sizing: border-box; margin-top: -4.5rem; margin-left: calc(50% - 50vw); margin-right: calc(50% - 50vw); padding-bottom: 2.25rem;">
             <div style="display: flex; flex-direction: column; gap: 0;">
                 @foreach ($packageSections as $section)
                     @php
@@ -1676,91 +1776,70 @@
             </div>
         </section>
 
-        <section id="testimonials" class="home-screen-section rounded-[2rem] border border-white/70 bg-white/90 p-4 shadow-[0_20px_60px_rgba(15,23,42,0.08)] backdrop-blur">
-            <div class="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
-                <div>
-                    <h2 class="font-['Prata'] text-3xl text-stone-900">Customer reviews</h2>
+        <section id="blog" class="mt-14 home-section-compact px-6 pb-4 pt-4 md:mt-16 md:px-8 md:pb-6 md:pt-5">
+            <div class="relative mx-auto rounded-[2rem] border border-white/70 bg-white/90 px-5 pb-8 pt-4 shadow-[0_20px_60px_rgba(15,23,42,0.08)] backdrop-blur md:px-6 md:pb-10 md:pt-4" style="max-width: 1920px;">
+            <div class="mb-6 flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                <div class="hidden md:block md:w-[10rem]"></div>
+                <div class="text-center" style="position: relative; left: 0.8rem;">
+                    <h2 class="font-['Oswald'] text-4xl font-bold uppercase tracking-[0.22em] text-stone-900 md:text-5xl">Blog</h2>
                 </div>
-                <div class="flex flex-wrap gap-2">
-                    @if (($googleReviewData['reviews_count'] ?? 0) > 0 && !is_null($googleReviewData['rating'] ?? null))
-                        <a
-                            href="{{ $googleReviewData['place_url'] }}"
-                            target="_blank"
-                            rel="noreferrer"
-                            class="rounded-full bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-700 transition hover:bg-rose-100"
-                        >
-                            Google {{ number_format((float) $googleReviewData['rating'], 1) }}/5 from {{ $googleReviewData['reviews_count'] }} review{{ $googleReviewData['reviews_count'] === 1 ? '' : 's' }}
+                <div class="flex justify-center md:w-[10rem] md:justify-end"></div>
+            </div>
+
+            @if ($latestBlogPosts->isNotEmpty())
+                <div class="-mt-1 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+                    @foreach ($latestBlogPosts->take(6) as $post)
+                        <a href="{{ route('blog.show', $post) }}" class="group overflow-hidden rounded-[1.6rem] border border-stone-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-md">
+                            <div class="relative aspect-video overflow-hidden bg-stone-200">
+                                @if ($post->cover_image_url)
+                                    <img src="{{ $post->cover_image_url }}" alt="{{ $post->title }}" class="h-full w-full object-cover transition duration-300 group-hover:scale-[1.04]">
+                                @else
+                                    <div class="flex h-full w-full items-center justify-center bg-[linear-gradient(145deg,#77a6d8_0%,#5f8fcb_45%,#315fbd_100%)] px-8 text-center">
+                                        <span class="font-['Prata'] text-2xl leading-tight text-white">{{ $post->title }}</span>
+                                    </div>
+                                @endif
+                                <div class="absolute bottom-3 right-3 rounded-md bg-stone-950/85 px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-white">
+                                    Blog
+                                </div>
+                            </div>
+                            <div class="px-5 py-4">
+                                <div class="min-w-0">
+                                    <h3 class="line-clamp-2 text-base font-semibold leading-6 text-stone-900 md:text-lg">{{ $post->title }}</h3>
+                                    <p class="mt-2 text-sm font-medium text-stone-500">Universal Eden Holidays</p>
+                                    <p class="mt-1 text-sm text-stone-400">{{ $post->published_at?->format('d M Y') ?? 'Latest post' }}</p>
+                                </div>
+                            </div>
                         </a>
-                    @endif
+                    @endforeach
+                </div>
+            @else
+                <div class="rounded-[1.6rem] border border-dashed border-stone-300 bg-white px-6 py-10 text-center text-sm leading-7 text-stone-600">
+                    No travel updates are available yet.
+                </div>
+            @endif
+            </div>
+        </section>
+
+        <section id="testimonials" class="mt-[4.5rem] home-screen-section px-6 pb-8 pt-6 md:mt-24 md:px-8 md:pb-12 md:pt-8">
+            <div class="mx-auto rounded-[2rem] border border-white/70 bg-white/90 px-4 pb-8 pt-4 shadow-[0_20px_60px_rgba(15,23,42,0.08)] backdrop-blur md:px-4 md:pb-10 md:pt-7" style="max-width: 1920px;">
+            <div class="-mt-1 flex flex-col items-center gap-3 text-center">
+                <div>
+                    <h2 class="font-['Oswald'] text-4xl font-bold uppercase tracking-[0.22em] text-stone-900 md:text-5xl">Customer reviews</h2>
+                </div>
+                <div class="flex flex-wrap justify-center gap-2">
                     @if (($websiteReviewStats['reviews_count'] ?? 0) > 0 && !is_null($websiteReviewStats['average_rating'] ?? null))
                         <div class="rounded-full bg-amber-50 px-4 py-2 text-sm font-semibold text-amber-700">
-                            Website {{ number_format((float) $websiteReviewStats['average_rating'], 1) }}/5 from {{ $websiteReviewStats['reviews_count'] }} review{{ $websiteReviewStats['reviews_count'] === 1 ? '' : 's' }}
+                            {{ number_format((float) $websiteReviewStats['average_rating'], 1) }}/5 from {{ $websiteReviewStats['reviews_count'] }} review{{ $websiteReviewStats['reviews_count'] === 1 ? '' : 's' }}
                         </div>
                     @endif
                 </div>
             </div>
             <div class="mt-3 grid gap-4 md:grid-cols-2">
                 <div class="space-y-3">
-                    @if (!empty($googleReviewData['landscape_photo_url']))
-                        <article class="overflow-hidden rounded-[1.75rem] border border-stone-200 bg-white shadow-sm">
-                            <a href="{{ $googleReviewData['place_url'] }}" target="_blank" rel="noreferrer" class="block">
-                                <img
-                                    src="{{ $googleReviewData['landscape_photo_url'] }}"
-                                    alt="{{ $googleReviewData['place_name'] ?: 'Universal Eden Holidays' }}"
-                                    class="h-56 w-full object-cover"
-                                >
-                            </a>
-                            <div class="flex flex-wrap items-center justify-between gap-3 p-4">
-                                <div>
-                                    <p class="text-sm font-semibold text-stone-900">{{ $googleReviewData['place_name'] ?: 'Universal Eden Holidays' }}</p>
-                                    <p class="mt-1 text-xs uppercase tracking-[0.16em] text-stone-500">Google business photo</p>
-                                </div>
-                                <a href="{{ $googleReviewData['place_url'] }}" target="_blank" rel="noreferrer" class="text-sm font-semibold text-sky-700 transition hover:text-sky-800">
-                                    Open on Google
-                                </a>
-                            </div>
-                            @if (!empty($googleReviewData['landscape_photo_attribution']))
-                                <div class="border-t border-stone-200 px-4 py-3 text-xs text-stone-500">
-                                    Photo:
-                                    @foreach ($googleReviewData['landscape_photo_attribution'] as $author)
-                                        @if (!empty($author['uri']))
-                                            <a href="{{ $author['uri'] }}" target="_blank" rel="noreferrer" class="font-medium text-stone-700 hover:text-sky-700">{{ $author['name'] }}</a>@if (! $loop->last), @endif
-                                        @else
-                                            <span class="font-medium text-stone-700">{{ $author['name'] }}</span>@if (! $loop->last), @endif
-                                        @endif
-                                    @endforeach
-                                </div>
-                            @endif
-                        </article>
-                    @endif
-
-                    <section class="rounded-[1.75rem] border border-rose-200 bg-rose-50/60 p-4 shadow-sm">
-                        <div class="flex flex-wrap items-center justify-between gap-3">
-                            <div>
-                                <p class="text-sm uppercase tracking-[0.28em] text-rose-600">Google Reviews</p>
-                                <h3 class="mt-2 font-['Prata'] text-2xl text-stone-900">Live from Google Maps</h3>
-                            </div>
-                            @if (!empty($googleReviewData['place_url']))
-                                <a href="{{ $googleReviewData['place_url'] }}" target="_blank" rel="noreferrer" class="rounded-full border border-rose-200 bg-white px-4 py-2 text-sm font-semibold text-rose-700 transition hover:bg-rose-100">
-                                    Open Google page
-                                </a>
-                            @endif
-                        </div>
-                        <div class="mt-4 space-y-3">
-                            @forelse ($googleReviews as $review)
-                                @include('partials.public-review-card', ['review' => $review])
-                            @empty
-                                <div class="rounded-3xl border border-dashed border-rose-200 bg-white/80 p-5 text-sm text-stone-600">
-                                    Google reviews will appear here after the Google Places API key is connected and reviews are enabled.
-                                </div>
-                            @endforelse
-                        </div>
-                    </section>
-
                     <section class="rounded-[1.75rem] border border-sky-200 bg-sky-50/50 p-4 shadow-sm">
                         <div>
-                            <p class="text-sm uppercase tracking-[0.28em] text-sky-600">Website Reviews</p>
-                            <h3 class="mt-2 font-['Prata'] text-2xl text-stone-900">Customer reviews from this website</h3>
+                            <p class="text-sm uppercase tracking-[0.28em] text-sky-600">Reviews</p>
+                            <h3 class="mt-2 font-['Prata'] text-2xl text-stone-900">Customer reviews</h3>
                         </div>
                         <div class="mt-4 space-y-3">
                             @forelse ($websiteReviews as $review)
@@ -1828,9 +1907,11 @@
                     </form>
                 </section>
             </div>
+            </div>
         </section>
 
-        <section id="about-us" class="home-section-compact relative mb-16 overflow-hidden rounded-[2rem] border border-stone-200 bg-[linear-gradient(135deg,_#fffdf9,_#eff6ff_60%,_#ecfeff)] p-5 shadow-sm">
+        <section id="about-us" class="home-section-compact mt-[6rem] px-6 pb-4 md:mt-24 md:px-8 md:pb-6">
+            <div class="relative mx-auto overflow-hidden rounded-[2rem] border border-stone-200 bg-[linear-gradient(135deg,_#fffdf9,_#eff6ff_60%,_#ecfeff)] p-5 shadow-sm" style="max-width: 1920px;">
             <div class="absolute right-0 top-0 h-32 w-32 rounded-full bg-sky-100/70 blur-3xl"></div>
             <div class="absolute bottom-0 left-0 h-28 w-28 rounded-full bg-amber-100/70 blur-3xl"></div>
             <div class="relative grid gap-4 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
@@ -1865,12 +1946,13 @@
                     </div>
                 </div>
             </div>
+            </div>
         </section>
+
+        <div class="h-12 md:h-16"></div>
     </main>
 
-    <div class="h-12"></div>
-
-    <footer class="border-t border-stone-200/80 bg-stone-950 text-stone-200">
+    <footer class="mt-auto border-t border-stone-200/80 bg-stone-950 text-stone-200">
         <div class="mx-auto grid max-w-7xl gap-10 px-6 py-12 lg:grid-cols-[1.2fr_0.8fr_0.8fr_1fr] lg:px-10">
             <div>
                 <div class="flex items-center gap-3">

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Mail\BookingReferenceMail;
+use App\Models\BlogPost;
 use App\Models\Booking;
 use App\Models\NewsFeature;
 use App\Models\Product;
@@ -14,6 +15,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
 
@@ -114,8 +116,21 @@ class HomeController extends Controller
             ->where('id', '!=', $product->id)
             ->where('category', 'package')
             ->where('is_featured', true)
-            ->take(3)
+            ->take(4)
             ->get();
+
+        if ($recommendedProducts->count() < 4) {
+            $recommendedProducts = $recommendedProducts
+                ->concat(
+                    Product::where('is_active', true)
+                        ->where('id', '!=', $product->id)
+                        ->where('category', 'package')
+                        ->whereNotIn('id', $recommendedProducts->pluck('id'))
+                        ->take(4 - $recommendedProducts->count())
+                        ->get()
+                )
+                ->values();
+        }
 
         return view('products.show', [
             'product' => $product,
@@ -137,6 +152,32 @@ class HomeController extends Controller
                 (float) $product->international_adult_price_myr,
                 (float) $product->international_child_price_myr,
             ),
+        ]);
+    }
+
+    public function showBlogPost(BlogPost $blogPost): View
+    {
+        abort_unless(Schema::hasTable('blog_posts'), 404);
+
+        abort_unless(
+            $blogPost->is_published
+            && ($blogPost->published_at === null || $blogPost->published_at->lte(now())),
+            404
+        );
+
+        return view('blog.show', [
+            'blogPost' => $blogPost,
+            'latestBlogPosts' => BlogPost::query()
+                ->where('is_published', true)
+                ->where(function ($query) {
+                    $query->whereNull('published_at')
+                        ->orWhere('published_at', '<=', now());
+                })
+                ->whereKeyNot($blogPost->id)
+                ->orderByDesc('published_at')
+                ->latest()
+                ->take(3)
+                ->get(),
         ]);
     }
 
@@ -264,6 +305,18 @@ class HomeController extends Controller
             });
 
         $currentPromo = (clone $activeNewsQuery)->latest()->first();
+        $latestBlogPosts = Schema::hasTable('blog_posts')
+            ? BlogPost::query()
+                ->where('is_published', true)
+                ->where(function ($query) {
+                    $query->whereNull('published_at')
+                        ->orWhere('published_at', '<=', now());
+                })
+                ->orderByDesc('published_at')
+                ->latest()
+                ->take(3)
+                ->get()
+            : collect();
         $pastPromos = NewsFeature::query()
             ->whereNotNull('ends_at')
             ->whereDate('ends_at', '<', now()->toDateString())
@@ -287,6 +340,7 @@ class HomeController extends Controller
                 'reviews_count' => $landingTestimonials->count(),
             ],
             'googleReviewData' => $googleReviewData,
+            'latestBlogPosts' => $latestBlogPosts,
             'recentBookings' => Booking::with('product')->latest()->take(5)->get(),
             'currencyRates' => self::CURRENCY_RATES,
             'currencySymbols' => self::CURRENCY_SYMBOLS,

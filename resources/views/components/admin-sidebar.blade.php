@@ -49,6 +49,16 @@
                 <span>Promos</span>
             </a>
 
+            <a href="{{ route('admin.blogs') }}"
+               class="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition {{ request()->routeIs('admin.blogs') ? 'border border-emerald-200 bg-emerald-50 text-emerald-700' : 'text-stone-700 hover:border-stone-200 hover:bg-stone-50' }}"
+               @if(request()->routeIs('admin.blogs')) aria-current="page" @endif>
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                </svg>
+                <span>Blog</span>
+            </a>
+
             <!-- Transport -->
             <a href="{{ route('admin.transport') }}"
                class="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition {{ request()->routeIs('admin.transport') ? 'border border-emerald-200 bg-emerald-50 text-emerald-700' : 'text-stone-700 hover:border-stone-200 hover:bg-stone-50' }}"

@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
+Route::get('/blog/{blogPost}', [HomeController::class, 'showBlogPost'])->name('blog.show');
 Route::post('/testimonials', [HomeController::class, 'storeLandingTestimonial'])->name('testimonials.store');
 Route::get('/products/{product}', [HomeController::class, 'showProduct'])->name('products.show');
 Route::post('/products/{product}/testimonials', [HomeController::class, 'storeProductTestimonial'])->name('products.testimonials.store');
@@ -61,6 +62,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     Route::get('/', [AdminController::class, 'index'])->name('admin.dashboard');
     Route::get('/profile', [AdminController::class, 'profile'])->name('admin.profile');
     Route::get('/promos', [AdminController::class, 'promos'])->name('admin.promos');
+    Route::get('/blogs', [AdminController::class, 'blogs'])->name('admin.blogs');
     Route::get('/transport', [AdminController::class, 'transport'])->name('admin.transport');
     Route::get('/packages', [AdminController::class, 'packages'])->name('admin.packages');
     Route::get('/testimonials', [AdminController::class, 'testimonials'])->name('admin.testimonials');
@@ -80,8 +82,14 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     Route::post('/news-features', [AdminController::class, 'storeNewsFeature'])->name('admin.news-features.store');
     Route::patch('/news-features/{newsFeature}', [AdminController::class, 'updateNewsFeature'])->name('admin.news-features.update');
     Route::delete('/news-features/{newsFeature}', [AdminController::class, 'destroyNewsFeature'])->name('admin.news-features.destroy');
+    Route::post('/blog-posts', [AdminController::class, 'storeBlogPost'])->name('admin.blog-posts.store');
+    Route::patch('/blog-posts/{blogPost}', [AdminController::class, 'updateBlogPost'])->name('admin.blog-posts.update');
+    Route::delete('/blog-posts/{blogPost}', [AdminController::class, 'destroyBlogPost'])->name('admin.blog-posts.destroy');
     Route::post('/testimonials', [AdminController::class, 'storeTestimonial'])->name('admin.testimonials.store');
     Route::patch('/testimonials/{testimonial}', [AdminController::class, 'updateTestimonial'])->name('admin.testimonials.update');
     Route::delete('/testimonials/{testimonial}', [AdminController::class, 'destroyTestimonial'])->name('admin.testimonials.destroy');
+    Route::post('/users/admins', [AdminController::class, 'storeAdminUser'])->name('admin.users.store');
+    Route::patch('/users/admins/{user}', [AdminController::class, 'updateAdminUser'])->name('admin.users.update');
+    Route::delete('/users/admins/{user}', [AdminController::class, 'destroyAdminUser'])->name('admin.users.destroy');
     Route::patch('/bookings/{booking}', [AdminController::class, 'updateBooking'])->name('admin.bookings.update');
 });

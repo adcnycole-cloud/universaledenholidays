@@ -32,6 +32,17 @@
                     <p class="mt-2 text-xs leading-5 text-stone-600">Upload posters, edit offers, and manage live promos.</p>
                 </a>
 
+                <a href="{{ route('admin.blogs') }}" class="group rounded-xl border border-stone-200 bg-gradient-to-br from-stone-50 to-white p-5 transition hover:border-emerald-200 hover:shadow-md">
+                    <div class="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-100 text-emerald-700 group-hover:bg-emerald-200">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                        </svg>
+                    </div>
+                    <p class="mt-4 font-semibold text-stone-900">Blog Manager</p>
+                    <p class="mt-2 text-xs leading-5 text-stone-600">Upload daily posts and publish fresh website updates.</p>
+                </a>
+
                 <a href="{{ route('admin.transport') }}" class="group rounded-xl border border-stone-200 bg-gradient-to-br from-stone-50 to-white p-5 transition hover:border-blue-200 hover:shadow-md">
                     <div class="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100 text-blue-700 group-hover:bg-blue-200">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">

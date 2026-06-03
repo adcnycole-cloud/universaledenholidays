@@ -510,10 +510,10 @@
         @endif
 
         @if ($product->category !== 'transport')
-            <section class="mt-8 grid gap-8 lg:grid-cols-[1fr_1fr]">
+            <section class="mt-8">
                 <section class="rounded-[2rem] border border-stone-200 bg-white p-6 shadow-sm">
                     <h2 class="text-2xl font-semibold text-stone-900">Recommended Packages</h2>
-                    <div class="mt-6 grid gap-5 md:grid-cols-3">
+                    <div class="mt-6 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
                         @foreach ($recommendedProducts as $recommended)
                             <a href="{{ route('products.show', $recommended) }}" class="block overflow-hidden rounded-3xl border border-stone-200 bg-stone-50 transition duration-300 hover:-translate-y-1.5 hover:shadow-lg">
                                 @if ($recommended->image_url)
@@ -535,36 +535,6 @@
                                     <div class="mt-5 text-xs text-stone-400 line-through">From MYR {{ number_format((float) $recommended->malaysia_adult_price_myr, 2) }}</div>
                                 @endif
                                 <div class="mt-1 text-lg font-semibold text-stone-900">From MYR {{ number_format((float) $recommended->discounted_malaysia_adult_price_myr, 2) }}</div>
-                                </div>
-                            </a>
-                        @endforeach
-                    </div>
-                </section>
-
-                <section class="rounded-[2rem] border border-stone-200 bg-white p-6 shadow-sm">
-                    <h2 class="text-2xl font-semibold text-stone-900">Related {{ ucfirst($product->category) }}s</h2>
-                    <div class="mt-6 grid gap-5 md:grid-cols-3">
-                        @foreach ($relatedProducts as $related)
-                            <a href="{{ route('products.show', $related) }}" class="block overflow-hidden rounded-3xl border border-stone-200 bg-stone-50 transition duration-300 hover:-translate-y-1.5 hover:shadow-lg">
-                                @if ($related->image_url)
-                                    <div class="relative">
-                                        <img src="{{ $related->image_url }}" alt="{{ $related->name }}" class="h-44 w-full object-cover">
-                                        <img src="{{ asset('images/UE.png') }}" alt="Universal Eden trademark" class="pointer-events-none absolute z-10 h-10 w-auto opacity-90" style="right: 0; bottom: 0; transform: translate(-0.65rem, -0.65rem);">
-                                    </div>
-                                @else
-                                    <div class="flex h-44 items-center justify-center bg-[linear-gradient(135deg,_#dbeafe,_#fff7ed_55%,_#ecfeff)] px-6 text-center text-xl font-semibold text-stone-700">
-                                        {{ $related->name }}
-                                    </div>
-                                @endif
-                                <div class="p-5">
-                                <p class="text-xs font-semibold uppercase tracking-[0.25em] text-amber-700">{{ ucfirst($related->category) }}</p>
-                                <h3 class="mt-3 text-xl font-semibold text-stone-900">{{ $related->name }}</h3>
-                                <p class="mt-3 text-sm text-stone-500">{{ $related->location }}</p>
-                                <p class="mt-4 text-sm leading-6 text-stone-600">{{ $related->summary }}</p>
-                                @if ($related->has_active_discount)
-                                    <div class="mt-5 text-xs text-stone-400 line-through">From MYR {{ number_format((float) $related->malaysia_adult_price_myr, 2) }}</div>
-                                @endif
-                                <div class="mt-1 text-lg font-semibold text-stone-900">From MYR {{ number_format((float) $related->discounted_malaysia_adult_price_myr, 2) }}</div>
                                 </div>
                             </a>
                         @endforeach
@@ -604,7 +574,7 @@
 
     <div class="h-12"></div>
 
-    <footer class="border-t border-stone-200/80 bg-stone-950 text-stone-200">
+    <footer class="mt-auto border-t border-stone-200/80 bg-stone-950 text-stone-200">
         <div class="mx-auto grid max-w-7xl gap-10 px-6 py-12 lg:grid-cols-[1.2fr_0.8fr_0.8fr_1fr] lg:px-10">
             <div>
                 <div class="flex items-center gap-3">

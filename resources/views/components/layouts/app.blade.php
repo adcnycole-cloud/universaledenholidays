@@ -88,7 +88,7 @@
         @php($adminNavBase = 'rounded-full border px-4 py-2 transition')
         @php($adminNavActive = $adminNavBase.' border-emerald-200 bg-emerald-50 text-emerald-700')
         @php($adminNavIdle = $adminNavBase.' border-stone-200 text-stone-700 hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700')
-        <div class="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(14,165,233,0.08),_transparent_30%),linear-gradient(180deg,_#fffdf9,_#f8fafc)]">
+        <div class="flex min-h-screen flex-col bg-[radial-gradient(circle_at_top,_rgba(14,165,233,0.08),_transparent_30%),linear-gradient(180deg,_#fffdf9,_#f8fafc)]">
             @unless ($hideHeader)
                 <header class="js-app-header border-b shadow-[0_10px_24px_rgba(15,23,42,0.08)] {{ $isAdminRoute ? 'border-emerald-200 bg-white' : 'border-stone-200 bg-white' }} ">
                     <div class="{{ $isAdminRoute ? 'grid w-full grid-cols-[1fr_auto_1fr] items-center px-6 py-3 lg:px-10' : 'flex w-full items-center justify-between px-6 py-3 lg:px-10' }}">
@@ -114,7 +114,9 @@
                                 </a>
                                 <a href="{{ route('home') }}#promos" class="transition hover:text-sky-700">Promotion</a>
                                 <a href="{{ route('home') }}#transport" class="transition hover:text-sky-700">Transport</a>
+                                <a href="{{ route('home') }}#popular-picks" class="transition hover:text-sky-700">Popular Picks</a>
                                 <a href="{{ route('home') }}#packages-showcase" class="transition hover:text-sky-700">Packages</a>
+                                <a href="{{ route('home') }}#blog" class="transition hover:text-sky-700">Blog</a>
                                 <a href="{{ route('home') }}#testimonials" class="transition hover:text-sky-700">Testimonials</a>
                                 <a href="{{ route('home') }}#about-us" class="transition hover:text-sky-700">About Us</a>
                                 <a href="{{ route('bookings.track.form') }}" class="transition hover:text-sky-700">Track Booking</a>
@@ -212,11 +214,11 @@
                 <x-admin-sidebar />
             @endif
 
-            <div class="admin-shell {{ $isAdminRoute ? 'with-sidebar' : '' }}" style="{{ $hideHeader ? '' : 'padding-top: var(--app-header-offset, 0px);' }}">
+            <div class="admin-shell {{ $isAdminRoute ? 'with-sidebar flex min-h-screen flex-col' : 'flex flex-1 flex-col' }}" style="{{ $hideHeader ? '' : 'padding-top: var(--app-header-offset, 0px);' }}">
                 {{ $slot }}
 
                 @if ($isAdminRoute)
-                    <footer class="border-t border-stone-200/80 bg-white/70">
+                    <footer class="mt-auto border-t border-stone-200/80 bg-white/70">
                         <div class="mx-auto max-w-[1700px] px-6 py-4 text-center text-xs font-medium uppercase tracking-[0.18em] text-stone-500 lg:px-10">
                             Copyright 2026 by universaledenholidays @ Adcey
                         </div>

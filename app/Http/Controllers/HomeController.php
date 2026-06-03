@@ -324,6 +324,11 @@ class HomeController extends Controller
             ->take(12)
             ->get();
 
+        $landingTestimonials = Testimonial::where('display_location', 'landing')
+            ->where('is_featured', true)
+            ->orderByDesc('rating')
+            ->get();
+
         return [
             'transportServices' => $products->where('category', 'transport')->values(),
             'travelPackages' => $travelPackages,

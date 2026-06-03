@@ -46,6 +46,8 @@ class Booking extends Model
         'account_setup_expires_at',
         'account_setup_completed_at',
         'payment_submitted_at',
+        'payment_reminder_sent_at',
+        'trip_reminder_sent_at',
         'confirmed_at',
         'invoice_number',
         'invoice_issued_at',
@@ -63,6 +65,8 @@ class Booking extends Model
             'account_setup_expires_at' => 'datetime',
             'account_setup_completed_at' => 'datetime',
             'payment_submitted_at' => 'datetime',
+            'payment_reminder_sent_at' => 'datetime',
+            'trip_reminder_sent_at' => 'datetime',
             'confirmed_at' => 'datetime',
             'invoice_issued_at' => 'datetime',
         ];

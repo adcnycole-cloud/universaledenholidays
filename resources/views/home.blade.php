@@ -686,7 +686,7 @@
         }
 
         #popular-picks {
-            scroll-margin-top: calc(var(--home-header-offset, 0px) + 6rem + 10px);
+            scroll-margin-top: calc(var(--home-header-offset, 0px) + 3.5rem + 10px);
         }
 
         @media (max-width: 1365px) {

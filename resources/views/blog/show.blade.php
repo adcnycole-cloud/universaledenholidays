@@ -1,8 +1,58 @@
 <x-layouts.app :title="$blogPost->title.' | Universal Eden Holidays'">
-    <main class="mx-auto min-h-[calc(100vh-var(--app-header-offset))] max-w-[1400px] px-6 py-10 lg:px-8">
+    <main class="mx-auto min-h-[calc(100vh-var(--app-header-offset))] max-w-[1680px] px-6 py-10 lg:px-8">
         <style>
             .blog-watch-layout {
                 display: block;
+            }
+
+            .blog-fixed-panel {
+                width: min(100%, 1300px);
+                margin-left: auto;
+                margin-right: auto;
+            }
+
+            .blog-copy-text {
+                overflow-wrap: anywhere;
+                word-break: break-word;
+            }
+
+            .blog-media-frame {
+                width: min(100%, 1300px);
+                height: 700px;
+                background: #000;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .blog-media-frame iframe {
+                width: 100%;
+                height: 100%;
+                display: block;
+            }
+
+            .blog-media-frame video,
+            .blog-media-frame img {
+                display: block;
+                width: 100%;
+                height: 100%;
+                object-fit: contain;
+            }
+
+            .blog-media-frame video {
+                background: #000;
+            }
+
+            .blog-media-frame img {
+                width: 100%;
+                height: 100%;
+                background: #000;
+            }
+
+            @media (max-width: 900px) {
+                .blog-media-frame {
+                    height: min(700px, 70vw);
+                }
             }
 
             #blog-media-player:fullscreen,
@@ -46,8 +96,9 @@
             @media (min-width: 1100px) {
                 .blog-watch-layout {
                     display: grid;
-                    grid-template-columns: minmax(0, 1fr) 320px;
+                    grid-template-columns: minmax(0, 1300px) 320px;
                     gap: 24px;
+                    justify-content: center;
                     align-items: start;
                 }
             }
@@ -55,7 +106,7 @@
 
         <div class="blog-watch-layout">
             <section style="min-width: 0;">
-                <div id="blog-media-player" style="position: relative; overflow: hidden; border: 1px solid #e7e5e4; border-radius: 20px; background: #000; box-shadow: 0 18px 45px rgba(15, 23, 42, 0.18); max-height: 700px;">
+                <div id="blog-media-player" class="blog-fixed-panel" style="position: relative; overflow: hidden; border: 1px solid #e7e5e4; border-radius: 20px; background: #000; box-shadow: 0 18px 45px rgba(15, 23, 42, 0.18); max-height: 700px;">
                     <button
                         type="button"
                         onclick="(function(){const el=document.getElementById('blog-media-player'); if(!el) return; if(document.fullscreenElement){document.exitFullscreen?.();} else {el.requestFullscreen?.();}})()"
@@ -68,31 +119,33 @@
                         </svg>
                     </button>
                     @if ($blogPost->hasEmbeddableVideo())
-                        <div class="blog-media-fill" style="height: min(700px, 56.25vw); max-height: 700px; background: #000;">
+                        <div class="blog-media-fill blog-media-frame">
                             <iframe
                                 src="{{ $blogPost->video_embed_url }}"
                                 title="{{ $blogPost->title }} video"
-                                style="height: 100%; width: 100%; border: 0;"
+                                style="border: 0;"
                                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                                 referrerpolicy="strict-origin-when-cross-origin"
                                 allowfullscreen
                             ></iframe>
                         </div>
                     @elseif ($blogPost->hasDirectVideoFile())
-                        <video class="blog-media-fill" controls preload="metadata" style="display: block; height: min(700px, 56.25vw); max-height: 700px; width: 100%; background: #000; object-fit: cover;">
+                        <video class="blog-media-fill blog-media-frame" controls preload="metadata">
                             <source src="{{ $blogPost->video_url }}">
                             Your browser does not support the video tag.
                         </video>
                     @elseif ($blogPost->cover_image_url)
-                        <img class="blog-media-fill" src="{{ $blogPost->cover_image_url }}" alt="{{ $blogPost->title }}" style="display: block; width: auto; max-width: 100%; height: 700px; max-height: 700px; margin: 0 auto; object-fit: contain;">
+                        <div class="blog-media-fill blog-media-frame">
+                            <img src="{{ $blogPost->cover_image_url }}" alt="{{ $blogPost->title }}">
+                        </div>
                     @else
-                        <div class="blog-media-fill" style="display: flex; height: 700px; max-height: 700px; align-items: center; justify-content: center; background: linear-gradient(145deg, #1f2937 0%, #111827 100%); padding: 2rem; text-align: center;">
+                        <div class="blog-media-fill blog-media-frame" style="display: flex; align-items: center; justify-content: center; background: linear-gradient(145deg, #1f2937 0%, #111827 100%); padding: 2rem; text-align: center;">
                             <span style="font-family: 'Prata', serif; font-size: 2rem; line-height: 1.25; color: #fff;">{{ $blogPost->title }}</span>
                         </div>
                     @endif
                 </div>
 
-                <div style="margin-top: 10px; display: flex; align-items: center; justify-content: space-between; gap: 1rem; border-radius: 10px; background: #171717; padding: 0.75rem 1rem; color: #fff;">
+                <div class="blog-fixed-panel" style="margin-top: 10px; display: flex; align-items: center; justify-content: space-between; gap: 1rem; border-radius: 10px; background: #171717; padding: 0.75rem 1rem; color: #fff;">
                     <h1 style="margin: 0; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.95rem; font-weight: 700; text-transform: uppercase;">
                         {{ $blogPost->title }}
                     </h1>
@@ -101,49 +154,51 @@
                     </p>
                 </div>
 
-                <div style="margin-top: 18px; border: 1px solid #e7e5e4; border-radius: 20px; background: #fff; padding: 1.4rem 1.5rem; box-shadow: 0 8px 20px rgba(15, 23, 42, 0.06);">
-                    @if ($blogPost->description)
-                        <p style="margin: 1.2rem 0 0; font-size: 1rem; line-height: 1.9rem; color: #57534e;">
-                            {{ $blogPost->description }}
-                        </p>
-                    @endif
+                <div class="blog-fixed-panel" style="margin-top: 18px; border: 1px solid #e7e5e4; border-radius: 20px; background: #fff; padding: 1.4rem 1.5rem; box-shadow: 0 8px 20px rgba(15, 23, 42, 0.06);">
+                    <div>
+                        @if ($blogPost->description)
+                            <p class="blog-copy-text" style="margin: 1.2rem 0 0; font-size: 1rem; line-height: 1.9rem; color: #57534e;">
+                                {{ $blogPost->description }}
+                            </p>
+                        @endif
 
-                    <div style="margin-top: 1.6rem;">
-                        <p style="margin: 0; font-size: 1.9rem; font-weight: 700; color: #111827;">Follow our socials:</p>
-                        <div style="margin-top: 1.2rem; display: grid; gap: 1rem; grid-template-columns: repeat(3, minmax(0, 1fr));">
-                            <a href="https://www.facebook.com/universal.edenholidays" target="_blank" rel="noopener noreferrer" style="display: flex; align-items: center; gap: 0.75rem; border: 1px solid #e7e5e4; border-radius: 16px; background: #fafaf9; padding: 0.8rem 1rem; text-decoration: none;">
-                                <span style="display: inline-flex; height: 42px; width: 42px; align-items: center; justify-content: center; border-radius: 999px; background: #1877f2; color: #fff; font-size: 1.35rem; font-weight: 700;">f</span>
-                                <span style="min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.92rem; font-weight: 700; color: #1f2937;">Universal Eden Holidays</span>
-                            </a>
+                        <div style="margin-top: 1.6rem;">
+                            <p style="margin: 0; font-size: 1.9rem; font-weight: 700; color: #111827;">Follow our socials:</p>
+                            <div style="margin-top: 1.2rem; display: grid; gap: 1rem; grid-template-columns: repeat(3, minmax(0, 1fr));">
+                                <a href="https://www.facebook.com/universal.edenholidays" target="_blank" rel="noopener noreferrer" style="display: flex; align-items: center; gap: 0.75rem; border: 1px solid #e7e5e4; border-radius: 16px; background: #fafaf9; padding: 0.8rem 1rem; text-decoration: none;">
+                                    <span style="display: inline-flex; height: 42px; width: 42px; align-items: center; justify-content: center; border-radius: 999px; background: #1877f2; color: #fff; font-size: 1.35rem; font-weight: 700;">f</span>
+                                    <span style="min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.92rem; font-weight: 700; color: #1f2937;">Universal Eden Holidays</span>
+                                </a>
 
-                            <a href="{{ $blogPost->social_media_url ?: 'https://www.instagram.com/ue.holidays/' }}" target="_blank" rel="noopener noreferrer" style="display: flex; align-items: center; gap: 0.75rem; border: 1px solid #e7e5e4; border-radius: 16px; background: #fafaf9; padding: 0.8rem 1rem; text-decoration: none;">
-                                <span style="display: inline-flex; height: 42px; width: 42px; align-items: center; justify-content: center; border-radius: 999px; background: linear-gradient(135deg, #f58529, #dd2a7b, #8134af, #515bd4); color: #fff;">
-                                    <svg viewBox="0 0 24 24" aria-hidden="true" style="height: 20px; width: 20px; fill: currentColor;">
-                                        <path d="M7.75 2h8.5A5.75 5.75 0 0 1 22 7.75v8.5A5.75 5.75 0 0 1 16.25 22h-8.5A5.75 5.75 0 0 1 2 16.25v-8.5A5.75 5.75 0 0 1 7.75 2Zm0 1.5A4.25 4.25 0 0 0 3.5 7.75v8.5a4.25 4.25 0 0 0 4.25 4.25h8.5a4.25 4.25 0 0 0 4.25-4.25v-8.5a4.25 4.25 0 0 0-4.25-4.25h-8.5ZM12 7a5 5 0 1 1 0 10 5 5 0 0 1 0-10Zm0 1.5A3.5 3.5 0 1 0 12 15.5 3.5 3.5 0 0 0 12 8.5Zm5.25-2a1.25 1.25 0 1 1 0 2.5 1.25 1.25 0 0 1 0-2.5Z"/>
-                                    </svg>
-                                </span>
-                                <span style="min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.92rem; font-weight: 700; color: #1f2937;">@ue.holidays</span>
-                            </a>
+                                <a href="{{ $blogPost->social_media_url ?: 'https://www.instagram.com/ue.holidays/' }}" target="_blank" rel="noopener noreferrer" style="display: flex; align-items: center; gap: 0.75rem; border: 1px solid #e7e5e4; border-radius: 16px; background: #fafaf9; padding: 0.8rem 1rem; text-decoration: none;">
+                                    <span style="display: inline-flex; height: 42px; width: 42px; align-items: center; justify-content: center; border-radius: 999px; background: linear-gradient(135deg, #f58529, #dd2a7b, #8134af, #515bd4); color: #fff;">
+                                        <svg viewBox="0 0 24 24" aria-hidden="true" style="height: 20px; width: 20px; fill: currentColor;">
+                                            <path d="M7.75 2h8.5A5.75 5.75 0 0 1 22 7.75v8.5A5.75 5.75 0 0 1 16.25 22h-8.5A5.75 5.75 0 0 1 2 16.25v-8.5A5.75 5.75 0 0 1 7.75 2Zm0 1.5A4.25 4.25 0 0 0 3.5 7.75v8.5a4.25 4.25 0 0 0 4.25 4.25h8.5a4.25 4.25 0 0 0 4.25-4.25v-8.5a4.25 4.25 0 0 0-4.25-4.25h-8.5ZM12 7a5 5 0 1 1 0 10 5 5 0 0 1 0-10Zm0 1.5A3.5 3.5 0 1 0 12 15.5 3.5 3.5 0 0 0 12 8.5Zm5.25-2a1.25 1.25 0 1 1 0 2.5 1.25 1.25 0 0 1 0-2.5Z"/>
+                                        </svg>
+                                    </span>
+                                    <span style="min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.92rem; font-weight: 700; color: #1f2937;">@ue.holidays</span>
+                                </a>
 
-                            <a href="{{ $blogPost->video_url ?: 'https://www.tiktok.com/@ue.holidays' }}" target="_blank" rel="noopener noreferrer" style="display: flex; align-items: center; gap: 0.75rem; border: 1px solid #e7e5e4; border-radius: 16px; background: #fafaf9; padding: 0.8rem 1rem; text-decoration: none;">
-                                <span style="display: inline-flex; height: 42px; width: 42px; align-items: center; justify-content: center; border-radius: 999px; background: #000; color: #fff;">
-                                    <svg viewBox="0 0 24 24" aria-hidden="true" style="height: 20px; width: 20px; fill: currentColor;">
-                                        <path d="M19.59 6.69A4.83 4.83 0 0 1 16 5.13V15.5a6.5 6.5 0 1 1-6.5-6.5c.18 0 .36.01.54.03v3.2a3.3 3.3 0 0 0-.54-.05 3.32 3.32 0 1 0 3.32 3.32V2h3.06a4.84 4.84 0 0 0 4.71 4.09v3.1c-.34 0-.67-.03-1-.1Z"/>
-                                    </svg>
-                                </span>
-                                <span style="min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.92rem; font-weight: 700; color: #1f2937;">@ue.holidays</span>
-                            </a>
+                                <a href="{{ $blogPost->video_url ?: 'https://www.tiktok.com/@ue.holidays' }}" target="_blank" rel="noopener noreferrer" style="display: flex; align-items: center; gap: 0.75rem; border: 1px solid #e7e5e4; border-radius: 16px; background: #fafaf9; padding: 0.8rem 1rem; text-decoration: none;">
+                                    <span style="display: inline-flex; height: 42px; width: 42px; align-items: center; justify-content: center; border-radius: 999px; background: #000; color: #fff;">
+                                        <svg viewBox="0 0 24 24" aria-hidden="true" style="height: 20px; width: 20px; fill: currentColor;">
+                                            <path d="M19.59 6.69A4.83 4.83 0 0 1 16 5.13V15.5a6.5 6.5 0 1 1-6.5-6.5c.18 0 .36.01.54.03v3.2a3.3 3.3 0 0 0-.54-.05 3.32 3.32 0 1 0 3.32 3.32V2h3.06a4.84 4.84 0 0 0 4.71 4.09v3.1c-.34 0-.67-.03-1-.1Z"/>
+                                        </svg>
+                                    </span>
+                                    <span style="min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.92rem; font-weight: 700; color: #1f2937;">@ue.holidays</span>
+                                </a>
+                            </div>
                         </div>
-                    </div>
 
-                    @if ($blogPost->credits)
-                        <p style="margin: 1.6rem 0 0; font-size: 0.8rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: #78716c;">
-                            Credits
-                        </p>
-                        <p style="margin: 0.45rem 0 0; font-size: 0.98rem; line-height: 1.8rem; color: #57534e;">
-                            {{ $blogPost->credits }}
-                        </p>
-                    @endif
+                        @if ($blogPost->credits)
+                            <p style="margin: 1.6rem 0 0; font-size: 0.8rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: #78716c;">
+                                Credits
+                            </p>
+                            <p class="blog-copy-text" style="margin: 0.45rem 0 0; font-size: 0.98rem; line-height: 1.8rem; color: #57534e;">
+                                {{ $blogPost->credits }}
+                            </p>
+                        @endif
+                    </div>
                 </div>
             </section>
 

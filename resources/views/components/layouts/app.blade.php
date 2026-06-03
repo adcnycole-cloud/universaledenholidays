@@ -113,8 +113,8 @@
                                     </svg>
                                 </a>
                                 <a href="{{ route('home') }}#promos" class="transition hover:text-sky-700">Promotion</a>
-                                <a href="{{ route('home') }}#transport" class="transition hover:text-sky-700">Transport</a>
                                 <a href="{{ route('home') }}#popular-picks" class="transition hover:text-sky-700">Popular Picks</a>
+                                <a href="{{ route('home') }}#transport" class="transition hover:text-sky-700">Transport</a>
                                 <a href="{{ route('home') }}#packages-showcase" class="transition hover:text-sky-700">Packages</a>
                                 <a href="{{ route('home') }}#blog" class="transition hover:text-sky-700">Blog</a>
                                 <a href="{{ route('home') }}#testimonials" class="transition hover:text-sky-700">Testimonials</a>
@@ -232,6 +232,9 @@
                 const header = document.querySelector('.js-app-header');
                 const toasts = Array.from(document.querySelectorAll('.js-app-toast'));
                 const anchorOffsetExtra = 0;
+                const anchorOffsetOverrides = {
+                    '#popular-picks': 24,
+                };
 
                 const updateHeaderOffset = () => {
                     root.style.setProperty('--app-header-offset', `${header?.offsetHeight ?? 0}px`);
@@ -250,7 +253,8 @@
 
                     const headerOffset = header?.offsetHeight ?? 0;
                     const targetTop = target.getBoundingClientRect().top + window.scrollY;
-                    const scrollTop = Math.max(0, targetTop - headerOffset - anchorOffsetExtra);
+                    const sectionOffset = anchorOffsetOverrides[hash] ?? anchorOffsetExtra;
+                    const scrollTop = Math.max(0, targetTop - headerOffset - sectionOffset);
 
                     window.scrollTo({
                         top: scrollTop,

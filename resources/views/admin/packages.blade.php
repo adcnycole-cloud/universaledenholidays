@@ -13,6 +13,13 @@
             'stackLayout' => true,
             'gridColumns' => 2,
             'collapsibleCreatePanel' => true,
+            'listingFilters' => [
+                ['label' => 'All Tours / Packages', 'value' => 'all'],
+                ['label' => 'Day Trip', 'value' => 'day-trip'],
+                ['label' => '2D1N', 'value' => '2d1n'],
+                ['label' => '3D2N', 'value' => '3d2n'],
+                ['label' => '4D3N', 'value' => '4d3n'],
+            ],
         ])
     </main>
     @include('admin.partials.filter-paginate-script', [

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Mail\BookingReferenceMail;
 use App\Models\BlogPost;
 use App\Models\Booking;
+use App\Models\HomeHeroSlide;
 use App\Models\NewsFeature;
 use App\Models\Product;
 use App\Models\Testimonial;
@@ -24,6 +25,12 @@ class HomeController extends Controller
     public function __construct(
         private readonly GooglePlaceReviewService $googlePlaceReviewService,
     ) {}
+
+    private const PROMO_POSTER_PORTRAIT = 'portrait';
+
+    private const PROMO_POSTER_LANDSCAPE = 'landscape';
+
+    private const PROMO_POSTER_UNKNOWN = 'unknown';
 
     private const PHONE_COUNTRY_CODES = [
         '+60' => 'Malaysia (+60)',
@@ -61,6 +68,41 @@ class HomeController extends Controller
         'USD' => '$',
         'SGD' => 'S$',
         'CNY' => 'CNY ',
+    ];
+
+    private const TOUR_PAGE_DEFINITIONS = [
+        'day-trip' => [
+            'slug' => 'day-trip',
+            'label' => 'Day Trip',
+            'heading' => 'Day Trip Tours',
+            'description' => 'Quick Sabah escapes that fit into a single day, perfect for easy sightseeing, island hopping, and short nature breaks.',
+            'days' => 1,
+            'nights' => 0,
+        ],
+        '2d1n-trip' => [
+            'slug' => '2d1n-trip',
+            'label' => '2D1N Trip',
+            'heading' => '2D1N Tours',
+            'description' => 'Short overnight getaways with enough time to explore, rest, and enjoy a fuller Sabah experience.',
+            'days' => 2,
+            'nights' => 1,
+        ],
+        '3d2n-trip' => [
+            'slug' => '3d2n-trip',
+            'label' => '3D2N Trip',
+            'heading' => '3D2N Tours',
+            'description' => 'Balanced multi-day tours for travellers who want more activities, more scenery, and a more complete itinerary.',
+            'days' => 3,
+            'nights' => 2,
+        ],
+        '4d3n-trip' => [
+            'slug' => '4d3n-trip',
+            'label' => '4D3N Trip',
+            'heading' => '4D3N Tours',
+            'description' => 'Longer Sabah journeys with added sightseeing time, deeper exploration, and a more relaxed pace.',
+            'days' => 4,
+            'nights' => 3,
+        ],
     ];
 
     public function index(): View
@@ -181,6 +223,29 @@ class HomeController extends Controller
         ]);
     }
 
+    public function showTourCategory(string $tourType): View
+    {
+        $tourPage = self::TOUR_PAGE_DEFINITIONS[$tourType] ?? null;
+
+        abort_unless($tourPage !== null, 404);
+
+        $tourPackages = Product::query()
+            ->where('is_active', true)
+            ->where('category', 'package')
+            ->orderBy('price_myr')
+            ->get()
+            ->filter(fn (Product $product) => $this->productMatchesTourCategory($product, $tourPage))
+            ->values();
+
+        return view('tours.show', [
+            'tourPage' => $tourPage,
+            'tourPackages' => $tourPackages,
+            'tourPages' => array_values(self::TOUR_PAGE_DEFINITIONS),
+            'currencyRates' => self::CURRENCY_RATES,
+            'currencySymbols' => self::CURRENCY_SYMBOLS,
+        ]);
+    }
+
     public function storeLandingTestimonial(Request $request): RedirectResponse
     {
         $this->storePublicTestimonial($request, null);
@@ -262,6 +327,68 @@ class HomeController extends Controller
         ];
     }
 
+    private function productMatchesTourCategory(Product $product, array $tourPage): bool
+    {
+        $tourCode = strtoupper(trim((string) ($product->tour_code ?? '')));
+
+        if ($tourPage['slug'] === 'day-trip' && str_starts_with($tourCode, 'DT-UEH')) {
+            return true;
+        }
+
+        if ($tourPage['slug'] !== 'day-trip' && str_starts_with($tourCode, 'OT-UEH')) {
+            return true;
+        }
+
+        $durationData = $this->parseProductDuration($product->duration);
+
+        if (
+            $durationData['days'] === (int) $tourPage['days']
+            && $durationData['nights'] === (int) $tourPage['nights']
+        ) {
+            return true;
+        }
+
+        $durationLabel = Str::lower(trim((string) $product->duration));
+
+        if ($tourPage['slug'] === 'day-trip') {
+            return str_contains($durationLabel, 'day trip')
+                || str_contains($durationLabel, '1 day');
+        }
+
+        return str_contains($durationLabel, Str::lower((string) $tourPage['label']));
+    }
+
+    private function parseProductDuration(?string $duration): array
+    {
+        $durationLabel = Str::lower(trim((string) $duration));
+        $compactDurationLabel = preg_replace('/\s+/', '', $durationLabel) ?? $durationLabel;
+        $days = 0;
+        $nights = 0;
+
+        if (preg_match('/(\d+)d(\d+)n/i', $compactDurationLabel, $matches)) {
+            $days = (int) $matches[1];
+            $nights = (int) $matches[2];
+
+            return [
+                'days' => $days,
+                'nights' => $nights,
+            ];
+        }
+
+        if (preg_match('/(\d+)\s*day/i', $durationLabel, $dayMatches)) {
+            $days = (int) $dayMatches[1];
+        }
+
+        if (preg_match('/(\d+)\s*night/i', $durationLabel, $nightMatches)) {
+            $nights = (int) $nightMatches[1];
+        }
+
+        return [
+            'days' => $days,
+            'nights' => $nights,
+        ];
+    }
+
     private function sharedPageData(): array
     {
         $products = Product::where('is_active', true)->orderBy('category')->orderBy('price_myr')->get();
@@ -286,7 +413,52 @@ class HomeController extends Controller
         });
 
         $travelPackages = $products->where('category', 'package')->values();
+        $transportServices = $products->where('category', 'transport')->values();
         $popularPackages = $travelPackages->where('is_featured', true)->take(3)->values();
+        $transportImageMap = [
+            '41/44 Seaters Bus' => asset('images/44pax.png'),
+            '17 Seaters Van' => asset('images/17pax.png'),
+            '9/14 Seaters Van' => asset('images/14pax.png'),
+        ];
+        $transportOptions = $transportServices->map(function (Product $transport) use ($transportImageMap) {
+            return [
+                'label' => $transport->name,
+                'name' => $transport->name,
+                'image' => $transportImageMap[$transport->name] ?? $transport->image_url,
+                'url' => route('products.show', $transport),
+            ];
+        })->values();
+        $transportFeatures = collect([
+            ['label' => 'HYGIENE', 'icon' => 'spark'],
+            ['label' => 'SAFETY', 'icon' => 'shield'],
+            ['label' => 'PROFESIONAL DRIVER', 'icon' => 'driver'],
+            ['label' => 'LICENSED VAN/BUS PERSIARAN', 'icon' => 'license'],
+        ]);
+        $packageSections = collect([
+            [
+                'key' => 'kundasang',
+                'title' => 'KUNDASANG',
+                'summary' => 'Discover Kundasang, a serene highland paradise nestled in the cool hills near Mount Kinabalu, offering breathtaking mountain views, fresh air, and a peaceful escape from the city.',
+                'background' => asset('images/kundasang_bg.png'),
+                'keywords' => ['kundasang', 'kinabalu', 'ranau', 'nabalu', 'desa'],
+            ],
+            [
+                'key' => 'island',
+                'title' => 'ISLAND HOPPING',
+                'summary' => 'Sabah has around 395 islands, offering everything from easy day trips to world-class diving destinations.',
+                'background' => asset('images/semporna.png'),
+                'keywords' => ['island', 'marine', 'semporna', 'snork', 'div', 'sipadan', 'mabul', 'mataking', 'pom pom', 'bohey'],
+            ],
+            [
+                'key' => 'kk-beach',
+                'title' => 'KK BEACH',
+                'summary' => 'Kota Kinabalu is home to some of Sabah\'s most scenic beaches, known for their breathtaking sunsets and relaxed coastal lifestyle.',
+                'background' => asset('images/beach.png'),
+                'keywords' => ['kota kinabalu', 'kk ', 'beach', 'tanjung aru', 'city', 'island hopping', 'manukan', 'sapi', 'mamutik'],
+            ],
+        ]);
+        $defaultPackageSection = 'kundasang';
+        $packagePageSize = 3;
 
         if ($popularPackages->count() < 3) {
             $popularPackages = $travelPackages->take(3)->values();
@@ -304,6 +476,20 @@ class HomeController extends Controller
             });
 
         $currentPromo = (clone $activeNewsQuery)->latest()->first();
+        $currentPromoSlide = $currentPromo ? $this->buildPromoSlide($currentPromo, 'Current Offer') : null;
+        $otherPromoSlides = NewsFeature::query()
+            ->when($currentPromo, fn ($query) => $query->whereKeyNot($currentPromo->getKey()))
+            ->latest()
+            ->take(12)
+            ->get()
+            ->map(fn (NewsFeature $promo) => $this->buildPromoSlide($promo, $this->resolvePromoStatus($promo, $currentPromo)))
+            ->values();
+        $totalVisiblePromoPosters = 3;
+        $secondaryPromoLimit = max(0, $totalVisiblePromoPosters - ($currentPromoSlide ? 1 : 0));
+        $recentPromoSlides = $currentPromoSlide
+            ? $otherPromoSlides->take($secondaryPromoLimit)->values()
+            : $otherPromoSlides->take($totalVisiblePromoPosters)->values();
+        $pastPromos = collect();
         $latestBlogPosts = Schema::hasTable('blog_posts')
             ? BlogPost::query()
                 ->where('is_published', true)
@@ -316,12 +502,29 @@ class HomeController extends Controller
                 ->take(3)
                 ->get()
             : collect();
-        $pastPromos = NewsFeature::query()
-            ->whereNotNull('ends_at')
-            ->whereDate('ends_at', '<', now()->toDateString())
-            ->latest('ends_at')
-            ->take(12)
-            ->get();
+        $heroSlides = Schema::hasTable('home_hero_slides')
+            ? HomeHeroSlide::query()
+                ->where('is_active', true)
+                ->orderBy('display_order')
+                ->orderBy('id')
+                ->take(5)
+                ->get()
+                ->map(fn (HomeHeroSlide $slide) => [
+                    'id' => $slide->id,
+                    'image_url' => $slide->image_url,
+                ])
+                ->filter(fn (array $slide) => filled($slide['image_url']))
+                ->values()
+            : collect();
+
+        if ($heroSlides->isEmpty()) {
+            $heroSlides = collect([
+                [
+                    'id' => 'fallback-hero-slide',
+                    'image_url' => asset('images/bg_image.png'),
+                ],
+            ]);
+        }
 
         $landingTestimonials = Testimonial::where('display_location', 'landing')
             ->where('is_featured', true)
@@ -329,14 +532,22 @@ class HomeController extends Controller
             ->get();
 
         return [
-            'transportServices' => $products->where('category', 'transport')->values(),
+            'transportServices' => $transportServices,
+            'transportOptions' => $transportOptions,
+            'transportFeatures' => $transportFeatures,
+            'packageSections' => $packageSections,
+            'defaultPackageSection' => $defaultPackageSection,
+            'packagePageSize' => $packagePageSize,
             'travelPackages' => $travelPackages,
             'popularPackages' => $popularPackages,
             'currentPromo' => $currentPromo,
+            'currentPromoSlide' => $currentPromoSlide,
             'pastPromo' => $pastPromos->first(),
             'pastPromos' => $pastPromos,
-            'newsFeatures' => (clone $activeNewsQuery)->latest()->take(6)->get(),
+            'recentPromoSlides' => $recentPromoSlides,
             'latestBlogPosts' => $latestBlogPosts,
+            'heroSlides' => $heroSlides,
+            'newsFeatures' => (clone $activeNewsQuery)->latest()->take(6)->get(),
             'testimonials' => $landingTestimonials,
             'websiteReviews' => $this->mapWebsiteReviews($landingTestimonials),
             'websiteReviewStats' => [
@@ -347,6 +558,79 @@ class HomeController extends Controller
             'currencyRates' => self::CURRENCY_RATES,
             'currencySymbols' => self::CURRENCY_SYMBOLS,
         ];
+    }
+
+    private function buildPromoSlide(NewsFeature $promo, string $status): array
+    {
+        $isActiveOffer = $this->isPromoActive($promo);
+
+        return [
+            'id' => $promo->getKey(),
+            'title' => $promo->title,
+            'summary' => $promo->summary,
+            'poster_url' => $promo->poster_url,
+            'poster_orientation' => $this->detectPromoPosterOrientation($promo),
+            'is_active_offer' => $isActiveOffer,
+            'promo_label' => $promo->promo_label ?: 'Discover Sabah',
+            'date_label' => $isActiveOffer
+                ? ($promo->ends_at ? 'Until '.$promo->ends_at->format('d F Y') : 'Available now')
+                : ($promo->ends_at ? 'Ended '.$promo->ends_at->format('d M Y') : 'Recently featured'),
+            'range_label' => ($promo->starts_at?->format('d M Y') ?: 'Available now').' - '.($promo->ends_at?->format('d M Y') ?: 'While active'),
+            'status' => $status,
+        ];
+    }
+
+    private function resolvePromoStatus(NewsFeature $promo, ?NewsFeature $currentPromo): string
+    {
+        if ($currentPromo && $promo->is($currentPromo)) {
+            return 'Current Offer';
+        }
+
+        if ($this->isPromoActive($promo)) {
+            return 'Current Offer';
+        }
+
+        if ($promo->ends_at && $promo->ends_at->isPast()) {
+            return 'Past Offer';
+        }
+
+        return 'Current Offer';
+    }
+
+    private function isPromoActive(NewsFeature $promo): bool
+    {
+        $today = now()->toDateString();
+
+        if ($promo->starts_at && $promo->starts_at->format('Y-m-d') > $today) {
+            return false;
+        }
+
+        if ($promo->ends_at && $promo->ends_at->format('Y-m-d') < $today) {
+            return false;
+        }
+
+        return (bool) $promo->is_active;
+    }
+
+    private function detectPromoPosterOrientation(NewsFeature $promo): string
+    {
+        if (blank($promo->poster_path)) {
+            return self::PROMO_POSTER_UNKNOWN;
+        }
+
+        $posterFullPath = public_path('storage/'.$promo->poster_path);
+        if (! is_file($posterFullPath)) {
+            return self::PROMO_POSTER_UNKNOWN;
+        }
+
+        $posterSize = @getimagesize($posterFullPath);
+        if (! is_array($posterSize) || empty($posterSize[0]) || empty($posterSize[1])) {
+            return self::PROMO_POSTER_UNKNOWN;
+        }
+
+        return $posterSize[1] > $posterSize[0]
+            ? self::PROMO_POSTER_PORTRAIT
+            : self::PROMO_POSTER_LANDSCAPE;
     }
 
     private function mergePublicReviews(EloquentCollection $websiteTestimonials, array $googleReviewData): Collection

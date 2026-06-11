@@ -63,6 +63,118 @@
                 min-width: 0;
             }
 
+            .site-nav-details > summary::-webkit-details-marker {
+                display: none;
+            }
+
+            .site-nav-details[open] .site-nav-toggle-icon {
+                transform: rotate(90deg);
+            }
+
+            .site-nav-panel {
+                position: absolute;
+                top: calc(100% + 0.9rem);
+                right: 0;
+                width: min(22rem, calc(100vw - 2rem));
+                border: 1px solid #d6d3d1;
+                border-radius: 1.5rem;
+                background: rgba(255, 255, 255, 0.98);
+                box-shadow: 0 22px 44px rgba(15, 23, 42, 0.16);
+                backdrop-filter: blur(18px);
+            }
+
+            .site-nav-link {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 0.75rem;
+                border-radius: 1rem;
+                padding: 0.85rem 1rem;
+                font-size: 1rem;
+                font-weight: 600;
+                color: #44403c;
+                transition: background-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
+            }
+
+            .site-nav-link:hover {
+                background: #f0f9ff;
+                color: #0369a1;
+                transform: translateX(-2px);
+            }
+
+            .tours-menu {
+                position: relative;
+                display: inline-flex;
+                align-items: center;
+            }
+
+            .tours-menu.is-open .tours-menu-panel {
+                opacity: 1;
+                visibility: visible;
+                transform: translate(-50%, 0);
+                pointer-events: auto;
+            }
+
+            .tours-menu-panel {
+                position: absolute;
+                top: calc(100% + 0.6rem);
+                left: 50%;
+                min-width: 10.5rem;
+                padding: 0.5rem;
+                border: 1px solid rgba(69, 84, 153, 0.16);
+                border-radius: 1rem;
+                background: rgba(255, 255, 255, 0.98);
+                box-shadow: 0 18px 36px rgba(15, 23, 42, 0.18);
+                opacity: 0;
+                visibility: hidden;
+                transform: translate(-50%, 0.5rem);
+                transition: opacity 0.18s ease, transform 0.18s ease, visibility 0.18s ease;
+                pointer-events: none;
+                z-index: 220;
+            }
+
+            .tours-menu-link {
+                display: block;
+                border-radius: 0.7rem;
+                padding: 0.55rem 0.8rem;
+                font-size: 0.95rem;
+                font-weight: 600;
+                color: #455499;
+                text-decoration: none;
+                white-space: nowrap;
+                transition: background-color 0.18s ease, color 0.18s ease, transform 0.18s ease;
+            }
+
+            .tours-menu-link:hover {
+                background: rgba(69, 84, 153, 0.12);
+                color: #2f3b7c;
+                transform: translateX(2px);
+            }
+
+            .main-nav-link {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                border: 0;
+                border-radius: 999px;
+                background: transparent;
+                padding: 0.38rem 0.7rem;
+                font: inherit;
+                cursor: pointer;
+                transition: background-color 0.18s ease, color 0.18s ease, transform 0.18s ease;
+            }
+
+            .main-nav-link:hover {
+                background: rgba(255, 255, 255, 0.14);
+                color: #ffffff;
+                transform: translateY(-1px);
+            }
+
+            .main-nav-link.is-light:hover {
+                background: rgba(69, 84, 153, 0.1);
+                color: #455499;
+            }
+
             @media (min-width: 768px) {
                 .admin-shell.with-sidebar {
                     position: relative;
@@ -90,13 +202,14 @@
         @php($adminNavIdle = $adminNavBase.' border-stone-200 text-stone-700 hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700')
         <div class="flex min-h-screen flex-col bg-[radial-gradient(circle_at_top,_rgba(14,165,233,0.08),_transparent_30%),linear-gradient(180deg,_#fffdf9,_#f8fafc)]">
             @unless ($hideHeader)
-                <header class="js-app-header border-b shadow-[0_10px_24px_rgba(15,23,42,0.08)] {{ $isAdminRoute ? 'border-emerald-200 bg-white' : 'border-stone-200 bg-white' }} ">
-                    <div class="{{ $isAdminRoute ? 'grid w-full grid-cols-[1fr_auto_1fr] items-center px-6 py-3 lg:px-10' : 'flex w-full items-center justify-between px-6 py-3 lg:px-10' }}">
+                <header class="js-app-header shadow-[0_10px_24px_rgba(15,23,42,0.08)] {{ $isAdminRoute ? 'border-b border-emerald-200 bg-white' : 'bg-white' }} ">
+                    <div class="{{ $isAdminRoute ? 'grid w-full grid-cols-[1fr_auto_1fr] items-center px-6 lg:px-10' : 'flex w-full items-center justify-between px-6 lg:px-10' }}" style="height: 70px; padding-top: 0; padding-bottom: 0;">
                         @if ($isAdminRoute)
                             <div class="justify-self-start" aria-hidden="true"></div>
                         @else
-                            <a href="{{ route('home') }}" class="flex items-center gap-3" style="position: relative; left: 1rem;">
-                                <img src="{{ asset('images/ue_logo.jpg') }}" alt="Universal Eden Logo" class="h-11 w-11 rounded-full object-cover">
+                            <a href="{{ route('home') }}" class="flex items-center gap-3" style="position: relative; left: 0.25rem;">
+                                <img src="{{ asset('images/ue blue logo.png') }}" alt="Universal Eden Logo" class="w-auto " style="height: 2rem;">
+                                <img src="{{ asset('images/Malaysia Truly Asia logo 2026.png') }}" alt="Malaysia Truly Asia Logo" class="w-auto" style="display: block; height: 4rem; margin: 0; padding: 0;">
                                 <span class="font-['Prata'] text-xl text-stone-900">Universal Eden Holidays</span>
                             </a>
                         @endif
@@ -104,22 +217,27 @@
                         @if ($isAdminRoute)
                             <p class="hidden md:block text-xs font-semibold uppercase tracking-[0.18em] text-emerald-600">Admin Workspace</p>
                         @else
-                            <nav class="hidden items-center gap-6 text-sm font-medium text-stone-600 md:flex" style="position: relative; left: -2rem;">
-                                <a href="{{ route('home') }}" class="inline-flex h-10 w-10 items-center justify-center rounded-full border border-stone-200 bg-white text-stone-600 transition hover:border-sky-200 hover:text-sky-700" aria-label="Home">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                        <path d="M3 10.5 12 3l9 7.5" />
-                                        <path d="M5 9.5V21h14V9.5" />
-                                        <path d="M9 21v-6h6v6" />
-                                    </svg>
-                                </a>
-                                <a href="{{ route('home') }}#promos" class="transition hover:text-sky-700">Promotion</a>
-                                <a href="{{ route('home') }}#popular-picks" class="transition hover:text-sky-700">Popular Picks</a>
-                                <a href="{{ route('home') }}#transport" class="transition hover:text-sky-700">Transport</a>
-                                <a href="{{ route('home') }}#packages-showcase" class="transition hover:text-sky-700">Packages</a>
-                                <a href="{{ route('home') }}#testimonials" class="transition hover:text-sky-700">Testimonials</a>
-                                <a href="{{ route('home') }}#about-us" class="transition hover:text-sky-700">About Us</a>
-                                <a href="{{ route('blog.index') }}" class="transition hover:text-sky-700">Blog</a>
-                                <a href="{{ route('bookings.track.form') }}" class="transition hover:text-sky-700">Track Booking</a>
+                            <nav class="hidden">
+                                <div class="flex items-center gap-5 font-semibold uppercase text-stone-700 xl:gap-6" style="font-size: 0.58rem; letter-spacing: 0.1em;">
+                                    <a href="{{ route('home') }}" class="main-nav-link is-light whitespace-nowrap">Home</a>
+                                    <a href="{{ route('home') }}#transport" class="main-nav-link is-light whitespace-nowrap">Transport</a>
+                                    <a href="{{ route('home') }}#packages-showcase" class="main-nav-link is-light whitespace-nowrap">Packages</a>
+                                    <div class="tours-menu" data-tours-menu>
+                                        <button type="button" class="main-nav-link is-light tours-menu-toggle whitespace-nowrap" data-tours-toggle aria-expanded="false" style="display: inline-flex; align-items: center; gap: 0.28rem;">
+                                            <span>Tours</span>
+                                            <span aria-hidden="true" style="font-size: 0.72rem; line-height: 1;">&#9662;</span>
+                                        </button>
+                                        <div class="tours-menu-panel" style="border-radius: 0;">
+                                            <a href="{{ route('tours.show', 'day-trip') }}" class="tours-menu-link" style="border-radius: 0;">Day Trip</a>
+                                            <a href="{{ route('tours.show', '2d1n-trip') }}" class="tours-menu-link" style="border-radius: 0;">2D1N Trip</a>
+                                            <a href="{{ route('tours.show', '3d2n-trip') }}" class="tours-menu-link" style="border-radius: 0;">3D2N Trip</a>
+                                            <a href="{{ route('tours.show', '4d3n-trip') }}" class="tours-menu-link" style="border-radius: 0;">4D3N Trip</a>
+                                        </div>
+                                    </div>
+                                    <a href="{{ route('blog.index') }}" class="main-nav-link is-light whitespace-nowrap">Blog</a>
+                                    <a href="{{ route('home') }}#about-us" class="main-nav-link is-light whitespace-nowrap">About Us</a>
+                                    <a href="{{ route('bookings.track.form') }}" class="main-nav-link is-light whitespace-nowrap">Track Booking</a>
+                                </div>
                             </nav>
                         @endif
 
@@ -136,6 +254,8 @@
                                         <span class="pointer-events-none absolute top-1/2 -translate-y-1/2 text-[10px] leading-none text-stone-400" style="right: 0.55rem;">▼</span>
                                     </div>
                                 </div>
+
+
                             @endif
                             @auth
                                 @if (! $isAdminRoute)
@@ -169,6 +289,32 @@
                             @endauth
                         </div>
                     </div>
+                    @if (! $isAdminRoute)
+                        <div class="hidden md:block" style="background: #455499;">
+                            <nav class="w-full px-6 lg:px-10" style="padding-top: 1rem; padding-bottom: 1rem; background: #455499;">
+                                <div class="flex items-center justify-center gap-8 font-semibold uppercase text-white xl:gap-10" style="font-size: 0.9rem; letter-spacing: 0.12em;">
+                                    <a href="{{ route('home') }}" class="main-nav-link whitespace-nowrap">Home</a>
+                                    <a href="{{ route('home') }}#transport" class="main-nav-link whitespace-nowrap">Transport</a>
+                                    <a href="{{ route('home') }}#packages-showcase" class="main-nav-link whitespace-nowrap">Packages</a>
+                                    <div class="tours-menu" data-tours-menu>
+                                        <button type="button" class="main-nav-link tours-menu-toggle whitespace-nowrap" data-tours-toggle aria-expanded="false" style="display: inline-flex; align-items: center; gap: 0.28rem;">
+                                            <span>TOURS</span>
+                                            <span aria-hidden="true" style="font-size: 0.72rem; line-height: 1;">&#9662;</span>
+                                        </button>
+                                        <div class="tours-menu-panel" style="border-radius: 0;">
+                                            <a href="{{ route('tours.show', 'day-trip') }}" class="tours-menu-link" style="border-radius: 0;">Day Trip</a>
+                                            <a href="{{ route('tours.show', '2d1n-trip') }}" class="tours-menu-link" style="border-radius: 0;">2D1N Trip</a>
+                                            <a href="{{ route('tours.show', '3d2n-trip') }}" class="tours-menu-link" style="border-radius: 0;">3D2N Trip</a>
+                                            <a href="{{ route('tours.show', '4d3n-trip') }}" class="tours-menu-link" style="border-radius: 0;">4D3N Trip</a>
+                                        </div>
+                                    </div>
+                                    <a href="{{ route('blog.index') }}" class="main-nav-link whitespace-nowrap">Blog</a>
+                                    <a href="{{ route('home') }}#about-us" class="main-nav-link whitespace-nowrap">About Us</a>
+                                    <a href="{{ route('bookings.track.form') }}" class="main-nav-link whitespace-nowrap">Track Booking</a>
+                                </div>
+                            </nav>
+                        </div>
+                    @endif
                 </header>
             @endunless
 
@@ -231,6 +377,8 @@
                 const root = document.documentElement;
                 const header = document.querySelector('.js-app-header');
                 const toasts = Array.from(document.querySelectorAll('.js-app-toast'));
+                const siteNavDetails = Array.from(document.querySelectorAll('.js-site-nav'));
+                const toursMenus = Array.from(document.querySelectorAll('[data-tours-menu]'));
                 const anchorOffsetExtra = 0;
                 const anchorOffsetOverrides = {
                     '#popular-picks': 24,
@@ -294,6 +442,87 @@
                         scrollToHashTarget(window.location.hash, 'auto');
                     }, 0);
                 }
+
+                const closeSiteNavs = (activeNav = null) => {
+                    siteNavDetails.forEach((details) => {
+                        if (details !== activeNav) {
+                            details.removeAttribute('open');
+                        }
+                    });
+                };
+
+                const closeToursMenus = (activeMenu = null) => {
+                    toursMenus.forEach((menu) => {
+                        const toggle = menu.querySelector('[data-tours-toggle]');
+
+                        if (menu !== activeMenu) {
+                            menu.classList.remove('is-open');
+                            toggle?.setAttribute('aria-expanded', 'false');
+                        }
+                    });
+                };
+
+                siteNavDetails.forEach((details) => {
+                    details.addEventListener('toggle', () => {
+                        if (details.open) {
+                            closeSiteNavs(details);
+                        }
+                    });
+                });
+
+                document.addEventListener('click', (event) => {
+                    const target = event.target;
+
+                    if (!(target instanceof Node)) {
+                        return;
+                    }
+
+                    if (siteNavDetails.some((details) => details.contains(target))) {
+                        return;
+                    }
+
+                    closeSiteNavs();
+                });
+
+                document.querySelectorAll('.js-site-nav-link').forEach((link) => {
+                    link.addEventListener('click', () => {
+                        closeSiteNavs();
+                    });
+                });
+
+                toursMenus.forEach((menu) => {
+                    const toggle = menu.querySelector('[data-tours-toggle]');
+                    const links = menu.querySelectorAll('.tours-menu-link');
+
+                    toggle?.addEventListener('click', (event) => {
+                        event.preventDefault();
+                        const willOpen = !menu.classList.contains('is-open');
+
+                        closeToursMenus();
+                        menu.classList.toggle('is-open', willOpen);
+                        toggle.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+                    });
+
+                    links.forEach((link) => {
+                        link.addEventListener('click', () => {
+                            closeToursMenus();
+                        });
+                    });
+                });
+
+                document.addEventListener('click', (event) => {
+                    const target = event.target;
+
+                    if (!(target instanceof Node)) {
+                        return;
+                    }
+
+                    if (toursMenus.some((menu) => menu.contains(target))) {
+                        return;
+                    }
+
+                    closeToursMenus();
+                });
 
                 if (!toasts.length) {
                     return;
@@ -507,3 +736,5 @@
         </script>
     </body>
 </html>
+
+

@@ -10,6 +10,8 @@
             return;
         }
 
+        const filterButtons = Array.from(section.querySelectorAll('[data-list-filter]'));
+
         const list = document.getElementById('{{ $listId }}');
 
         if (!list) {
@@ -20,6 +22,7 @@
         const pageSize = {{ $pageSize }};
         let activePage = 0;
         let filteredItems = items;
+        let activeFilter = filterButtons.find((button) => button.getAttribute('aria-pressed') === 'true')?.dataset.filterValue ?? 'all';
 
         const updateResults = () => {
             const total = filteredItems.length;
@@ -57,9 +60,15 @@
             updateResults();
         };
 
-        const applySearch = () => {
+        const applyFilters = () => {
             const query = searchInput.value.trim().toLowerCase();
-            filteredItems = items.filter((item) => item.textContent.toLowerCase().includes(query));
+            filteredItems = items.filter((item) => {
+                const matchesQuery = item.textContent.toLowerCase().includes(query);
+                const itemFilterValue = item.dataset.listFilterValue ?? 'all';
+                const matchesGroup = activeFilter === 'all' || itemFilterValue === activeFilter;
+
+                return matchesQuery && matchesGroup;
+            });
             activePage = 0;
             renderPage();
         };
@@ -84,7 +93,26 @@
             renderPage();
         });
 
-        searchInput.addEventListener('input', applySearch);
+        filterButtons.forEach((button) => {
+            button.addEventListener('click', () => {
+                activeFilter = button.dataset.filterValue ?? 'all';
+
+                filterButtons.forEach((candidate) => {
+                    const isActive = candidate === button;
+                    candidate.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+                    candidate.classList.toggle('bg-stone-900', isActive);
+                    candidate.classList.toggle('border-stone-900', isActive);
+                    candidate.classList.toggle('text-white', isActive);
+                    candidate.classList.toggle('text-stone-700', !isActive);
+                    candidate.classList.toggle('bg-white', !isActive);
+                });
+
+                applyFilters();
+            });
+        });
+
+        searchInput.addEventListener('input', applyFilters);
+        filterButtons.find((button) => button.dataset.filterValue === activeFilter)?.click();
         renderPage();
     });
 </script>

@@ -6,6 +6,7 @@ use App\Mail\BookingInvoiceMail;
 use Barryvdh\DomPDF\Facade\Pdf;
 use App\Models\BlogPost;
 use App\Models\Booking;
+use App\Models\HomeHeroSlide;
 use App\Models\NewsFeature;
 use App\Models\Product;
 use App\Models\Testimonial;
@@ -28,6 +29,10 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class AdminController extends Controller
 {
+    private const HOME_HERO_SLIDE_MAX_KB = 20480;
+
+    private const PACKAGE_DURATION_OPTIONS = ['Day Trip', '2D1N', '3D2N', '4D3N'];
+
     private const FIXED_TRANSPORT_PRODUCTS = [
         [
             'name' => '41/44 Seaters Bus',
@@ -104,6 +109,11 @@ class AdminController extends Controller
     public function promos(): View
     {
         return view('admin.promos', $this->sharedAdminData());
+    }
+
+    public function landingPage(): View
+    {
+        return view('admin.landing-page', $this->sharedAdminData());
     }
 
     public function blogs(): View
@@ -376,6 +386,9 @@ class AdminController extends Controller
     {
         $request->merge([
             'image_url' => $this->normalizeOptionalUrl($request->input('image_url')),
+            'tour_code' => $request->input('category') === 'package'
+                ? $this->normalizeTourCode((string) $request->input('tour_code', ''), $request->input('package_type') === 'Day Trip')
+                : null,
         ]);
 
         $validated = $request->validate([
@@ -390,7 +403,51 @@ class AdminController extends Controller
             'gallery_image_files.*' => ['image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
             'itinerary_items_text' => ['nullable', 'string', 'max:5000'],
             'description' => ['required', 'string', 'max:1000'],
-            'duration' => ['required', 'string', 'max:100'],
+            'package_type' => [
+                Rule::requiredIf($request->input('category') === 'package'),
+                'nullable',
+                'string',
+                'in:'.implode(',', self::PACKAGE_DURATION_OPTIONS),
+            ],
+            'duration' => [
+                Rule::requiredIf($request->input('category') === 'transport'),
+                'nullable',
+                'string',
+                'max:100',
+            ],
+            'duration_detail' => [
+                Rule::requiredIf(
+                    $request->input('category') === 'package'
+                    && $request->input('package_type') === 'Day Trip'
+                ),
+                'nullable',
+                'string',
+                'max:100',
+            ],
+            'minimum_age_mode' => [
+                Rule::requiredIf($request->input('category') === 'package'),
+                'nullable',
+                'string',
+                'in:no_limit,above_age',
+            ],
+            'minimum_age_years' => [
+                Rule::requiredIf(
+                    $request->input('category') === 'package'
+                    && $request->input('minimum_age_mode') === 'above_age'
+                ),
+                'nullable',
+                'integer',
+                'min:1',
+                'max:120',
+            ],
+            'tour_code' => [
+                Rule::requiredIf($request->input('category') === 'package'),
+                'nullable',
+                'string',
+                'max:50',
+                'regex:/^(DT|OT)-UEH[A-Z0-9]+$/',
+                Rule::unique('products', 'tour_code'),
+            ],
             'malaysia_adult_price_myr' => ['required', 'numeric', 'min:0'],
             'malaysia_child_price_myr' => ['required', 'numeric', 'min:0'],
             'international_adult_price_myr' => ['required', 'numeric', 'min:0'],
@@ -416,6 +473,17 @@ class AdminController extends Controller
                 $this->storeProductGalleryImages($request->file('gallery_image_files')),
             );
         }
+
+        if ($validated['category'] === 'package') {
+            $validated['duration'] = ($validated['package_type'] ?? null) === 'Day Trip'
+                ? ($validated['duration_detail'] ?? 'Day Trip')
+                : (string) ($validated['package_type'] ?? '');
+            $validated['minimum_age'] = ($validated['minimum_age_mode'] ?? 'no_limit') === 'above_age'
+                ? 'Above '.(int) ($validated['minimum_age_years'] ?? 0).' years old'
+                : 'No limit';
+        }
+
+        unset($validated['package_type'], $validated['duration_detail'], $validated['minimum_age_mode'], $validated['minimum_age_years']);
 
         $productPayload = $validated + [
             'price_myr' => $validated['malaysia_adult_price_myr'],
@@ -443,6 +511,9 @@ class AdminController extends Controller
     {
         $request->merge([
             'image_url' => $this->normalizeOptionalUrl($request->input('image_url')),
+            'tour_code' => $product->category === 'package'
+                ? $this->normalizeTourCode((string) $request->input('tour_code', ''), $this->isDayTripPackage((string) $request->input('duration', $product->duration), (string) $product->tour_code))
+                : null,
         ]);
 
         $validated = $request->validate([
@@ -457,7 +528,51 @@ class AdminController extends Controller
             'gallery_image_files.*' => ['image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
             'itinerary_items_text' => ['nullable', 'string', 'max:5000'],
             'description' => ['required', 'string', 'max:1000'],
-            'duration' => ['required', 'string', 'max:100'],
+            'package_type' => [
+                Rule::requiredIf($product->category === 'package'),
+                'nullable',
+                'string',
+                'in:'.implode(',', self::PACKAGE_DURATION_OPTIONS),
+            ],
+            'duration' => [
+                Rule::requiredIf($product->category !== 'package'),
+                'nullable',
+                'string',
+                'max:100',
+            ],
+            'duration_detail' => [
+                Rule::requiredIf(
+                    $product->category === 'package'
+                    && $request->input('package_type') === 'Day Trip'
+                ),
+                'nullable',
+                'string',
+                'max:100',
+            ],
+            'minimum_age_mode' => [
+                Rule::requiredIf($product->category === 'package'),
+                'nullable',
+                'string',
+                'in:no_limit,above_age',
+            ],
+            'minimum_age_years' => [
+                Rule::requiredIf(
+                    $product->category === 'package'
+                    && $request->input('minimum_age_mode') === 'above_age'
+                ),
+                'nullable',
+                'integer',
+                'min:1',
+                'max:120',
+            ],
+            'tour_code' => [
+                Rule::requiredIf($product->category === 'package'),
+                'nullable',
+                'string',
+                'max:50',
+                'regex:/^(DT|OT)-UEH[A-Z0-9]+$/',
+                Rule::unique('products', 'tour_code')->ignore($product->id),
+            ],
             'malaysia_adult_price_myr' => ['required', 'numeric', 'min:0'],
             'malaysia_child_price_myr' => ['required', 'numeric', 'min:0'],
             'international_adult_price_myr' => ['required', 'numeric', 'min:0'],
@@ -492,6 +607,17 @@ class AdminController extends Controller
             );
         }
 
+        if ($product->category === 'package') {
+            $validated['duration'] = ($validated['package_type'] ?? null) === 'Day Trip'
+                ? ($validated['duration_detail'] ?? $product->duration ?? 'Day Trip')
+                : (string) ($validated['package_type'] ?? $product->duration);
+            $validated['minimum_age'] = ($validated['minimum_age_mode'] ?? 'no_limit') === 'above_age'
+                ? 'Above '.(int) ($validated['minimum_age_years'] ?? 0).' years old'
+                : 'No limit';
+        }
+
+        unset($validated['package_type'], $validated['duration_detail'], $validated['minimum_age_mode'], $validated['minimum_age_years']);
+
         $productPayload = $validated + [
             'price_myr' => $validated['malaysia_adult_price_myr'],
             'gallery_images' => $galleryImages,
@@ -512,6 +638,31 @@ class AdminController extends Controller
         $product->update($productPayload);
 
         return back()->with('success', 'Product updated successfully.');
+    }
+
+    private function normalizeTourCode(string $tourCode, bool $isDayTrip): string
+    {
+        $cleanCode = strtoupper(trim($tourCode));
+        $cleanCode = preg_replace('/\s+/', '', $cleanCode) ?? $cleanCode;
+        $cleanCode = str_replace(['_', '.'], '-', $cleanCode);
+        $cleanCode = preg_replace('/^(DT|OT)-?UEH/i', '', $cleanCode) ?? $cleanCode;
+        $cleanCode = preg_replace('/^UEH/i', '', $cleanCode) ?? $cleanCode;
+        $suffix = preg_replace('/[^A-Z0-9]/', '', $cleanCode) ?? '';
+
+        return ($isDayTrip ? 'DT-UEH' : 'OT-UEH').$suffix;
+    }
+
+    private function isDayTripPackage(string $label, ?string $tourCode = null): bool
+    {
+        $normalizedLabel = strtolower(trim($label));
+        $compactLabel = preg_replace('/\s+/', '', $normalizedLabel) ?? $normalizedLabel;
+
+        if (is_string($tourCode) && str_starts_with(strtoupper(trim($tourCode)), 'DT-UEH')) {
+            return true;
+        }
+
+        return str_contains($normalizedLabel, 'day trip')
+            || str_contains($compactLabel, '1day');
     }
 
     public function updateProductItinerary(Request $request, Product $product): RedirectResponse
@@ -798,6 +949,79 @@ class AdminController extends Controller
         $newsFeature->delete();
 
         return back()->with('success', 'Promo news deleted successfully.');
+    }
+
+    public function storeHomeHeroSlide(Request $request): RedirectResponse
+    {
+        if (! Schema::hasTable('home_hero_slides')) {
+            return back()->withErrors([
+                'home_hero_slides' => 'Homepage slider storage is not ready yet. Please run php artisan migrate first.',
+            ])->withInput();
+        }
+
+        if (HomeHeroSlide::count() >= 5) {
+            return back()->withErrors([
+                'home_hero_slides' => 'You can only keep up to 5 homepage hero images at a time.',
+            ])->withInput();
+        }
+
+        $validated = $request->validate([
+            'image' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:' . self::HOME_HERO_SLIDE_MAX_KB],
+            'display_order' => ['nullable', 'integer', 'min:1', 'max:5'],
+        ]);
+
+        $slide = HomeHeroSlide::create([
+            'image_path' => $request->file('image')->store('home-hero-slides', 'public'),
+            'display_order' => HomeHeroSlide::count() + 1,
+            'is_active' => $request->boolean('is_active', true),
+        ]);
+
+        $this->resequenceHomeHeroSlides($slide, (int) ($validated['display_order'] ?? HomeHeroSlide::count()));
+
+        return back()->with('success', 'Homepage hero image added successfully.');
+    }
+
+    public function updateHomeHeroSlide(Request $request, HomeHeroSlide $homeHeroSlide): RedirectResponse
+    {
+        if (! Schema::hasTable('home_hero_slides')) {
+            return back()->withErrors([
+                'home_hero_slides' => 'Homepage slider storage is not ready yet. Please run php artisan migrate first.',
+            ])->withInput();
+        }
+
+        $validated = $request->validate([
+            'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:' . self::HOME_HERO_SLIDE_MAX_KB],
+            'display_order' => ['required', 'integer', 'min:1', 'max:5'],
+        ]);
+
+        $updates = [
+            'is_active' => $request->boolean('is_active'),
+        ];
+
+        if ($request->hasFile('image')) {
+            if ($homeHeroSlide->image_path) {
+                Storage::disk('public')->delete($homeHeroSlide->image_path);
+            }
+
+            $updates['image_path'] = $request->file('image')->store('home-hero-slides', 'public');
+        }
+
+        $homeHeroSlide->update($updates);
+        $this->resequenceHomeHeroSlides($homeHeroSlide->fresh(), (int) $validated['display_order']);
+
+        return back()->with('success', 'Homepage hero image updated successfully.');
+    }
+
+    public function destroyHomeHeroSlide(HomeHeroSlide $homeHeroSlide): RedirectResponse
+    {
+        if ($homeHeroSlide->image_path) {
+            Storage::disk('public')->delete($homeHeroSlide->image_path);
+        }
+
+        $homeHeroSlide->delete();
+        $this->resequenceHomeHeroSlides();
+
+        return back()->with('success', 'Homepage hero image removed successfully.');
     }
 
     public function storeBlogPost(Request $request): RedirectResponse
@@ -1106,6 +1330,9 @@ class AdminController extends Controller
                 ->values(),
             'packageProducts' => $products->where('category', 'package')->values(),
             'newsFeatures' => NewsFeature::latest()->get(),
+            'homeHeroSlides' => Schema::hasTable('home_hero_slides')
+                ? HomeHeroSlide::query()->orderBy('display_order')->orderBy('id')->get()
+                : collect(),
             'blogPosts' => Schema::hasTable('blog_posts')
                 ? BlogPost::latest('published_at')->latest()->get()
                 : collect(),
@@ -1125,6 +1352,37 @@ class AdminController extends Controller
                 'testimonials' => Testimonial::count(),
             ],
         ];
+    }
+
+    private function resequenceHomeHeroSlides(?HomeHeroSlide $targetSlide = null, ?int $requestedPosition = null): void
+    {
+        if (! Schema::hasTable('home_hero_slides')) {
+            return;
+        }
+
+        $slides = HomeHeroSlide::query()
+            ->when($targetSlide, fn ($query) => $query->whereKeyNot($targetSlide->id))
+            ->orderBy('display_order')
+            ->orderBy('id')
+            ->get()
+            ->values();
+
+        if ($targetSlide) {
+            $position = max(1, min($requestedPosition ?? ($slides->count() + 1), $slides->count() + 1));
+            $slides->splice($position - 1, 0, [$targetSlide]);
+        }
+
+        $slides
+            ->values()
+            ->each(function (HomeHeroSlide $slide, int $index) {
+                $expectedOrder = $index + 1;
+
+                if ((int) $slide->display_order !== $expectedOrder) {
+                    $slide->updateQuietly([
+                        'display_order' => $expectedOrder,
+                    ]);
+                }
+            });
     }
 
     private function filterBlogPostAttributes(array $attributes): array

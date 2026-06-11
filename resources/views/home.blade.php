@@ -1,4 +1,4 @@
-<x-layouts.app title="Universal Eden Holidays | Sabah Packages and Transport">
+﻿<x-layouts.app title="Universal Eden Holidays | Sabah Packages and Transport">
     <div class="flex min-h-[calc(100vh-var(--app-header-offset,0px))] flex-col" style="background-color: #f0f0e9;">
     <style>
         html,
@@ -17,12 +17,12 @@
         }
 
         .home-screen-section--hero {
-            height: 100svh;
-            min-height: 100svh;
+            height: 85svh;
+            min-height: 85svh;
         }
 
         .home-screen-section--hero > div[style*="min-height"] {
-            min-height: 100svh !important;
+            min-height: 76svh !important;
         }
 
         .hero-content-shell {
@@ -32,6 +32,86 @@
 
         .hero-copy {
             margin-left: 0;
+        }
+
+        .hero-slider {
+            position: absolute;
+            inset: 0;
+            overflow: hidden;
+        }
+
+        .hero-slider-slide {
+            position: absolute;
+            inset: 0;
+            background-position: center center;
+            background-repeat: no-repeat;
+            background-size: cover;
+            opacity: 0;
+            transform: scale(1.02);
+            transition: opacity 0.9s ease;
+        }
+
+        .hero-slider-slide.is-active {
+            opacity: 1;
+        }
+
+        .hero-slider-overlay {
+            position: absolute;
+            inset: 0;
+            background:
+                linear-gradient(90deg, rgba(0,0,0,0.48) 0%, rgba(0,0,0,0.34) 35%, rgba(0,0,0,0.24) 100%),
+                linear-gradient(180deg, rgba(0,0,0,0.16) 0%, rgba(0,0,0,0.28) 100%);
+        }
+
+        .hero-slider-controls {
+            position: absolute;
+            right: clamp(1rem, 4vw, 2rem);
+            bottom: clamp(1rem, 4vw, 2rem);
+            z-index: 20;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .hero-slider-arrow {
+            display: inline-flex;
+            height: 2.8rem;
+            width: 2.8rem;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid rgba(255,255,255,0.48);
+            border-radius: 999px;
+            background: rgba(15,23,42,0.26);
+            color: #ffffff;
+            font-size: 1.35rem;
+            line-height: 1;
+            backdrop-filter: blur(8px);
+            transition: background-color 0.2s ease, transform 0.2s ease;
+        }
+
+        .hero-slider-arrow:hover {
+            background: rgba(15,23,42,0.42);
+            transform: translateY(-1px);
+        }
+
+        .hero-slider-dots {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.45rem;
+        }
+
+        .hero-slider-dot {
+            height: 0.72rem;
+            width: 0.72rem;
+            border: 1px solid rgba(255,255,255,0.55);
+            border-radius: 999px;
+            background: rgba(255,255,255,0.38);
+            transition: transform 0.2s ease, background-color 0.2s ease;
+        }
+
+        .hero-slider-dot.is-active {
+            background: #ffffff;
+            transform: scale(1.18);
         }
 
         .hero-copy-stack {
@@ -138,537 +218,184 @@
             transform: translateY(-0.05rem);
         }
 
-        .promo-current-layout {
-            display: flex;
-            width: fit-content;
-            align-items: stretch;
-        }
-
-        .promo-inline-card {
+        .bulletin-board {
             position: relative;
-        }
-
-        .promo-inline-info-shell {
-            position: relative;
-        }
-
-        .promo-more-info-button {
-            position: absolute;
-        }
-
-        .promo-cards-row {
-            display: flex;
-            flex-wrap: nowrap;
-            align-items: flex-start;
-            justify-content: center;
-            gap: 0.45rem;
-            transition: gap 0.28s ease;
-        }
-
-        .promo-card-column {
-            min-width: 0;
-            flex-shrink: 1;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-
-        .promo-card-column--current {
-            width: min(100%, 470px);
-            flex-basis: 470px;
-        }
-
-        .promo-card-column--past {
-            width: min(100%, 470px);
-            flex-basis: 470px;
-        }
-
-        .promo-book-shell {
-            position: relative;
-            overflow: hidden;
-            border-radius: 1rem;
-            width: min(100%, 1760px);
-            margin: 0 auto;
-            background: transparent;
-            box-shadow: none;
-        }
-
-        .promo-book-shell::after {
-            content: "";
-            position: absolute;
-            left: 4.5rem;
-            right: 4.5rem;
-            bottom: -0.2rem;
-            height: 2.9rem;
-            border-radius: 999px;
-            background: radial-gradient(ellipse at center, rgba(15,23,42,0.18) 0%, rgba(15,23,42,0.1) 38%, rgba(15,23,42,0) 76%);
-            filter: blur(16px);
-            opacity: 0.62;
-            pointer-events: none;
-            z-index: 0;
-        }
-
-        .promo-book-toolbar {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 1rem;
-            padding: 0.2rem 1.25rem 0;
-        }
-
-        .promo-book-nav {
-            display: inline-flex;
-            height: 3rem;
-            width: 3rem;
-            align-items: center;
-            justify-content: center;
-            border: none;
-            border-radius: 999px;
-            background: #ffffff;
-            box-shadow: 0 10px 24px rgba(15,23,42,0.1);
-            font-size: 2rem;
-            font-weight: 300;
-            line-height: 1;
-            color: #7b93c8;
-            cursor: pointer;
-            transition: transform 0.22s ease, box-shadow 0.22s ease, opacity 0.22s ease;
-        }
-
-        .promo-book-nav:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 14px 28px rgba(15,23,42,0.14);
-        }
-
-        .promo-book-status {
-            min-width: 0;
-            flex: 1;
-            text-align: center;
-        }
-
-        .promo-book-mobile {
-            display: none;
-        }
-
-        .promo-book-desktop {
-            display: block;
-            padding: 1.1rem 3rem;
-            position: relative;
-            z-index: 1;
-        }
-
-        .promo-book-cover {
-            position: absolute;
-            inset: 0.9rem 2.35rem 0.9rem;
-            border-radius: 0.85rem;
+            overflow: visible;
+            border: 0;
+            border-radius: 0;
             background:
-                linear-gradient(145deg, #405735 0%, #5f7f49 34%, #7b9860 56%, #33492b 100%);
+                linear-gradient(135deg, #5f3517 0%, #7b4720 18%, #9b6332 42%, #7d4821 68%, #5c3317 100%);
             box-shadow:
-                inset 0 0 0 1px rgba(248,250,252,0.14),
+                inset 0 0 0 1px rgba(255,255,255,0.14),
+                inset 0 0 0 6px rgba(78,43,17,0.48),
                 inset 0 1px 0 rgba(255,255,255,0.14),
-                inset 1.1rem 0 1.8rem rgba(24,43,20,0.28),
-                inset -0.9rem 0 1.5rem rgba(24,42,20,0.24),
-                0 20px 34px rgba(15,23,42,0.16),
-                0 34px 48px rgba(15,23,42,0.08);
-            pointer-events: none;
-            z-index: 0;
+                0 22px 42px rgba(15,23,42,0.14);
         }
 
-        .promo-book-cover::before {
+        .bulletin-board::before {
             content: "";
             position: absolute;
-            top: 0;
-            bottom: 0;
-            left: calc(50% - 0.45rem);
-            width: 0.9rem;
+            inset: 1rem;
+            border-radius: 0;
             background:
-                linear-gradient(90deg, rgba(27,47,22,0.96), rgba(97,126,72,0.78) 42%, rgba(25,43,20,0.96));
+                radial-gradient(circle at 18% 20%, rgba(255,222,173,0.18) 0, rgba(255,222,173,0) 22%),
+                radial-gradient(circle at 78% 34%, rgba(92,51,22,0.14) 0, rgba(92,51,22,0) 24%),
+                repeating-linear-gradient(
+                    0deg,
+                    rgba(121,73,38,0.16) 0,
+                    rgba(121,73,38,0.16) 2px,
+                    rgba(0,0,0,0) 2px,
+                    rgba(0,0,0,0) 34px
+                ),
+                repeating-linear-gradient(
+                    92deg,
+                    rgba(88,50,24,0.12) 0,
+                    rgba(88,50,24,0.12) 1px,
+                    rgba(0,0,0,0) 1px,
+                    rgba(0,0,0,0) 18px
+                ),
+                linear-gradient(180deg, #b97a45 0%, #a96936 44%, #955a2b 100%);
             box-shadow:
-                inset 1px 0 0 rgba(255,255,255,0.1),
-                inset -1px 0 0 rgba(0,0,0,0.2);
-        }
-
-        .promo-book-cover::after {
-            content: "";
-            position: absolute;
-            inset: 0.65rem;
-            border: 1px solid rgba(255,255,255,0.08);
-            opacity: 0.7;
+                inset 0 0 0 1px rgba(255,255,255,0.1),
+                inset 0 2px 10px rgba(255,255,255,0.08),
+                inset 0 -8px 18px rgba(84,46,19,0.18);
             pointer-events: none;
         }
 
-        .promo-book-spread {
-            display: grid;
-            grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-            gap: 0;
-            height: 36rem;
-            min-height: 36rem;
-            overflow: hidden;
-            border-radius: 0.7rem;
-            margin: 0.7rem;
-            background:
-                linear-gradient(180deg, rgba(255,255,255,0.99), rgba(247,244,237,0.98));
-            box-shadow:
-                inset 0 0 0 1px rgba(231,229,228,0.9),
-                inset 0 18px 28px rgba(255,255,255,0.4),
-                inset 0 -10px 18px rgba(120,113,108,0.04),
-                0 16px 26px rgba(15,23,42,0.1),
-                0 30px 42px rgba(15,23,42,0.06);
+        .bulletin-board::after {
+            content: "";
+            position: absolute;
+            inset: 0.7rem;
+            border: 1px solid rgba(70, 38, 16, 0.38);
+            box-shadow: inset 0 0 0 1px rgba(255,255,255,0.08);
+            pointer-events: none;
+        }
+
+        .bulletin-board-inner {
             position: relative;
             z-index: 1;
-            perspective: 2400px;
-            transform-style: preserve-3d;
+            padding: 1.55rem;
         }
 
-        .promo-book-spread.is-turning .promo-book-page--info {
-            opacity: 0;
+        .bulletin-note {
+            position: relative;
+            border: 1px solid rgba(120,113,108,0.2);
+            border-radius: 1.5rem;
+            padding: 1rem;
+            box-shadow: 0 18px 28px rgba(15,23,42,0.14);
+            transition: transform 0.24s ease, box-shadow 0.24s ease;
         }
 
-        .promo-book-spread.is-updating .promo-book-page--poster,
-        .promo-book-spread.is-updating .promo-book-page--info {
-            opacity: 0.58;
-            transform: translateY(0.35rem);
+        .bulletin-note:hover {
+            transform: translateY(-4px) rotate(0deg) !important;
+            box-shadow: 0 22px 34px rgba(15,23,42,0.18);
         }
 
-        .promo-book-turn-zone {
-            position: absolute;
-            top: 0;
-            bottom: 0;
-            width: 4.75rem;
-            border: none;
-            background: transparent;
-            cursor: pointer;
-            z-index: 4;
-        }
-
-        .promo-book-turn-zone--prev {
-            left: 0;
-        }
-
-        .promo-book-turn-zone--next {
-            right: 0;
-        }
-
-        .promo-book-turn-zone::before {
+        .bulletin-note::before {
             content: "";
             position: absolute;
-            top: 0;
-            bottom: 0;
-            width: 100%;
-            opacity: 0;
-            transition: opacity 0.2s ease;
-            pointer-events: none;
-        }
-
-        .promo-book-turn-zone--prev::before {
-            left: 0;
-            background: linear-gradient(90deg, rgba(49,95,189,0.08), rgba(49,95,189,0));
-        }
-
-        .promo-book-turn-zone--next::before {
-            right: 0;
-            background: linear-gradient(270deg, rgba(49,95,189,0.08), rgba(49,95,189,0));
-        }
-
-        .promo-book-turn-zone:hover::before {
-            opacity: 1;
-        }
-
-        .promo-book-page-corner {
-            position: absolute;
-            right: 0.85rem;
-            bottom: 0.8rem;
-            z-index: 4;
+            top: 0.85rem;
+            left: 50%;
             height: 0.95rem;
             width: 0.95rem;
-            background: linear-gradient(135deg, rgba(255,255,255,1) 0 50%, rgba(228,232,236,0.98) 50% 100%);
-            box-shadow:
-                -1px -1px 0 rgba(255,255,255,0.95),
-                -3px -3px 8px rgba(15,23,42,0.05);
-            pointer-events: none;
-            clip-path: polygon(100% 0, 0 100%, 100% 100%);
-            opacity: 0.72;
-            transition: transform 0.2s ease, opacity 0.2s ease;
+            transform: translateX(-50%);
+            border-radius: 999px;
+            background: radial-gradient(circle at 30% 30%, #fff7ed, #dc2626 55%, #7f1d1d 100%);
+            box-shadow: 0 3px 6px rgba(15,23,42,0.25);
         }
 
-        .promo-book-spread:hover .promo-book-page-corner {
-            transform: translate(-1px, -1px);
-            opacity: 1;
+        .bulletin-note--gold {
+            background: linear-gradient(180deg, #fff8c9, #fef3a5);
         }
 
-        .promo-book-page {
-            min-width: 0;
-            height: 100%;
+        .bulletin-note--blue {
+            background: linear-gradient(180deg, #eff6ff, #dbeafe);
         }
 
-        .promo-book-page--poster {
-            display: flex;
-            align-items: stretch;
-            justify-content: center;
-            border: none;
-            border-right: 1px solid rgba(214,211,209,0.5);
-            background: linear-gradient(180deg, #fffefb, #fcfaf6);
-            padding: 0;
-            text-align: left;
-            cursor: pointer;
-            position: relative;
-            z-index: 1;
-            transition: opacity 0.22s ease, transform 0.22s ease;
+        .bulletin-note--rose {
+            background: linear-gradient(180deg, #fff1f2, #ffe4e6);
         }
 
-        .promo-book-page--poster::after {
-            content: "";
+        .bulletin-note--cream {
+            background: linear-gradient(180deg, #fffdf7, #f6efe1);
+        }
+
+        .bulletin-note--green {
+            border-color: rgba(22, 101, 52, 0.32);
+            background: linear-gradient(180deg, #86efac, #4ade80 52%, #22c55e 100%);
+            box-shadow: 0 18px 28px rgba(22,101,52,0.24);
+        }
+
+        .bulletin-note--red {
+            border-color: rgba(153, 27, 27, 0.32);
+            background: linear-gradient(180deg, #fca5a5, #f87171 52%, #ef4444 100%);
+            box-shadow: 0 18px 28px rgba(153,27,27,0.22);
+        }
+
+        .bulletin-photo {
+            border-radius: 1.1rem;
+            border: 1px solid rgba(120,113,108,0.18);
+            background: #ffffff;
+            box-shadow: 0 8px 18px rgba(15,23,42,0.08);
+        }
+
+        .promo-poster-card {
+            transition: transform 0.24s ease, filter 0.24s ease;
+        }
+
+        .promo-poster-card:hover {
+            transform: translateY(-6px) rotate(0deg) !important;
+            filter: drop-shadow(0 16px 24px rgba(15,23,42,0.16));
+        }
+
+        @media (min-width: 1024px) {
+            .promo-posters-row {
+                display: flex !important;
+                align-items: flex-start !important;
+                justify-content: flex-start !important;
+                gap: 5rem !important;
+                margin-top: 4.4rem !important;
+                margin-left: 8.3rem !important;
+                margin-right: 3.2rem !important;
+            }
+
+            .promo-primary-poster-card {
+                margin: 0 !important;
+                flex: 0 0 21rem !important;
+            }
+
+            .promo-secondary-posters {
+                margin-top: 0 !important;
+                margin-left: 0 !important;
+                width: auto !important;
+                flex: 0 0 auto !important;
+                justify-content: flex-start !important;
+                align-items: flex-start !important;
+            }
+
+            .promo-secondary-poster-card {
+                margin-left: 0 !important;
+                margin-right: 0 !important;
+            }
+        }
+
+        .promo-poster-pin {
             position: absolute;
-            top: 0;
-            right: 0;
-            bottom: 0;
-            width: 0.9rem;
-            background: linear-gradient(90deg, rgba(15,23,42,0), rgba(15,23,42,0.055));
-            pointer-events: none;
-        }
-
-        .promo-book-page--poster::before {
-            content: "";
-            position: absolute;
-            inset: 0;
-            background: linear-gradient(90deg, rgba(15,23,42,0.02), rgba(15,23,42,0.22));
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.56s ease;
-        }
-
-        .promo-book-page--poster img {
-            display: block;
-            height: auto;
-            width: 100%;
-            max-height: 36rem;
-            max-width: 100%;
-            border-radius: 0;
-            object-fit: contain;
-            background: #fff;
-            box-shadow: 0 10px 18px rgba(15,23,42,0.05);
-        }
-
-        .promo-book-page--poster.is-landscape {
-            align-items: center;
-            justify-content: center;
-            overflow: hidden;
-            position: relative;
-            top: -3px;
-        }
-
-        .promo-book-page--poster.is-landscape img {
-            height: auto;
-            width: 100%;
-            max-height: none;
-            max-width: 100%;
-            object-fit: contain;
-            object-position: center;
-        }
-
-        .promo-book-page--poster.is-portrait {
-            align-items: flex-start;
-            align-self: start;
-            padding-top: 0;
-            padding-bottom: 0;
-        }
-
-        .promo-book-page--poster.is-portrait img {
-            height: auto !important;
-            max-height: 36rem !important;
-            width: auto !important;
-            max-width: none;
-            border-radius: 0;
-            object-fit: contain;
-            box-shadow: 0 16px 34px rgba(15,23,42,0.12);
-        }
-
-        .promo-book-page--info {
-            display: flex;
-            flex-direction: column;
-            justify-content: flex-start;
-            padding: 2rem 2.2rem;
-            background:
-                linear-gradient(180deg, rgba(255,255,255,0.99), rgba(250,247,240,0.98)),
-                radial-gradient(circle at top right, rgba(203,213,225,0.22), transparent 36%);
-            position: relative;
-            z-index: 1;
-            transition: opacity 0.18s ease;
-            transition: opacity 0.22s ease, transform 0.22s ease;
-        }
-
-        .promo-book-page--info::before {
-            content: "";
-            position: absolute;
-            top: 0;
-            left: 0;
-            bottom: 0;
-            width: 0.9rem;
-            background: linear-gradient(90deg, rgba(15,23,42,0.055), rgba(15,23,42,0));
-            pointer-events: none;
-        }
-
-        .promo-book-turn-sheet {
-            position: absolute;
-            top: 0;
-            bottom: 0;
             left: 50%;
-            width: 50%;
-            transform-origin: left bottom;
-            transform-style: preserve-3d;
-            pointer-events: none;
-            z-index: 5;
-            opacity: 0;
-            transform: perspective(1800px) rotateY(0deg);
+            top: 0.15rem;
+            z-index: 3;
+            width: 0.9rem;
+            height: 0.9rem;
+            transform: translateX(-50%);
+            border-radius: 999px;
+            background: radial-gradient(circle at 30% 30%, #fff7ed, #dc2626 55%, #7f1d1d 100%);
+            box-shadow: 0 3px 6px rgba(15,23,42,0.25);
         }
 
-        .promo-book-turn-sheet.is-active {
-            opacity: 1;
-        }
-
-        .promo-book-turn-sheet.is-flipping {
-            transform: perspective(2000px) rotateY(-180deg);
-        }
-
-        .promo-book-turn-face {
-            position: absolute;
-            inset: 0;
-            backface-visibility: hidden;
-            overflow: hidden;
-            background: linear-gradient(90deg, #e1ddd8 0%, #fffbf6 12%, #ffffff 100%);
-            box-shadow:
-                inset 0 -1px 2px rgba(50,50,50,0.08),
-                inset -1px 0 1px rgba(150,150,150,0.16),
-                0 16px 30px rgba(15,23,42,0.12);
-        }
-
-        .promo-book-turn-face--front {
-            transform: rotateY(0deg);
-        }
-
-        .promo-book-turn-face--front::before {
-            content: "";
-            position: absolute;
-            top: 0;
-            left: 0;
-            bottom: 0;
-            width: 1rem;
-            background: linear-gradient(90deg, rgba(15,23,42,0.1), rgba(15,23,42,0));
-            pointer-events: none;
-        }
-
-        .promo-book-turn-face--back {
-            transform: rotateY(180deg);
-            background: #ffffff;
-        }
-
-        .promo-book-turn-face--back::before {
-            content: "";
-            position: absolute;
-            top: 0;
-            right: 0;
-            bottom: 0;
-            width: 1rem;
-            background: linear-gradient(270deg, rgba(15,23,42,0.12), rgba(15,23,42,0));
-            pointer-events: none;
-        }
-
-        .promo-book-turn-info {
-            height: 100%;
-            padding: 2rem 2.2rem;
-        }
-
-        .promo-book-turn-poster {
-            display: flex;
-            height: 100%;
-            align-items: stretch;
-            justify-content: center;
-            background: #ffffff;
-        }
-
-        .promo-book-turn-poster img {
-            display: block;
-            height: auto;
-            width: 100%;
-            max-height: 36rem;
-            max-width: 100%;
-            object-fit: contain;
-            background: #fff;
-        }
-
-        .promo-book-turn-poster.is-landscape {
-            align-items: center;
-            justify-content: center;
-            overflow: hidden;
-            position: relative;
-            top: -3px;
-        }
-
-        .promo-book-turn-poster.is-portrait {
-            align-items: flex-start;
-            padding-top: 0;
-            padding-bottom: 0;
-        }
-
-        .promo-book-turn-poster.is-portrait img {
-            height: auto !important;
-            max-height: 36rem !important;
-            width: auto !important;
-            max-width: none;
-            object-fit: contain;
-            box-shadow: 0 16px 34px rgba(15,23,42,0.12);
-        }
-
-        .promo-book-turn-sheet {
-            display: none;
-        }
-
-        .promo-book-mobile-card {
-            position: relative;
-            perspective: 1400px;
-        }
-
-        .promo-book-mobile-inner {
-            position: relative;
-            min-height: 28rem;
-            transform-style: preserve-3d;
-            transition: transform 0.7s ease;
-        }
-
-        .promo-book-mobile-card.is-flipped .promo-book-mobile-inner {
-            transform: rotateY(180deg);
-        }
-
-        .promo-book-face {
-            position: absolute;
-            inset: 0;
-            backface-visibility: hidden;
-            overflow: hidden;
-            border-radius: 0;
-            background: #fff;
-            box-shadow: 0 18px 36px rgba(15,23,42,0.1);
-        }
-
-        .promo-book-face--front {
-            background: linear-gradient(145deg, #4f6f42 0%, #709458 46%, #36502f 100%);
-        }
-
-        .promo-book-face--front.is-portrait > div {
-            padding-top: 0.8rem !important;
-            padding-bottom: 0.8rem !important;
-            background: linear-gradient(145deg, #4f6f42 0%, #709458 46%, #36502f 100%) !important;
-        }
-
-        .promo-book-face--front.is-portrait img {
-            height: 98% !important;
-            object-fit: contain !important;
-        }
-
-        .promo-book-face--back {
-            transform: rotateY(180deg);
-            background:
-                linear-gradient(180deg, rgba(255,255,255,0.98), rgba(248,250,252,0.98)),
-                radial-gradient(circle at top right, rgba(191,219,254,0.35), transparent 34%);
-            overflow-y: auto;
+        @media (min-width: 1024px) {
+            #home-footer-grid {
+                grid-template-columns: var(--footer-grid-columns-lg, 1fr);
+            }
         }
 
         #promos,
@@ -775,7 +502,7 @@
 
         @media (max-width: 767px) {
             .hero-content-shell {
-                min-height: 100svh !important;
+                min-height: 76svh !important;
                 padding: 2rem 1rem 2.5rem 1rem !important;
                 transform: none !important;
             }
@@ -831,33 +558,6 @@
                 left: 0 !important;
                 font-size: 2.5rem !important;
                 line-height: 1.05 !important;
-            }
-
-            #promos [id$="-button"] {
-                height: 2.7rem !important;
-                width: 2.7rem !important;
-                font-size: 2.2rem !important;
-            }
-
-            .promo-prev-wrap {
-                left: 0.35rem !important;
-            }
-
-            .promo-next-wrap {
-                right: 0.35rem !important;
-            }
-
-            #promo-detail-modal {
-                padding: 1rem !important;
-            }
-
-            .promo-detail-layout {
-                grid-template-columns: minmax(0, 1fr) !important;
-            }
-
-            .promo-detail-media {
-                min-height: auto !important;
-                padding: 3.5rem 1rem 1rem !important;
             }
 
             .popular-package-card {
@@ -968,44 +668,6 @@
                 min-height: 7.25rem !important;
             }
 
-            .promo-book-toolbar {
-                padding: 0.9rem 0.9rem 0 !important;
-            }
-
-            .promo-book-nav {
-                height: 2.7rem !important;
-                width: 2.7rem !important;
-                font-size: 2rem !important;
-            }
-
-            .promo-book-desktop {
-                display: none !important;
-            }
-
-            .promo-book-mobile {
-                display: block !important;
-                padding: 0.9rem 0.9rem 1rem !important;
-            }
-
-            .promo-book-mobile-inner {
-                min-height: 26rem !important;
-            }
-        }
-
-        @media (min-width: 768px) {
-            .promo-book-nav {
-                display: none !important;
-            }
-
-            .promo-book-toolbar {
-                justify-content: center;
-                padding-left: 0;
-                padding-right: 0;
-            }
-
-            .promo-book-status {
-                flex: 0 1 auto;
-            }
         }
 
         @media (max-width: 1280px) {
@@ -1015,9 +677,22 @@
         }
     </style>
 
-    <section class="home-screen-section home-screen-section--hero relative w-full overflow-hidden bg-black min-h-screen">
+    @php($heroSlides = collect($heroSlides ?? [])->values())
+    @php($currentPromoSlide = $currentPromoSlide ?? null)
+    @php($recentPromoSlides = collect($recentPromoSlides ?? []))
+    @php($latestBlogPosts = collect($latestBlogPosts ?? []))
+    <section class="home-screen-section home-screen-section--hero relative w-full overflow-hidden bg-black">
         <div class="absolute inset-0">
-            <div class="absolute inset-0 bg-cover bg-center" style="background-image: url('{{ asset('images/bg_image.png') }}'); background-size: cover; background-position: center center;"></div>
+            <div class="hero-slider" data-hero-slider>
+                @foreach ($heroSlides as $index => $heroSlide)
+                    <div
+                        class="hero-slider-slide{{ $index === 0 ? ' is-active' : '' }}"
+                        data-hero-slide
+                        style="background-image: url('{{ $heroSlide['image_url'] }}');"
+                    ></div>
+                @endforeach
+                <div class="hero-slider-overlay"></div>
+            </div>
             <img
                 src="{{ asset('images/plane.png') }}"
                 alt="Plane"
@@ -1025,16 +700,16 @@
                 style="width: 200px;"
             >
         </div>
-        <div class="hero-content-shell" style="position: relative; margin: 0 auto; display: flex; min-height: 100vh; max-width: 92rem; flex-direction: column; justify-content: center; padding: 3rem 2rem 3rem 1rem;">
+        <div class="hero-content-shell" style="position: relative; margin: 0 auto; display: flex; min-height: 76svh; max-width: 92rem; flex-direction: column; justify-content: center; padding: 2.25rem 2rem 2.25rem 1rem;">
             <div style="display:flex; width:100%; align-items:center; gap:2.5rem;">
                 <div class="hero-copy" style="display:flex; min-width:0; flex:1 1 0%; flex-direction:column; align-items:flex-start; gap:0.75rem; text-align:left;">
-                    <img class="hero-bus" src="{{ asset('images/bus.png') }}" alt="Bus" style="width: auto;">
+                    <img class="hero-bus" src="{{ asset('images/bus.png') }}" alt="Bus" style="width: auto; margin-top:6.15rem;">
                     <div class="hero-copy-stack" style="display:flex; width:100%; flex-direction:column; align-items:flex-start; gap:0; text-align:left;">
-                        <h2 id="discover-heading" style="display: block; width: 100%; max-width: 34rem; font-family: 'Vendura', sans-serif; font-size: clamp(2.8rem, 5vw, 4.8rem); font-weight: 600; line-height: 0.9; letter-spacing: 0.01em; text-transform: uppercase; color: #ffffff; transform: scaleX(0.76); transform-origin: left center; white-space: nowrap;">TRAVEL AND RIDE</h2>
-                        <h2 id="discover-subheading" style="display: block; width: 100%; max-width: 40rem; margin-left: 6.2rem; text-align: center; font-family: 'Vendura', sans-serif; font-size: clamp(3rem, 5.8vw, 5.4rem); font-weight: 700; color: #ffffff;">WITH US</h2>
-                        <div class="hero-tagline" style="margin-top: 1.35rem; display: inline-flex; align-items: center; justify-content: center; border-radius: 999px; padding: 0.35rem; background: linear-gradient(90deg, rgba(38,164,232,0.96), rgba(58,86,195,0.96)); box-shadow: 0 14px 28px rgba(15,23,42,0.22);">
-                            <div class="hero-tagline-inner" style="width: 100%; border-radius: 999px; border: 2px solid rgba(255,255,255,0.45); padding: 0.45rem 3.4rem 0.55rem; background: linear-gradient(90deg, rgba(62,180,242,0.18), rgba(76,65,186,0.18));">
-                                <span class="hero-tagline-text" style="display: block; width: 100%; text-align: center; font-family: 'Oswald', sans-serif; font-size: clamp(1.7rem, 3vw, 2.7rem); font-weight: 700; line-height: 1; letter-spacing: 0.07em; color: #ffffff; text-transform: none; transform: scaleX(1.14); transform-origin: center;">Discover All Of Sabah Borneo</span>
+                        <h2 id="discover-heading" style="display: block; width: 100%; max-width: 34rem; font-family: 'Vendura', sans-serif; font-size: clamp(2.3rem, 4.2vw, 4rem); font-weight: 600; line-height: 0.9; letter-spacing: 0.01em; text-transform: uppercase; color: #ffffff; transform: scaleX(0.76); transform-origin: left center; white-space: nowrap;">TRAVEL AND RIDE</h2>
+                        <h2 id="discover-subheading" style="display: block; width: 100%; max-width: 40rem; margin-left: 6.2rem; text-align: center; font-family: 'Vendura', sans-serif; font-size: clamp(2.45rem, 4.8vw, 4.5rem); font-weight: 700; color: #ffffff;">WITH US</h2>
+                        <div class="hero-tagline" style="margin-top: 1.15rem; display: inline-flex; align-items: center; justify-content: center; border-radius: 999px; padding: 0.22rem; background: linear-gradient(90deg, rgba(38,164,232,0.96), rgba(58,86,195,0.96)); box-shadow: 0 14px 28px rgba(15,23,42,0.22);">
+                            <div class="hero-tagline-inner" style="width: 100%; border-radius: 999px; border: 2px solid rgba(255,255,255,0.45); padding: 0.22rem 1.9rem 0.3rem; background: linear-gradient(90deg, rgba(62,180,242,0.18), rgba(76,65,186,0.18));">
+                                <span class="hero-tagline-text" style="display: block; width: 100%; text-align: center; font-family: 'Oswald', sans-serif; font-size: clamp(1.12rem, 1.9vw, 1.72rem); font-weight: 700; line-height: 1; letter-spacing: 0.05em; color: #ffffff; text-transform: none; transform: scaleX(1.04); transform-origin: center;">Discover All Of Sabah Borneo</span>
                             </div>
                         </div>
                     </div>
@@ -1042,261 +717,209 @@
 
             </div>
         </div>
+        @if ($heroSlides->count() > 1)
+            <div class="hero-slider-controls" data-hero-slider-controls>
+                <div class="hero-slider-dots">
+                    @foreach ($heroSlides as $index => $heroSlide)
+                        <button
+                            type="button"
+                            class="hero-slider-dot{{ $index === 0 ? ' is-active' : '' }}"
+                            data-hero-dot
+                            data-hero-slide-index="{{ $index }}"
+                            aria-label="Show homepage image {{ $index + 1 }}"
+                        ></button>
+                    @endforeach
+                </div>
+            </div>
+        @endif
     </section>
 
         <div class="pointer-events-none absolute inset-x-0 top-8 -z-10 h-72 rounded-[3rem] bg-[radial-gradient(circle_at_top_left,_rgba(134,239,172,0.16),_transparent_38%),radial-gradient(circle_at_top_right,_rgba(190,242,100,0.14),_transparent_34%)]"></div>
 
         <div>
-            <section id="promos" class="bg-white px-5 pt-3 pb-24 md:px-7 md:pt-5 md:pb-28 lg:px-8" style="margin-left: calc(50% - 50vw); margin-right: calc(50% - 50vw);">
-                @php
-                    $currentPromoSlide = $currentPromo ? [
-                        'title' => $currentPromo->title,
-                        'summary' => $currentPromo->summary,
-                        'poster_url' => $currentPromo->poster_url,
-                        'promo_label' => $currentPromo->promo_label ?: 'Discover Sabah',
-                        'date_label' => $currentPromo->ends_at ? 'Until '.$currentPromo->ends_at->format('d M Y') : null,
-                        'range_label' => ($currentPromo->starts_at?->format('d M Y') ?: 'Available now').' - '.($currentPromo->ends_at?->format('d M Y') ?: 'While active'),
-                        'status' => 'Current Promotion',
-                    ] : null;
-
-                    $pastPromoSlides = $pastPromos->map(function ($promo) {
-                        return [
-                            'title' => $promo->title,
-                            'summary' => $promo->summary,
-                            'poster_url' => $promo->poster_url,
-                            'promo_label' => $promo->promo_label ?: 'Discover Sabah',
-                            'date_label' => $promo->ends_at ? 'Ended '.$promo->ends_at->format('d M Y') : null,
-                            'range_label' => ($promo->starts_at?->format('d M Y') ?: 'Available now').' - '.($promo->ends_at?->format('d M Y') ?: 'While active'),
-                            'status' => 'Past Promotion',
-                        ];
-                    })->values();
-
-                    $promoBookSlides = collect();
-
-                    if ($currentPromoSlide) {
-                        $promoBookSlides->push($currentPromoSlide);
-                    }
-
-                    $promoBookSlides = $promoBookSlides->concat($pastPromoSlides)->values();
-                    $initialPromoBookSlide = $promoBookSlides->first();
-                @endphp
-
-                <div class="relative mx-auto pt-6 md:pt-8" style="max-width: 1920px; height: 730px;">
-                    <h2 class="mb-2 text-center font-['Oswald'] text-4xl font-bold uppercase tracking-[0.22em] text-[#315fbd] md:mb-3 md:text-5xl lg:text-6xl">
-                        Promotion & News
-                    </h2>
-                    @if ($initialPromoBookSlide)
-                            <div id="promo-book-shell" class="promo-book-shell" style="margin-bottom: 3rem;">
-                                <div class="promo-book-toolbar">
-                                    <button id="promo-book-prev" type="button" class="promo-book-nav" aria-label="Show previous promo offer">&lsaquo;</button>
-                                    <div class="promo-book-status">
-                                        <p id="promo-book-count" class="text-xs font-semibold uppercase tracking-[0.18em] text-stone-500">1 / {{ $promoBookSlides->count() }}</p>
-                                    </div>
-                                    <button id="promo-book-next" type="button" class="promo-book-nav" aria-label="Show next promo offer">&rsaquo;</button>
-                                </div>
-
-                                <div class="promo-book-mobile">
-                                    <div id="promo-mobile-card" class="promo-book-mobile-card">
-                                        <div id="promo-mobile-inner" class="promo-book-mobile-inner">
-                                            <div class="promo-book-face promo-book-face--front">
-                                                <div style="position: relative; height: 100%; background: linear-gradient(145deg, #4f6f42 0%, #709458 46%, #36502f 100%); padding: 0.95rem;">
-                                                    <img id="promo-mobile-image" src="{{ $initialPromoBookSlide['poster_url'] }}" alt="{{ $initialPromoBookSlide['title'] }}" style="display: block; height: 100%; width: 100%; border-radius: 0; object-fit: cover; background: #fff;">
-                                                    <div style="position: absolute; left: 1.6rem; top: 1.55rem; right: 1.6rem; display: flex; align-items: flex-start; justify-content: space-between; gap: 0.75rem;">
-                                                        <span id="promo-mobile-label" style="border-radius: 999px; background: rgba(255,255,255,0.94); padding: 0.55rem 0.8rem; font-size: 0.64rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: #315fbd;">{{ $initialPromoBookSlide['promo_label'] }}</span>
-                                                        <span id="promo-mobile-date" style="border-radius: 999px; background: rgba(255,255,255,0.94); padding: 0.55rem 0.8rem; font-size: 0.6rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: #b45309;">{{ $initialPromoBookSlide['date_label'] }}</span>
-                                                    </div>
-                                                    <div style="position: absolute; left: 1.6rem; right: 1.6rem; bottom: 1.55rem; border-radius: 0; background: linear-gradient(180deg, rgba(15,23,42,0), rgba(15,23,42,0.72)); padding: 2.3rem 1rem 1rem;">
-                                                        <p id="promo-mobile-status-front" style="margin: 0; font-family: 'Oswald', sans-serif; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.18em; color: #bfdbfe;">{{ $initialPromoBookSlide['status'] }}</p>
-                                                        <h3 id="promo-mobile-title-front" style="margin: 0.45rem 0 0; font-size: 1.6rem; font-weight: 700; line-height: 1.08; color: #fff;">{{ $initialPromoBookSlide['title'] }}</h3>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div class="promo-book-face promo-book-face--back">
-                                                <div style="display: flex; height: 100%; flex-direction: column; padding: 1.35rem 1.2rem 1.2rem;">
-                                                    <p id="promo-mobile-status-back" style="margin: 0; font-family: 'Oswald', sans-serif; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.18em; color: #315fbd;">{{ $initialPromoBookSlide['status'] }}</p>
-                                                    <h3 id="promo-mobile-title-back" style="margin: 0.7rem 0 0; font-size: 1.65rem; font-weight: 700; line-height: 1.08; color: #1c1917;">{{ $initialPromoBookSlide['title'] }}</h3>
-                                                    <div style="margin-top: 0.8rem; display: flex; flex-wrap: wrap; gap: 0.4rem; font-size: 0.63rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.14em; color: #a16207;">
-                                                        <span id="promo-mobile-range">{{ $initialPromoBookSlide['range_label'] }}</span>
-                                                    </div>
-                                                    <p id="promo-mobile-summary" style="margin-top: 1rem; flex: 1; font-size: 0.94rem; line-height: 1.72; color: #57534e;">{{ \Illuminate\Support\Str::limit($initialPromoBookSlide['summary'], 420) }}</p>
-                                                    <div style="display: flex; align-items: center; justify-content: space-between; gap: 0.8rem;">
-                                                        <button id="promo-mobile-flip-toggle" type="button" style="display: inline-flex; min-width: 8rem; align-items: center; justify-content: center; border: none; border-radius: 999px; background: #315fbd; padding: 0.8rem 1rem; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: #fff;">Back to Poster</button>
-                                                        <button id="promo-mobile-view-poster" type="button" class="promo-poster-trigger" data-promo-title="{{ $initialPromoBookSlide['title'] }}" data-promo-summary="{{ $initialPromoBookSlide['summary'] }}" data-promo-poster="{{ $initialPromoBookSlide['poster_url'] }}" data-promo-label="{{ $initialPromoBookSlide['promo_label'] }}" data-promo-date="{{ $initialPromoBookSlide['date_label'] }}" data-promo-range="{{ $initialPromoBookSlide['range_label'] }}" data-promo-status="{{ $initialPromoBookSlide['status'] }}" style="display: inline-flex; min-width: 8rem; align-items: center; justify-content: center; border: 1px solid #cbd5e1; border-radius: 999px; background: #fff; padding: 0.8rem 1rem; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: #475569;">Open Poster</button>
-                                                    </div>
-                                                </div>
+            <section id="promos" class="bg-white px-5 pb-12 pt-3 md:px-7 md:pb-16 md:pt-5 lg:px-8" style="margin-left: calc(50% - 50vw); margin-right: calc(50% - 50vw);">
+                <div class="relative mx-auto pt-6 md:pt-8" style="max-width: 1920px;">
+                    <div class="bulletin-board mx-auto mt-8" style="width: min(96vw, 1880px); max-width: 1880px;">
+                        <div class="bulletin-board-inner">
+                            <div class="flex flex-row items-start justify-between gap-8">
+                                <div class="space-y-6 border p-4" style="width: 1160px; min-width: 0; flex: 0 1 1600px; height: 36rem; border-color: rgba(120, 74, 34, 0.28); background: linear-gradient(180deg, #f8f1e4 0%, #f1e4d1 100%);">
+                                    <div class="flex items-center justify-center px-4 py-2">
+                                        <div class="text-center">
+                                            <div style="position: relative; display: inline-block; border: 1px solid rgba(78,43,17,0.42); background: linear-gradient(180deg, rgba(255,255,255,0.14), rgba(255,255,255,0) 24%), repeating-linear-gradient(92deg, rgba(118,71,35,0.14) 0, rgba(118,71,35,0.14) 1px, rgba(0,0,0,0) 1px, rgba(0,0,0,0) 16px), linear-gradient(180deg, #d4a46f 0%, #bd834e 46%, #a46434 100%); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.12), inset 0 -4px 10px rgba(78,43,17,0.16), 0 8px 16px rgba(15,23,42,0.12); padding: 0.55rem 1.9rem 0.65rem; text-align: center;">
+                                                <span style="position: absolute; left: 0.7rem; top: 50%; width: 0.7rem; height: 0.7rem; transform: translateY(-50%); border-radius: 999px; background: radial-gradient(circle at 30% 30%, #fff7ed, #c2410c 56%, #7c2d12 100%); box-shadow: 0 2px 5px rgba(15,23,42,0.24);"></span>
+                                                <span style="position: absolute; right: 0.7rem; top: 50%; width: 0.7rem; height: 0.7rem; transform: translateY(-50%); border-radius: 999px; background: radial-gradient(circle at 30% 30%, #fff7ed, #c2410c 56%, #7c2d12 100%); box-shadow: 0 2px 5px rgba(15,23,42,0.24);"></span>
+                                                <h3 class="m-0 font-['Oswald'] font-bold uppercase text-[#fff8ed]" style="font-size: 1rem; letter-spacing: 0.18em; text-shadow: 0 2px 0 rgba(97,52,20,0.28);">Promotions & Offers</h3>
                                             </div>
                                         </div>
                                     </div>
-                                    <button id="promo-mobile-flip-front" type="button" style="margin-top: 0.5rem; display: inline-flex; width: 100%; align-items: center; justify-content: center; border: none; border-radius: 999px; background: #315fbd; padding: 0.85rem 1rem; font-size: 0.76rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: #fff;">Flip for Details</button>
-                                </div>
 
-                                <div class="promo-book-desktop">
-                                    <div class="promo-book-cover" aria-hidden="true"></div>
-                                    <div class="promo-book-spread">
-                                        <div id="promo-desktop-turn-sheet" class="promo-book-turn-sheet" aria-hidden="true">
-                                            <div class="promo-book-turn-face promo-book-turn-face--front">
-                                                <div id="promo-desktop-turn-info" class="promo-book-turn-info"></div>
+                                    <div class="promo-posters-row">
+                                    <?php if ($currentPromoSlide): ?>
+                                        <article class="promo-poster-card promo-primary-poster-card bulletin-note {{ ($currentPromoSlide['is_active_offer'] ?? false) ? 'bulletin-note--green' : 'bulletin-note--red' }} mx-auto" style="position: relative; width: min(100%, 21rem); margin-top: 2.8rem; margin-left: 3.5rem; margin-right: auto; padding: 0.18rem; border-radius: 0; transform: rotate(-1.2deg);" data-past-promo-card>
+                                            <button
+                                                type="button"
+                                                class="bulletin-photo overflow-hidden"
+                                                style="position: relative; display: block; width: 100%; max-width: 100%; cursor: pointer; padding: 0.15rem; background: #fff9ef; border-radius: 0;"
+                                                data-promo-modal-trigger
+                                                data-promo-title="{{ $currentPromoSlide['title'] }}"
+                                                data-promo-summary="{{ $currentPromoSlide['summary'] }}"
+                                                data-promo-poster="{{ $currentPromoSlide['poster_url'] }}"
+                                                data-promo-date="{{ $currentPromoSlide['date_label'] }}"
+                                            >
+                                                <span class="promo-poster-pin"></span>
+                                                <div style="position: absolute; left: 0.55rem; top: 0.55rem; z-index: 2; display: flex; flex-direction: column; gap: 0.35rem; align-items: flex-start;">
+                                                    <span style="border-radius: 999px; background: rgba(255,255,255,0.94); padding: 0.26rem 0.62rem; font-size: 0.48rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: #315fbd; box-shadow: 0 6px 12px rgba(15,23,42,0.12);">{{ $currentPromoSlide['status'] }}</span>
+                                                    <span style="border-radius: 999px; background: rgba(255,255,255,0.94); padding: 0.26rem 0.62rem; font-size: 0.46rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: #b45309; box-shadow: 0 6px 12px rgba(15,23,42,0.12);">{{ $currentPromoSlide['date_label'] }}</span>
+                                                </div>
+                                                <?php if ($currentPromoSlide['poster_url']): ?>
+                                                    <img src="{{ $currentPromoSlide['poster_url'] }}" alt="{{ $currentPromoSlide['title'] }}" class="mx-auto object-contain" style="display: block; width: 100%; height: auto; max-height: 40rem; background: #ffffff; border-radius: 0;">
+                                                <?php else: ?>
+                                                    <div class="mx-auto flex w-full items-center justify-center bg-[linear-gradient(145deg,#77a6d8_0%,#5f8fcb_45%,#315fbd_100%)] px-6 text-center" style="height: 31rem; border-radius: 0;">
+                                                        <span class="font-['Prata'] text-2xl leading-tight text-white">{{ $currentPromoSlide['title'] }}</span>
+                                                    </div>
+                                                <?php endif; ?>
+                                            </button>
+                                        </article>
+                                    <?php else: ?>
+                                        <article class="bulletin-note bulletin-note--cream" style="transform: rotate(-1deg);">
+                                            <div class="pt-6 text-center">
+                                                <p class="text-[0.72rem] font-bold uppercase tracking-[0.22em] text-stone-500">Notice</p>
+                                                <h3 class="mt-3 font-['Prata'] text-3xl text-stone-900">No current promotion yet</h3>
+                                                <p class="mx-auto mt-4 max-w-2xl text-sm leading-7 text-stone-600">
+                                                    New promotions uploaded from the admin dashboard will appear here as soon as they go live.
+                                                </p>
                                             </div>
-                                            <div class="promo-book-turn-face promo-book-turn-face--back">
-                                                <div id="promo-desktop-turn-poster" class="promo-book-turn-poster"></div>
-                                            </div>
-                                        </div>
-                                        <button id="promo-desktop-prev-zone" type="button" class="promo-book-turn-zone promo-book-turn-zone--prev" aria-label="Show previous promo offer"></button>
-                                        <button id="promo-desktop-poster" type="button" class="promo-book-page promo-book-page--poster promo-poster-trigger" data-promo-title="{{ $initialPromoBookSlide['title'] }}" data-promo-summary="{{ $initialPromoBookSlide['summary'] }}" data-promo-poster="{{ $initialPromoBookSlide['poster_url'] }}" data-promo-label="{{ $initialPromoBookSlide['promo_label'] }}" data-promo-date="{{ $initialPromoBookSlide['date_label'] }}" data-promo-range="{{ $initialPromoBookSlide['range_label'] }}" data-promo-status="{{ $initialPromoBookSlide['status'] }}">
-                                            <img id="promo-desktop-image" src="{{ $initialPromoBookSlide['poster_url'] }}" alt="{{ $initialPromoBookSlide['title'] }}">
-                                        </button>
-                                        <div class="promo-book-page promo-book-page--info">
-                                            <p id="promo-desktop-status" style="margin: 0; font-family: 'Oswald', sans-serif; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.2em; color: #315fbd;">{{ $initialPromoBookSlide['status'] }}</p>
-                                            <div style="margin-top: 1rem; display: flex; flex-wrap: wrap; gap: 0.45rem; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.14em; color: #b45309;">
-                                                <span id="promo-desktop-label" style="border-radius: 999px; background: #eff6ff; padding: 0.45rem 0.75rem; color: #315fbd;">{{ $initialPromoBookSlide['promo_label'] }}</span>
-                                                <span id="promo-desktop-date" style="border-radius: 999px; background: #fff7ed; padding: 0.45rem 0.75rem; color: #b45309;">{{ $initialPromoBookSlide['date_label'] }}</span>
-                                            </div>
-                                            <h3 id="promo-desktop-title" style="margin: 1.15rem 0 0; font-size: clamp(2rem, 2.4vw, 2.8rem); font-weight: 700; line-height: 1.04; color: #1c1917;">{{ $initialPromoBookSlide['title'] }}</h3>
-                                            <p id="promo-desktop-summary" style="margin: 1.15rem 0 0; font-size: 1rem; line-height: 1.85; color: #57534e;">{{ \Illuminate\Support\Str::limit($initialPromoBookSlide['summary'], 620) }}</p>
-                                            <div style="margin-top: 1.5rem; padding-top: 0;">
-                                                <p style="margin: 0; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.18em; color: #94a3b8;">Offer Window</p>
-                                                <p id="promo-desktop-range" style="margin: 0.55rem 0 0; font-size: 0.95rem; line-height: 1.7; color: #57534e;">{{ $initialPromoBookSlide['range_label'] }}</p>
-                                            </div>
-                                        </div>
-                                        <span class="promo-book-page-corner" aria-hidden="true"></span>
-                                        <button id="promo-desktop-next-zone" type="button" class="promo-book-turn-zone promo-book-turn-zone--next" aria-label="Show next promo offer"></button>
+                                        </article>
+                                    <?php endif; ?>
+
+                                    <div class="promo-secondary-posters flex flex-col md:flex-row md:items-start" style="margin-left: 5rem; margin-top: -15rem; gap: 4rem;">
+                                        <?php foreach ($recentPromoSlides->reverse()->values() as $index => $promo): ?>
+                                            <?php $isPortraitPromo = ($promo['poster_orientation'] ?? null) === 'portrait'; ?>
+                                            <article class="promo-poster-card promo-secondary-poster-card bulletin-note {{ ($promo['is_active_offer'] ?? false) ? 'bulletin-note--green' : 'bulletin-note--red' }}" style="margin-top: {{ $isPortraitPromo ? '-2.4rem' : '6.35rem' }}; margin-left: 0; margin-right: 0; width: {{ $isPortraitPromo ? 'min(100%, 21rem)' : '20rem' }}; flex: 0 0 {{ $isPortraitPromo ? '21rem' : '16.75rem' }}; padding: 0.18rem; border-radius: 0; transform: rotate({{ $index % 2 === 0 ? '-0.9deg' : '1.1deg' }});" data-past-promo-card>
+                                                <?php if ($promo['poster_url']): ?>
+                                                    <button
+                                                        type="button"
+                                                        class="bulletin-photo mx-auto overflow-hidden"
+                                                        style="position: relative; display: block; width: 100%; max-width: {{ $isPortraitPromo ? '100%' : '16.1rem' }}; cursor: pointer; padding: {{ $isPortraitPromo ? '0.15rem' : '0.08rem' }}; background: #fff9ef; border-radius: 0;"
+                                                        data-promo-modal-trigger
+                                                        data-promo-title="{{ $promo['title'] }}"
+                                                        data-promo-summary="{{ $promo['summary'] }}"
+                                                        data-promo-poster="{{ $promo['poster_url'] }}"
+                                                        data-promo-date="{{ $promo['date_label'] }}"
+                                                        data-past-promo-trigger
+                                                        data-promo-orientation="{{ $promo['poster_orientation'] }}"
+                                                    >
+                                                        <span class="promo-poster-pin"></span>
+                                                        <div style="position: absolute; left: 0.5rem; top: 0.5rem; z-index: 2; display: flex; flex-direction: column; gap: 0.35rem; align-items: flex-start;">
+                                                            <span style="border-radius: 999px; background: rgba(255,255,255,0.94); padding: 0.24rem 0.6rem; font-size: 0.46rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: #315fbd; box-shadow: 0 6px 12px rgba(15,23,42,0.12);">{{ $promo['status'] }}</span>
+                                                            <span style="border-radius: 999px; background: rgba(255,255,255,0.94); padding: 0.24rem 0.6rem; font-size: 0.44rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: #b45309; box-shadow: 0 6px 12px rgba(15,23,42,0.12);">{{ $promo['date_label'] }}</span>
+                                                        </div>
+                                                        <img src="{{ $promo['poster_url'] }}" alt="{{ $promo['title'] }}" class="w-full {{ $isPortraitPromo ? 'object-contain' : 'object-cover' }}" style="display: block; width: 100%; {{ $isPortraitPromo ? 'height: auto; max-height: 40rem;' : 'height: 22rem;' }} background: #ffffff; border-radius: 0; object-position: center;" data-past-promo-poster>
+                                                    </button>
+                                                <?php else: ?>
+                                                    <button
+                                                        type="button"
+                                                        class="bulletin-photo mx-auto overflow-hidden"
+                                                        style="position: relative; display: block; width: 100%; max-width: 16.1rem; cursor: pointer; padding: 0.08rem; background: #fff9ef; border-radius: 0;"
+                                                        data-promo-modal-trigger
+                                                        data-promo-title="{{ $promo['title'] }}"
+                                                        data-promo-summary="{{ $promo['summary'] }}"
+                                                        data-promo-poster=""
+                                                        data-promo-date="{{ $promo['date_label'] }}"
+                                                        data-past-promo-trigger
+                                                        data-promo-orientation="{{ $promo['poster_orientation'] }}"
+                                                    >
+                                                        <span class="promo-poster-pin"></span>
+                                                        <div style="position: absolute; left: 0.5rem; top: 0.5rem; z-index: 2; display: flex; flex-direction: column; gap: 0.35rem; align-items: flex-start;">
+                                                            <span style="border-radius: 999px; background: rgba(255,255,255,0.94); padding: 0.24rem 0.6rem; font-size: 0.46rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: #315fbd; box-shadow: 0 6px 12px rgba(15,23,42,0.12);">{{ $promo['status'] }}</span>
+                                                            <span style="border-radius: 999px; background: rgba(255,255,255,0.94); padding: 0.24rem 0.6rem; font-size: 0.44rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: #b45309; box-shadow: 0 6px 12px rgba(15,23,42,0.12);">{{ $promo['date_label'] }}</span>
+                                                        </div>
+                                                        <div class="flex w-full items-center justify-center bg-[linear-gradient(145deg,#77a6d8_0%,#5f8fcb_45%,#315fbd_100%)] px-4 text-center" style="min-height: 13.5rem; height: 16.5rem; border-radius: 0;">
+                                                            <span class="text-xs font-bold uppercase tracking-[0.12em] text-white">Promo</span>
+                                                        </div>
+                                                    </button>
+                                                <?php endif; ?>
+                                            </article>
+                                        <?php endforeach; ?>
+                                        <?php if ($recentPromoSlides->isEmpty()): ?>
+                                            <article class="bulletin-note bulletin-note--cream w-full" style="transform: rotate(0.4deg);">
+                                                <div class="pt-5 text-center">
+                                                    <p class="text-sm leading-7 text-stone-600">Recent promotions will be pinned here after new offers are uploaded.</p>
+                                                </div>
+                                            </article>
+                                        <?php endif; ?>
+                                    </div>
                                     </div>
                                 </div>
-                            </div>
-                    @else
-                        <div style="margin-top: 1.25rem; border-radius: 1.25rem; border: 1px dashed rgb(214 211 209); background: rgb(250 250 249); padding: 2.5rem 1.25rem; text-align: center; font-size: 0.875rem; line-height: 1.5rem; color: rgb(87 83 78);">
-                            No promotion is available yet.
-                        </div>
-                    @endif
-                </div>
-            </section>
 
-            <div
-                id="promo-detail-modal"
-                style="position: fixed; inset: 0; z-index: 80; display: none; align-items: flex-start; justify-content: center; background: rgba(15,23,42,0.72); padding: 4.5rem 2rem 2rem;"
-            >
-                <div
-                    id="promo-detail-panel"
-                    style="position: relative; width: min(1120px, 100%); height: min(760px, 88vh); margin-top: 2.25rem; border-radius: 1.5rem; background: #fff; box-shadow: 0 24px 60px rgba(15,23,42,0.24); overflow: hidden;"
-                >
-                    <button
-                        id="promo-detail-close"
-                        type="button"
-                        style="position: absolute; right: 1rem; top: 1rem; z-index: 2; display: inline-flex; height: 2.75rem; width: 2.75rem; align-items: center; justify-content: center; border: none; border-radius: 999px; background: rgba(255,255,255,0.96); box-shadow: 0 8px 18px rgba(15,23,42,0.12); font-size: 1.5rem; color: #52627f; cursor: pointer;"
-                        aria-label="Close promotion details"
-                    >&times;</button>
-
-                    <div class="promo-detail-layout" style="display: grid; height: 100%; gap: 0; grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);">
-                        <div class="promo-detail-media" style="display: flex; height: 100%; align-items: center; justify-content: center; background: #fff; padding: 1.5rem;">
-                            <img id="promo-detail-image" src="" alt="" style="display: block; width: 100%; height: 100%; max-height: 680px; object-fit: contain; background: #fff;">
-                        </div>
-                        <div style="height: 100%; overflow-y: auto; padding: 1.75rem 1.75rem 2rem;">
-                            <p id="promo-detail-status" style="margin: 0; font-family: 'Oswald', sans-serif; font-size: 1rem; text-transform: uppercase; letter-spacing: 0.16em; color: #2563eb;"></p>
-                            <div style="margin-top: 1rem; display: flex; flex-wrap: wrap; gap: 0.5rem; font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.18em; color: #d65f6d;">
-                                <span id="promo-detail-label"></span>
-                                <span id="promo-detail-date" style="color: #d6a24b;"></span>
-                            </div>
-                            <h3 id="promo-detail-title" style="margin: 1rem 0 0; font-size: 2rem; font-weight: 600; color: rgb(28 25 23);"></h3>
-                            <p id="promo-detail-summary" style="margin: 1rem 0 0; font-size: 1rem; line-height: 1.8rem; color: rgb(87 83 78); white-space: pre-line;"></p>
-                            <p id="promo-detail-range" style="margin: 1.25rem 0 0; font-size: 0.76rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.18em; color: rgb(255, 255, 255, 1);"></p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        @if (false)
-        <div>
-            <section id="blog" class="home-screen-section relative bg-white px-6 pb-10 pt-12 md:px-8 md:pb-12 md:pt-16">
-                <div class="mb-4 flex flex-col gap-4 md:flex-row md:items-center">
-                    <div class="hidden md:block md:w-[18rem]"></div>
-                    <div class="flex-1 text-center">
-                        <p class="font-['Oswald'] text-sm font-semibold uppercase tracking-[0.28em] text-[#315fbd]">Travel Channel</p>
-                        <h2 class="mt-2 font-['Oswald'] text-4xl font-bold uppercase tracking-[0.22em] text-stone-900 md:text-5xl lg:text-6xl">
-                            Latest Blog
-                        </h2>
-                    </div>
-                    <div class="flex justify-center md:w-[18rem] md:justify-end"></div>
-                </div>
-
-                <div class="relative mx-auto rounded-[2rem] bg-white px-5 py-5 md:px-8 md:py-7" style="max-width: 1920px;">
-                    <div class="mx-auto max-w-[1500px]">
-                        <div class="mb-6 flex flex-col gap-3 rounded-[1.75rem] border border-stone-200 bg-[#f7f9fc] px-5 py-5 md:flex-row md:items-end md:justify-between md:px-7">
-                            <div class="max-w-3xl">
-                                <p class="text-[0.72rem] font-semibold uppercase tracking-[0.24em] text-[#315fbd]">Fresh Stories</p>
-                                <h3 class="mt-2 font-['Prata'] text-2xl text-stone-900 md:text-3xl">Travel updates presented like a video feed</h3>
-                                <p class="mt-3 text-sm leading-7 text-stone-500 md:text-base">
-                                    Browse the newest posts with large thumbnails, clean titles, and publish dates for a familiar YouTube-style browsing experience.
-                                </p>
-                            </div>
-                            <p class="text-sm font-medium text-stone-500">
-                                {{ $latestBlogPosts->count() }} {{ \Illuminate\Support\Str::plural('post', $latestBlogPosts->count()) }} available
-                            </p>
-                        </div>
-
-                        @if ($latestBlogPosts->isNotEmpty())
-                            <div class="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-                                @foreach ($latestBlogPosts->take(6) as $post)
-                                        <a href="{{ route('blog.show', $post) }}" class="group overflow-hidden rounded-[1.6rem] border border-stone-200 bg-white shadow-[0_10px_22px_rgba(15,23,42,0.08)] transition hover:-translate-y-1 hover:shadow-[0_18px_32px_rgba(15,23,42,0.14)]">
-                                            <div class="relative aspect-video overflow-hidden bg-stone-200">
-                                                @if ($post->cover_image_url)
-                                                    <img src="{{ $post->cover_image_url }}" alt="{{ $post->title }}" class="h-full w-full object-cover transition duration-300 group-hover:scale-[1.04]">
-                                                @else
-                                                    <div class="flex h-full w-full items-center justify-center bg-[linear-gradient(145deg,#77a6d8_0%,#5f8fcb_45%,#315fbd_100%)] px-8 text-center">
-                                                        <span class="font-['Prata'] text-2xl leading-tight text-white">{{ $post->title }}</span>
-                                                    </div>
-                                                @endif
-                                                <div class="absolute bottom-3 right-3 rounded-md bg-stone-950/85 px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-white">
-                                                    Blog
-                                                </div>
+                                <div class="space-y-5 border p-4" style="width: 300px; min-width: 300px; flex: 0 0 300px; margin-left: auto; height: 36rem; border-color: rgba(120, 74, 34, 0.28); background: linear-gradient(180deg, #f8f1e4 0%, #f1e4d1 100%);">
+                                    <div class="flex items-center justify-center px-4 py-2">
+                                        <div class="text-center">
+                                            <div style="position: relative; display: inline-block; border: 1px solid rgba(78,43,17,0.42); background: linear-gradient(180deg, rgba(255,255,255,0.14), rgba(255,255,255,0) 24%), repeating-linear-gradient(92deg, rgba(118,71,35,0.14) 0, rgba(118,71,35,0.14) 1px, rgba(0,0,0,0) 1px, rgba(0,0,0,0) 16px), linear-gradient(180deg, #d4a46f 0%, #bd834e 46%, #a46434 100%); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.12), inset 0 -4px 10px rgba(78,43,17,0.16), 0 8px 16px rgba(15,23,42,0.12); padding: 0.55rem 1.9rem 0.65rem; text-align: center;">
+                                                <span style="position: absolute; left: 0.7rem; top: 50%; width: 0.7rem; height: 0.7rem; transform: translateY(-50%); border-radius: 999px; background: radial-gradient(circle at 30% 30%, #fff7ed, #c2410c 56%, #7c2d12 100%); box-shadow: 0 2px 5px rgba(15,23,42,0.24);"></span>
+                                                <span style="position: absolute; right: 0.7rem; top: 50%; width: 0.7rem; height: 0.7rem; transform: translateY(-50%); border-radius: 999px; background: radial-gradient(circle at 30% 30%, #fff7ed, #c2410c 56%, #7c2d12 100%); box-shadow: 0 2px 5px rgba(15,23,42,0.24);"></span>
+                                                <h3 class="m-0 font-['Oswald'] font-bold uppercase text-[#fff8ed]" style="font-size: 1rem; letter-spacing: 0.18em; text-shadow: 0 2px 0 rgba(97,52,20,0.28);">Blog News</h3>
                                             </div>
-                                            <div class="flex gap-4 px-5 py-4">
-                                                <div class="mt-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#e9f0ff] text-xs font-bold uppercase tracking-[0.16em] text-[#315fbd]">
-                                                    UE
+                                        </div>
+                                    </div>
+
+                                    <?php foreach ($latestBlogPosts as $index => $post): ?>
+                                        <a href="{{ route('blog.show', $post) }}" class="bulletin-note {{ $index % 2 === 0 ? 'bulletin-note--cream' : 'bulletin-note--rose' }} block" style="transform: rotate({{ $index % 2 === 0 ? '0.9deg' : '-0.8deg' }});">
+                                            <div class="flex gap-3 pt-3">
+                                                <div class="bulletin-photo h-20 w-20 shrink-0 overflow-hidden p-1.5">
+                                                    <?php if ($post->cover_image_url): ?>
+                                                        <img src="{{ $post->cover_image_url }}" alt="{{ $post->title }}" class="h-full w-full rounded-[0.75rem] object-cover">
+                                                    <?php else: ?>
+                                                        <div class="flex h-full w-full items-center justify-center rounded-[0.75rem] bg-[linear-gradient(145deg,#77a6d8_0%,#5f8fcb_45%,#315fbd_100%)] px-3 text-center">
+                                                            <span class="text-xs font-bold uppercase tracking-[0.12em] text-white">Blog</span>
+                                                        </div>
+                                                    <?php endif; ?>
                                                 </div>
-                                                <div class="min-w-0">
-                                                    <h3 class="line-clamp-2 text-base font-semibold leading-6 text-stone-900 md:text-lg">{{ $post->title }}</h3>
-                                                    <p class="mt-2 text-sm font-medium text-stone-500">Universal Eden Holidays</p>
-                                                    <p class="mt-1 text-sm text-stone-400">{{ $post->published_at?->format('d M Y') ?? 'Latest post' }}</p>
+                                                <div class="min-w-0 flex-1" style="padding-top: 0.35rem;">
+                                                    <h3 class="line-clamp-2 text-[1.55rem] font-semibold leading-[1.15] text-stone-900">{{ $post->title }}</h3>
+                                                    <p class="mt-2 text-[0.68rem] font-bold uppercase tracking-[0.18em] text-stone-500">{{ $post->published_at?->format('d M Y') ?? 'Latest post' }}</p>
                                                 </div>
                                             </div>
                                         </a>
-                                    @endforeach
+                                    <?php endforeach; ?>
+                                    <?php if ($latestBlogPosts->isEmpty()): ?>
+                                        <article class="bulletin-note bulletin-note--cream" style="transform: rotate(0.8deg);">
+                                            <div class="pt-5 text-center">
+                                                <p class="text-sm leading-7 text-stone-600">No blog posts have been uploaded yet.</p>
+                                            </div>
+                                        </article>
+                                    <?php endif; ?>
                                 </div>
-                            @else
-                                <div class="flex min-h-[250px] items-center justify-center rounded-[1.6rem] border border-dashed border-stone-300 bg-white px-6 text-center text-sm leading-7 text-stone-600">
-                                    No travel updates are available yet.
-                                </div>
-                            @endif
+                            </div>
                         </div>
-
-                        <div class="mt-5 grid gap-3 border-t border-stone-200 pt-4 md:grid-cols-2 xl:grid-cols-4">
-                            <div class="flex items-start gap-3 rounded-[1rem] bg-white px-4 py-3">
-                                <span class="text-lg text-stone-500">✈</span>
-                                <div>
-                                    <p class="text-[0.62rem] font-semibold uppercase tracking-[0.16em] text-stone-700">Travel Stories</p>
-                                    <p class="mt-1 text-xs text-stone-500">Fresh inspiration from Sabah and beyond</p>
+                    </div>
+                    <div
+                        id="promo-poster-modal"
+                        style="position: fixed; inset: 0; z-index: 80; display: none; align-items: center; justify-content: center; background: rgba(15,23,42,0.72); padding: 1.25rem;"
+                    >
+                        <div
+                            id="promo-poster-modal-panel"
+                            style="position: relative; width: min(100%, 1100px); max-height: calc(100vh - 2.5rem); overflow-y: auto; border-radius: 1.6rem; background: linear-gradient(180deg, #fffdf7 0%, #f8f2e7 100%); box-shadow: 0 30px 80px rgba(15,23,42,0.3);"
+                        >
+                            <button
+                                type="button"
+                                id="promo-poster-modal-close"
+                                aria-label="Close promotion popup"
+                                style="position: absolute; top: 1rem; right: 1rem; display: inline-flex; height: 2.4rem; width: 2.4rem; align-items: center; justify-content: center; border: 0; border-radius: 999px; background: rgba(255,255,255,0.94); color: #1f2937; font-size: 1.5rem; cursor: pointer; box-shadow: 0 10px 24px rgba(15,23,42,0.16);"
+                            >
+                                ×
+                            </button>
+                            <div style="display: flex; align-items: flex-start; gap: 1.75rem; padding: 2rem;">
+                                <div id="promo-poster-modal-media" class="bulletin-photo overflow-hidden p-2" style="width: 500px; min-width: 500px; flex: 0 0 500px; margin: 0; background: #ffffff;">
+                                    <img id="promo-poster-modal-image" src="" alt="" class="w-full rounded-[1rem] object-contain" style="display: none; width: 100%; height: 520px; background: #ffffff;">
+                                    <div id="promo-poster-modal-fallback" class="flex items-center justify-center rounded-[1rem] bg-[linear-gradient(145deg,#77a6d8_0%,#5f8fcb_45%,#315fbd_100%)] px-5 text-center" style="display: none; min-height: 320px;">
+                                        <span id="promo-poster-modal-fallback-title" class="font-['Prata'] text-3xl leading-tight text-white"></span>
+                                    </div>
                                 </div>
-                            </div>
-                            <div class="flex items-start gap-3 rounded-[1rem] bg-white px-4 py-3">
-                                <span class="text-lg text-stone-500">🗺</span>
-                                <div>
-                                    <p class="text-[0.62rem] font-semibold uppercase tracking-[0.16em] text-stone-700">Local Tips</p>
-                                    <p class="mt-1 text-xs text-stone-500">Helpful ideas for planning your route</p>
-                                </div>
-                            </div>
-                            <div class="flex items-start gap-3 rounded-[1rem] bg-white px-4 py-3">
-                                <span class="text-lg text-stone-500">🎥</span>
-                                <div>
-                                    <p class="text-[0.62rem] font-semibold uppercase tracking-[0.16em] text-stone-700">Video Updates</p>
-                                    <p class="mt-1 text-xs text-stone-500">Attach social links and video highlights</p>
-                                </div>
-                            </div>
-                            <div class="flex items-start gap-3 rounded-[1rem] bg-white px-4 py-3">
-                                <span class="text-lg text-stone-500">🧳</span>
-                                <div>
-                                    <p class="text-[0.62rem] font-semibold uppercase tracking-[0.16em] text-stone-700">Daily Posts</p>
-                                    <p class="mt-1 text-xs text-stone-500">New blog entries from the admin dashboard</p>
+                                <div style="min-width: 0; flex: 1 1 auto; padding-top: 1.35rem; padding-right: 0.5rem;">
+                                    <p id="promo-poster-modal-date" style="margin: 0; font-size: 0.68rem; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: #b45309;"></p>
+                                    <h3 id="promo-poster-modal-title" style="margin: 0.9rem 0 0; font-family: 'Prata', serif; font-size: clamp(1.6rem, 2vw, 2.2rem); line-height: 1.15; color: #1c1917;"></h3>
+                                    <p id="promo-poster-modal-summary" style="margin: 1rem 0 0; font-size: 0.98rem; line-height: 1.8; color: #57534e;"></p>
                                 </div>
                             </div>
                         </div>
@@ -1304,7 +927,6 @@
                 </div>
             </section>
         </div>
-        @endif
 
         <section id="popular-picks" class="mt-10 home-screen-section relative overflow-hidden md:overflow-visible px-6 pb-8 pt-0 md:mt-12 md:px-8 md:pb-10 md:pt-0">
 
@@ -1339,10 +961,16 @@
 
                 <div class="mt-1 overflow-hidden px-2 py-4 md:overflow-visible md:py-6">
                     <div class="popular-picks-track flex flex-wrap justify-center" data-popular-picks-track style="gap: 2.5rem;">
-                        @foreach ($popularPackages as $package)
-                            @php
-                                $locationTag = strtoupper(str_contains(strtolower($package->location), 'kundasang') ? 'Kundasang' : (str_contains(strtolower($package->location), 'kota belud') ? 'Kota Belud' : (str_contains(strtolower($package->location), 'ranau') ? 'Kundasang-Ranau' : 'Kota Kinabalu')));
-                                $tripCode = strtoupper(str_replace([' days', ' day', ' nights', ' night', ' '], ['D', 'D', 'N', 'N', ''], $package->duration));
+                        <?php if ($popularPackages->isNotEmpty()): ?>
+                        <?php foreach ($popularPackages as $package): ?>
+                            <?php
+                                $packageLocation = strtolower((string) $package->location);
+                                $locationTag = str_contains($packageLocation, 'kundasang')
+                                    ? 'KUNDASANG'
+                                    : (str_contains($packageLocation, 'kota belud')
+                                        ? 'KOTA BELUD'
+                                        : (str_contains($packageLocation, 'ranau') ? 'KUNDASANG-RANAU' : 'KOTA KINABALU'));
+                                $tripCode = strtoupper(str_replace([' days', ' day', ' nights', ' night', ' '], ['D', 'D', 'N', 'N', ''], (string) $package->duration));
                                 $discountBadge = $package->has_active_discount
                                     ? rtrim(rtrim(number_format((float) $package->discount_percentage, 2, '.', ''), '0'), '.').'% OFF'
                                     : null;
@@ -1350,7 +978,7 @@
                                 $originalPrice = (float) $package->malaysia_adult_price_myr;
                                 $packageRating = $package->package_review_average;
                                 $packageReviewCount = (int) ($package->package_review_count ?? 0);
-                            @endphp
+                            ?>
                             <div class="popular-package-shell flex h-full flex-col items-center">
                                 <a href="{{ route('products.show', $package) }}" class="popular-package-card flex h-full flex-col overflow-hidden text-left shadow-[0_14px_26px_rgba(15,23,42,0.08)] duration-300" style="width: 390px; min-height: 580px; border-radius: 1.6rem 1.6rem 0 0; background: #f1f0e9;">
                                     <div class="relative overflow-hidden">
@@ -1360,7 +988,9 @@
                                         @else
                                             <div class="flex h-52 items-center justify-center bg-[linear-gradient(135deg,_#f59e0b,_#fde68a_45%,_#fed7aa)] px-6 text-center text-xl font-semibold text-stone-800">{{ $package->name }}</div>
                                         @endif
+
                                         <span style="position: absolute; left: 0.75rem; top: 0.75rem; z-index: 2; border-radius: 0.2rem; background: #2c22c9; padding: 0.28rem 0.55rem; font-size: 0.6rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #fff;">{{ $locationTag }}</span>
+
                                         @if ($discountBadge)
                                             <span style="position: absolute; right: 0.75rem; top: 0.75rem; z-index: 2; border-radius: 0.2rem; background: #ff1d0d; padding: 0.28rem 0.55rem; font-size: 0.6rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #fff;">{{ $discountBadge }}</span>
                                         @endif
@@ -1378,8 +1008,10 @@
                                                 @endif
                                             </div>
                                         </div>
+
                                         <h3 class="mt-3 font-['Oswald'] text-2xl font-bold uppercase leading-tight text-[#1c2f7d]">{{ $package->name }}</h3>
                                         <p class="mt-3 flex-1 text-sm font-medium leading-6 text-stone-900">{{ \Illuminate\Support\Str::limit($package->description, 180) }}</p>
+
                                         <div class="mt-5 pt-2">
                                             <p class="text-xs font-bold uppercase tracking-[0.14em] text-[#ff1d0d]">Starting From</p>
                                             @if ($package->has_active_discount)
@@ -1398,7 +1030,12 @@
                                     Book Now
                                 </a>
                             </div>
-                        @endforeach
+                        <?php endforeach; ?>
+                        <?php else: ?>
+                            <div class="rounded-3xl border border-dashed border-stone-300 bg-stone-50 px-6 py-10 text-center text-sm text-stone-600">
+                                No popular packages are available right now.
+                            </div>
+                        <?php endif; ?>
                     </div>
                 </div>
             </div>
@@ -1409,39 +1046,15 @@
     id="transport"
     style="position: relative; overflow: hidden; box-sizing: border-box; min-height: calc(100svh - var(--home-header-offset, 0px) + 90px); margin-top: -0.75rem; margin-left: calc(50% - 50vw); margin-right: calc(50% - 50vw);"
 >
-    @php
-        $transportImageMap = [
-            '41/44 Seaters Bus' => asset('images/44pax.png'),
-            '17 Seaters Van' => asset('images/17pax.png'),
-            '9/14 Seaters Van' => asset('images/14pax.png'),
-        ];
-
-        $transportOptions = $transportServices->map(function ($transport) use ($transportImageMap) {
-            return [
-                'label' => $transport->name,
-                'name' => $transport->name,
-                'image' => $transportImageMap[$transport->name] ?? $transport->image_url,
-                'url' => route('products.show', $transport),
-            ];
-        })->values();
-
-        $transportFeatures = [
-            ['label' => 'HYGIENE', 'icon' => 'spark'],
-            ['label' => 'SAFETY', 'icon' => 'shield'],
-            ['label' => 'PROFESIONAL DRIVER', 'icon' => 'driver'],
-            ['label' => 'LICENSED VAN/BUS PERSIARAN', 'icon' => 'license'],
-        ];
-    @endphp
-
     <div style="position: absolute; inset: 0; background-image: url('{{ asset('images/transport.png') }}'); background-size: cover; background-position: center center; background-repeat: no-repeat;"></div>
     <div class="transport-shell" style="position: relative; z-index: 2; min-height: 100%; width: 100%; padding: 1.5rem 3rem calc(2.25rem + 20px);">
 
     <div style="display: flex; min-height: 100%; width: 100%; align-items: center; justify-content: flex-start;">
 
             <!-- LEFT SIDE -->
-            <div class="transport-copy" style="position: relative; z-index: 10; width: 100%; max-width: 980px; flex-shrink: 0; margin-top: 1.75rem; margin-left: 6rem;">
+            <div class="transport-copy" style="position: relative; z-index: 10; width: 100%; max-width: 980px; flex-shrink: 0; margin-top: 0.75rem; margin-left: 6rem;">
                 <!-- TRANSPORT BOX -->
-                <div class="transport-box" style="border-radius: 1rem; background: rgba(255,255,255,0.85); padding: 2rem 2.5rem; min-height: 390px; box-shadow: 0 14px 30px rgba(15,23,42,0.12); backdrop-filter: blur(4px);">
+                <div class="transport-box" style="display: flex; flex-direction: column; justify-content: center; border-radius: 1rem; background: rgba(255,255,255,0.85); padding: 1.6rem 2.5rem 1.8rem; min-height: 330px; box-shadow: 0 14px 30px rgba(15,23,42,0.12); backdrop-filter: blur(4px);">
 
                     <div style="text-align: center;">
                         <h2 style="margin: 0; font-family: 'Oswald', sans-serif; font-size: 2.55rem; font-weight: 700; text-transform: uppercase; line-height: 1; letter-spacing: 0.16em; color: #2f63bc;">
@@ -1453,15 +1066,15 @@
                         </p>
                     </div>
 
-                    <div class="transport-grid" style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1.5rem; margin-top: 2.2rem;">
+                    <div class="transport-grid" style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: center; gap: 1.35rem; margin-top: 2.55rem;">
                         @foreach ($transportOptions as $option)
                             <a
                                 href="{{ $option['url'] }}"
-                                style="display: flex; flex-direction: column; align-items: center; justify-content: flex-end; text-align: center; text-decoration: none; color: inherit; transition: transform 0.25s ease;"
+                                style="display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; text-decoration: none; color: inherit; padding-top: 0.78rem; transition: transform 0.25s ease;"
                                 onmouseover="this.style.transform='translateY(-6px)'"
                                 onmouseout="this.style.transform='translateY(0)'"
                             >
-                                <div style="display: flex; height: 7.5rem; width: 100%; align-items: flex-end; justify-content: center;">
+                                <div style="display: flex; height: 6.7rem; width: 100%; align-items: center; justify-content: center;">
                                     <img
                                         src="{{ $option['image'] }}"
                                         alt="{{ $option['name'] }}"
@@ -1471,7 +1084,7 @@
                                     >
                                 </div>
 
-                                <span style="display: inline-flex; align-items: center; justify-content: center; margin-top: 1rem; border-radius: 999px; background: #365fb8; padding: 0.5rem 1.25rem; font-size: 0.82rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #fff; box-shadow: 0 6px 14px rgba(54,95,184,0.3);">
+                                <span style="display: inline-flex; align-items: center; justify-content: center; margin-top: 0.85rem; border-radius: 999px; background: #365fb8; padding: 0.5rem 1.25rem; font-size: 0.82rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #fff; box-shadow: 0 6px 14px rgba(54,95,184,0.3);">
                                     {{ $option['label'] }}
                                 </span>
 
@@ -1546,38 +1159,10 @@
 
 </section>
 
-        @php
-            $packageSections = [
-                [
-                    'key' => 'kundasang',
-                    'title' => 'KUNDASANG',
-                    'summary' => 'Discover Kundasang, a serene highland paradise nestled in the cool hills near Mount Kinabalu, offering breathtaking mountain views, fresh air, and a peaceful escape from the city.',
-                    'background' => asset('images/kundasang_bg.png'),
-                    'keywords' => ['kundasang', 'kinabalu', 'ranau', 'nabalu', 'desa'],
-                ],
-                [
-                    'key' => 'island',
-                    'title' => 'ISLAND HOPPING',
-                    'summary' => 'Sabah has around 395 islands, offering everything from easy day trips to world-class diving destinations.',
-                    'background' => asset('images/semporna.png'),
-                    'keywords' => ['island', 'marine', 'semporna', 'snork', 'div', 'sipadan', 'mabul', 'mataking', 'pom pom', 'bohey'],
-                ],
-                [
-                    'key' => 'kk-beach',
-                    'title' => 'KK BEACH',
-                    'summary' => 'Kota Kinabalu is home to some of Sabah\'s most scenic beaches, known for their breathtaking sunsets and relaxed coastal lifestyle.',
-                    'background' => asset('images/beach.png'),
-                    'keywords' => ['kota kinabalu', 'kk ', 'beach', 'tanjung aru', 'city', 'island hopping', 'manukan', 'sapi', 'mamutik'],
-                ],
-            ];
-
-            $packagePageSize = 3;
-        @endphp
-
         <section id="packages-showcase" style="box-sizing: border-box; margin-top: -4.5rem; margin-left: calc(50% - 50vw); margin-right: calc(50% - 50vw); padding-bottom: 2.25rem;">
             <div style="display: flex; flex-direction: column; gap: 0;">
-                @foreach ($packageSections as $section)
-                    @php
+                <?php foreach ($packageSections as $section): ?>
+                    <?php
                         $sectionPackages = $travelPackages
                             ->filter(function ($package) use ($section) {
                                 $haystack = strtolower(trim(($package->name ?? '').' '.($package->location ?? '').' '.($package->description ?? '')));
@@ -1594,9 +1179,9 @@
 
                         $visiblePackages = $sectionPackages->isNotEmpty() ? $sectionPackages : $travelPackages->take($packagePageSize)->values();
                         $pageCount = max(1, $visiblePackages->count() - $packagePageSize + 1);
-                    @endphp
+                    ?>
 
-                    <article class="package-offer-section home-screen-section" data-package-section="{{ $section['key'] }}" style="position: relative; overflow: hidden; box-shadow: 0 20px 60px rgba(15,23,42,0.18);">
+                    <article class="package-offer-section home-screen-section" data-package-section="{{ $section['key'] }}" style="position: relative; overflow: hidden; box-shadow: 0 20px 60px rgba(15,23,42,0.18);{{ $section['key'] === $defaultPackageSection ? '' : ' display: none;' }}">
                         <div style="position: absolute; inset: 0; background-image: url('{{ $section['background'] }}'); background-size: cover; background-position: center center;"></div>
                         <div style="position: absolute; inset: 0; background: linear-gradient(180deg, rgba(7,29,58,0.22), rgba(7,29,58,0.12));"></div>
 
@@ -1628,9 +1213,22 @@
                             @endif
 
                             <div style="position: relative; min-height: 4.5rem; margin-top: 0;">
-                                <div style="display: flex; justify-content: center;">
-                                    <div class="package-section-label" style="min-width: 320px; clip-path: polygon(10% 0, 90% 0, 100% 100%, 0 100%); background: #1f80c4; padding: 0.9rem 2.4rem 1rem; text-align: center; margin-top: 0;">
-                                        <span style="font-family: 'Prata', serif; font-size: 1.95rem; color: #fff;">Packages</span>
+                                <div style="position: relative; left: 15rem; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 1rem 1.25rem;">
+                                    <div class="package-section-label" style="min-width: 320px; clip-path: polygon(10% 0, 90% 0, 100% 100%, 0 100%); transform: scaleY(-1); background: #00000060; padding: 0.9rem 2.4rem 1rem; text-align: center; margin-top: 0;">
+                                        <span style="display: inline-block; font-family: 'Prata', serif; font-size: 1.95rem; color: rgb(255, 255, 255); transform: scaleY(-1);">Packages</span>
+                                    </div>
+                                    <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 0.75rem;">
+                                        <?php foreach ($packageSections as $switchSection): ?>
+                                            <?php $isActivePackageSwitch = $section['key'] === $switchSection['key']; ?>
+                                            <button
+                                                type="button"
+                                                data-package-switch="{{ $switchSection['key'] }}"
+                                                aria-pressed="{{ $isActivePackageSwitch ? 'true' : 'false' }}"
+                                                style="border: 1px solid {{ $isActivePackageSwitch ? '#ffffff' : 'rgba(255,255,255,0.7)' }}; border-radius: 999px; background: {{ $isActivePackageSwitch ? '#ffffff' : 'rgba(255,255,255,0.14)' }}; padding: 0.68rem 1.2rem; font-size: 0.82rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: {{ $isActivePackageSwitch ? '#1f4da2' : '#ffffff' }}; box-shadow: {{ $isActivePackageSwitch ? '0 10px 22px rgba(15,23,42,0.14)' : 'none' }}; cursor: pointer; transition: transform 0.2s ease, background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;"
+                                            >
+                                                {{ $switchSection['title'] }}
+                                            </button>
+                                        <?php endforeach; ?>
                                     </div>
                                 </div>
                             </div>
@@ -1644,11 +1242,11 @@
                                 </p>
                             </div>
 
-                            @if ($visiblePackages->isNotEmpty())
+                            <?php if ($visiblePackages->isNotEmpty()): ?>
                                 <div class="package-carousel-shell" style="margin: 1.7rem auto 0; max-width: calc((390px * 3) + 5rem); padding: 0.8rem 1rem 1.2rem; overflow: visible;">
                                 <div class="package-section-grid" data-package-grid="{{ $section['key'] }}" data-package-page-count="{{ $pageCount }}" style="display: flex; gap: 2.5rem; align-items: start; transition: transform 0.45s ease;">
-                                    @foreach ($visiblePackages as $package)
-                                        @php
+                                    <?php foreach ($visiblePackages as $package): ?>
+                                        <?php
                                             $locationTag = strtoupper(str_contains(strtolower($package->location), 'kundasang') ? 'Kundasang' : (str_contains(strtolower($package->location), 'marine') || str_contains(strtolower($package->location), 'island') ? 'Semporna' : 'Kota Kinabalu'));
                                             $tripCode = strtoupper(str_replace([' days', ' day', ' nights', ' night', ' '], ['D', 'D', 'N', 'N', ''], $package->duration));
                                             $discountBadge = $package->has_active_discount
@@ -1658,7 +1256,7 @@
                                             $originalPrice = (float) $package->malaysia_adult_price_myr;
                                             $packageRating = $package->package_review_average;
                                             $packageReviewCount = (int) ($package->package_review_count ?? 0);
-                                        @endphp
+                                        ?>
                                         <div class="package-section-card" data-package-card="{{ $section['key'] }}" style="display: flex; width: 390px; min-width: 390px; flex-direction: column; align-items: center;">
                                             <a href="{{ route('products.show', $package) }}" class="package-showcase-card" style="display: flex; width: 100%; max-width: 390px; min-height: 520px; flex-direction: column; overflow: hidden; border-radius: 1.6rem 1.6rem 0 0; background: #fff; text-decoration: none; box-shadow: 0 18px 30px rgba(15,23,42,0.22);">
                                                 <div style="position: relative;">
@@ -1716,17 +1314,17 @@
                                                 Book Now
                                             </a>
                                         </div>
-                                    @endforeach
+                                    <?php endforeach; ?>
                                 </div>
                                 </div>
-                            @else
+                            <?php else: ?>
                                 <div style="margin-top: 1.7rem; background: rgba(255,255,255,0.88); padding: 1.5rem 1.75rem; color: #1f2937;">
                                     Packages for this destination will show here once they are added.
                                 </div>
-                            @endif
+                            <?php endif; ?>
                         </div>
                     </article>
-                @endforeach
+                <?php endforeach; ?>
             </div>
         </section>
 
@@ -1739,32 +1337,32 @@
                 <p class="max-w-2xl text-sm leading-6 text-stone-600">Packages combine planning, logistics, and guided experiences into easier customer decisions.</p>
             </div>
             <div class="mt-6 grid gap-5 md:grid-cols-2">
-                @foreach ($travelPackages as $package)
-                    @php
+                <?php foreach ($travelPackages as $package): ?>
+                    <?php
                         $currentPrice = (float) $package->discounted_malaysia_adult_price_myr;
                         $originalPrice = (float) $package->malaysia_adult_price_myr;
-                    @endphp
+                    ?>
                     <a href="{{ route('products.show', $package) }}" class="block overflow-hidden rounded-3xl border border-stone-200 bg-stone-50 transition hover:-translate-y-1 hover:shadow-lg">
-                        @if ($package->image_url)
+                        <?php if ($package->image_url): ?>
                             <div class="relative">
                                 <img src="{{ $package->image_url }}" alt="{{ $package->name }}" class="h-52 w-full object-cover">
                                 <img src="{{ asset('images/UE.png') }}" alt="Universal Eden trademark" class="pointer-events-none absolute bottom-3 right-3 h-7 w-auto opacity-90">
                             </div>
-                        @else
+                        <?php else: ?>
                             <div class="flex h-52 items-center justify-center bg-[linear-gradient(135deg,_#fff7ed,_#ecfccb)] px-6 text-center text-xl font-semibold text-stone-700">{{ $package->name }}</div>
-                        @endif
+                        <?php endif; ?>
                         <div class="p-5">
                             <h3 class="text-2xl font-semibold text-stone-900">{{ $package->name }}</h3>
-                            <p class="mt-2 text-sm text-stone-500">{{ $package->location }} Â· {{ $package->duration }}</p>
+                            <p class="mt-2 text-sm text-stone-500">{{ $package->location }} · {{ $package->duration }}</p>
                             <p class="mt-4 text-sm leading-6 text-stone-600">{{ $package->description }}</p>
                             <div class="mt-5 flex items-center justify-between">
                                 <span class="text-sm text-stone-500">Package rate</span>
                                 <div class="text-right">
-                                    @if ($package->has_active_discount)
+                                    <?php if ($package->has_active_discount): ?>
                                         <div class="text-xs text-stone-400 line-through">
                                             <span class="currency-price" data-myr="{{ $originalPrice }}">{{ number_format($originalPrice, 2) }}</span>
                                         </div>
-                                    @endif
+                                    <?php endif; ?>
                                     <div class="text-lg font-semibold text-stone-900">
                                         <span class="currency-price" data-myr="{{ $currentPrice }}">{{ number_format($currentPrice, 2) }}</span>
                                     </div>
@@ -1772,7 +1370,7 @@
                             </div>
                         </div>
                     </a>
-                @endforeach
+                <?php endforeach; ?>
             </div>
         </section>
 
@@ -1906,45 +1504,6 @@
                         </button>
                     </form>
                 </section>
-            </div>
-            </div>
-        </section>
-
-        <section id="about-us" class="home-section-compact mt-[6rem] px-6 pb-4 md:mt-24 md:px-8 md:pb-6">
-            <div class="relative mx-auto overflow-hidden rounded-[2rem] border border-stone-200 bg-[linear-gradient(135deg,_#fffdf9,_#eff6ff_60%,_#ecfeff)] p-5 shadow-sm" style="max-width: 1920px;">
-            <div class="absolute right-0 top-0 h-32 w-32 rounded-full bg-sky-100/70 blur-3xl"></div>
-            <div class="absolute bottom-0 left-0 h-28 w-28 rounded-full bg-amber-100/70 blur-3xl"></div>
-            <div class="relative grid gap-4 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
-                <div class="rounded-[1.75rem] border border-white/70 bg-white/80 p-5 shadow-sm backdrop-blur">
-                    <div class="flex items-center gap-4">
-                        <img src="{{ asset('images/ue_logo.jpg') }}" alt="Universal Eden Logo" class="h-16 w-16 rounded-full object-cover shadow-sm">
-                        <div>
-                            <p class="text-sm uppercase tracking-[0.3em] text-amber-600">About Us</p>
-                            <h2 class="mt-2 font-['Prata'] text-3xl text-stone-900">Universal Eden Holidays</h2>
-                        </div>
-                    </div>
-                    <p class="mt-4 text-sm leading-6 text-stone-600">
-                        We help travelers explore Sabah with smoother planning, reliable transport, curated holiday packages, and practical booking support from the first enquiry to the final trip detail.
-                    </p>
-                </div>
-                <div class="grid gap-3 md:grid-cols-2">
-                    <div class="rounded-[1.5rem] border border-white/70 bg-white/85 p-4 shadow-sm">
-                        <h3 class="text-lg font-semibold text-stone-900">What we do</h3>
-                        <p class="mt-2 text-sm leading-6 text-stone-600">We organize transport services, holiday packages, and customer assistance so visitors can book Sabah experiences in one clear place.</p>
-                    </div>
-                    <div class="rounded-[1.5rem] border border-white/70 bg-white/85 p-4 shadow-sm">
-                        <h3 class="text-lg font-semibold text-stone-900">Why people choose us</h3>
-                        <p class="mt-2 text-sm leading-6 text-stone-600">Travelers come to us for local knowledge, simpler planning, flexible options, and a more personal holiday experience across Sabah.</p>
-                    </div>
-                    <div class="rounded-[1.5rem] border border-white/70 bg-white/85 p-4 shadow-sm">
-                        <h3 class="text-lg font-semibold text-stone-900">Our focus</h3>
-                        <p class="mt-2 text-sm leading-6 text-stone-600">We aim to make every journey feel organized, comfortable, and memorable, whether it is an airport transfer, a family package, or a full sightseeing trip.</p>
-                    </div>
-                    <div class="rounded-[1.5rem] border border-white/70 bg-white/85 p-4 shadow-sm">
-                        <h3 class="text-lg font-semibold text-stone-900">Travel with confidence</h3>
-                        <p class="mt-2 text-sm leading-6 text-stone-600">Our team is built around helpful support, straightforward booking, and dependable service for guests discovering Sabah and beyond.</p>
-                    </div>
-                </div>
             </div>
             </div>
         </section>
@@ -2132,310 +1691,6 @@
     </script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            const promoSlides = @json($promoBookSlides ?? []);
-            const prevButton = document.getElementById('promo-book-prev');
-            const nextButton = document.getElementById('promo-book-next');
-            const statusLabel = document.getElementById('promo-book-status');
-            const countLabel = document.getElementById('promo-book-count');
-            const desktopSpread = document.querySelector('.promo-book-spread');
-            const desktopTurnSheet = document.getElementById('promo-desktop-turn-sheet');
-            const desktopTurnInfo = document.getElementById('promo-desktop-turn-info');
-            const desktopTurnPoster = document.getElementById('promo-desktop-turn-poster');
-            const desktopPrevZone = document.getElementById('promo-desktop-prev-zone');
-            const desktopNextZone = document.getElementById('promo-desktop-next-zone');
-            const desktopPoster = document.getElementById('promo-desktop-poster');
-            const desktopInfoPage = document.querySelector('.promo-book-page--info');
-            const desktopImage = document.getElementById('promo-desktop-image');
-            const desktopStatus = document.getElementById('promo-desktop-status');
-            const desktopLabel = document.getElementById('promo-desktop-label');
-            const desktopDate = document.getElementById('promo-desktop-date');
-            const desktopTitle = document.getElementById('promo-desktop-title');
-            const desktopSummary = document.getElementById('promo-desktop-summary');
-            const desktopRange = document.getElementById('promo-desktop-range');
-            const mobileCard = document.getElementById('promo-mobile-card');
-            const mobileFrontFace = mobileCard?.querySelector('.promo-book-face--front');
-            const mobileImage = document.getElementById('promo-mobile-image');
-            const mobileLabel = document.getElementById('promo-mobile-label');
-            const mobileDate = document.getElementById('promo-mobile-date');
-            const mobileStatusFront = document.getElementById('promo-mobile-status-front');
-            const mobileTitleFront = document.getElementById('promo-mobile-title-front');
-            const mobileStatusBack = document.getElementById('promo-mobile-status-back');
-            const mobileTitleBack = document.getElementById('promo-mobile-title-back');
-            const mobileRange = document.getElementById('promo-mobile-range');
-            const mobileSummary = document.getElementById('promo-mobile-summary');
-            const mobileFlipFront = document.getElementById('promo-mobile-flip-front');
-            const mobileFlipBack = document.getElementById('promo-mobile-flip-toggle');
-            const mobileViewPoster = document.getElementById('promo-mobile-view-poster');
-
-            if (
-                !promoSlides.length ||
-                !prevButton ||
-                !nextButton ||
-                !countLabel ||
-                !desktopTurnSheet ||
-                !desktopTurnInfo ||
-                !desktopTurnPoster ||
-                !desktopPoster ||
-                !desktopInfoPage ||
-                !desktopImage ||
-                !desktopStatus ||
-                !desktopLabel ||
-                !desktopDate ||
-                !desktopTitle ||
-                !desktopSummary ||
-                !desktopRange ||
-                !mobileCard ||
-                !mobileImage ||
-                !mobileLabel ||
-                !mobileDate ||
-                !mobileStatusFront ||
-                !mobileTitleFront ||
-                !mobileStatusBack ||
-                !mobileTitleBack ||
-                !mobileRange ||
-                !mobileSummary ||
-                !mobileFlipFront ||
-                !mobileFlipBack ||
-                !mobileViewPoster
-            ) {
-                return;
-            }
-
-            let activePromoIndex = 0;
-            let desktopFlipStartTimeout = null;
-            let desktopFlipTimeout = null;
-            let desktopFlipResetTimeout = null;
-            let isDesktopFlipping = false;
-
-            const isDesktopPromoView = () => window.matchMedia('(min-width: 768px)').matches;
-
-            const syncMobileCardHeight = () => {
-                const mobileInner = document.getElementById('promo-mobile-inner');
-
-                if (!mobileCard || !mobileInner || !mobileFrontFace) {
-                    return;
-                }
-
-                const frontHeight = mobileFrontFace.scrollHeight;
-                const nextHeight = Math.max(frontHeight, 380);
-
-                mobileCard.style.minHeight = `${nextHeight}px`;
-                mobileInner.style.minHeight = `${nextHeight}px`;
-                mobileCard.style.height = `${nextHeight}px`;
-                mobileInner.style.height = `${nextHeight}px`;
-            };
-
-            const syncTriggerData = (element, promo) => {
-                element.dataset.promoTitle = promo.title ?? '';
-                element.dataset.promoSummary = promo.summary ?? '';
-                element.dataset.promoPoster = promo.poster_url ?? '';
-                element.dataset.promoLabel = promo.promo_label ?? '';
-                element.dataset.promoDate = promo.date_label ?? '';
-                element.dataset.promoRange = promo.range_label ?? '';
-                element.dataset.promoStatus = promo.status ?? '';
-            };
-
-            const setFlipped = (isFlipped) => {
-                mobileCard.classList.toggle('is-flipped', isFlipped);
-                mobileFlipFront.style.display = isFlipped ? 'none' : 'inline-flex';
-                requestAnimationFrame(syncMobileCardHeight);
-            };
-
-            const clearDesktopFlipTimers = () => {
-                if (desktopFlipStartTimeout) {
-                    window.clearTimeout(desktopFlipStartTimeout);
-                    desktopFlipStartTimeout = null;
-                }
-
-                if (desktopFlipTimeout) {
-                    window.clearTimeout(desktopFlipTimeout);
-                    desktopFlipTimeout = null;
-                }
-
-                if (desktopFlipResetTimeout) {
-                    window.clearTimeout(desktopFlipResetTimeout);
-                    desktopFlipResetTimeout = null;
-                }
-            };
-
-            const clearDesktopTurnClasses = () => {
-                desktopSpread.classList.remove('is-turning', 'is-updating');
-                desktopTurnSheet.classList.remove('is-active', 'is-flipping');
-                desktopTurnInfo.innerHTML = '';
-                desktopTurnPoster.innerHTML = '';
-            };
-
-            const buildDesktopInfoHtml = (promo) => `
-                <p style="margin: 0; font-family: 'Oswald', sans-serif; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.2em; color: #315fbd;">${promo.status ?? ''}</p>
-                <div style="margin-top: 1rem; display: flex; flex-wrap: wrap; gap: 0.45rem; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.14em; color: #b45309;">
-                    <span style="border-radius: 999px; background: #eff6ff; padding: 0.45rem 0.75rem; color: #315fbd;">${promo.promo_label ?? ''}</span>
-                    <span style="border-radius: 999px; background: #fff7ed; padding: 0.45rem 0.75rem; color: #b45309;">${promo.date_label ?? ''}</span>
-                </div>
-                <h3 style="margin: 1.15rem 0 0; font-size: clamp(2rem, 2.4vw, 2.8rem); font-weight: 700; line-height: 1.04; color: #1c1917;">${promo.title ?? ''}</h3>
-                <p style="margin: 1.15rem 0 0; font-size: 1rem; line-height: 1.85; color: #57534e;">${promo.summary ?? ''}</p>
-                <div style="margin-top: 1.5rem; padding-top: 0;">
-                    <p style="margin: 0; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.18em; color: #94a3b8;">Offer Window</p>
-                    <p style="margin: 0.55rem 0 0; font-size: 0.95rem; line-height: 1.7; color: #57534e;">${promo.range_label ?? ''}</p>
-                </div>
-            `;
-
-            const buildDesktopTurnPoster = (promo) => {
-                desktopTurnPoster.classList.remove('is-portrait', 'is-landscape');
-                const img = document.createElement('img');
-                img.src = promo.poster_url ?? '';
-                img.alt = promo.title ?? 'Promotion poster';
-                img.addEventListener('load', () => {
-                    if (!img.naturalWidth || !img.naturalHeight) {
-                        return;
-                    }
-
-                    desktopTurnPoster.classList.toggle('is-portrait', img.naturalHeight > img.naturalWidth);
-                    desktopTurnPoster.classList.toggle('is-landscape', img.naturalWidth >= img.naturalHeight);
-                }, { once: true });
-                desktopTurnPoster.replaceChildren(img);
-            };
-
-            const applyPromoOrientation = (imageElement, containerElement) => {
-                if (!imageElement || !containerElement) {
-                    return;
-                }
-
-                const update = () => {
-                    if (!imageElement.naturalWidth || !imageElement.naturalHeight) {
-                        return;
-                    }
-
-                    const isPortrait = imageElement.naturalHeight > imageElement.naturalWidth;
-                    containerElement.classList.toggle('is-portrait', isPortrait);
-                    containerElement.classList.toggle('is-landscape', !isPortrait);
-                };
-
-                if (imageElement.complete) {
-                    update();
-                } else {
-                    imageElement.addEventListener('load', update, { once: true });
-                }
-            };
-
-            const renderPromo = (nextIndex) => {
-                activePromoIndex = (nextIndex + promoSlides.length) % promoSlides.length;
-                const promo = promoSlides[activePromoIndex];
-
-                if (statusLabel) {
-                    statusLabel.textContent = promo.status ?? 'Promotion';
-                }
-                countLabel.textContent = `${activePromoIndex + 1} / ${promoSlides.length}`;
-
-                desktopImage.src = promo.poster_url ?? '';
-                desktopImage.alt = promo.title ?? 'Promotion poster';
-                desktopStatus.textContent = promo.status ?? '';
-                desktopLabel.textContent = promo.promo_label ?? '';
-                desktopDate.textContent = promo.date_label ?? '';
-                desktopTitle.textContent = promo.title ?? '';
-                desktopSummary.textContent = promo.summary ?? '';
-                desktopRange.textContent = promo.range_label ?? '';
-
-                mobileImage.src = promo.poster_url ?? '';
-                mobileImage.alt = promo.title ?? 'Promotion poster';
-                mobileLabel.textContent = promo.promo_label ?? '';
-                mobileDate.textContent = promo.date_label ?? '';
-                mobileStatusFront.textContent = promo.status ?? '';
-                mobileTitleFront.textContent = promo.title ?? '';
-                mobileStatusBack.textContent = promo.status ?? '';
-                mobileTitleBack.textContent = promo.title ?? '';
-                mobileRange.textContent = promo.range_label ?? '';
-                mobileSummary.textContent = promo.summary ?? '';
-
-                syncTriggerData(desktopPoster, promo);
-                syncTriggerData(mobileViewPoster, promo);
-                applyPromoOrientation(desktopImage, desktopPoster);
-                applyPromoOrientation(mobileImage, mobileFrontFace);
-                setFlipped(false);
-                requestAnimationFrame(syncMobileCardHeight);
-            };
-
-            const animateDesktopPromoTurn = (direction) => {
-                if (!desktopSpread || !isDesktopPromoView()) {
-                    renderPromo(activePromoIndex + direction);
-                    return;
-                }
-
-                if (isDesktopFlipping) {
-                    return;
-                }
-
-                isDesktopFlipping = true;
-                clearDesktopFlipTimers();
-                clearDesktopTurnClasses();
-                desktopSpread.classList.add('is-updating');
-
-                desktopFlipTimeout = window.setTimeout(() => {
-                    renderPromo(activePromoIndex + direction);
-                }, 110);
-
-                desktopFlipResetTimeout = window.setTimeout(() => {
-                    clearDesktopTurnClasses();
-                    isDesktopFlipping = false;
-                }, 240);
-            };
-
-            if (promoSlides.length <= 1) {
-                prevButton.style.opacity = '0.45';
-                nextButton.style.opacity = '0.45';
-            }
-
-            nextButton.addEventListener('click', () => {
-                animateDesktopPromoTurn(1);
-            });
-
-            prevButton.addEventListener('click', () => {
-                animateDesktopPromoTurn(-1);
-            });
-
-            desktopNextZone?.addEventListener('click', () => {
-                animateDesktopPromoTurn(1);
-            });
-
-            desktopPrevZone?.addEventListener('click', () => {
-                animateDesktopPromoTurn(-1);
-            });
-
-            mobileFlipFront.addEventListener('click', () => {
-                setFlipped(true);
-            });
-
-            mobileFlipBack.addEventListener('click', (event) => {
-                event.stopPropagation();
-                setFlipped(false);
-            });
-
-            mobileViewPoster.addEventListener('click', (event) => {
-                event.stopPropagation();
-            });
-
-            mobileCard.addEventListener('click', (event) => {
-                if (event.target.closest('button') || event.target.closest('.promo-poster-trigger')) {
-                    return;
-                }
-
-                setFlipped(!mobileCard.classList.contains('is-flipped'));
-            });
-
-            mobileImage.addEventListener('load', syncMobileCardHeight);
-            window.addEventListener('resize', () => {
-                syncMobileCardHeight();
-
-                if (!isDesktopPromoView() && desktopSpread) {
-                    clearDesktopFlipTimers();
-                    clearDesktopTurnClasses();
-                    isDesktopFlipping = false;
-                }
-            });
-            renderPromo(0);
-        });
-    </script>
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
             const popularTrack = document.querySelector('[data-popular-picks-track]');
             const popularPrevButton = document.querySelector('[data-popular-prev]');
             const popularNextButton = document.querySelector('[data-popular-next]');
@@ -2580,59 +1835,256 @@
     </script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            const modal = document.getElementById('promo-detail-modal');
-            const panel = document.getElementById('promo-detail-panel');
-            const closeButton = document.getElementById('promo-detail-close');
-            const triggers = Array.from(document.querySelectorAll('.promo-poster-trigger'));
+            const heroSlider = document.querySelector('[data-hero-slider]');
+            const heroSlides = Array.from(document.querySelectorAll('[data-hero-slide]'));
+            const heroPrev = document.querySelector('[data-hero-prev]');
+            const heroNext = document.querySelector('[data-hero-next]');
+            const heroDots = Array.from(document.querySelectorAll('[data-hero-dot]'));
+            let heroActiveIndex = 0;
+            let heroIntervalId = null;
 
-            if (!modal || !panel || !closeButton || !triggers.length) {
+            if (heroSlider && heroSlides.length > 1) {
+                const setHeroSlide = (nextIndex) => {
+                    heroActiveIndex = (nextIndex + heroSlides.length) % heroSlides.length;
+
+                    heroSlides.forEach((slide, index) => {
+                        slide.classList.toggle('is-active', index === heroActiveIndex);
+                    });
+
+                    heroDots.forEach((dot, index) => {
+                        dot.classList.toggle('is-active', index === heroActiveIndex);
+                        dot.setAttribute('aria-pressed', index === heroActiveIndex ? 'true' : 'false');
+                    });
+                };
+
+                const stopHeroAutoplay = () => {
+                    if (heroIntervalId) {
+                        window.clearInterval(heroIntervalId);
+                        heroIntervalId = null;
+                    }
+                };
+
+                const startHeroAutoplay = () => {
+                    stopHeroAutoplay();
+                    heroIntervalId = window.setInterval(() => {
+                        setHeroSlide(heroActiveIndex + 1);
+                    }, 5000);
+                };
+
+                heroPrev?.addEventListener('click', () => {
+                    setHeroSlide(heroActiveIndex - 1);
+                    startHeroAutoplay();
+                });
+
+                heroNext?.addEventListener('click', () => {
+                    setHeroSlide(heroActiveIndex + 1);
+                    startHeroAutoplay();
+                });
+
+                heroDots.forEach((dot, index) => {
+                    dot.addEventListener('click', () => {
+                        setHeroSlide(index);
+                        startHeroAutoplay();
+                    });
+                });
+
+                heroSlider.addEventListener('mouseenter', stopHeroAutoplay);
+                heroSlider.addEventListener('mouseleave', startHeroAutoplay);
+                setHeroSlide(0);
+                startHeroAutoplay();
+            }
+
+            const pastPromoPosters = Array.from(document.querySelectorAll('[data-past-promo-poster]'));
+
+            const applyPastPromoShape = (image) => {
+                if (!image.naturalWidth || !image.naturalHeight) {
+                    return;
+                }
+
+                const orientation = image.closest('[data-past-promo-trigger]')?.dataset.promoOrientation || '';
+                const isLandscape = orientation
+                    ? orientation === 'landscape'
+                    : image.naturalWidth >= image.naturalHeight;
+                const card = image.closest('[data-past-promo-card]');
+                const trigger = image.closest('[data-past-promo-trigger]');
+
+                if (card) {
+                    card.style.marginTop = isLandscape ? '6.35rem' : '-2.4rem';
+                    card.style.marginLeft = '0';
+                    card.style.marginRight = '0';
+                    card.style.width = isLandscape ? '20rem' : 'min(100%, 21rem)';
+                    card.style.flex = isLandscape ? '0 0 16.75rem' : '0 0 21rem';
+                    card.style.padding = '0.18rem';
+                }
+
+                if (trigger) {
+                    trigger.style.maxWidth = isLandscape ? '16.1rem' : '100%';
+                    trigger.style.padding = isLandscape ? '0.08rem' : '0.15rem';
+                }
+
+                image.style.maxHeight = isLandscape ? '22rem' : '40rem';
+                image.style.height = isLandscape ? '22rem' : 'auto';
+                image.style.objectFit = isLandscape ? 'cover' : 'contain';
+            };
+
+            pastPromoPosters.forEach((image) => {
+                if (image.complete) {
+                    applyPastPromoShape(image);
+                } else {
+                    image.addEventListener('load', () => applyPastPromoShape(image), { once: true });
+                }
+            });
+        });
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const promoModal = document.getElementById('promo-poster-modal');
+            const promoModalPanel = document.getElementById('promo-poster-modal-panel');
+            const promoModalClose = document.getElementById('promo-poster-modal-close');
+            const promoModalImage = document.getElementById('promo-poster-modal-image');
+            const promoModalFallback = document.getElementById('promo-poster-modal-fallback');
+            const promoModalFallbackTitle = document.getElementById('promo-poster-modal-fallback-title');
+            const promoModalDate = document.getElementById('promo-poster-modal-date');
+            const promoModalTitle = document.getElementById('promo-poster-modal-title');
+            const promoModalSummary = document.getElementById('promo-poster-modal-summary');
+            const promoTriggers = Array.from(document.querySelectorAll('[data-promo-modal-trigger]'));
+
+            if (
+                !promoModal ||
+                !promoModalPanel ||
+                !promoModalClose ||
+                !promoModalImage ||
+                !promoModalFallback ||
+                !promoModalFallbackTitle ||
+                !promoModalDate ||
+                !promoModalTitle ||
+                !promoModalSummary ||
+                !promoTriggers.length
+            ) {
                 return;
             }
 
-            const image = document.getElementById('promo-detail-image');
-            const status = document.getElementById('promo-detail-status');
-            const label = document.getElementById('promo-detail-label');
-            const date = document.getElementById('promo-detail-date');
-            const title = document.getElementById('promo-detail-title');
-            const summary = document.getElementById('promo-detail-summary');
-            const range = document.getElementById('promo-detail-range');
-
-            const closeModal = () => {
-                modal.style.display = 'none';
+            const closePromoModal = () => {
+                promoModal.style.display = 'none';
                 document.body.style.overflow = '';
             };
 
-            const openModal = (trigger) => {
-                image.src = trigger.dataset.promoPoster ?? '';
-                image.alt = trigger.dataset.promoTitle ?? 'Promotion poster';
-                status.textContent = trigger.dataset.promoStatus ?? '';
-                label.textContent = trigger.dataset.promoLabel ?? '';
-                date.textContent = trigger.dataset.promoDate ?? '';
-                title.textContent = trigger.dataset.promoTitle ?? '';
-                summary.textContent = trigger.dataset.promoSummary ?? '';
-                range.textContent = trigger.dataset.promoRange ?? '';
+            const setPromoModalImageHeight = () => {
+                if (!promoModalImage.naturalWidth || !promoModalImage.naturalHeight) {
+                    promoModalImage.style.height = '520px';
+                    promoModalImage.style.width = '100%';
+                    return;
+                }
 
-                modal.style.display = 'flex';
+                const isLandscape = promoModalImage.naturalWidth > promoModalImage.naturalHeight;
+
+                promoModalImage.style.height = isLandscape ? '320px' : '520px';
+                promoModalImage.style.width = '100%';
+            };
+
+            const openPromoModal = (trigger) => {
+                const posterUrl = trigger.dataset.promoPoster || '';
+                const title = trigger.dataset.promoTitle || 'Promotion';
+                const summary = trigger.dataset.promoSummary || 'No description available yet.';
+                const dateLabel = trigger.dataset.promoDate || '';
+
+                promoModalDate.textContent = dateLabel;
+                promoModalTitle.textContent = title;
+                promoModalSummary.textContent = summary;
+                promoModalImage.alt = title;
+                promoModalFallbackTitle.textContent = title;
+
+                if (posterUrl) {
+                    promoModalImage.src = posterUrl;
+                    promoModalImage.style.display = 'block';
+                    promoModalImage.style.height = '520px';
+                    promoModalImage.style.width = '100%';
+                    promoModalFallback.style.display = 'none';
+
+                    if (promoModalImage.complete) {
+                        setPromoModalImageHeight();
+                    } else {
+                        promoModalImage.addEventListener('load', setPromoModalImageHeight, { once: true });
+                    }
+                } else {
+                    promoModalImage.removeAttribute('src');
+                    promoModalImage.style.display = 'none';
+                    promoModalImage.style.height = '520px';
+                    promoModalImage.style.width = '100%';
+                    promoModalFallback.style.display = 'flex';
+                }
+
+                promoModal.style.display = 'flex';
                 document.body.style.overflow = 'hidden';
             };
 
-            triggers.forEach((trigger) => {
-                trigger.addEventListener('click', () => openModal(trigger));
+            promoTriggers.forEach((trigger) => {
+                trigger.addEventListener('click', () => {
+                    openPromoModal(trigger);
+                });
             });
 
-            closeButton.addEventListener('click', closeModal);
+            promoModalClose.addEventListener('click', closePromoModal);
 
-            modal.addEventListener('click', (event) => {
-                if (event.target === modal) {
-                    closeModal();
+            promoModal.addEventListener('click', (event) => {
+                if (event.target === promoModal) {
+                    closePromoModal();
                 }
             });
 
             document.addEventListener('keydown', (event) => {
-                if (event.key === 'Escape' && modal.style.display === 'flex') {
-                    closeModal();
+                if (event.key === 'Escape' && promoModal.style.display === 'flex') {
+                    closePromoModal();
                 }
             });
+        });
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const sectionPanels = Array.from(document.querySelectorAll('[data-package-section]'));
+            const switchButtons = Array.from(document.querySelectorAll('[data-package-switch]'));
+
+            if (!sectionPanels.length || !switchButtons.length) {
+                return;
+            }
+
+            const setActiveSection = (sectionKey) => {
+                sectionPanels.forEach((panel) => {
+                    panel.style.display = panel.dataset.packageSection === sectionKey ? 'block' : 'none';
+                });
+
+                switchButtons.forEach((button) => {
+                    const isActive = button.dataset.packageSwitch === sectionKey;
+
+                    button.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+                    button.style.borderColor = isActive ? '#ffffff' : 'rgba(255,255,255,0.7)';
+                    button.style.background = isActive ? '#ffffff' : 'rgba(255,255,255,0.14)';
+                    button.style.color = isActive ? '#1f4da2' : '#ffffff';
+                    button.style.boxShadow = isActive ? '0 10px 22px rgba(15,23,42,0.14)' : 'none';
+                    button.style.transform = 'translateY(0)';
+                });
+
+                window.dispatchEvent(new Event('resize'));
+            };
+
+            switchButtons.forEach((button) => {
+                button.addEventListener('click', () => {
+                    setActiveSection(button.dataset.packageSwitch || 'kundasang');
+                });
+
+                button.addEventListener('mouseenter', () => {
+                    if (button.getAttribute('aria-pressed') !== 'true') {
+                        button.style.transform = 'translateY(-2px)';
+                    }
+                });
+
+                button.addEventListener('mouseleave', () => {
+                    button.style.transform = 'translateY(0)';
+                });
+            });
+
+            const initialButton = switchButtons.find((button) => button.getAttribute('aria-pressed') === 'true') ?? switchButtons[0];
+            setActiveSection(initialButton?.dataset.packageSwitch || 'kundasang');
         });
     </script>
     </div>

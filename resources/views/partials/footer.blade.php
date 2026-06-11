@@ -71,8 +71,8 @@
                         Contact
                     </h4>
                     <div class="mt-4 flex flex-col gap-3 text-sm text-stone-400">
-                        <a href="mailto:info@universaledenholiday.com" class="hover:text-white transition">Email: info@universaledenholiday.com</a>
-                        <a href="tel:+6088212345" class="hover:text-white transition">Phone: +60 88 212 345</a>
+                        <a href="mailto:info@universaledenholiday.com" class="hover:text-white transition">Email: uniedenholidays@gmail.com</a>
+                        <a href="tel:+60168122921" class="hover:text-white transition">Phone: +6016 812 2921</a>
                         <span>Kota Kinabalu, Sabah, Malaysia</span>
                     </div>
                 </div>

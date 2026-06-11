@@ -11,8 +11,21 @@
     @forelse ($products as $product)
         @php($cardImage = $product->image_url ?: (collect($product->gallery_images ?? [])->filter()->first()))
         @php($isPackage = $product->category === 'package')
+        @php($packageDurationToken = strtolower(preg_replace('/\s+/', '', trim((string) $product->duration)) ?? ''))
+        @php($tourCodeToken = strtoupper(trim((string) ($product->tour_code ?? ''))))
+        @php($packageDurationFilter = match (true) {
+            str_starts_with($tourCodeToken, 'DT-UEH') => 'day-trip',
+            str_starts_with($tourCodeToken, 'OT-UEH') && str_contains($packageDurationToken, '2d1n'), str_starts_with($tourCodeToken, 'OT-UEH') && str_contains($packageDurationToken, '2days1night'), str_starts_with($tourCodeToken, 'OT-UEH') && str_contains($packageDurationToken, '2days1nights') => '2d1n',
+            str_starts_with($tourCodeToken, 'OT-UEH') && str_contains($packageDurationToken, '3d2n'), str_starts_with($tourCodeToken, 'OT-UEH') && str_contains($packageDurationToken, '3days2night'), str_starts_with($tourCodeToken, 'OT-UEH') && str_contains($packageDurationToken, '3days2nights') => '3d2n',
+            str_starts_with($tourCodeToken, 'OT-UEH') && str_contains($packageDurationToken, '4d3n'), str_starts_with($tourCodeToken, 'OT-UEH') && str_contains($packageDurationToken, '4days3night'), str_starts_with($tourCodeToken, 'OT-UEH') && str_contains($packageDurationToken, '4days3nights') => '4d3n',
+            str_contains($packageDurationToken, 'daytrip'), str_contains($packageDurationToken, '1day') => 'day-trip',
+            str_contains($packageDurationToken, '2d1n'), str_contains($packageDurationToken, '2days1night'), str_contains($packageDurationToken, '2days1nights') => '2d1n',
+            str_contains($packageDurationToken, '3d2n'), str_contains($packageDurationToken, '3days2night'), str_contains($packageDurationToken, '3days2nights') => '3d2n',
+            str_contains($packageDurationToken, '4d3n'), str_contains($packageDurationToken, '4days3night'), str_contains($packageDurationToken, '4days3nights') => '4d3n',
+            default => 'other',
+        })
 
-        <article @if($itemAttribute) {{ $itemAttribute }}="true" @endif class="relative rounded-3xl border border-stone-200 bg-stone-50 p-5" @if($isPackage) data-package-inline-row @endif>
+        <article @if($itemAttribute) {{ $itemAttribute }}="true" @endif class="relative rounded-3xl border border-stone-200 bg-stone-50 p-5" @if($isPackage) data-package-inline-row data-list-filter-value="{{ $packageDurationFilter }}" @endif>
             <div
                 class="grid gap-4 items-start {{ $isPackage ? '' : 'xl:grid-cols-[110px_minmax(0,1fr)_auto]' }}"
                 @if ($isPackage) style="grid-template-columns: 180px minmax(0, 1fr);" @endif
@@ -40,6 +53,19 @@
                         @php($inlineFormId = 'package-inline-form-'.$product->id)
                         @php($itineraryFormId = 'package-itinerary-form-'.$product->id)
                         @php($serviceInclusionFormId = 'package-service-inclusion-form-'.$product->id)
+                        @php($normalizedPackageDuration = strtolower(trim((string) $product->duration)))
+                        @php($currentPackageType = match (true) {
+                            str_starts_with(strtoupper(trim((string) ($product->tour_code ?? ''))), 'DT-UEH') => 'Day Trip',
+                            str_contains($normalizedPackageDuration, 'day trip') || str_contains(str_replace(' ', '', $normalizedPackageDuration), '1day') => 'Day Trip',
+                            str_contains(str_replace(' ', '', $normalizedPackageDuration), '2d1n') || str_contains(str_replace(' ', '', $normalizedPackageDuration), '2days1night') || str_contains(str_replace(' ', '', $normalizedPackageDuration), '2days1nights') => '2D1N',
+                            str_contains(str_replace(' ', '', $normalizedPackageDuration), '3d2n') || str_contains(str_replace(' ', '', $normalizedPackageDuration), '3days2night') || str_contains(str_replace(' ', '', $normalizedPackageDuration), '3days2nights') => '3D2N',
+                            str_contains(str_replace(' ', '', $normalizedPackageDuration), '4d3n') || str_contains(str_replace(' ', '', $normalizedPackageDuration), '4days3night') || str_contains(str_replace(' ', '', $normalizedPackageDuration), '4days3nights') => '4D3N',
+                            default => 'Day Trip',
+                        })
+                        @php($packageDurationDetail = $currentPackageType === 'Day Trip' ? $product->duration : '')
+                        @php($minimumAgeLabel = trim((string) ($product->minimum_age ?? '')))
+                        @php($minimumAgeMode = str_starts_with(strtolower($minimumAgeLabel), 'above ') ? 'above_age' : 'no_limit')
+                        @php($minimumAgeYears = preg_match('/(\d+)/', $minimumAgeLabel, $minimumAgeMatches) ? (int) $minimumAgeMatches[1] : null)
                         @php($packageItineraryItems = collect($product->itinerary_items ?? [])->filter()->values())
                         @php($packageDurationDays = preg_match('/(\d+)\s*day/i', $product->duration ?? '', $packageDurationMatches) ? max(1, (int) $packageDurationMatches[1]) : 1)
                         @php($packageItineraryRows = collect(range(0, $packageDurationDays - 1))->map(function ($index) use ($packageItineraryItems) {
@@ -109,6 +135,9 @@
                                     <span class="rounded-full bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] {{ $product->is_active ? 'text-emerald-700' : 'text-stone-500' }}">
                                         {{ $product->is_active ? 'Active' : 'Hidden' }}
                                     </span>
+                                    @if ($product->tour_code)
+                                        <span class="rounded-full bg-stone-900 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-white">{{ $product->tour_code }}</span>
+                                    @endif
                                 </div>
                                 <p class="text-sm text-stone-500">{{ $product->location }} | {{ $product->duration }}</p>
                                 <p class="text-sm leading-6 text-stone-600">{{ $product->summary }}</p>
@@ -237,28 +266,56 @@
                                         <input name="location" type="text" value="{{ $product->location }}" class="w-full rounded-lg border border-stone-300 bg-white px-4 py-2.5 text-sm text-stone-800">
                                     </div>
                                     <div>
+                                        <label class="mb-1 block text-sm font-medium uppercase tracking-[0.02em] text-stone-500">Package Type</label>
+                                        <select name="package_type" class="w-full rounded-lg border border-stone-300 bg-white px-4 py-2.5 text-sm text-stone-800" data-package-edit-type>
+                                            <option value="Day Trip" @selected($currentPackageType === 'Day Trip')>Day Trip</option>
+                                            <option value="2D1N" @selected($currentPackageType === '2D1N')>2D1N</option>
+                                            <option value="3D2N" @selected($currentPackageType === '3D2N')>3D2N</option>
+                                            <option value="4D3N" @selected($currentPackageType === '4D3N')>4D3N</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="mb-1 block text-sm font-medium uppercase tracking-[0.02em] text-stone-500">Tour Code</label>
+                                        <input name="tour_code" type="text" value="{{ $product->tour_code }}" placeholder="{{ $currentPackageType === 'Day Trip' ? 'DT-UEH01' : 'OT-UEH01' }}" class="w-full rounded-lg border border-stone-300 bg-white px-4 py-2.5 text-sm text-stone-800" data-package-edit-tour-code>
+                                    </div>
+                                    <div>
                                         <label class="mb-1 block text-sm font-medium uppercase tracking-[0.02em] text-stone-500">Duration</label>
-                                        <input name="duration" type="text" value="{{ $product->duration }}" class="w-full rounded-lg border border-stone-300 bg-white px-4 py-2.5 text-sm text-stone-800">
+                                        <input name="duration_detail" type="text" value="{{ $packageDurationDetail }}" placeholder="Example: 6 hours" class="w-full rounded-lg border border-stone-300 bg-white px-4 py-2.5 text-sm text-stone-800" data-package-edit-duration @disabled($currentPackageType !== 'Day Trip')>
                                     </div>
                                     <div>
                                         <label class="mb-1 block text-sm font-medium uppercase tracking-[0.02em] text-stone-500">Capacity</label>
                                         <input name="capacity" type="number" value="{{ $product->capacity }}" class="w-full rounded-lg border border-stone-300 bg-white px-4 py-2.5 text-sm text-stone-800">
                                     </div>
                                     <div>
-                                        <label class="mb-1 block text-sm font-medium uppercase tracking-[0.02em] text-stone-500">Malaysian adult price (MYR)</label>
-                                        <input name="malaysia_adult_price_myr" type="number" step="0.01" value="{{ $product->malaysia_adult_price_myr }}" class="w-full rounded-lg border border-stone-300 bg-white px-4 py-2.5 text-sm text-stone-800">
+                                        <label class="mb-1 block text-sm font-medium uppercase tracking-[0.02em] text-stone-500">Minimum Age</label>
+                                        <select name="minimum_age_mode" class="w-full rounded-lg border border-stone-300 bg-white px-4 py-2.5 text-sm text-stone-800" data-package-edit-minimum-age-mode>
+                                            <option value="no_limit" @selected($minimumAgeMode === 'no_limit')>No limit</option>
+                                            <option value="above_age" @selected($minimumAgeMode === 'above_age')>Above age</option>
+                                        </select>
                                     </div>
                                     <div>
-                                        <label class="mb-1 block text-sm font-medium uppercase tracking-[0.02em] text-stone-500">International adult price (MYR)</label>
-                                        <input name="international_adult_price_myr" type="number" step="0.01" value="{{ $product->international_adult_price_myr }}" class="w-full rounded-lg border border-stone-300 bg-white px-4 py-2.5 text-sm text-stone-800">
+                                        <label class="mb-1 block text-sm font-medium uppercase tracking-[0.02em] text-stone-500">Years Old</label>
+                                        <input name="minimum_age_years" type="number" min="1" max="120" value="{{ $minimumAgeYears }}" placeholder="12" class="w-full rounded-lg border border-stone-300 bg-white px-4 py-2.5 text-sm text-stone-800" data-package-edit-minimum-age-years @disabled($minimumAgeMode !== 'above_age')>
                                     </div>
-                                    <div>
-                                        <label class="mb-1 block text-sm font-medium uppercase tracking-[0.02em] text-stone-500">Malaysian child price (MYR)</label>
-                                        <input name="malaysia_child_price_myr" type="number" step="0.01" value="{{ $product->malaysia_child_price_myr }}" class="w-full rounded-lg border border-stone-300 bg-white px-4 py-2.5 text-sm text-stone-800">
-                                    </div>
-                                    <div>
-                                        <label class="mb-1 block text-sm font-medium uppercase tracking-[0.02em] text-stone-500">International child price (MYR)</label>
-                                        <input name="international_child_price_myr" type="number" step="0.01" value="{{ $product->international_child_price_myr }}" class="w-full rounded-lg border border-stone-300 bg-white px-4 py-2.5 text-sm text-stone-800">
+                                    <div style="grid-column: 1 / -1;">
+                                        <div class="grid gap-3" style="grid-template-columns: repeat(4, minmax(0, 1fr));">
+                                            <div>
+                                                <label class="mb-1 block text-sm font-medium uppercase tracking-[0.02em] text-stone-500">MY Adult</label>
+                                                <input name="malaysia_adult_price_myr" type="number" step="0.01" value="{{ $product->malaysia_adult_price_myr }}" class="w-full rounded-lg border border-stone-300 bg-white px-4 py-2.5 text-sm text-stone-800">
+                                            </div>
+                                            <div>
+                                                <label class="mb-1 block text-sm font-medium uppercase tracking-[0.02em] text-stone-500">INT Adult</label>
+                                                <input name="international_adult_price_myr" type="number" step="0.01" value="{{ $product->international_adult_price_myr }}" class="w-full rounded-lg border border-stone-300 bg-white px-4 py-2.5 text-sm text-stone-800">
+                                            </div>
+                                            <div>
+                                                <label class="mb-1 block text-sm font-medium uppercase tracking-[0.02em] text-stone-500">MY Child</label>
+                                                <input name="malaysia_child_price_myr" type="number" step="0.01" value="{{ $product->malaysia_child_price_myr }}" class="w-full rounded-lg border border-stone-300 bg-white px-4 py-2.5 text-sm text-stone-800">
+                                            </div>
+                                            <div>
+                                                <label class="mb-1 block text-sm font-medium uppercase tracking-[0.02em] text-stone-500">INT Child</label>
+                                                <input name="international_child_price_myr" type="number" step="0.01" value="{{ $product->international_child_price_myr }}" class="w-full rounded-lg border border-stone-300 bg-white px-4 py-2.5 text-sm text-stone-800">
+                                            </div>
+                                        </div>
                                     </div>
                                     <div style="grid-column: span 2 / span 2;">
                                         <label class="mb-1 block text-sm font-medium uppercase tracking-[0.02em] text-stone-500">Summary</label>
@@ -818,6 +875,11 @@
             const editSection = row.querySelector('.package-inline-edit');
             const editPanel = row.querySelector('[data-package-inline-panel]');
             const editButton = row.querySelector('[data-package-inline-edit]');
+            const packageTypeSelect = row.querySelector('[data-package-edit-type]');
+            const durationInput = row.querySelector('[data-package-edit-duration]');
+            const tourCodeInput = row.querySelector('[data-package-edit-tour-code]');
+            const minimumAgeMode = row.querySelector('[data-package-edit-minimum-age-mode]');
+            const minimumAgeYears = row.querySelector('[data-package-edit-minimum-age-years]');
             const itineraryButton = row.querySelector('[data-package-inline-open="itinerary"]');
             const serviceInclusionButton = row.querySelector('[data-package-inline-open="service-inclusions"]');
             const cancelButton = row.querySelector('[data-package-inline-cancel]');
@@ -836,6 +898,67 @@
             if (!form || !viewSection || !editSection || !editButton || !cancelButton || !saveButton) {
                 return;
             }
+
+            const normalizeTourCodeValue = (value, isDayTrip) => {
+                const desiredPrefix = isDayTrip ? 'DT-UEH' : 'OT-UEH';
+                const cleanedValue = String(value || '')
+                    .toUpperCase()
+                    .replace(/\s+/g, '')
+                    .replace(/_/g, '-')
+                    .replace(/\./g, '-')
+                    .replace(/^(DT|OT)-?UEH/i, '')
+                    .replace(/^UEH/i, '')
+                    .replace(/[^A-Z0-9-]/g, '');
+
+                return desiredPrefix + cleanedValue.replace(/-/g, '');
+            };
+
+            const syncPackageFields = () => {
+                if (!packageTypeSelect || !durationInput || !tourCodeInput) {
+                    return;
+                }
+
+                const isDayTrip = packageTypeSelect.value === 'Day Trip';
+                durationInput.disabled = !isDayTrip;
+                durationInput.required = isDayTrip;
+                tourCodeInput.placeholder = isDayTrip ? 'DT-UEH01' : 'OT-UEH01';
+                tourCodeInput.value = normalizeTourCodeValue(tourCodeInput.value, isDayTrip);
+
+                if (!isDayTrip) {
+                    durationInput.value = '';
+                }
+            };
+
+            const syncMinimumAgeFields = () => {
+                if (!minimumAgeMode || !minimumAgeYears) {
+                    return;
+                }
+
+                const requiresAge = minimumAgeMode.value === 'above_age';
+                minimumAgeYears.disabled = !requiresAge;
+                minimumAgeYears.required = requiresAge;
+
+                if (!requiresAge) {
+                    minimumAgeYears.value = '';
+                }
+            };
+
+            packageTypeSelect?.addEventListener('change', syncPackageFields);
+            minimumAgeMode?.addEventListener('change', syncMinimumAgeFields);
+            tourCodeInput?.addEventListener('input', () => {
+                if (!packageTypeSelect) {
+                    return;
+                }
+
+                const normalizedValue = normalizeTourCodeValue(tourCodeInput.value, packageTypeSelect.value === 'Day Trip');
+
+                if (tourCodeInput.value !== normalizedValue) {
+                    tourCodeInput.value = normalizedValue;
+                }
+            });
+
+            syncPackageFields();
+            syncMinimumAgeFields();
 
             const resetForm = () => {
                 form.reset();

@@ -11,12 +11,12 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
-
 // Legal pages
 Route::get('/privacy-policy', [LegalController::class, 'privacyPolicy'])->name('legal.privacy-policy');
 Route::get('/terms-and-conditions', [LegalController::class, 'termsAndConditions'])->name('legal.terms-and-conditions');
 Route::get('/refund-cancellation-policy', [LegalController::class, 'refundCancellationPolicy'])->name('legal.refund-cancellation-policy');
 Route::get('/car-rental-terms', [LegalController::class, 'carRentalTerms'])->name('legal.car-rental-terms');
+Route::get('/tours/{tourType}', [HomeController::class, 'showTourCategory'])->name('tours.show');
 Route::get('/blog', [HomeController::class, 'showBlogIndex'])->name('blog.index');
 Route::get('/blog/{blogPost}', [HomeController::class, 'showBlogPost'])->name('blog.show');
 Route::post('/testimonials', [HomeController::class, 'storeLandingTestimonial'])->name('testimonials.store');
@@ -70,6 +70,7 @@ Route::middleware('auth')->group(function () {
 Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     Route::get('/', [AdminController::class, 'index'])->name('admin.dashboard');
     Route::get('/profile', [AdminController::class, 'profile'])->name('admin.profile');
+    Route::get('/landing-page', [AdminController::class, 'landingPage'])->name('admin.landing-page');
     Route::get('/promos', [AdminController::class, 'promos'])->name('admin.promos');
     Route::get('/blogs', [AdminController::class, 'blogs'])->name('admin.blogs');
     Route::get('/transport', [AdminController::class, 'transport'])->name('admin.transport');
@@ -91,6 +92,9 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     Route::post('/news-features', [AdminController::class, 'storeNewsFeature'])->name('admin.news-features.store');
     Route::patch('/news-features/{newsFeature}', [AdminController::class, 'updateNewsFeature'])->name('admin.news-features.update');
     Route::delete('/news-features/{newsFeature}', [AdminController::class, 'destroyNewsFeature'])->name('admin.news-features.destroy');
+    Route::post('/home-hero-slides', [AdminController::class, 'storeHomeHeroSlide'])->name('admin.home-hero-slides.store');
+    Route::patch('/home-hero-slides/{homeHeroSlide}', [AdminController::class, 'updateHomeHeroSlide'])->name('admin.home-hero-slides.update');
+    Route::delete('/home-hero-slides/{homeHeroSlide}', [AdminController::class, 'destroyHomeHeroSlide'])->name('admin.home-hero-slides.destroy');
     Route::post('/blog-posts', [AdminController::class, 'storeBlogPost'])->name('admin.blog-posts.store');
     Route::patch('/blog-posts/{blogPost}', [AdminController::class, 'updateBlogPost'])->name('admin.blog-posts.update');
     Route::delete('/blog-posts/{blogPost}', [AdminController::class, 'destroyBlogPost'])->name('admin.blog-posts.destroy');

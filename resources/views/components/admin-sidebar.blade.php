@@ -6,9 +6,9 @@
         <div class="shrink-0 border-b border-stone-200 px-4 py-5">
             <a href="{{ route('admin.dashboard') }}" 
                class="flex items-center gap-3 rounded-2xl bg-stone-50 px-3 py-3 transition hover:bg-stone-100">
-                <img src="{{ asset('images/ue_logo.jpg') }}" 
+                <img src="{{ asset('images/ue blue logo.png') }}" 
                      alt="Eden Holidays Logo" 
-                     class="h-11 w-11 rounded-2xl object-cover shadow-sm">
+                     class="h-11 w-auto object-contain shadow-sm">
                 <div class="min-w-0">
                     <p class="truncate text-sm font-semibold text-stone-900">Eden Holidays</p>
                     <p class="text-[10px] text-stone-500 -mt-0.5">Admin Panel</p>
@@ -38,7 +38,17 @@
                 <span>Profile</span>
             </a>
 
-            <!-- Promos -->
+            <a href="{{ route('admin.landing-page') }}"
+               class="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition {{ request()->routeIs('admin.landing-page') ? 'border border-emerald-200 bg-emerald-50 text-emerald-700' : 'text-stone-700 hover:border-stone-200 hover:bg-stone-50' }}"
+               @if(request()->routeIs('admin.landing-page')) aria-current="page" @endif>
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 12l9-8 9 8"></path>
+                    <path d="M5 10.5V20h14v-9.5"></path>
+                    <path d="M9 20v-6h6v6"></path>
+                </svg>
+                <span>Landing Page</span>
+            </a>
+
             <a href="{{ route('admin.promos') }}"
                class="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition {{ request()->routeIs('admin.promos') ? 'border border-emerald-200 bg-emerald-50 text-emerald-700' : 'text-stone-700 hover:border-stone-200 hover:bg-stone-50' }}"
                @if(request()->routeIs('admin.promos')) aria-current="page" @endif>

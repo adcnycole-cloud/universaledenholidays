@@ -18,6 +18,8 @@ class Product extends Model
         'service_inclusions',
         'description',
         'duration',
+        'tour_code',
+        'minimum_age',
         'price_myr',
         'malaysia_adult_price_myr',
         'malaysia_child_price_myr',

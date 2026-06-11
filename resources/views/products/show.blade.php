@@ -1,6 +1,6 @@
 <x-layouts.app :title="$product->name.' | Universal Eden Holidays'">
-    <main class="mx-auto max-w-[120rem] px-6 py-10 lg:px-10">
-        <div class="mb-6 text-sm text-stone-500">
+    <main class="mx-auto max-w-[120rem] px-6 py-10 lg:px-10" style="background-color: #A5B8D9;">
+        <div class="mb-6 text-stone-500" style="font-size: 1.2rem; line-height: 1.25;">
             <a href="{{ route('home') }}" class="hover:text-sky-700">Home</a>
             <span class="mx-2">›</span>
             <span class="capitalize">{{ $product->category }}</span>

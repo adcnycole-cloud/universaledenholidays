@@ -190,12 +190,41 @@
                     <textarea id="special_requests" name="special_requests" rows="6" class="w-full rounded-2xl border border-stone-300 bg-white px-4 py-3 text-stone-800" placeholder="Tell us what product you are interested in, your travel plan, number of travelers, or any questions you want us to answer.">{{ old('special_requests') }}</textarea>
                 </div>
 
-                <div class="rounded-[1.5rem] bg-white p-4">
+                {{-- PDPA notice --}}
+                <div class="rounded-[1.5rem] border border-amber-100 bg-amber-50 px-5 py-4 text-sm leading-6 text-stone-600">
+                    By submitting this form, you consent to the collection, processing, and storage of your personal data in accordance with our
+                    <a href="{{ route('legal.privacy-policy') }}" target="_blank" rel="noopener noreferrer" class="font-medium text-amber-700 underline hover:text-amber-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 rounded">Privacy Policy</a>.
+                </div>
+
+                <div class="rounded-[1.5rem] bg-white p-4 space-y-4">
+                    {{-- Legal consent checkbox --}}
+                    <label class="flex cursor-pointer items-start gap-3" for="legal_consent_enquiry">
+                        <input
+                            id="legal_consent_enquiry"
+                            name="legal_consent"
+                            type="checkbox"
+                            value="1"
+                            class="mt-0.5 h-4 w-4 flex-shrink-0 cursor-pointer rounded border-stone-300 accent-sky-600 focus-visible:ring-2 focus-visible:ring-sky-500"
+                            required
+                            aria-required="true"
+                            aria-describedby="enquiry-consent-error"
+                            @checked(old('legal_consent'))
+                        >
+                        <span class="text-sm leading-5 text-stone-600">
+                            I have read and agree to the
+                            <a href="{{ route('legal.terms-and-conditions') }}" target="_blank" rel="noopener noreferrer" class="font-medium text-sky-700 underline hover:text-sky-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 rounded">Terms &amp; Conditions</a>
+                            and
+                            <a href="{{ route('legal.privacy-policy') }}" target="_blank" rel="noopener noreferrer" class="font-medium text-sky-700 underline hover:text-sky-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 rounded">Privacy Policy</a>.
+                        </span>
+                    </label>
+                    <p id="enquiry-consent-error" class="hidden text-sm text-rose-600" role="alert" aria-live="polite">
+                        You must agree to the Terms &amp; Conditions and Privacy Policy before submitting.
+                    </p>
                     <div class="flex flex-col gap-3 sm:flex-row sm:justify-start">
-                    <button type="submit" class="flex-1 rounded-full border border-sky-600 bg-sky-600 px-5 py-3 text-sm font-semibold uppercase tracking-[0.22em] text-white transition hover:bg-sky-700">Submit Enquiry</button>
-                    <a href="{{ route('home') }}" class="inline-flex items-center justify-center gap-2 rounded-full border border-stone-300 bg-white px-5 py-3 text-sm font-semibold text-stone-700 transition hover:bg-stone-50 sm:min-w-[9rem]">
-                        Cancel
-                    </a>
+                        <button type="submit" class="flex-1 rounded-full border border-sky-600 bg-sky-600 px-5 py-3 text-sm font-semibold uppercase tracking-[0.22em] text-white transition hover:bg-sky-700">Submit Enquiry</button>
+                        <a href="{{ route('home') }}" class="inline-flex items-center justify-center gap-2 rounded-full border border-stone-300 bg-white px-5 py-3 text-sm font-semibold text-stone-700 transition hover:bg-stone-50 sm:min-w-[9rem]">
+                            Cancel
+                        </a>
                     </div>
                 </div>
                 @else
@@ -424,11 +453,42 @@
                     <textarea id="special_requests" name="special_requests" rows="4" class="w-full rounded-2xl border border-stone-300 bg-white px-4 py-3 text-stone-800" placeholder="Any additional information or special requirements for your booking?">{{ old('special_requests') }}</textarea>
                 </div>
 
-                <div class="flex flex-col gap-3 pt-1 sm:flex-row">
-                    <button type="submit" class="flex-1 rounded-full bg-sky-600 px-5 py-2.5 text-sm font-semibold uppercase tracking-[0.22em] text-white transition hover:bg-sky-700">{{ $bookingSubmitLabel }}</button>
-                    <a href="{{ route('home') }}" class="flex items-center gap-2 rounded-full border border-stone-300 px-4 py-2.5 text-sm font-semibold text-stone-700 transition hover:bg-stone-50">
-                        Cancel
-                    </a>
+                {{-- PDPA notice --}}
+                <div class="rounded-[1.5rem] border border-amber-100 bg-amber-50 px-5 py-4 text-sm leading-6 text-stone-600">
+                    By submitting this form, you consent to the collection, processing, and storage of your personal data in accordance with our
+                    <a href="{{ route('legal.privacy-policy') }}" target="_blank" rel="noopener noreferrer" class="font-medium text-amber-700 underline hover:text-amber-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 rounded">Privacy Policy</a>.
+                </div>
+
+                <div class="space-y-3 pt-1">
+                    {{-- Legal consent checkbox --}}
+                    <label class="flex cursor-pointer items-start gap-3" for="legal_consent_booking">
+                        <input
+                            id="legal_consent_booking"
+                            name="legal_consent"
+                            type="checkbox"
+                            value="1"
+                            class="mt-0.5 h-4 w-4 flex-shrink-0 cursor-pointer rounded border-stone-300 accent-sky-600 focus-visible:ring-2 focus-visible:ring-sky-500"
+                            required
+                            aria-required="true"
+                            aria-describedby="booking-consent-error"
+                            @checked(old('legal_consent'))
+                        >
+                        <span class="text-sm leading-5 text-stone-600">
+                            I have read and agree to the
+                            <a href="{{ route('legal.terms-and-conditions') }}" target="_blank" rel="noopener noreferrer" class="font-medium text-sky-700 underline hover:text-sky-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 rounded">Terms &amp; Conditions</a>
+                            and
+                            <a href="{{ route('legal.privacy-policy') }}" target="_blank" rel="noopener noreferrer" class="font-medium text-sky-700 underline hover:text-sky-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 rounded">Privacy Policy</a>.
+                        </span>
+                    </label>
+                    <p id="booking-consent-error" class="hidden text-sm text-rose-600" role="alert" aria-live="polite">
+                        You must agree to the Terms &amp; Conditions and Privacy Policy before submitting.
+                    </p>
+                    <div class="flex flex-col gap-3 sm:flex-row">
+                        <button type="submit" class="flex-1 rounded-full bg-sky-600 px-5 py-2.5 text-sm font-semibold uppercase tracking-[0.22em] text-white transition hover:bg-sky-700">{{ $bookingSubmitLabel }}</button>
+                        <a href="{{ route('home') }}" class="flex items-center gap-2 rounded-full border border-stone-300 px-4 py-2.5 text-sm font-semibold text-stone-700 transition hover:bg-stone-50">
+                            Cancel
+                        </a>
+                    </div>
                 </div>
                 @endif
 
@@ -487,59 +547,7 @@
 
     <div class="h-12"></div>
 
-    <footer class="mt-auto border-t border-stone-200/80 bg-stone-950 text-stone-200">
-        <div class="mx-auto grid max-w-7xl gap-10 px-6 py-12 lg:grid-cols-[1.2fr_0.8fr_0.8fr_1fr] lg:px-10">
-            <div>
-                <div class="flex items-center gap-3">
-                    <img src="{{ asset('images/ue_logo.jpg') }}" alt="Universal Eden Logo" class="h-12 w-12 rounded-full object-cover ring-2 ring-white/10">
-                    <div>
-                        <p class="font-['Prata'] text-xl text-white">Universal Eden Holidays</p>
-                    </div>
-                </div>
-                <p class="mt-5 max-w-md text-sm leading-7 text-stone-400">
-                    Travel planning for Sabah made easier with transport services, holiday packages, and practical booking support in one place.
-                </p>
-            </div>
-
-            <div>
-                <p class="text-sm font-semibold uppercase tracking-[0.22em] text-white">Explore</p>
-                <div class="mt-5 flex flex-col gap-3 text-sm text-stone-400">
-                    <a href="{{ route('home') }}#promos" class="transition hover:text-white">Promos</a>
-                    <a href="{{ route('home') }}#transport" class="transition hover:text-white">Transport</a>
-                    <a href="{{ route('home') }}#packages-showcase" class="transition hover:text-white">Packages</a>
-                    <a href="{{ route('home') }}#testimonials" class="transition hover:text-white">Testimonials</a>
-                </div>
-            </div>
-
-            <div>
-                <p class="text-sm font-semibold uppercase tracking-[0.22em] text-white">Company</p>
-                <div class="mt-5 flex flex-col gap-3 text-sm text-stone-400">
-                    <a href="{{ route('home') }}#about-us" class="transition hover:text-white">About Us</a>
-                    <a href="{{ route('home') }}#popular-picks" class="transition hover:text-white">Popular Picks</a>
-                    <a href="{{ route('bookings.track.form') }}" class="transition hover:text-white">Track Your Bookings</a>
-                    @auth
-                        <a href="{{ route('profile.show') }}" class="transition hover:text-white">My Profile</a>
-                    @else
-                        <a href="{{ route('login') }}" class="transition hover:text-white">Login</a>
-                    @endauth
-                </div>
-            </div>
-
-            <div>
-                <p class="text-sm font-semibold uppercase tracking-[0.22em] text-white">Contact</p>
-                <div class="mt-5 space-y-4 text-sm text-stone-400">
-                    <p>Email: <a href="mailto:info@universaledenholiday.com" class="transition hover:text-white">info@universaledenholiday.com</a></p>
-                    <p>Phone: <a href="tel:+6088212345" class="transition hover:text-white">+60 88 212 345</a></p>
-                    <p>Kota Kinabalu, Sabah, Malaysia</p>
-                </div>
-            </div>
-        </div>
-        <div class="border-t border-white/10">
-            <div class="mx-auto flex max-w-7xl items-center justify-center px-6 py-5 text-center text-xs uppercase tracking-[0.22em] text-stone-500 lg:px-10">
-            <p>Adcey &copy; Universal Eden Holidays - {{ now()->year }}</p>
-            </div>
-        </div>
-    </footer>
+    @include('partials.footer')
 
     <style>
         .calendar-card {
@@ -686,6 +694,30 @@
     </style>
 
     <script>
+        // Legal consent validation for booking forms
+        (function () {
+            function attachConsentValidation(formSelector, checkboxId, errorId) {
+                const form = document.querySelector(formSelector);
+                const checkbox = document.getElementById(checkboxId);
+                const errorEl = document.getElementById(errorId);
+                if (!form || !checkbox || !errorEl) return;
+                form.addEventListener('submit', function (e) {
+                    if (!checkbox.checked) {
+                        e.preventDefault();
+                        errorEl.classList.remove('hidden');
+                        checkbox.focus();
+                    } else {
+                        errorEl.classList.add('hidden');
+                    }
+                });
+                checkbox.addEventListener('change', function () {
+                    if (this.checked) errorEl.classList.add('hidden');
+                });
+            }
+            attachConsentValidation('[data-form-persist]', 'legal_consent_enquiry', 'enquiry-consent-error');
+            attachConsentValidation('[data-form-persist]', 'legal_consent_booking', 'booking-consent-error');
+        })();
+
         document.addEventListener('DOMContentLoaded', () => {
             const currencyRates = {
                 @foreach ($currencyRates as $code => $rate)

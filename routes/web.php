@@ -4,11 +4,19 @@ use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BookingAccessController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\LegalController;
 use App\Http\Controllers\ProfileController;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
+
+// Legal pages
+Route::get('/privacy-policy', [LegalController::class, 'privacyPolicy'])->name('legal.privacy-policy');
+Route::get('/terms-and-conditions', [LegalController::class, 'termsAndConditions'])->name('legal.terms-and-conditions');
+Route::get('/refund-cancellation-policy', [LegalController::class, 'refundCancellationPolicy'])->name('legal.refund-cancellation-policy');
+Route::get('/car-rental-terms', [LegalController::class, 'carRentalTerms'])->name('legal.car-rental-terms');
 Route::get('/blog', [HomeController::class, 'showBlogIndex'])->name('blog.index');
 Route::get('/blog/{blogPost}', [HomeController::class, 'showBlogPost'])->name('blog.show');
 Route::post('/testimonials', [HomeController::class, 'storeLandingTestimonial'])->name('testimonials.store');
@@ -42,7 +50,7 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::get('/profile/bookings', [ProfileController::class, 'bookings'])->name('profile.bookings');
     Route::get('/profile/test-email', function () {
-        $recipient = auth()->user()?->email;
+        $recipient = Auth::user()?->email;
 
         if (! $recipient) {
             abort(403, 'No email found for authenticated user.');

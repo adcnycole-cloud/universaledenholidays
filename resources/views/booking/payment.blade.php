@@ -64,7 +64,7 @@
                     } }}
                 </p>
 
-                <form method="POST" action="{{ $submitRoute }}" class="mt-6 space-y-3">
+                <form method="POST" action="{{ $submitRoute }}" class="mt-6 space-y-3" id="payment-form">
                     @csrf
                     <div>
                         <label for="sandbox_reference" class="mb-2 block text-xs uppercase tracking-[0.2em] text-stone-300">Sandbox transaction ref</label>
@@ -77,10 +77,58 @@
                             class="w-full rounded-2xl border border-stone-600 bg-stone-800 px-4 py-3 text-sm text-white"
                         >
                     </div>
+
+                    {{-- Legal consent checkbox --}}
+                    <div class="rounded-2xl border border-stone-600 bg-stone-800/60 px-4 py-4">
+                        <label class="flex cursor-pointer items-start gap-3" for="legal_consent_payment">
+                            <input
+                                id="legal_consent_payment"
+                                name="legal_consent"
+                                type="checkbox"
+                                value="1"
+                                class="mt-0.5 h-4 w-4 flex-shrink-0 cursor-pointer rounded border-stone-500 accent-amber-500 focus-visible:ring-2 focus-visible:ring-amber-400"
+                                required
+                                aria-required="true"
+                                aria-describedby="payment-consent-error"
+                            >
+                            <span class="text-xs leading-5 text-stone-300">
+                                I have read and agree to the
+                                <a href="{{ route('legal.terms-and-conditions') }}" target="_blank" rel="noopener noreferrer" class="text-amber-300 underline hover:text-amber-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 rounded">Terms &amp; Conditions</a>
+                                and
+                                <a href="{{ route('legal.privacy-policy') }}" target="_blank" rel="noopener noreferrer" class="text-amber-300 underline hover:text-amber-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 rounded">Privacy Policy</a>.
+                            </span>
+                        </label>
+                        <p id="payment-consent-error" class="mt-2 hidden text-xs text-rose-400" role="alert" aria-live="polite">
+                            You must agree to the Terms &amp; Conditions and Privacy Policy before proceeding.
+                        </p>
+                    </div>
+
                     <button type="submit" class="inline-flex w-full items-center justify-center rounded-full bg-white px-6 py-3 text-sm font-semibold uppercase tracking-[0.2em] text-stone-900 transition hover:bg-stone-100">
                         {{ $booking->payment_status === 'paid' ? 'Payment Submitted' : 'Submit Sandbox Payment' }}
                     </button>
                 </form>
+
+                <script>
+                    (function () {
+                        const form = document.getElementById('payment-form');
+                        const checkbox = document.getElementById('legal_consent_payment');
+                        const errorEl = document.getElementById('payment-consent-error');
+                        if (form && checkbox && errorEl) {
+                            form.addEventListener('submit', function (e) {
+                                if (!checkbox.checked) {
+                                    e.preventDefault();
+                                    errorEl.classList.remove('hidden');
+                                    checkbox.focus();
+                                } else {
+                                    errorEl.classList.add('hidden');
+                                }
+                            });
+                            checkbox.addEventListener('change', function () {
+                                if (this.checked) errorEl.classList.add('hidden');
+                            });
+                        }
+                    })();
+                </script>
 
                 <p class="mt-4 text-xs leading-6 text-stone-400">
                     This sandbox confirms the payment flow. A payment receipt email will be sent once submitted.

@@ -1776,6 +1776,50 @@
             </div>
         </section>
 
+        <section id="blog" class="mt-14 home-section-compact px-6 pb-4 pt-4 md:mt-16 md:px-8 md:pb-6 md:pt-5">
+            <div class="relative mx-auto rounded-[2rem] border border-white/70 bg-white/90 px-5 pb-8 pt-4 shadow-[0_20px_60px_rgba(15,23,42,0.08)] backdrop-blur md:px-6 md:pb-10 md:pt-4" style="max-width: 1920px;">
+            <div class="mb-6 flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                <div class="hidden md:block md:w-[10rem]"></div>
+                <div class="text-center" style="position: relative; left: 0.8rem;">
+                    <h2 class="font-['Oswald'] text-4xl font-bold uppercase tracking-[0.22em] text-stone-900 md:text-5xl">Blog</h2>
+                </div>
+                <div class="flex justify-center md:w-[10rem] md:justify-end"></div>
+            </div>
+
+            @if ($latestBlogPosts->isNotEmpty())
+                <div class="-mt-1 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+                    @foreach ($latestBlogPosts->take(6) as $post)
+                        <a href="{{ route('blog.show', $post) }}" class="group overflow-hidden rounded-[1.6rem] border border-stone-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-md">
+                            <div class="relative aspect-video overflow-hidden bg-stone-200">
+                                @if ($post->cover_image_url)
+                                    <img src="{{ $post->cover_image_url }}" alt="{{ $post->title }}" class="h-full w-full object-cover transition duration-300 group-hover:scale-[1.04]">
+                                @else
+                                    <div class="flex h-full w-full items-center justify-center bg-[linear-gradient(145deg,#77a6d8_0%,#5f8fcb_45%,#315fbd_100%)] px-8 text-center">
+                                        <span class="font-['Prata'] text-2xl leading-tight text-white">{{ $post->title }}</span>
+                                    </div>
+                                @endif
+                                <div class="absolute bottom-3 right-3 rounded-md bg-stone-950/85 px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-white">
+                                    Blog
+                                </div>
+                            </div>
+                            <div class="px-5 py-4">
+                                <div class="min-w-0">
+                                    <h3 class="line-clamp-2 text-base font-semibold leading-6 text-stone-900 md:text-lg">{{ $post->title }}</h3>
+                                    <p class="mt-2 text-sm font-medium text-stone-500">Universal Eden Holidays</p>
+                                    <p class="mt-1 text-sm text-stone-400">{{ $post->published_at?->format('d M Y') ?? 'Latest post' }}</p>
+                                </div>
+                            </div>
+                        </a>
+                    @endforeach
+                </div>
+            @else
+                <div class="rounded-3xl border border-dashed border-stone-300 bg-white p-6 text-sm text-stone-600">
+                    Blog posts will appear here once they are published.
+                </div>
+            @endif
+            </div>
+        </section>
+
         <section id="testimonials" class="mt-[4.5rem] home-screen-section px-6 pb-8 pt-6 md:mt-24 md:px-8 md:pb-12 md:pt-8">
             <div class="mx-auto rounded-[2rem] border border-white/70 bg-white/90 px-4 pb-8 pt-4 shadow-[0_20px_60px_rgba(15,23,42,0.08)] backdrop-blur md:px-4 md:pb-10 md:pt-7" style="max-width: 1920px;">
             <div class="-mt-1 flex flex-col items-center gap-3 text-center">
@@ -1818,7 +1862,7 @@
                         <div class="grid gap-4 md:grid-cols-2">
                             <div>
                                 <label for="landing_testimonial_name" class="mb-2 block text-sm font-medium text-stone-700">Your name</label>
-                                <input id="landing_testimonial_name" name="name" type="text" value="{{ old('name') }}" class="w-full rounded-2xl border border-stone-300 bg-white px-4 py-3 text-stone-800" required>
+                                <input id="landing_testimonial_name" name="name" type="text" value="{{ old('name') }}" class="w-full roundedgdfsfxfffdffdfffafyh-2xl border border-stone-300 bg-white px-4 py-3 text-stone-800" required>
                             </div>
                             <div>
                                 <label for="landing_testimonial_email" class="mb-2 block text-sm font-medium text-stone-700">Gmail / Email</label>

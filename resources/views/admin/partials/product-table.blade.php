@@ -66,6 +66,14 @@
                         @php($minimumAgeLabel = trim((string) ($product->minimum_age ?? '')))
                         @php($minimumAgeMode = str_starts_with(strtolower($minimumAgeLabel), 'above ') ? 'above_age' : 'no_limit')
                         @php($minimumAgeYears = preg_match('/(\d+)/', $minimumAgeLabel, $minimumAgeMatches) ? (int) $minimumAgeMatches[1] : null)
+                        @php($packagePricingTiers = collect($product->pricing_tiers ?? [])->filter(fn ($tier) => is_array($tier) && filled($tier['group_size_label'] ?? null))->values())
+                        @php($packagePricingTiers = $packagePricingTiers->isNotEmpty() ? $packagePricingTiers : collect([[
+                            'group_size_label' => $product->group_size_label ?? '',
+                            'malaysia_adult_price_myr' => $product->malaysia_adult_price_myr,
+                            'malaysia_child_price_myr' => $product->malaysia_child_price_myr,
+                            'international_adult_price_myr' => $product->international_adult_price_myr,
+                            'international_child_price_myr' => $product->international_child_price_myr,
+                        ]]))
                         @php($packageItineraryItems = collect($product->itinerary_items ?? [])->filter()->values())
                         @php($packageDurationDays = preg_match('/(\d+)\s*day/i', $product->duration ?? '', $packageDurationMatches) ? max(1, (int) $packageDurationMatches[1]) : 1)
                         @php($packageItineraryRows = collect(range(0, $packageDurationDays - 1))->map(function ($index) use ($packageItineraryItems) {
@@ -143,6 +151,9 @@
                                 <p class="text-sm leading-6 text-stone-600">{{ $product->summary }}</p>
                                 <div class="flex flex-wrap gap-2 text-xs font-semibold uppercase tracking-[0.2em]">
                                     <span class="rounded-full bg-white px-3 py-1 text-stone-600">RM {{ number_format((float) $product->malaysia_adult_price_myr, 2) }}</span>
+                                    @if ($product->group_size_label)
+                                        <span class="rounded-full bg-white px-3 py-1 text-stone-600">{{ $product->group_size_label }}</span>
+                                    @endif
                                     @if ($product->capacity)
                                         <span class="rounded-full bg-white px-3 py-1 text-stone-600">Capacity {{ $product->capacity }}</span>
                                     @endif
@@ -287,6 +298,10 @@
                                         <input name="capacity" type="number" value="{{ $product->capacity }}" class="w-full rounded-lg border border-stone-300 bg-white px-4 py-2.5 text-sm text-stone-800">
                                     </div>
                                     <div>
+                                        <label class="mb-1 block text-sm font-medium uppercase tracking-[0.02em] text-stone-500">Departure Time</label>
+                                        <input name="departure_time" type="text" value="{{ $product->departure_time }}" placeholder="Example: 7:30 AM" class="w-full rounded-lg border border-stone-300 bg-white px-4 py-2.5 text-sm text-stone-800">
+                                    </div>
+                                    <div>
                                         <label class="mb-1 block text-sm font-medium uppercase tracking-[0.02em] text-stone-500">Minimum Age</label>
                                         <select name="minimum_age_mode" class="w-full rounded-lg border border-stone-300 bg-white px-4 py-2.5 text-sm text-stone-800" data-package-edit-minimum-age-mode>
                                             <option value="no_limit" @selected($minimumAgeMode === 'no_limit')>No limit</option>
@@ -298,23 +313,86 @@
                                         <input name="minimum_age_years" type="number" min="1" max="120" value="{{ $minimumAgeYears }}" placeholder="12" class="w-full rounded-lg border border-stone-300 bg-white px-4 py-2.5 text-sm text-stone-800" data-package-edit-minimum-age-years @disabled($minimumAgeMode !== 'above_age')>
                                     </div>
                                     <div style="grid-column: 1 / -1;">
-                                        <div class="grid gap-3" style="grid-template-columns: repeat(4, minmax(0, 1fr));">
-                                            <div>
-                                                <label class="mb-1 block text-sm font-medium uppercase tracking-[0.02em] text-stone-500">MY Adult</label>
-                                                <input name="malaysia_adult_price_myr" type="number" step="0.01" value="{{ $product->malaysia_adult_price_myr }}" class="w-full rounded-lg border border-stone-300 bg-white px-4 py-2.5 text-sm text-stone-800">
+                                        <div class="rounded-[1.25rem] border border-stone-200 bg-stone-50/70 p-4">
+                                            <div class="flex items-center justify-between gap-3">
+                                                <div>
+                                                    <label class="mb-1 block text-sm font-medium uppercase tracking-[0.02em] text-stone-500">Group Pricing</label>
+                                                    <p class="text-xs text-stone-500">Add one row for each pax range and its matching prices.</p>
+                                                </div>
+                                                <button type="button" class="rounded-full border border-stone-300 bg-white px-4 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-stone-700 transition hover:bg-stone-100" data-package-edit-pricing-add>
+                                                    Add Group Size
+                                                </button>
                                             </div>
-                                            <div>
-                                                <label class="mb-1 block text-sm font-medium uppercase tracking-[0.02em] text-stone-500">INT Adult</label>
-                                                <input name="international_adult_price_myr" type="number" step="0.01" value="{{ $product->international_adult_price_myr }}" class="w-full rounded-lg border border-stone-300 bg-white px-4 py-2.5 text-sm text-stone-800">
+                                            <div class="mt-4 overflow-x-auto">
+                                                <div class="space-y-3" data-package-edit-pricing-rows>
+                                                    @foreach ($packagePricingTiers as $pricingTier)
+                                                        <div class="rounded-[1.1rem] border border-stone-200 bg-white p-4" data-package-edit-pricing-row>
+                                                            <div class="flex flex-col gap-3">
+                                                                <div class="grid gap-3 md:grid-cols-[12rem_minmax(0,1fr)_auto] md:items-center">
+                                                                    <span class="text-[11px] font-semibold uppercase tracking-[0.16em] text-stone-500">Group Size / No. Pax</span>
+                                                                    <input name="pricing_group_size_label[]" type="text" value="{{ $pricingTier['group_size_label'] ?? '' }}" placeholder="Example: 4 - 6 Pax" class="w-full rounded-lg border border-stone-300 bg-white px-4 py-2.5 text-sm text-stone-800">
+                                                                    <button type="button" class="rounded-full border border-rose-200 bg-white px-3 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-rose-600 transition hover:bg-rose-50" data-package-edit-pricing-remove>
+                                                                        Remove
+                                                                    </button>
+                                                                </div>
+                                                                <div class="grid gap-3 md:grid-cols-2">
+                                                                    <div class="grid gap-3 md:grid-cols-[8rem_minmax(0,1fr)] md:items-center">
+                                                                        <span class="text-[11px] font-semibold uppercase tracking-[0.16em] text-stone-500">MY Adult</span>
+                                                                        <input name="pricing_malaysia_adult_price_myr[]" type="number" step="0.01" value="{{ $pricingTier['malaysia_adult_price_myr'] ?? '' }}" class="w-full rounded-lg border border-stone-300 bg-white px-4 py-2.5 text-sm text-stone-800">
+                                                                    </div>
+                                                                    <div class="grid gap-3 md:grid-cols-[8rem_minmax(0,1fr)] md:items-center">
+                                                                        <span class="text-[11px] font-semibold uppercase tracking-[0.16em] text-stone-500">MY Child</span>
+                                                                        <input name="pricing_malaysia_child_price_myr[]" type="number" step="0.01" value="{{ $pricingTier['malaysia_child_price_myr'] ?? '' }}" class="w-full rounded-lg border border-stone-300 bg-white px-4 py-2.5 text-sm text-stone-800">
+                                                                    </div>
+                                                                </div>
+                                                                <div class="grid gap-3 md:grid-cols-2">
+                                                                    <div class="grid gap-3 md:grid-cols-[8rem_minmax(0,1fr)] md:items-center">
+                                                                        <span class="text-[11px] font-semibold uppercase tracking-[0.16em] text-stone-500">INT Adult</span>
+                                                                        <input name="pricing_international_adult_price_myr[]" type="number" step="0.01" value="{{ $pricingTier['international_adult_price_myr'] ?? '' }}" class="w-full rounded-lg border border-stone-300 bg-white px-4 py-2.5 text-sm text-stone-800">
+                                                                    </div>
+                                                                    <div class="grid gap-3 md:grid-cols-[8rem_minmax(0,1fr)] md:items-center">
+                                                                        <span class="text-[11px] font-semibold uppercase tracking-[0.16em] text-stone-500">INT Child</span>
+                                                                        <input name="pricing_international_child_price_myr[]" type="number" step="0.01" value="{{ $pricingTier['international_child_price_myr'] ?? '' }}" class="w-full rounded-lg border border-stone-300 bg-white px-4 py-2.5 text-sm text-stone-800">
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    @endforeach
+                                                </div>
                                             </div>
-                                            <div>
-                                                <label class="mb-1 block text-sm font-medium uppercase tracking-[0.02em] text-stone-500">MY Child</label>
-                                                <input name="malaysia_child_price_myr" type="number" step="0.01" value="{{ $product->malaysia_child_price_myr }}" class="w-full rounded-lg border border-stone-300 bg-white px-4 py-2.5 text-sm text-stone-800">
-                                            </div>
-                                            <div>
-                                                <label class="mb-1 block text-sm font-medium uppercase tracking-[0.02em] text-stone-500">INT Child</label>
-                                                <input name="international_child_price_myr" type="number" step="0.01" value="{{ $product->international_child_price_myr }}" class="w-full rounded-lg border border-stone-300 bg-white px-4 py-2.5 text-sm text-stone-800">
-                                            </div>
+                                            <template data-package-edit-pricing-template>
+                                                <div class="rounded-[1.1rem] border border-stone-200 bg-white p-4" data-package-edit-pricing-row>
+                                                    <div class="flex flex-col gap-3">
+                                                        <div class="grid gap-3 md:grid-cols-[12rem_minmax(0,1fr)_auto] md:items-center">
+                                                            <span class="text-[11px] font-semibold uppercase tracking-[0.16em] text-stone-500">Group Size / No. Pax</span>
+                                                            <input name="pricing_group_size_label[]" type="text" placeholder="Example: 4 - 6 Pax" class="w-full rounded-lg border border-stone-300 bg-white px-4 py-2.5 text-sm text-stone-800">
+                                                            <button type="button" class="rounded-full border border-rose-200 bg-white px-3 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-rose-600 transition hover:bg-rose-50" data-package-edit-pricing-remove>
+                                                                Remove
+                                                            </button>
+                                                        </div>
+                                                        <div class="grid gap-3 md:grid-cols-2">
+                                                            <div class="grid gap-3 md:grid-cols-[8rem_minmax(0,1fr)] md:items-center">
+                                                                <span class="text-[11px] font-semibold uppercase tracking-[0.16em] text-stone-500">MY Adult</span>
+                                                                <input name="pricing_malaysia_adult_price_myr[]" type="number" step="0.01" class="w-full rounded-lg border border-stone-300 bg-white px-4 py-2.5 text-sm text-stone-800">
+                                                            </div>
+                                                            <div class="grid gap-3 md:grid-cols-[8rem_minmax(0,1fr)] md:items-center">
+                                                                <span class="text-[11px] font-semibold uppercase tracking-[0.16em] text-stone-500">MY Child</span>
+                                                                <input name="pricing_malaysia_child_price_myr[]" type="number" step="0.01" class="w-full rounded-lg border border-stone-300 bg-white px-4 py-2.5 text-sm text-stone-800">
+                                                            </div>
+                                                        </div>
+                                                        <div class="grid gap-3 md:grid-cols-2">
+                                                            <div class="grid gap-3 md:grid-cols-[8rem_minmax(0,1fr)] md:items-center">
+                                                                <span class="text-[11px] font-semibold uppercase tracking-[0.16em] text-stone-500">INT Adult</span>
+                                                                <input name="pricing_international_adult_price_myr[]" type="number" step="0.01" class="w-full rounded-lg border border-stone-300 bg-white px-4 py-2.5 text-sm text-stone-800">
+                                                            </div>
+                                                            <div class="grid gap-3 md:grid-cols-[8rem_minmax(0,1fr)] md:items-center">
+                                                                <span class="text-[11px] font-semibold uppercase tracking-[0.16em] text-stone-500">INT Child</span>
+                                                                <input name="pricing_international_child_price_myr[]" type="number" step="0.01" class="w-full rounded-lg border border-stone-300 bg-white px-4 py-2.5 text-sm text-stone-800">
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </template>
                                         </div>
                                     </div>
                                     <div style="grid-column: span 2 / span 2;">
@@ -407,7 +485,7 @@
                                 Add Itinerary
                             </button>
                             <button type="button" class="min-w-[8.75rem] rounded-full border border-emerald-300 bg-emerald-50 px-4 py-2 text-center text-xs font-semibold uppercase tracking-[0.2em] text-emerald-700 transition hover:bg-emerald-100" data-package-inline-open="service-inclusions">
-                                Add Service Inclusion
+                                Add Package Details
                             </button>
                             <button type="submit" form="{{ $inlineFormId }}" class="hidden min-w-[8.75rem] rounded-full bg-sky-600 px-4 py-2 text-center text-xs font-semibold uppercase tracking-[0.2em] text-white transition hover:bg-sky-700 package-inline-save">
                                 Save
@@ -437,7 +515,6 @@
                                                         <th class="w-40 px-4 py-3 font-semibold">Day Number</th>
                                                         <th class="w-48 px-4 py-3 font-semibold">Time</th>
                                                         <th class="px-4 py-3 font-semibold">Activity</th>
-                                                        <th class="px-4 py-3 font-semibold">Notes</th>
                                                         <th class="w-24 px-4 py-3 font-semibold text-center"></th>
                                                     </tr>
                                                 </thead>
@@ -471,11 +548,6 @@
                                                                 <td class="px-4 py-3 align-top">
                                                                     <div class="flex h-[96px] items-stretch gap-2 rounded-xl border border-stone-200 bg-stone-50 p-2.5" data-itinerary-activity-slot>
                                                                         <textarea name="itinerary_activity[]" rows="2" class="h-full flex-1 resize-none rounded-lg border border-stone-300 bg-white px-2.5 py-1.5 text-sm text-stone-800" placeholder="Arrival, transfer, check-in, and evening city walk">{{ $row['activity'] }}</textarea>
-                                                                    </div>
-                                                                </td>
-                                                                <td class="px-4 py-3 align-top">
-                                                                    <div class="flex h-[96px] items-stretch gap-2 rounded-xl border border-stone-200 bg-stone-50 p-2.5">
-                                                                        <textarea name="itinerary_notes[]" rows="2" class="h-full flex-1 resize-none rounded-lg border border-stone-300 bg-white px-2.5 py-1.5 text-sm text-stone-800" placeholder="Meeting point, what to bring, extra detail">{{ $row['notes'] ?? '' }}</textarea>
                                                                     </div>
                                                                 </td>
                                                                 <td class="px-4 py-3 align-top text-center">
@@ -524,11 +596,6 @@
                                                         <textarea name="itinerary_activity[]" rows="2" class="h-full flex-1 resize-none rounded-lg border border-stone-300 bg-white px-2.5 py-1.5 text-sm text-stone-800" placeholder="Arrival, transfer, check-in, and evening city walk"></textarea>
                                                     </div>
                                                 </td>
-                                                <td class="px-4 py-3 align-top">
-                                                    <div class="flex h-[96px] items-stretch gap-2 rounded-xl border border-stone-200 bg-stone-50 p-2.5">
-                                                        <textarea name="itinerary_notes[]" rows="2" class="h-full flex-1 resize-none rounded-lg border border-stone-300 bg-white px-2.5 py-1.5 text-sm text-stone-800" placeholder="Meeting point, what to bring, extra detail"></textarea>
-                                                    </div>
-                                                </td>
                                                 <td class="px-4 py-3 align-top text-center">
                                                     <div class="flex h-[96px] flex-col items-center justify-center gap-2">
                                                         <button type="button" class="inline-flex h-9 w-9 items-center justify-center rounded-full border border-stone-300 bg-white text-lg leading-none text-stone-600 transition hover:border-sky-300 hover:text-sky-700" data-package-itinerary-add-slot aria-label="Add slot">
@@ -566,9 +633,9 @@
                                         @method('PATCH')
                                         <div class="flex items-start justify-between gap-4">
                                             <div>
-                                                <p class="text-sm font-medium uppercase tracking-[0.02em] text-stone-500">Service Inclusion</p>
+                                                <p class="text-sm font-medium uppercase tracking-[0.02em] text-stone-500">Package Details</p>
                                                 <h3 class="mt-1 text-2xl font-semibold text-stone-900">{{ $product->name }}</h3>
-                                                <p class="mt-2 text-sm text-stone-500">Add label/value rows for the package inclusion table.</p>
+                                                <p class="mt-2 text-sm text-stone-500">Add label and description rows for includes, excludes, things to bring, and important notes.</p>
                                             </div>
                                             <button type="button" class="rounded-full border border-stone-300 bg-white px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-stone-700 transition hover:bg-stone-100" data-package-service-inclusion-close>
                                                 Close
@@ -880,6 +947,9 @@
             const tourCodeInput = row.querySelector('[data-package-edit-tour-code]');
             const minimumAgeMode = row.querySelector('[data-package-edit-minimum-age-mode]');
             const minimumAgeYears = row.querySelector('[data-package-edit-minimum-age-years]');
+            const pricingRows = row.querySelector('[data-package-edit-pricing-rows]');
+            const pricingTemplate = row.querySelector('[data-package-edit-pricing-template]');
+            const pricingAddButton = row.querySelector('[data-package-edit-pricing-add]');
             const itineraryButton = row.querySelector('[data-package-inline-open="itinerary"]');
             const serviceInclusionButton = row.querySelector('[data-package-inline-open="service-inclusions"]');
             const cancelButton = row.querySelector('[data-package-inline-cancel]');
@@ -945,6 +1015,33 @@
 
             packageTypeSelect?.addEventListener('change', syncPackageFields);
             minimumAgeMode?.addEventListener('change', syncMinimumAgeFields);
+            pricingAddButton?.addEventListener('click', () => {
+                const templateContent = pricingTemplate?.content?.cloneNode(true);
+
+                if (!templateContent || !pricingRows) {
+                    return;
+                }
+
+                pricingRows.appendChild(templateContent);
+            });
+            pricingRows?.addEventListener('click', (event) => {
+                const removeButton = event.target.closest('[data-package-edit-pricing-remove]');
+
+                if (!removeButton) {
+                    return;
+                }
+
+                const currentRow = removeButton.closest('[data-package-edit-pricing-row]');
+
+                if (!currentRow || pricingRows.querySelectorAll('[data-package-edit-pricing-row]').length <= 1) {
+                    currentRow?.querySelectorAll('input').forEach((input) => {
+                        input.value = '';
+                    });
+                    return;
+                }
+
+                currentRow.remove();
+            });
             tourCodeInput?.addEventListener('input', () => {
                 if (!packageTypeSelect) {
                     return;

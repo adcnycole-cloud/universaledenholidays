@@ -210,7 +210,7 @@
                             <a href="{{ route('home') }}" class="flex items-center gap-3" style="position: relative; left: 0.25rem;">
                                 <img src="{{ asset('images/ue blue logo.png') }}" alt="Universal Eden Logo" class="w-auto " style="height: 2rem;">
                                 <img src="{{ asset('images/Malaysia Truly Asia logo 2026.png') }}" alt="Malaysia Truly Asia Logo" class="w-auto" style="display: block; height: 4rem; margin: 0; padding: 0;">
-                                <span class="font-['Prata'] text-xl text-stone-900">Universal Eden Holidays</span>
+                                <span class="hidden font-['Prata'] text-xl text-stone-900 md:inline">Universal Eden Holidays</span>
                             </a>
                         @endif
 
@@ -234,8 +234,19 @@
                                             <a href="{{ route('tours.show', '4d3n-trip') }}" class="tours-menu-link" style="border-radius: 0;">4D3N Trip</a>
                                         </div>
                                     </div>
-                                    <a href="{{ route('blog.index') }}" class="main-nav-link is-light whitespace-nowrap">Blog</a>
-                                    <a href="{{ route('home') }}#about-us" class="main-nav-link is-light whitespace-nowrap">About Us</a>
+                                    <div class="tours-menu" data-tours-menu>
+                                        <button type="button" class="main-nav-link is-light tours-menu-toggle whitespace-nowrap" data-tours-toggle aria-expanded="false" style="display: inline-flex; align-items: center; gap: 0.28rem;">
+                                            <span>About Us</span>
+                                            <span aria-hidden="true" style="font-size: 0.72rem; line-height: 1;">&#9662;</span>
+                                        </button>
+                                        <div class="tours-menu-panel" style="border-radius: 0;">
+                                            <a href="{{ route('home') }}#about-us" class="tours-menu-link" style="border-radius: 0;">About Us</a>
+                                            <a href="{{ route('home') }}#testimonials" class="tours-menu-link" style="border-radius: 0;">Customer Reviews</a>
+                                            <a href="{{ route('blog.index') }}" class="tours-menu-link" style="border-radius: 0;">Travel Blog</a>
+                                            <a href="{{ route('legal.terms-and-conditions') }}" class="tours-menu-link" style="border-radius: 0;">Terms and Condition</a>
+                                            <a href="{{ route('booking.create') }}" class="tours-menu-link" style="border-radius: 0;">Payment Options</a>
+                                        </div>
+                                    </div>
                                     <a href="{{ route('bookings.track.form') }}" class="main-nav-link is-light whitespace-nowrap">Track Booking</a>
                                 </div>
                             </nav>
@@ -291,7 +302,7 @@
                     </div>
                     @if (! $isAdminRoute)
                         <div class="hidden md:block" style="background: #455499;">
-                            <nav class="w-full px-6 lg:px-10" style="padding-top: 1rem; padding-bottom: 1rem; background: #455499;">
+                            <nav class="w-full px-6 lg:px-10" style="padding-top: 0.65rem; padding-bottom: 0.65rem; background: #455499;">
                                 <div class="flex items-center justify-center gap-8 font-semibold uppercase text-white xl:gap-10" style="font-size: 0.9rem; letter-spacing: 0.12em;">
                                     <a href="{{ route('home') }}" class="main-nav-link whitespace-nowrap">Home</a>
                                     <a href="{{ route('home') }}#transport" class="main-nav-link whitespace-nowrap">Transport</a>
@@ -308,8 +319,19 @@
                                             <a href="{{ route('tours.show', '4d3n-trip') }}" class="tours-menu-link" style="border-radius: 0;">4D3N Trip</a>
                                         </div>
                                     </div>
-                                    <a href="{{ route('blog.index') }}" class="main-nav-link whitespace-nowrap">Blog</a>
-                                    <a href="{{ route('home') }}#about-us" class="main-nav-link whitespace-nowrap">About Us</a>
+                                    <div class="tours-menu" data-tours-menu>
+                                        <button type="button" class="main-nav-link tours-menu-toggle whitespace-nowrap" data-tours-toggle aria-expanded="false" style="display: inline-flex; align-items: center; gap: 0.28rem;">
+                                            <span>ABOUT US</span>
+                                            <span aria-hidden="true" style="font-size: 0.72rem; line-height: 1;">&#9662;</span>
+                                        </button>
+                                        <div class="tours-menu-panel" style="border-radius: 0;">
+                                            <a href="{{ route('home') }}#about-us" class="tours-menu-link" style="border-radius: 0;">About Us</a>
+                                            <a href="{{ route('home') }}#testimonials" class="tours-menu-link" style="border-radius: 0;">Customer Reviews</a>
+                                            <a href="{{ route('blog.index') }}" class="tours-menu-link" style="border-radius: 0;">Travel Blog</a>
+                                            <a href="{{ route('legal.terms-and-conditions') }}" class="tours-menu-link" style="border-radius: 0;">Terms and Condition</a>
+                                            <a href="{{ route('booking.create') }}" class="tours-menu-link" style="border-radius: 0;">Payment Options</a>
+                                        </div>
+                                    </div>
                                     <a href="{{ route('bookings.track.form') }}" class="main-nav-link whitespace-nowrap">Track Booking</a>
                                 </div>
                             </nav>
@@ -736,5 +758,3 @@
         </script>
     </body>
 </html>
-
-

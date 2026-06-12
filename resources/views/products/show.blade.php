@@ -1,5 +1,5 @@
 <x-layouts.app :title="$product->name.' | Universal Eden Holidays'">
-    <main class="mx-auto max-w-[120rem] px-6 py-10 lg:px-10" style="background-color: #A5B8D9;">
+    <main class="mx-auto max-w-[120rem] px-6 py-10 lg:px-10" style="background-color: #ffffff;">
         <div class="mb-6 text-stone-500" style="font-size: 1.2rem; line-height: 1.25;">
             <a href="{{ route('home') }}" class="hover:text-sky-700">Home</a>
             <span class="mx-2">›</span>
@@ -28,6 +28,52 @@
             $structuredServiceInclusions = collect($serviceInclusions)
                 ->filter(fn ($item) => is_array($item) && array_key_exists('value', $item))
                 ->values();
+            $serviceInfoSections = collect([
+                'inclusion' => ['title' => 'Inclusion', 'items' => []],
+                'exclusion' => ['title' => 'Exclusion', 'items' => []],
+                'things_to_bring' => ['title' => 'Things to Bring', 'items' => []],
+                'important_notes' => ['title' => 'Important Notes', 'items' => []],
+            ]);
+            $pushServiceSectionItem = function (string $key, string $value) use (&$serviceInfoSections) {
+                $trimmedValue = trim($value);
+
+                if ($trimmedValue === '') {
+                    return;
+                }
+
+                $section = $serviceInfoSections->get($key);
+                $section['items'][] = $trimmedValue;
+                $serviceInfoSections->put($key, $section);
+            };
+
+            if ($structuredServiceInclusions->isNotEmpty()) {
+                foreach ($structuredServiceInclusions as $item) {
+                    $label = trim((string) ($item['label'] ?? ''));
+                    $value = trim((string) ($item['value'] ?? ''));
+                    $normalizedLabel = Str::lower($label);
+
+                    $targetKey = match (true) {
+                        str_contains($normalizedLabel, 'exclusion') => 'exclusion',
+                        str_contains($normalizedLabel, 'bring') => 'things_to_bring',
+                        str_contains($normalizedLabel, 'important'), str_contains($normalizedLabel, 'note') => 'important_notes',
+                        default => 'inclusion',
+                    };
+
+                    $pushServiceSectionItem(
+                        $targetKey,
+                        $label !== '' && !in_array($normalizedLabel, ['inclusion', 'exclusion', 'things to bring', 'important notes', 'note'], true)
+                            ? $label.': '.$value
+                            : $value
+                    );
+                }
+            } else {
+                $pushServiceSectionItem('inclusion', (string) (($serviceInclusions['inclusion'] ?? '') ?: 'Core service delivery, support coordination, and supplier-side arrangements as stated.'));
+                $pushServiceSectionItem('inclusion', (string) (($serviceInclusions['meals'] ?? '') ? 'Meals: '.$serviceInclusions['meals'] : 'Meals: Subject to package or service arrangement.'));
+                $pushServiceSectionItem('inclusion', (string) (($serviceInclusions['accommodation'] ?? '') ? 'Accommodation: '.$serviceInclusions['accommodation'] : 'Accommodation: Included where relevant for package and overnight products.'));
+                $pushServiceSectionItem('exclusion', (string) (($serviceInclusions['exclusion'] ?? '') ?: 'Flights, personal travel insurance, personal spending, and unlisted add-ons.'));
+                $pushServiceSectionItem('things_to_bring', 'Personal identification, comfortable clothing, and any trip-specific essentials confirmed after booking.');
+                $pushServiceSectionItem('important_notes', 'Timing, weather, and supplier arrangements may vary depending on the selected package and travel date.');
+            }
             $itineraryItems = collect($product->itinerary_items ?? [])->filter()->values();
             $structuredItineraryItems = $itineraryItems
                 ->filter(fn ($item) => is_array($item) && array_key_exists('activity', $item))
@@ -123,7 +169,7 @@
         <section class="grid gap-8 lg:grid-cols-2">
             <div>
                 <div>
-                    <div class="overflow-hidden rounded-[2rem] border border-stone-200 bg-white shadow-sm">
+                    <div class="overflow-hidden" style="background: #ffffff;">
                         @if ($primaryImage)
                             <button
                                 type="button"
@@ -143,7 +189,7 @@
                             </div>
                         @endif
                         @if ($thumbnailImages->isNotEmpty())
-                            <div class="grid grid-cols-2 gap-3 border-t border-stone-200 bg-stone-50 p-4 md:grid-cols-4">
+                            <div class="grid grid-cols-2 gap-3 border-t border-stone-200 bg-white p-4 md:grid-cols-4">
                                 @foreach ($thumbnailImages as $index => $image)
                                     <button
                                         type="button"
@@ -166,16 +212,16 @@
                             <p class="text-sm uppercase tracking-[0.3em] text-sky-700">{{ ucfirst($product->category) }}</p>
                             <h1 class="mt-3 font-['Prata'] text-4xl text-stone-900 md:text-5xl">{{ $product->name }}</h1>
                             <p class="mt-4 max-w-3xl text-base leading-8 text-stone-600">{{ $product->description }}</p>
-                            <div class="mt-8 grid gap-4 md:grid-cols-3">
-                                <div class="rounded-3xl bg-white/80 p-5">
+                            <div class="mt-8 grid gap-0 border-y border-stone-200 md:grid-cols-3">
+                                <div class="p-5 md:border-r md:border-stone-200">
                                     <p class="text-sm text-stone-500">Location</p>
                                     <p class="mt-2 text-lg font-semibold text-stone-900">{{ $product->location }}</p>
                                 </div>
-                                <div class="rounded-3xl bg-white/80 p-5">
+                                <div class="border-t border-stone-200 p-5 md:border-t-0 md:border-r md:border-stone-200">
                                     <p class="text-sm text-stone-500">Duration</p>
                                     <p class="mt-2 text-lg font-semibold text-stone-900">{{ $product->duration }}</p>
                                 </div>
-                                <div class="rounded-3xl bg-white/80 p-5">
+                                <div class="border-t border-stone-200 p-5 md:border-t-0">
                                     <p class="text-sm text-stone-500">Capacity</p>
                                     <p class="mt-2 text-lg font-semibold text-stone-900">{{ $product->capacity ?? 'Flexible' }}</p>
                                 </div>
@@ -186,16 +232,16 @@
             </div>
 
             <aside class="space-y-6">
-                <section class="rounded-[2rem] border border-emerald-500/30 bg-white p-6 shadow-sm">
-                    <div class="mt-6 space-y-4 text-sm text-stone-700">
-                        <div class="flex justify-between gap-4"><span class="font-semibold">Description</span><span>{{ $product->name }}</span></div>
-                        <div class="flex justify-between gap-4"><span class="font-semibold">Region</span><span>{{ $product->location }}</span></div>
-                        <div class="flex justify-between gap-4"><span class="font-semibold">Duration</span><span>{{ $product->duration }}</span></div>
-                        <div class="flex justify-between gap-4"><span class="font-semibold">Minimum</span><span>1 Pax</span></div>
-                        <div class="flex justify-between gap-4"><span class="font-semibold">Availability</span><span>Daily / Subject to booking</span></div>
+                <section class="p-0" style="background: #ffffff;">
+                    <div class="space-y-0 text-sm text-stone-700">
+                        <div class="flex justify-between gap-4 border-b border-stone-200 py-4"><span class="font-semibold">Description</span><span class="text-right">{{ $product->name }}</span></div>
+                        <div class="flex justify-between gap-4 border-b border-stone-200 py-4"><span class="font-semibold">Region</span><span class="text-right">{{ $product->location }}</span></div>
+                        <div class="flex justify-between gap-4 border-b border-stone-200 py-4"><span class="font-semibold">Duration</span><span class="text-right">{{ $product->duration }}</span></div>
+                        <div class="flex justify-between gap-4 border-b border-stone-200 py-4"><span class="font-semibold">Minimum</span><span class="text-right">1 Pax</span></div>
+                        <div class="flex justify-between gap-4 border-b border-stone-200 py-4"><span class="font-semibold">Availability</span><span class="text-right">Daily / Subject to booking</span></div>
                     </div>
 
-                    <div class="mt-6 flex items-center justify-between gap-4 rounded-3xl bg-emerald-50 p-5">
+                    <div class="mt-6 border-b border-stone-200 pb-6">
                         <div>
                             <p class="text-sm uppercase tracking-[0.3em] text-emerald-700">Starting From</p>
                             @if ($product->has_active_discount)
@@ -213,38 +259,38 @@
                     </div>
                 </section>
 
-                <section class="rounded-[2rem] border border-stone-200 bg-white p-6 shadow-sm">
-                    <h2 class="text-2xl font-semibold text-stone-900">Service Inclusion</h2>
-                    <div class="mt-6 overflow-hidden rounded-3xl border border-stone-200">
-                        <table class="min-w-full text-left text-sm">
-                            <tbody class="bg-white text-stone-700">
-                                @if ($structuredServiceInclusions->isNotEmpty())
-                                    @foreach ($structuredServiceInclusions as $item)
-                                        <tr class="{{ $loop->last ? '' : 'border-b border-stone-200' }}">
-                                            <th class="w-48 bg-stone-50 px-5 py-4 font-semibold">{{ $item['label'] ?: 'Item '.$loop->iteration }}</th>
-                                            <td class="px-5 py-4">{{ $item['value'] ?: '--' }}</td>
-                                        </tr>
-                                    @endforeach
+                <section class="border-t border-stone-200 pt-8" data-package-details style="background: #ffffff;">
+                    <h2 class="font-['Oswald'] text-3xl font-bold uppercase tracking-[0.08em] text-stone-900">Package Details</h2>
+                    <div class="mt-6 grid gap-0 border-y border-stone-200 md:grid-cols-4" style="background-color: #455499;">
+                        @foreach ($serviceInfoSections as $key => $section)
+                            <button
+                                type="button"
+                                class="px-4 py-4 text-center text-xs font-semibold uppercase tracking-[0.22em] transition"
+                                style="background-color: #455499; color: #111111; border-right: 1px solid rgba(255,255,255,0.35);"
+                                data-package-detail-tab="{{ $key }}"
+                                aria-pressed="{{ $loop->first ? 'true' : 'false' }}"
+                            >
+                                {{ $key === 'inclusion' ? 'Includes' : ($key === 'exclusion' ? 'Excludes' : $section['title']) }}
+                            </button>
+                        @endforeach
+                    </div>
+                    <div class="mt-10 border-t border-stone-200 pt-6">
+                        @foreach ($serviceInfoSections as $key => $section)
+                            <div @class(['hidden' => !$loop->first]) data-package-detail-panel="{{ $key }}">
+                                @if (!empty($section['items']))
+                                    <ul class="space-y-3 text-sm leading-8 text-stone-600">
+                                        @foreach ($section['items'] as $entry)
+                                            <li class="flex items-center gap-3">
+                                                <span class="text-base font-bold leading-none text-stone-500">{{ $key === 'exclusion' ? '•' : '✓' }}</span>
+                                                <span>{{ $entry }}</span>
+                                            </li>
+                                        @endforeach
+                                    </ul>
                                 @else
-                                    <tr class="border-b border-stone-200">
-                                        <th class="w-48 bg-stone-50 px-5 py-4 font-semibold">Meals</th>
-                                        <td class="px-5 py-4">{{ ($serviceInclusions['meals'] ?? '') ?: 'Subject to package or service arrangement.' }}</td>
-                                    </tr>
-                                    <tr class="border-b border-stone-200">
-                                        <th class="bg-stone-50 px-5 py-4 font-semibold">Inclusion</th>
-                                        <td class="px-5 py-4">{{ ($serviceInclusions['inclusion'] ?? '') ?: 'Core service delivery, support coordination, and supplier-side arrangements as stated.' }}</td>
-                                    </tr>
-                                    <tr class="border-b border-stone-200">
-                                        <th class="bg-stone-50 px-5 py-4 font-semibold">Accommodation</th>
-                                        <td class="px-5 py-4">{{ ($serviceInclusions['accommodation'] ?? '') ?: 'Included where relevant for package and overnight products.' }}</td>
-                                    </tr>
-                                    <tr>
-                                        <th class="bg-stone-50 px-5 py-4 font-semibold">Exclusion</th>
-                                        <td class="px-5 py-4">{{ ($serviceInclusions['exclusion'] ?? '') ?: 'Flights, personal travel insurance, personal spending, and unlisted add-ons.' }}</td>
-                                    </tr>
+                                    <p class="text-sm leading-7 text-stone-500">Details will be confirmed with this package.</p>
                                 @endif
-                            </tbody>
-                        </table>
+                            </div>
+                        @endforeach
                     </div>
                 </section>
             </aside>
@@ -253,63 +299,68 @@
 
         @if ($product->category !== 'transport')
             @if ($itineraryItems->isNotEmpty())
-                <section class="mt-8 rounded-[2rem] border border-stone-200 bg-white p-6 shadow-sm">
-                    <h2 class="text-3xl font-semibold text-stone-900">Package Itinerary</h2>
-                    @if ($structuredItineraryItems->isNotEmpty())
-                        <div class="mt-6 space-y-4">
-                            @foreach ($groupedItineraryDays as $day)
-                                <section class="overflow-hidden rounded-[1.5rem] border border-stone-200 bg-stone-50">
-                                    <div class="flex items-center justify-between gap-4 border-b border-stone-200 bg-white px-4 py-3">
-                                        <div>
+                <section class="mt-8 w-full border-t border-stone-200 pt-8">
+                        <h2 class="text-3xl font-semibold text-stone-900">Package Itinerary</h2>
+                        @if ($structuredItineraryItems->isNotEmpty())
+                            <div class="mt-6 w-full border-y border-stone-200">
+                                @foreach ($groupedItineraryDays as $day)
+                                    <section class="min-w-0 {{ $loop->last ? '' : 'border-b border-stone-200' }}" data-itinerary-day>
+                                        <button
+                                            type="button"
+                                            class="flex w-full items-center justify-between gap-4 px-4 py-4 text-left transition hover:bg-stone-50"
+                                            data-itinerary-toggle
+                                            aria-expanded="{{ $loop->first ? 'true' : 'false' }}"
+                                        >
                                             <h3 class="text-xl font-semibold text-stone-900">{{ $day['label'] }}</h3>
+                                            <div class="flex items-center gap-3">
+                                                <span class="rounded-full bg-emerald-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-emerald-700">
+                                                    {{ $day['items']->count() }} stop{{ $day['items']->count() === 1 ? '' : 's' }}
+                                                </span>
+                                                <span class="text-lg leading-none text-stone-500" data-itinerary-icon>{{ $loop->first ? '−' : '+' }}</span>
+                                            </div>
+                                        </button>
+                                        <div class="{{ $loop->first ? '' : 'hidden' }}" data-itinerary-panel>
+                                            <div class="border-t border-stone-200 bg-white">
+                                                <div class="max-w-[58rem] overflow-x-auto">
+                                                    <table class="w-full min-w-0 table-fixed text-sm">
+                                                    <colgroup>
+                                                        <col style="width: 120px;">
+                                                        <col style="width: auto;">
+                                                    </colgroup>
+                                                    <thead class="bg-stone-100/80 text-stone-600">
+                                                        <tr>
+                                                            <th class="px-4 py-3 text-center text-xs font-semibold uppercase tracking-[0.18em]">Time</th>
+                                                            <th class="px-4 py-3 text-center text-xs font-semibold uppercase tracking-[0.18em]">Activity</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody class="bg-white text-stone-700">
+                                                        @foreach ($day['items'] as $item)
+                                                            <tr class="{{ $loop->last ? '' : 'border-b border-stone-200' }}">
+                                                                <td class="px-4 py-3 text-center align-top font-semibold text-sky-700 whitespace-nowrap">
+                                                                    {{ filled($item['time'] ?? null) ? $item['time'] : 'Flexible time' }}
+                                                                </td>
+                                                                <td class="px-4 py-3 text-justify leading-6">
+                                                                    {{ $item['activity'] ?? '' }}
+                                                                </td>
+                                                            </tr>
+                                                        @endforeach
+                                                    </tbody>
+                                                    </table>
+                                                </div>
+                                            </div>
                                         </div>
-                                        <span class="rounded-full bg-emerald-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-emerald-700">
-                                            {{ $day['items']->count() }} stop{{ $day['items']->count() === 1 ? '' : 's' }}
-                                        </span>
+                                    </section>
+                                @endforeach
+                            </div>
+                        @else
+                            <div class="mt-6 w-full border-y border-stone-200">
+                                @foreach ($itineraryItems as $item)
+                                    <div class="{{ $loop->last ? '' : 'border-b border-stone-200' }} px-5 py-4 text-sm leading-7 text-stone-700">
+                                        {{ $item }}
                                     </div>
-                                    <div class="overflow-hidden">
-                                        <table class="w-full table-fixed text-sm">
-                                            <colgroup>
-                                                <col style="width: 180px;">
-                                                <col style="width: 44%;">
-                                                <col style="width: auto;">
-                                            </colgroup>
-                                            <thead class="bg-stone-100/80 text-stone-600">
-                                                <tr>
-                                                    <th class="px-4 py-3 text-center text-xs font-semibold uppercase tracking-[0.18em]">Time</th>
-                                                    <th class="px-4 py-3 text-center text-xs font-semibold uppercase tracking-[0.18em]">Activity</th>
-                                                    <th class="px-4 py-3 text-center text-xs font-semibold uppercase tracking-[0.18em]">Notes</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody class="bg-white text-stone-700">
-                                                @foreach ($day['items'] as $item)
-                                                    <tr class="{{ $loop->last ? '' : 'border-b border-stone-200' }}">
-                                                        <td class="px-4 py-3 text-center align-top font-semibold text-sky-700 whitespace-nowrap">
-                                                            {{ filled($item['time'] ?? null) ? $item['time'] : 'Flexible time' }}
-                                                        </td>
-                                                        <td class="px-4 py-3 text-justify leading-6">
-                                                            {{ $item['activity'] ?? '' }}
-                                                        </td>
-                                                        <td class="px-4 py-3 text-justify leading-6 text-stone-600">
-                                                            {{ filled($item['notes'] ?? null) ? $item['notes'] : '--' }}
-                                                        </td>
-                                                    </tr>
-                                                @endforeach
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </section>
-                            @endforeach
-                        </div>
-                    @else
-                        <div class="mt-6 grid gap-4">
-                            @foreach ($itineraryItems as $item)
-                                <div class="rounded-[1.5rem] border border-stone-200 bg-stone-50 px-5 py-4 text-sm leading-7 text-stone-700">
-                                    {{ $item }}
-                                </div>
-                            @endforeach
-                        </div>
-                    @endif
+                                @endforeach
+                            </div>
+                        @endif
                 </section>
             @endif
             <section class="mt-8 rounded-[2rem] border border-stone-200 bg-white p-6 shadow-sm">
@@ -396,185 +447,9 @@
 
         @endif
 
-        @if ($product->category === 'package')
-            <section id="reviews" class="mt-8 rounded-[2rem] border border-stone-200 bg-white p-6 shadow-sm">
-                <div class="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
-                    <h2 class="text-2xl font-semibold text-stone-900">Reviews</h2>
-                    @if (($googleReviewData['reviews_count'] ?? 0) > 0 && !is_null($googleReviewData['rating'] ?? null))
-                        <a
-                            href="{{ $googleReviewData['place_url'] }}"
-                            target="_blank"
-                            rel="noreferrer"
-                            class="rounded-full bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-700 transition hover:bg-rose-100"
-                        >
-                            Google {{ number_format((float) $googleReviewData['rating'], 1) }}/5 from {{ $googleReviewData['reviews_count'] }} reviews
-                        </a>
-                    @endif
-                </div>
-                <div class="mt-6 grid gap-6 md:grid-cols-2">
-                    <div class="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
-                        @if (!empty($googleReviewData['landscape_photo_url']))
-                            <article class="sm:col-span-2 xl:col-span-3 overflow-hidden rounded-3xl border border-stone-200 bg-white shadow-sm">
-                                <a href="{{ $googleReviewData['place_url'] }}" target="_blank" rel="noreferrer" class="block">
-                                    <img
-                                        src="{{ $googleReviewData['landscape_photo_url'] }}"
-                                        alt="{{ $googleReviewData['place_name'] ?: 'Universal Eden Holidays' }}"
-                                        class="h-56 w-full object-cover"
-                                    >
-                                </a>
-                                <div class="flex flex-wrap items-center justify-between gap-3 p-4">
-                                    <div>
-                                        <p class="text-sm font-semibold text-stone-900">{{ $googleReviewData['place_name'] ?: 'Universal Eden Holidays' }}</p>
-                                        <p class="mt-1 text-xs uppercase tracking-[0.16em] text-stone-500">Google business photo</p>
-                                    </div>
-                                    <a href="{{ $googleReviewData['place_url'] }}" target="_blank" rel="noreferrer" class="text-sm font-semibold text-sky-700 transition hover:text-sky-800">
-                                        Open on Google
-                                    </a>
-                                </div>
-                                @if (!empty($googleReviewData['landscape_photo_attribution']))
-                                    <div class="border-t border-stone-200 px-4 py-3 text-xs text-stone-500">
-                                        Photo:
-                                        @foreach ($googleReviewData['landscape_photo_attribution'] as $author)
-                                            @if (!empty($author['uri']))
-                                                <a href="{{ $author['uri'] }}" target="_blank" rel="noreferrer" class="font-medium text-stone-700 hover:text-sky-700">{{ $author['name'] }}</a>@if (! $loop->last), @endif
-                                            @else
-                                                <span class="font-medium text-stone-700">{{ $author['name'] }}</span>@if (! $loop->last), @endif
-                                            @endif
-                                        @endforeach
-                                    </div>
-                                @endif
-                            </article>
-                        @endif
-
-                        @forelse ($reviews as $review)
-                            @include('partials.public-review-card', ['review' => $review])
-                        @empty
-                            <div class="md:col-span-3 rounded-3xl border border-dashed border-stone-300 bg-stone-50 p-6 text-sm text-stone-600">
-                                No package or Google reviews are available yet.
-                            </div>
-                        @endforelse
-                    </div>
-
-                    <section class="rounded-[1.75rem] border border-stone-200 bg-stone-50/80 p-5 shadow-sm">
-                        <p class="text-sm uppercase tracking-[0.28em] text-amber-600">Leave a Review</p>
-                        <h3 class="mt-2 font-['Prata'] text-2xl text-stone-900">Share your {{ $product->name }} experience</h3>
-                        <p class="mt-3 text-sm leading-6 text-stone-600">If you joined this package before, you can leave a short review here. We will check it before showing it on this package page.</p>
-
-                        <form method="POST" action="{{ route('products.testimonials.store', $product) }}" enctype="multipart/form-data" class="mt-5 space-y-4" data-form-persist="product-testimonial-review-{{ $product->id }}">
-                            @csrf
-                            <div class="grid gap-4 md:grid-cols-2">
-                                <div>
-                                    <label for="product_testimonial_name" class="mb-2 block text-sm font-medium text-stone-700">Your name</label>
-                                    <input id="product_testimonial_name" name="name" type="text" value="{{ old('name') }}" class="w-full rounded-2xl border border-stone-300 bg-white px-4 py-3 text-stone-800" required>
-                                </div>
-                                <div>
-                                    <label for="product_testimonial_email" class="mb-2 block text-sm font-medium text-stone-700">Gmail / Email</label>
-                                    <input id="product_testimonial_email" name="email" type="email" value="{{ old('email') }}" class="w-full rounded-2xl border border-stone-300 bg-white px-4 py-3 text-stone-800" placeholder="yourname@gmail.com" autocomplete="email" inputmode="email" spellcheck="false" required>
-                                </div>
-                            </div>
-                            <div class="grid gap-4 md:grid-cols-2">
-                                <div>
-                                    <label for="product_testimonial_location" class="mb-2 block text-sm font-medium text-stone-700">Your location</label>
-                                    <input id="product_testimonial_location" name="location" type="text" value="{{ old('location') }}" class="w-full rounded-2xl border border-stone-300 bg-white px-4 py-3 text-stone-800" required>
-                                </div>
-                                <div>
-                                    <label for="product_testimonial_profile_photo" class="mb-2 block text-sm font-medium text-stone-700">Upload image</label>
-                                    <input id="product_testimonial_profile_photo" name="profile_photo" type="file" accept=".jpg,.jpeg,.png,.webp" class="w-full rounded-2xl border border-dashed border-stone-300 bg-white px-4 py-3 text-stone-700">
-                                </div>
-                            </div>
-                            <div class="grid gap-4 md:grid-cols-[1fr_9rem]">
-                                <div>
-                                    <label for="product_testimonial_trip_name" class="mb-2 block text-sm font-medium text-stone-700">Trip or package name</label>
-                                    <input id="product_testimonial_trip_name" name="trip_name" type="text" value="{{ old('trip_name', $product->name) }}" class="w-full rounded-2xl border border-stone-300 bg-white px-4 py-3 text-stone-800" required>
-                                </div>
-                                <div>
-                                    <label for="product_testimonial_rating" class="mb-2 block text-sm font-medium text-stone-700">Rating</label>
-                                    <select id="product_testimonial_rating" name="rating" class="w-full rounded-2xl border border-stone-300 bg-white px-4 py-3 text-stone-800" required>
-                                        @foreach ([5, 4, 3, 2, 1] as $rating)
-                                            <option value="{{ $rating }}" @selected((int) old('rating', 5) === $rating)>{{ $rating }}/5</option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                            </div>
-                            <div>
-                                <label for="product_testimonial_quote" class="mb-2 block text-sm font-medium text-stone-700">Your review</label>
-                                <textarea id="product_testimonial_quote" name="quote" rows="5" class="w-full rounded-2xl border border-stone-300 bg-white px-4 py-3 text-stone-800" placeholder="Tell future travelers what stood out about this package." required>{{ old('quote') }}</textarea>
-                            </div>
-                            <button type="submit" class="w-full rounded-full bg-amber-600 px-5 py-3 text-sm font-semibold uppercase tracking-[0.22em] text-white transition hover:bg-amber-700">
-                                Submit Review
-                            </button>
-                        </form>
-                    </section>
-                </div>
-            </section>
-        @endif
-
-        @if ($product->category !== 'transport')
-            <section class="mt-8">
-                <section class="rounded-[2rem] border border-stone-200 bg-white p-6 shadow-sm">
-                    <h2 class="text-2xl font-semibold text-stone-900">Recommended Packages</h2>
-                    <div class="mt-6 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
-                        @foreach ($recommendedProducts as $recommended)
-                            <a href="{{ route('products.show', $recommended) }}" class="block overflow-hidden rounded-3xl border border-stone-200 bg-stone-50 transition duration-300 hover:-translate-y-1.5 hover:shadow-lg">
-                                @if ($recommended->image_url)
-                                    <div class="relative">
-                                        <img src="{{ $recommended->image_url }}" alt="{{ $recommended->name }}" class="h-44 w-full object-cover">
-                                        <img src="{{ asset('images/UE.png') }}" alt="Universal Eden trademark" class="pointer-events-none absolute z-10 h-10 w-auto opacity-90" style="right: 0; bottom: 0; transform: translate(-0.65rem, -0.65rem);">
-                                    </div>
-                                @else
-                                    <div class="flex h-44 items-center justify-center bg-[linear-gradient(135deg,_#dbeafe,_#fff7ed_55%,_#ecfeff)] px-6 text-center text-xl font-semibold text-stone-700">
-                                        {{ $recommended->name }}
-                                    </div>
-                                @endif
-                                <div class="p-5">
-                                <p class="text-xs font-semibold uppercase tracking-[0.25em] text-sky-700">{{ ucfirst($recommended->category) }}</p>
-                                <h3 class="mt-3 text-xl font-semibold text-stone-900">{{ $recommended->name }}</h3>
-                                <p class="mt-3 text-sm text-stone-500">{{ $recommended->location }}</p>
-                                <p class="mt-4 text-sm leading-6 text-stone-600">{{ $recommended->summary }}</p>
-                                @if ($recommended->has_active_discount)
-                                    <div class="mt-5 text-xs text-stone-400 line-through">From MYR {{ number_format((float) $recommended->malaysia_adult_price_myr, 2) }}</div>
-                                @endif
-                                <div class="mt-1 text-lg font-semibold text-stone-900">From MYR {{ number_format((float) $recommended->discounted_malaysia_adult_price_myr, 2) }}</div>
-                                </div>
-                            </a>
-                        @endforeach
-                    </div>
-                </section>
-            </section>
-        @endif
-
-        <section class="mt-8 rounded-[2rem] border border-stone-200 bg-white p-6 shadow-sm">
-            <div class="grid gap-8 lg:grid-cols-[0.9fr_1.1fr]">
-                <div class="rounded-[1.75rem] bg-[linear-gradient(135deg,_#e0f2fe,_#fef3c7_60%,_#ecfccb)] p-8">
-                    <p class="text-sm uppercase tracking-[0.35em] text-stone-600">Why Travel With</p>
-                    <h2 class="mt-3 font-['Prata'] text-4xl text-stone-900">Universal Eden Holidays</h2>
-                    <p class="mt-4 text-sm leading-7 text-stone-700">Trusted coordination, practical pricing visibility, and a simpler booking path for Sabah experiences.</p>
-                </div>
-                <div class="grid gap-5 md:grid-cols-2">
-                    <div>
-                        <h3 class="text-xl font-semibold text-stone-900">Licensed and Regulated</h3>
-                        <p class="mt-2 text-sm leading-7 text-stone-600">Local partnerships and operational support designed for dependable Sabah travel planning.</p>
-                    </div>
-                    <div>
-                        <h3 class="text-xl font-semibold text-stone-900">Trusted Team</h3>
-                        <p class="mt-2 text-sm leading-7 text-stone-600">Customer support for product questions, booking changes, and reservation follow-up.</p>
-                    </div>
-                    <div>
-                        <h3 class="text-xl font-semibold text-stone-900">Flexible Arrangements</h3>
-                        <p class="mt-2 text-sm leading-7 text-stone-600">Useful for transport requests, custom departures, and last-minute changes.</p>
-                    </div>
-                    <div>
-                        <h3 class="text-xl font-semibold text-stone-900">Value for Money</h3>
-                        <p class="mt-2 text-sm leading-7 text-stone-600">Malaysia and international adult/child rates are clearly shown before the customer books.</p>
-                    </div>
-                </div>
-            </div>
-        </section>
     </main>
 
     <div class="h-12"></div>
-
-    @include('partials.footer')
 
     <div id="product-image-preview-modal" class="fixed inset-0 z-[260] hidden items-center justify-center bg-stone-950/80 px-2 py-6">
         <div class="w-full rounded-[1.75rem] bg-white shadow-[0_24px_60px_rgba(15,23,42,0.28)]" style="max-width: min(1100px, calc(100vw - 1rem));">
@@ -596,8 +471,57 @@
         </div>
     </div>
 
+    @include('/partials.footer')
+
     <script>
         document.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('[data-package-details]').forEach((detailsBlock) => {
+                const tabs = Array.from(detailsBlock.querySelectorAll('[data-package-detail-tab]'));
+                const panels = Array.from(detailsBlock.querySelectorAll('[data-package-detail-panel]'));
+
+                if (!tabs.length || !panels.length) {
+                    return;
+                }
+
+                const activateTab = (targetKey) => {
+                    tabs.forEach((tab) => {
+                        const isActive = tab.dataset.packageDetailTab === targetKey;
+                        tab.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+                        tab.style.backgroundColor = isActive ? '#ffffff' : '#455499';
+                        tab.style.color = '#111111';
+                    });
+
+                    panels.forEach((panel) => {
+                        panel.classList.toggle('hidden', panel.dataset.packageDetailPanel !== targetKey);
+                    });
+                };
+
+                tabs.forEach((tab) => {
+                    tab.addEventListener('click', () => {
+                        activateTab(tab.dataset.packageDetailTab || '');
+                    });
+                });
+
+                activateTab(tabs[0].dataset.packageDetailTab || '');
+            });
+
+            document.querySelectorAll('[data-itinerary-day]').forEach((dayBlock) => {
+                const toggle = dayBlock.querySelector('[data-itinerary-toggle]');
+                const panel = dayBlock.querySelector('[data-itinerary-panel]');
+                const icon = dayBlock.querySelector('[data-itinerary-icon]');
+
+                if (!toggle || !panel || !icon) {
+                    return;
+                }
+
+                toggle.addEventListener('click', () => {
+                    const isExpanded = toggle.getAttribute('aria-expanded') === 'true';
+                    toggle.setAttribute('aria-expanded', isExpanded ? 'false' : 'true');
+                    panel.classList.toggle('hidden', isExpanded);
+                    icon.textContent = isExpanded ? '+' : '−';
+                });
+            });
+
             const previewImages = @json($previewImages);
             const modal = document.getElementById('product-image-preview-modal');
             const imageFrame = document.getElementById('product-image-preview-frame');

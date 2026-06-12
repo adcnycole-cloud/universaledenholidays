@@ -22,6 +22,7 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
@@ -440,6 +441,33 @@ class AdminController extends Controller
                 'min:1',
                 'max:120',
             ],
+            'departure_time' => [
+                Rule::requiredIf($request->input('category') === 'package'),
+                'nullable',
+                'string',
+                'max:100',
+            ],
+            'group_size_label' => [
+                'nullable',
+                'string',
+                'max:100',
+            ],
+            'pricing_group_size_label' => [
+                Rule::requiredIf($request->input('category') === 'package'),
+                'nullable',
+                'array',
+                'min:1',
+                'max:20',
+            ],
+            'pricing_group_size_label.*' => ['nullable', 'string', 'max:100'],
+            'pricing_malaysia_adult_price_myr' => ['nullable', 'array', 'max:20'],
+            'pricing_malaysia_adult_price_myr.*' => ['nullable', 'numeric', 'min:0'],
+            'pricing_malaysia_child_price_myr' => ['nullable', 'array', 'max:20'],
+            'pricing_malaysia_child_price_myr.*' => ['nullable', 'numeric', 'min:0'],
+            'pricing_international_adult_price_myr' => ['nullable', 'array', 'max:20'],
+            'pricing_international_adult_price_myr.*' => ['nullable', 'numeric', 'min:0'],
+            'pricing_international_child_price_myr' => ['nullable', 'array', 'max:20'],
+            'pricing_international_child_price_myr.*' => ['nullable', 'numeric', 'min:0'],
             'tour_code' => [
                 Rule::requiredIf($request->input('category') === 'package'),
                 'nullable',
@@ -448,10 +476,10 @@ class AdminController extends Controller
                 'regex:/^(DT|OT)-UEH[A-Z0-9]+$/',
                 Rule::unique('products', 'tour_code'),
             ],
-            'malaysia_adult_price_myr' => ['required', 'numeric', 'min:0'],
-            'malaysia_child_price_myr' => ['required', 'numeric', 'min:0'],
-            'international_adult_price_myr' => ['required', 'numeric', 'min:0'],
-            'international_child_price_myr' => ['required', 'numeric', 'min:0'],
+            'malaysia_adult_price_myr' => [Rule::requiredIf($request->input('category') !== 'package'), 'nullable', 'numeric', 'min:0'],
+            'malaysia_child_price_myr' => [Rule::requiredIf($request->input('category') !== 'package'), 'nullable', 'numeric', 'min:0'],
+            'international_adult_price_myr' => [Rule::requiredIf($request->input('category') !== 'package'), 'nullable', 'numeric', 'min:0'],
+            'international_child_price_myr' => [Rule::requiredIf($request->input('category') !== 'package'), 'nullable', 'numeric', 'min:0'],
             'capacity' => ['nullable', 'integer', 'min:1', 'max:500'],
             'is_featured' => ['nullable', 'boolean'],
             'is_top_choice' => ['nullable', 'boolean'],
@@ -475,18 +503,37 @@ class AdminController extends Controller
         }
 
         if ($validated['category'] === 'package') {
+            $pricingTiers = $this->buildPackagePricingTiers($validated);
+            $pricingSummary = $this->summarizePackagePricingTiers($pricingTiers);
             $validated['duration'] = ($validated['package_type'] ?? null) === 'Day Trip'
                 ? ($validated['duration_detail'] ?? 'Day Trip')
                 : (string) ($validated['package_type'] ?? '');
             $validated['minimum_age'] = ($validated['minimum_age_mode'] ?? 'no_limit') === 'above_age'
                 ? 'Above '.(int) ($validated['minimum_age_years'] ?? 0).' years old'
                 : 'No limit';
+            $validated['pricing_tiers'] = $pricingTiers;
+            $validated['group_size_label'] = $pricingSummary['group_size_label'];
+            $validated['price_myr'] = $pricingSummary['price_myr'];
+            $validated['malaysia_adult_price_myr'] = $pricingSummary['malaysia_adult_price_myr'];
+            $validated['malaysia_child_price_myr'] = $pricingSummary['malaysia_child_price_myr'];
+            $validated['international_adult_price_myr'] = $pricingSummary['international_adult_price_myr'];
+            $validated['international_child_price_myr'] = $pricingSummary['international_child_price_myr'];
         }
 
-        unset($validated['package_type'], $validated['duration_detail'], $validated['minimum_age_mode'], $validated['minimum_age_years']);
+        unset(
+            $validated['package_type'],
+            $validated['duration_detail'],
+            $validated['minimum_age_mode'],
+            $validated['minimum_age_years'],
+            $validated['pricing_group_size_label'],
+            $validated['pricing_malaysia_adult_price_myr'],
+            $validated['pricing_malaysia_child_price_myr'],
+            $validated['pricing_international_adult_price_myr'],
+            $validated['pricing_international_child_price_myr'],
+        );
 
         $productPayload = $validated + [
-            'price_myr' => $validated['malaysia_adult_price_myr'],
+            'price_myr' => $validated['price_myr'] ?? $validated['malaysia_adult_price_myr'],
             'gallery_images' => $galleryImages,
             'capacity' => $validated['capacity'] ?? null,
             'is_featured' => $request->boolean('is_featured'),
@@ -565,6 +612,33 @@ class AdminController extends Controller
                 'min:1',
                 'max:120',
             ],
+            'departure_time' => [
+                Rule::requiredIf($product->category === 'package'),
+                'nullable',
+                'string',
+                'max:100',
+            ],
+            'group_size_label' => [
+                'nullable',
+                'string',
+                'max:100',
+            ],
+            'pricing_group_size_label' => [
+                Rule::requiredIf($product->category === 'package'),
+                'nullable',
+                'array',
+                'min:1',
+                'max:20',
+            ],
+            'pricing_group_size_label.*' => ['nullable', 'string', 'max:100'],
+            'pricing_malaysia_adult_price_myr' => ['nullable', 'array', 'max:20'],
+            'pricing_malaysia_adult_price_myr.*' => ['nullable', 'numeric', 'min:0'],
+            'pricing_malaysia_child_price_myr' => ['nullable', 'array', 'max:20'],
+            'pricing_malaysia_child_price_myr.*' => ['nullable', 'numeric', 'min:0'],
+            'pricing_international_adult_price_myr' => ['nullable', 'array', 'max:20'],
+            'pricing_international_adult_price_myr.*' => ['nullable', 'numeric', 'min:0'],
+            'pricing_international_child_price_myr' => ['nullable', 'array', 'max:20'],
+            'pricing_international_child_price_myr.*' => ['nullable', 'numeric', 'min:0'],
             'tour_code' => [
                 Rule::requiredIf($product->category === 'package'),
                 'nullable',
@@ -573,10 +647,10 @@ class AdminController extends Controller
                 'regex:/^(DT|OT)-UEH[A-Z0-9]+$/',
                 Rule::unique('products', 'tour_code')->ignore($product->id),
             ],
-            'malaysia_adult_price_myr' => ['required', 'numeric', 'min:0'],
-            'malaysia_child_price_myr' => ['required', 'numeric', 'min:0'],
-            'international_adult_price_myr' => ['required', 'numeric', 'min:0'],
-            'international_child_price_myr' => ['required', 'numeric', 'min:0'],
+            'malaysia_adult_price_myr' => [Rule::requiredIf($product->category !== 'package'), 'nullable', 'numeric', 'min:0'],
+            'malaysia_child_price_myr' => [Rule::requiredIf($product->category !== 'package'), 'nullable', 'numeric', 'min:0'],
+            'international_adult_price_myr' => [Rule::requiredIf($product->category !== 'package'), 'nullable', 'numeric', 'min:0'],
+            'international_child_price_myr' => [Rule::requiredIf($product->category !== 'package'), 'nullable', 'numeric', 'min:0'],
             'capacity' => ['nullable', 'integer', 'min:1', 'max:500'],
             'is_featured' => ['nullable', 'boolean'],
             'is_top_choice' => ['nullable', 'boolean'],
@@ -608,18 +682,37 @@ class AdminController extends Controller
         }
 
         if ($product->category === 'package') {
+            $pricingTiers = $this->buildPackagePricingTiers($validated);
+            $pricingSummary = $this->summarizePackagePricingTiers($pricingTiers);
             $validated['duration'] = ($validated['package_type'] ?? null) === 'Day Trip'
                 ? ($validated['duration_detail'] ?? $product->duration ?? 'Day Trip')
                 : (string) ($validated['package_type'] ?? $product->duration);
             $validated['minimum_age'] = ($validated['minimum_age_mode'] ?? 'no_limit') === 'above_age'
                 ? 'Above '.(int) ($validated['minimum_age_years'] ?? 0).' years old'
                 : 'No limit';
+            $validated['pricing_tiers'] = $pricingTiers;
+            $validated['group_size_label'] = $pricingSummary['group_size_label'];
+            $validated['price_myr'] = $pricingSummary['price_myr'];
+            $validated['malaysia_adult_price_myr'] = $pricingSummary['malaysia_adult_price_myr'];
+            $validated['malaysia_child_price_myr'] = $pricingSummary['malaysia_child_price_myr'];
+            $validated['international_adult_price_myr'] = $pricingSummary['international_adult_price_myr'];
+            $validated['international_child_price_myr'] = $pricingSummary['international_child_price_myr'];
         }
 
-        unset($validated['package_type'], $validated['duration_detail'], $validated['minimum_age_mode'], $validated['minimum_age_years']);
+        unset(
+            $validated['package_type'],
+            $validated['duration_detail'],
+            $validated['minimum_age_mode'],
+            $validated['minimum_age_years'],
+            $validated['pricing_group_size_label'],
+            $validated['pricing_malaysia_adult_price_myr'],
+            $validated['pricing_malaysia_child_price_myr'],
+            $validated['pricing_international_adult_price_myr'],
+            $validated['pricing_international_child_price_myr'],
+        );
 
         $productPayload = $validated + [
-            'price_myr' => $validated['malaysia_adult_price_myr'],
+            'price_myr' => $validated['price_myr'] ?? $validated['malaysia_adult_price_myr'],
             'gallery_images' => $galleryImages,
             'capacity' => $validated['capacity'] ?? null,
             'is_featured' => $request->boolean('is_featured'),
@@ -663,6 +756,88 @@ class AdminController extends Controller
 
         return str_contains($normalizedLabel, 'day trip')
             || str_contains($compactLabel, '1day');
+    }
+
+    private function buildPackagePricingTiers(array $validated): array
+    {
+        $groupLabels = $validated['pricing_group_size_label'] ?? [];
+        $malaysiaAdults = $validated['pricing_malaysia_adult_price_myr'] ?? [];
+        $malaysiaChildren = $validated['pricing_malaysia_child_price_myr'] ?? [];
+        $internationalAdults = $validated['pricing_international_adult_price_myr'] ?? [];
+        $internationalChildren = $validated['pricing_international_child_price_myr'] ?? [];
+        $rowCount = max(
+            count($groupLabels),
+            count($malaysiaAdults),
+            count($malaysiaChildren),
+            count($internationalAdults),
+            count($internationalChildren),
+        );
+
+        $pricingTiers = collect(range(0, max(0, $rowCount - 1)))
+            ->map(function (int $index) use ($groupLabels, $malaysiaAdults, $malaysiaChildren, $internationalAdults, $internationalChildren) {
+                $groupSizeLabel = trim((string) ($groupLabels[$index] ?? ''));
+                $malaysiaAdultPrice = $malaysiaAdults[$index] ?? null;
+                $malaysiaChildPrice = $malaysiaChildren[$index] ?? null;
+                $internationalAdultPrice = $internationalAdults[$index] ?? null;
+                $internationalChildPrice = $internationalChildren[$index] ?? null;
+
+                $isEmptyRow = $groupSizeLabel === ''
+                    && ($malaysiaAdultPrice === null || $malaysiaAdultPrice === '')
+                    && ($malaysiaChildPrice === null || $malaysiaChildPrice === '')
+                    && ($internationalAdultPrice === null || $internationalAdultPrice === '')
+                    && ($internationalChildPrice === null || $internationalChildPrice === '');
+
+                if ($isEmptyRow) {
+                    return null;
+                }
+
+                if (
+                    $groupSizeLabel === ''
+                    || $malaysiaAdultPrice === null || $malaysiaAdultPrice === ''
+                    || $malaysiaChildPrice === null || $malaysiaChildPrice === ''
+                    || $internationalAdultPrice === null || $internationalAdultPrice === ''
+                    || $internationalChildPrice === null || $internationalChildPrice === ''
+                ) {
+                    throw ValidationException::withMessages([
+                        'pricing_group_size_label' => 'Each group size row must include the pax label and all four prices.',
+                    ]);
+                }
+
+                return [
+                    'group_size_label' => $groupSizeLabel,
+                    'malaysia_adult_price_myr' => round((float) $malaysiaAdultPrice, 2),
+                    'malaysia_child_price_myr' => round((float) $malaysiaChildPrice, 2),
+                    'international_adult_price_myr' => round((float) $internationalAdultPrice, 2),
+                    'international_child_price_myr' => round((float) $internationalChildPrice, 2),
+                ];
+            })
+            ->filter()
+            ->values()
+            ->all();
+
+        if ($pricingTiers === []) {
+            throw ValidationException::withMessages([
+                'pricing_group_size_label' => 'Add at least one group size pricing row for this package.',
+            ]);
+        }
+
+        return $pricingTiers;
+    }
+
+    private function summarizePackagePricingTiers(array $pricingTiers): array
+    {
+        $startingTier = collect($pricingTiers)
+            ->sortBy('malaysia_adult_price_myr')
+            ->first();
+
+        return [
+            'group_size_label' => (string) ($startingTier['group_size_label'] ?? ''),
+            'price_myr' => round((float) ($startingTier['malaysia_adult_price_myr'] ?? 0), 2),
+            'malaysia_adult_price_myr' => round((float) ($startingTier['malaysia_adult_price_myr'] ?? 0), 2),
+            'malaysia_child_price_myr' => round((float) ($startingTier['malaysia_child_price_myr'] ?? 0), 2),
+            'international_adult_price_myr' => round((float) ($startingTier['international_adult_price_myr'] ?? 0), 2),
+            'international_child_price_myr' => round((float) ($startingTier['international_child_price_myr'] ?? 0), 2),
+        ];
     }
 
     public function updateProductItinerary(Request $request, Product $product): RedirectResponse

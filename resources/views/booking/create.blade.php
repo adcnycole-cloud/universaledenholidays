@@ -495,54 +495,6 @@
             </form>
         </div>
 
-        <section class="mt-8 rounded-[1.75rem] border border-stone-200 bg-white p-5 shadow-sm">
-            <div class="grid gap-6 lg:grid-cols-[1fr_1fr]">
-                <div>
-                    <p class="text-sm uppercase tracking-[0.3em] text-sky-700">What Happens Next</p>
-                    <h2 class="mt-2 text-xl font-semibold text-stone-900">{{ $isEnquiry ? 'Your enquiry process' : ($isReserveForm ? 'Your reserve process' : 'Your booking process') }}</h2>
-                    <ul class="mt-4 space-y-3 text-sm leading-6 text-stone-600">
-                        <li class="flex gap-3">
-                            <span class="flex min-h-6 min-w-6 items-center justify-center rounded-full bg-sky-100 text-xs font-semibold text-sky-700">1</span>
-                            <span>{{ $isEnquiry ? 'Submit your enquiry with the product you want and the details you already know.' : ($isReserveForm ? 'Submit your reserve form with product, guest details, and preferred travel dates.' : 'Submit your booking form with product, guest details, and travel dates.') }}</span>
-                        </li>
-                        <li class="flex gap-3">
-                            <span class="flex min-h-6 min-w-6 items-center justify-center rounded-full bg-sky-100 text-xs font-semibold text-sky-700">2</span>
-                            <span>{{ $isEnquiry ? 'Our team reviews your request and replies with availability, recommendations, or clarifications.' : ($isReserveForm ? 'Our team reviews your reserve request and confirms the next steps with availability details.' : 'Our team reviews your request and sends a confirmation with pricing details.') }}</span>
-                        </li>
-                        <li class="flex gap-3">
-                            <span class="flex min-h-6 min-w-6 items-center justify-center rounded-full bg-sky-100 text-xs font-semibold text-sky-700">3</span>
-                            <span>{{ $isEnquiry ? 'If you want to proceed, we will guide you into the booking step with the right details.' : 'You will receive a Booking ID by email right after submission.' }}</span>
-                        </li>
-                        <li class="flex gap-3">
-                            <span class="flex min-h-6 min-w-6 items-center justify-center rounded-full bg-sky-100 text-xs font-semibold text-sky-700">4</span>
-                            <span>{{ $isEnquiry ? 'Our Sabah team follows up to help you choose the right transport service or package.' : 'Use your Booking ID to track details, confirm the booking, and continue to sandbox payment.' }}</span>
-                        </li>
-                    </ul>
-                </div>
-                <div>
-                    <p class="text-sm uppercase tracking-[0.3em] text-amber-600">Need Help?</p>
-                    <h2 class="mt-2 text-xl font-semibold text-stone-900">{{ $isEnquiry ? 'Enquiry support' : ($isReserveForm ? 'Reserve support' : 'Booking support') }}</h2>
-                    <div class="mt-4 space-y-3 text-sm text-stone-600">
-                        <div>
-                            <p class="font-semibold text-stone-900">Product Questions</p>
-                            <p>Unsure which package or transport option suits you? Browse our recommendations on the homepage.</p>
-                        </div>
-                        <div>
-                            <p class="font-semibold text-stone-900">Pricing Clarity</p>
-                            <p>Check the product detail page for Malaysia and international market pricing tiers.</p>
-                        </div>
-                        <div>
-                            <p class="font-semibold text-stone-900">Payment Methods</p>
-                            <p>We accept credit cards, bank transfers, e-wallets, and pay-at-counter options.</p>
-                        </div>
-                        <div>
-                            <p class="font-semibold text-stone-900">Changes After Booking</p>
-                            <p>Contact our team to modify dates, guests, or special requests after submission.</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
     </main>
 
     <div class="h-12"></div>

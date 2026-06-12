@@ -182,18 +182,25 @@ class HomeController extends Controller
             'googleReviewData' => $googleReviewData,
             'currencyRates' => self::CURRENCY_RATES,
             'currencySymbols' => self::CURRENCY_SYMBOLS,
-            'malaysiaPricingTiers' => $this->buildPricingTiers(
-                (float) $product->discounted_malaysia_adult_price_myr,
-                (float) $product->discounted_malaysia_child_price_myr,
-                (float) $product->malaysia_adult_price_myr,
-                (float) $product->malaysia_child_price_myr,
-            ),
-            'internationalPricingTiers' => $this->buildPricingTiers(
-                (float) $product->discounted_international_adult_price_myr,
-                (float) $product->discounted_international_child_price_myr,
-                (float) $product->international_adult_price_myr,
-                (float) $product->international_child_price_myr,
-            ),
+            'malaysiaPricingTiers' => $this->resolveProductPricingTiers($product, 'malaysia'),
+            'internationalPricingTiers' => $this->resolveProductPricingTiers($product, 'international'),
+        ]);
+    }
+
+    public function showBlogIndex(): View
+    {
+        abort_unless(Schema::hasTable('blog_posts'), 404);
+
+        return view('blog.index', [
+            'blogPosts' => BlogPost::query()
+                ->where('is_published', true)
+                ->where(function ($query) {
+                    $query->whereNull('published_at')
+                        ->orWhere('published_at', '<=', now());
+                })
+                ->orderByDesc('published_at')
+                ->latest()
+                ->get(),
         ]);
     }
 
@@ -269,6 +276,7 @@ class HomeController extends Controller
     }
 
     private function buildPricingTiers(
+        string $groupSizeLabel,
         float $adultPrice,
         float $childPrice,
         ?float $originalAdultPrice = null,
@@ -277,54 +285,52 @@ class HomeController extends Controller
     {
         return [
             [
-                'label' => 'I have a Group of 16 - 29 Pax',
-                'adult_price' => round($adultPrice * 0.78, 2),
-                'child_price' => round($childPrice * 0.78, 2),
-                'original_adult_price' => $originalAdultPrice !== null ? round($originalAdultPrice * 0.78, 2) : null,
-                'original_child_price' => $originalChildPrice !== null ? round($originalChildPrice * 0.78, 2) : null,
-                'enquire' => false,
-            ],
-            [
-                'label' => 'I have a Group of 7 - 15 Pax',
-                'adult_price' => round($adultPrice * 0.84, 2),
-                'child_price' => round($childPrice * 0.84, 2),
-                'original_adult_price' => $originalAdultPrice !== null ? round($originalAdultPrice * 0.84, 2) : null,
-                'original_child_price' => $originalChildPrice !== null ? round($originalChildPrice * 0.84, 2) : null,
-                'enquire' => false,
-            ],
-            [
-                'label' => 'I have a Group of 4 - 6 Pax',
-                'adult_price' => round($adultPrice * 0.9, 2),
-                'child_price' => round($childPrice * 0.9, 2),
-                'original_adult_price' => $originalAdultPrice !== null ? round($originalAdultPrice * 0.9, 2) : null,
-                'original_child_price' => $originalChildPrice !== null ? round($originalChildPrice * 0.9, 2) : null,
-                'enquire' => false,
-            ],
-            [
-                'label' => 'I have a Group of 2 - 3 Pax',
-                'adult_price' => round($adultPrice * 0.96, 2),
-                'child_price' => round($childPrice * 0.96, 2),
-                'original_adult_price' => $originalAdultPrice !== null ? round($originalAdultPrice * 0.96, 2) : null,
-                'original_child_price' => $originalChildPrice !== null ? round($originalChildPrice * 0.96, 2) : null,
-                'enquire' => false,
-            ],
-            [
-                'label' => 'I am a Single Traveler',
+                'label' => trim($groupSizeLabel) !== '' ? trim($groupSizeLabel) : 'Per person',
                 'adult_price' => round($adultPrice, 2),
                 'child_price' => round($childPrice, 2),
                 'original_adult_price' => $originalAdultPrice !== null ? round($originalAdultPrice, 2) : null,
                 'original_child_price' => $originalChildPrice !== null ? round($originalChildPrice, 2) : null,
                 'enquire' => false,
             ],
-            [
-                'label' => 'I have a Group of 30 Pax & Above',
-                'adult_price' => null,
-                'child_price' => null,
-                'original_adult_price' => null,
-                'original_child_price' => null,
-                'enquire' => true,
-            ],
         ];
+    }
+
+    private function resolveProductPricingTiers(Product $product, string $market): array
+    {
+        $pricingTiers = collect($product->pricing_tiers ?? [])
+            ->filter(fn ($tier) => is_array($tier) && filled($tier['group_size_label'] ?? null))
+            ->map(function (array $tier) use ($product, $market) {
+                $adultKey = $market.'_adult_price_myr';
+                $childKey = $market.'_child_price_myr';
+                $adultPrice = round((float) ($tier[$adultKey] ?? 0), 2);
+                $childPrice = round((float) ($tier[$childKey] ?? 0), 2);
+                $discountMultiplier = $product->has_active_discount
+                    ? max(0, min(100, 100 - (float) $product->discount_percentage)) / 100
+                    : 1;
+
+                return [
+                    'label' => (string) $tier['group_size_label'],
+                    'adult_price' => round($adultPrice * $discountMultiplier, 2),
+                    'child_price' => round($childPrice * $discountMultiplier, 2),
+                    'original_adult_price' => $product->has_active_discount ? $adultPrice : null,
+                    'original_child_price' => $product->has_active_discount ? $childPrice : null,
+                    'enquire' => false,
+                ];
+            })
+            ->values()
+            ->all();
+
+        if ($pricingTiers !== []) {
+            return $pricingTiers;
+        }
+
+        return $this->buildPricingTiers(
+            (string) ($product->group_size_label ?? ''),
+            (float) ($market === 'malaysia' ? $product->discounted_malaysia_adult_price_myr : $product->discounted_international_adult_price_myr),
+            (float) ($market === 'malaysia' ? $product->discounted_malaysia_child_price_myr : $product->discounted_international_child_price_myr),
+            (float) ($market === 'malaysia' ? $product->malaysia_adult_price_myr : $product->international_adult_price_myr),
+            (float) ($market === 'malaysia' ? $product->malaysia_child_price_myr : $product->international_child_price_myr),
+        );
     }
 
     private function productMatchesTourCategory(Product $product, array $tourPage): bool

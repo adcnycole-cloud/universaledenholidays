@@ -32,6 +32,7 @@
 
         .hero-copy {
             margin-left: 0;
+            margin-top: clamp(2.5rem, 5vw, 4.75rem);
         }
 
         .hero-slider {
@@ -348,6 +349,63 @@
             filter: drop-shadow(0 16px 24px rgba(15,23,42,0.16));
         }
 
+        .reviews-carousel-shell {
+            position: relative;
+            overflow: hidden;
+            border: 1px solid rgba(186, 230, 253, 0.9);
+            border-radius: 1.75rem;
+            background: linear-gradient(180deg, rgba(240, 249, 255, 0.92), rgba(255, 255, 255, 0.96));
+            padding: 1.1rem 0;
+        }
+
+        .reviews-carousel-shell::before,
+        .reviews-carousel-shell::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: clamp(2rem, 6vw, 5rem);
+            z-index: 2;
+            pointer-events: none;
+        }
+
+        .reviews-carousel-shell::before {
+            left: 0;
+            background: linear-gradient(90deg, rgba(248, 250, 252, 0.98), rgba(248, 250, 252, 0));
+        }
+
+        .reviews-carousel-shell::after {
+            right: 0;
+            background: linear-gradient(270deg, rgba(248, 250, 252, 0.98), rgba(248, 250, 252, 0));
+        }
+
+        .reviews-carousel-track {
+            display: flex;
+            width: max-content;
+            align-items: stretch;
+            gap: 1rem;
+            padding: 0 1rem;
+            animation: reviews-carousel-scroll 34s linear infinite;
+        }
+
+        .reviews-carousel-shell:hover .reviews-carousel-track {
+            animation-play-state: paused;
+        }
+
+        .reviews-carousel-slide {
+            flex: 0 0 min(24rem, calc(100vw - 4.5rem));
+        }
+
+        @keyframes reviews-carousel-scroll {
+            from {
+                transform: translateX(0);
+            }
+
+            to {
+                transform: translateX(calc(-50% - 0.5rem));
+            }
+        }
+
         @media (min-width: 1024px) {
             .promo-posters-row {
                 display: flex !important;
@@ -501,15 +559,41 @@
         }
 
         @media (max-width: 767px) {
+            .home-screen-section.home-screen-section--hero,
+            section.home-screen-section--hero {
+                height: 14rem !important;
+                min-height: 14rem !important;
+                max-height: 14rem !important;
+            }
+
+            .hero-slider-slide {
+                background-position: center top !important;
+            }
+
+            .home-screen-section--hero > div[style*="min-height"] {
+                min-height: 14rem !important;
+                height: 14rem !important;
+                max-height: 14rem !important;
+            }
+
             .hero-content-shell {
-                min-height: 76svh !important;
-                padding: 2rem 1rem 2.5rem 1rem !important;
-                transform: none !important;
+                min-height: 14rem !important;
+                height: 14rem !important;
+                max-height: 14rem !important;
+                padding: 0.35rem 0.7rem 0.6rem 0.7rem !important;
+                justify-content: flex-end !important;
+                transform: translateY(-1.9rem) !important;
+            }
+
+            [data-mobile-hero-content] > div {
+                gap: 0.5rem !important;
             }
 
             .hero-copy {
                 margin-left: 0 !important;
+                margin-top: 0 !important;
                 width: 100%;
+                gap: 0.25rem !important;
             }
 
             .hero-copy-stack {
@@ -517,16 +601,18 @@
             }
 
             .hero-plane {
-                width: 120px !important;
+                width: 54px !important;
             }
 
             .hero-bus {
-                height: 4rem !important;
+                height: 1.55rem !important;
+                margin-top: 0.7rem !important;
             }
 
             #discover-heading {
                 max-width: 100% !important;
-                font-size: clamp(2rem, 11vw, 3rem) !important;
+                font-size: clamp(1.15rem, 6.9vw, 1.7rem) !important;
+                line-height: 0.92 !important;
                 white-space: normal !important;
             }
 
@@ -534,23 +620,25 @@
                 max-width: 100% !important;
                 margin-left: 0 !important;
                 text-align: left !important;
-                font-size: clamp(2.2rem, 12vw, 3.2rem) !important;
+                font-size: clamp(1.3rem, 7.5vw, 1.95rem) !important;
+                line-height: 0.95 !important;
             }
 
             .hero-tagline {
-                width: 100% !important;
+                width: min(100%, 16rem) !important;
                 min-width: 0 !important;
-                max-width: 100% !important;
+                max-width: 16rem !important;
                 margin-left: 0 !important;
+                margin-top: 0.45rem !important;
             }
 
             .hero-tagline-inner {
-                padding: 0.55rem 1rem 0.65rem !important;
+                padding: 0.24rem 0.55rem 0.28rem !important;
             }
 
             .hero-tagline-text {
-                font-size: clamp(1rem, 5vw, 1.35rem) !important;
-                letter-spacing: 0.03em !important;
+                font-size: clamp(0.6rem, 3.1vw, 0.78rem) !important;
+                letter-spacing: 0.01em !important;
                 transform: none !important;
             }
 
@@ -587,7 +675,7 @@
             }
 
             .transport-shell {
-                padding: 1rem 1.4rem 1.5rem !important;
+                padding: 0.85rem 1rem 1.1rem !important;
             }
 
             .transport-copy {
@@ -597,23 +685,32 @@
             }
 
             .transport-box {
-                padding: 1.4rem 1rem !important;
+                padding: 1rem 0.9rem !important;
                 min-height: 0 !important;
             }
 
             .transport-grid {
                 grid-template-columns: 1fr !important;
-                gap: 1rem !important;
+                gap: 0.7rem !important;
             }
 
             .transport-features {
                 flex-wrap: wrap !important;
-                gap: 1.25rem !important;
+                gap: 0.8rem !important;
             }
 
             .transport-feature-item {
                 width: calc(50% - 0.75rem) !important;
                 min-width: 0 !important;
+            }
+
+            #transport {
+                min-height: auto !important;
+                padding-bottom: 0 !important;
+            }
+
+            #transport > div[style*="background-image"] {
+                background-position: center top !important;
             }
 
             .package-section-stage {
@@ -668,6 +765,17 @@
                 min-height: 7.25rem !important;
             }
 
+            .transport-copy > div:first-child h2 {
+                font-size: 2rem !important;
+                line-height: 0.95 !important;
+            }
+
+            .transport-copy > div:first-child p {
+                margin-top: 0.7rem !important;
+                font-size: 0.88rem !important;
+                line-height: 1.45 !important;
+            }
+
         }
 
         @media (max-width: 1280px) {
@@ -681,7 +789,7 @@
     @php($currentPromoSlide = $currentPromoSlide ?? null)
     @php($recentPromoSlides = collect($recentPromoSlides ?? []))
     @php($latestBlogPosts = collect($latestBlogPosts ?? []))
-    <section class="home-screen-section home-screen-section--hero relative w-full overflow-hidden bg-black">
+    <section class="home-screen-section home-screen-section--hero relative w-full overflow-hidden bg-black" data-mobile-hero-section>
         <div class="absolute inset-0">
             <div class="hero-slider" data-hero-slider>
                 @foreach ($heroSlides as $index => $heroSlide)
@@ -700,7 +808,7 @@
                 style="width: 200px;"
             >
         </div>
-        <div class="hero-content-shell" style="position: relative; margin: 0 auto; display: flex; min-height: 76svh; max-width: 92rem; flex-direction: column; justify-content: center; padding: 2.25rem 2rem 2.25rem 1rem;">
+        <div class="hero-content-shell" data-mobile-hero-content style="position: relative; margin: 0 auto; display: flex; min-height: 76svh; max-width: 92rem; flex-direction: column; justify-content: center; padding: 2.25rem 2rem 2.25rem 1rem;">
             <div style="display:flex; width:100%; align-items:center; gap:2.5rem;">
                 <div class="hero-copy" style="display:flex; min-width:0; flex:1 1 0%; flex-direction:column; align-items:flex-start; gap:0.75rem; text-align:left;">
                     <img class="hero-bus" src="{{ asset('images/bus.png') }}" alt="Bus" style="width: auto; margin-top:6.15rem;">
@@ -739,7 +847,7 @@
         <div>
             <section id="promos" class="bg-white px-5 pb-12 pt-3 md:px-7 md:pb-16 md:pt-5 lg:px-8" style="margin-left: calc(50% - 50vw); margin-right: calc(50% - 50vw);">
                 <div class="relative mx-auto pt-6 md:pt-8" style="max-width: 1920px;">
-                    <div class="bulletin-board mx-auto mt-8" style="width: min(96vw, 1880px); max-width: 1880px;">
+                    <div class="bulletin-board mx-auto mt-8 hidden md:block" style="width: min(96vw, 1880px); max-width: 1880px;">
                         <div class="bulletin-board-inner">
                             <div class="flex flex-row items-start justify-between gap-8">
                                 <div class="space-y-6 border p-4" style="width: 1160px; min-width: 0; flex: 0 1 1600px; height: 36rem; border-color: rgba(120, 74, 34, 0.28); background: linear-gradient(180deg, #f8f1e4 0%, #f1e4d1 100%);">
@@ -1374,50 +1482,6 @@
             </div>
         </section>
 
-        <section id="blog" class="mt-14 home-section-compact px-6 pb-4 pt-4 md:mt-16 md:px-8 md:pb-6 md:pt-5">
-            <div class="relative mx-auto rounded-[2rem] border border-white/70 bg-white/90 px-5 pb-8 pt-4 shadow-[0_20px_60px_rgba(15,23,42,0.08)] backdrop-blur md:px-6 md:pb-10 md:pt-4" style="max-width: 1920px;">
-            <div class="mb-6 flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-                <div class="hidden md:block md:w-[10rem]"></div>
-                <div class="text-center" style="position: relative; left: 0.8rem;">
-                    <h2 class="font-['Oswald'] text-4xl font-bold uppercase tracking-[0.22em] text-stone-900 md:text-5xl">Blog</h2>
-                </div>
-                <div class="flex justify-center md:w-[10rem] md:justify-end"></div>
-            </div>
-
-            @if ($latestBlogPosts->isNotEmpty())
-                <div class="-mt-1 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-                    @foreach ($latestBlogPosts->take(6) as $post)
-                        <a href="{{ route('blog.show', $post) }}" class="group overflow-hidden rounded-[1.6rem] border border-stone-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-md">
-                            <div class="relative aspect-video overflow-hidden bg-stone-200">
-                                @if ($post->cover_image_url)
-                                    <img src="{{ $post->cover_image_url }}" alt="{{ $post->title }}" class="h-full w-full object-cover transition duration-300 group-hover:scale-[1.04]">
-                                @else
-                                    <div class="flex h-full w-full items-center justify-center bg-[linear-gradient(145deg,#77a6d8_0%,#5f8fcb_45%,#315fbd_100%)] px-8 text-center">
-                                        <span class="font-['Prata'] text-2xl leading-tight text-white">{{ $post->title }}</span>
-                                    </div>
-                                @endif
-                                <div class="absolute bottom-3 right-3 rounded-md bg-stone-950/85 px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-white">
-                                    Blog
-                                </div>
-                            </div>
-                            <div class="px-5 py-4">
-                                <div class="min-w-0">
-                                    <h3 class="line-clamp-2 text-base font-semibold leading-6 text-stone-900 md:text-lg">{{ $post->title }}</h3>
-                                    <p class="mt-2 text-sm font-medium text-stone-500">Universal Eden Holidays</p>
-                                    <p class="mt-1 text-sm text-stone-400">{{ $post->published_at?->format('d M Y') ?? 'Latest post' }}</p>
-                                </div>
-                            </div>
-                        </a>
-                    @endforeach
-                </div>
-            @else
-                <div class="rounded-3xl border border-dashed border-stone-300 bg-white p-6 text-sm text-stone-600">
-                    Blog posts will appear here once they are published.
-                </div>
-            @endif
-            </div>
-        </section>
-
         <section id="testimonials" class="mt-[4.5rem] home-screen-section px-6 pb-8 pt-6 md:mt-24 md:px-8 md:pb-12 md:pt-8">
             <div class="mx-auto rounded-[2rem] border border-white/70 bg-white/90 px-4 pb-8 pt-4 shadow-[0_20px_60px_rgba(15,23,42,0.08)] backdrop-blur md:px-4 md:pb-10 md:pt-7" style="max-width: 1920px;">
             <div class="-mt-1 flex flex-col items-center gap-3 text-center">
@@ -1432,79 +1496,34 @@
                     @endif
                 </div>
             </div>
-            <div class="mt-3 grid gap-4 md:grid-cols-2">
-                <div class="space-y-3">
-                    <section class="rounded-[1.75rem] border border-sky-200 bg-sky-50/50 p-4 shadow-sm">
-                        <div>
-                            <p class="text-sm uppercase tracking-[0.28em] text-sky-600">Reviews</p>
-                            <h3 class="mt-2 font-['Prata'] text-2xl text-stone-900">Customer reviews</h3>
-                        </div>
-                        <div class="mt-4 space-y-3">
-                            @forelse ($websiteReviews as $review)
-                                @include('partials.public-review-card', ['review' => $review])
-                            @empty
-                                <div class="rounded-3xl border border-dashed border-sky-200 bg-white/80 p-5 text-sm text-stone-600">
-                                    No website customer reviews are available yet.
-                                </div>
-                            @endforelse
-                        </div>
-                    </section>
+            <section class="mt-4 rounded-[1.75rem] border border-sky-200 bg-sky-50/50 p-4 shadow-sm">
+                <div class="text-center">
+                    <p class="text-sm uppercase tracking-[0.28em] text-sky-600">Reviews</p>
+                    <h3 class="mt-2 font-['Prata'] text-2xl text-stone-900">What travellers are saying</h3>
                 </div>
-
-                <section class="rounded-[1.75rem] border border-stone-200 bg-stone-50/80 p-4 shadow-sm">
-                    <p class="text-sm uppercase tracking-[0.28em] text-amber-600">Add Reviews</p>
-                    <p class="mt-3 text-sm leading-6 text-stone-600">If you have travelled with Universal Eden Holidays before, you can leave a short review here. We will check it before showing it on the landing page.</p>
-
-                    <form method="POST" action="{{ route('testimonials.store') }}" enctype="multipart/form-data" class="mt-4 space-y-3" data-form-persist="landing-testimonial-review">
-                        @csrf
-                        <div class="grid gap-4 md:grid-cols-2">
-                            <div>
-                                <label for="landing_testimonial_name" class="mb-2 block text-sm font-medium text-stone-700">Your name</label>
-                                <input id="landing_testimonial_name" name="name" type="text" value="{{ old('name') }}" class="w-full roundedgdfsfxfffdffdfffafyh-2xl border border-stone-300 bg-white px-4 py-3 text-stone-800" required>
-                            </div>
-                            <div>
-                                <label for="landing_testimonial_email" class="mb-2 block text-sm font-medium text-stone-700">Gmail / Email</label>
-                                <input id="landing_testimonial_email" name="email" type="email" value="{{ old('email') }}" class="w-full rounded-2xl border border-stone-300 bg-white px-4 py-3 text-stone-800" placeholder="yourname@gmail.com" autocomplete="email" inputmode="email" spellcheck="false" required>
-                            </div>
-                        </div>
-                        <div class="grid gap-4 md:grid-cols-2">
-                            <div>
-                                <label for="landing_testimonial_location" class="mb-2 block text-sm font-medium text-stone-700">Your location</label>
-                                <input id="landing_testimonial_location" name="location" type="text" value="{{ old('location') }}" class="w-full rounded-2xl border border-stone-300 bg-white px-4 py-3 text-stone-800" required>
-                            </div>
-                            <div>
-                                <label for="landing_testimonial_profile_photo" class="mb-2 block text-sm font-medium text-stone-700">Upload image</label>
-                                <input id="landing_testimonial_profile_photo" name="profile_photo" type="file" accept=".jpg,.jpeg,.png,.webp" class="w-full rounded-2xl border border-dashed border-stone-300 bg-white px-4 py-3 text-stone-700">
-                            </div>
-                        </div>
-                        <div class="grid gap-4 md:grid-cols-[1fr_8rem]">
-                            <div>
-                                <label for="landing_testimonial_trip_name" class="mb-2 block text-sm font-medium text-stone-700">Trip or package name</label>
-                                <input id="landing_testimonial_trip_name" name="trip_name" type="text" value="{{ old('trip_name') }}" class="w-full rounded-2xl border border-stone-300 bg-white px-4 py-3 text-stone-800" placeholder="Example: Kundasang Day Tour" required>
-                            </div>
-                            <div>
-                                <label class="mb-2 block text-sm font-medium text-stone-700">Rating</label>
-                                <div class="rounded-2xl border border-stone-300 bg-white px-3 py-3">
-                                    <input id="landing_testimonial_rating" type="hidden" name="rating" value="{{ old('rating', 5) }}">
-                                    <div class="flex items-center gap-1 text-2xl text-stone-300" data-star-rating data-target="landing_testimonial_rating" data-label="landing_testimonial_rating_label">
-                                        @for ($rating = 1; $rating <= 5; $rating++)
-                                            <button type="button" class="leading-none transition hover:scale-110" data-rating-value="{{ $rating }}" aria-label="Rate {{ $rating }} out of 5">&#9733;</button>
-                                        @endfor
+                <div class="mt-5">
+                    @if ($websiteReviews->isNotEmpty())
+                        <div class="reviews-carousel-shell">
+                            <div class="reviews-carousel-track">
+                                @foreach ($websiteReviews as $review)
+                                    <div class="reviews-carousel-slide">
+                                        @include('partials.public-review-card', ['review' => $review])
                                     </div>
-                                    <p id="landing_testimonial_rating_label" class="mt-2 text-xs font-medium text-stone-500">{{ old('rating', 5) }}/5</p>
-                                </div>
+                                @endforeach
+                                @foreach ($websiteReviews as $review)
+                                    <div class="reviews-carousel-slide" aria-hidden="true">
+                                        @include('partials.public-review-card', ['review' => $review])
+                                    </div>
+                                @endforeach
                             </div>
                         </div>
-                        <div>
-                            <label for="landing_testimonial_quote" class="mb-2 block text-sm font-medium text-stone-700">Your review</label>
-                            <textarea id="landing_testimonial_quote" name="quote" rows="5" class="w-full rounded-2xl border border-stone-300 bg-white px-4 py-3 text-stone-800" placeholder="Tell future customers what your trip was like." required>{{ old('quote') }}</textarea>
+                    @else
+                        <div class="rounded-3xl border border-dashed border-sky-200 bg-white/80 p-5 text-sm text-stone-600">
+                            No website customer reviews are available yet.
                         </div>
-                        <button type="submit" class="w-full rounded-full bg-amber-600 px-5 py-3 text-sm font-semibold uppercase tracking-[0.22em] text-white transition hover:bg-amber-700">
-                            Submit Review
-                        </button>
-                    </form>
-                </section>
-            </div>
+                    @endif
+                </div>
+            </section>
             </div>
         </section>
 
@@ -1517,47 +1536,45 @@
         document.addEventListener('DOMContentLoaded', () => {
             const root = document.documentElement;
             const header = document.querySelector('.js-app-header');
+            const mobileHeroSection = document.querySelector('[data-mobile-hero-section]');
+            const mobileHeroContent = document.querySelector('[data-mobile-hero-content]');
 
             const updateHeaderOffset = () => {
                 root.style.setProperty('--home-header-offset', `${header?.offsetHeight ?? 0}px`);
             };
 
-            updateHeaderOffset();
-            window.addEventListener('resize', updateHeaderOffset);
-        });
-    </script>
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            document.querySelectorAll('[data-star-rating]').forEach((ratingGroup) => {
-                const target = document.getElementById(ratingGroup.dataset.target);
-                const label = document.getElementById(ratingGroup.dataset.label);
-                const buttons = Array.from(ratingGroup.querySelectorAll('[data-rating-value]'));
-
-                if (!target || buttons.length === 0) {
+            const syncMobileHeroHeight = () => {
+                if (!mobileHeroSection || !mobileHeroContent) {
                     return;
                 }
 
-                const render = (value) => {
-                    buttons.forEach((button) => {
-                        const active = Number(button.dataset.ratingValue) <= value;
-                        button.style.color = active ? '#f59e0b' : '#d6d3d1';
-                    });
+                if (window.innerWidth <= 767) {
+                    mobileHeroSection.style.height = '14rem';
+                    mobileHeroSection.style.minHeight = '14rem';
+                    mobileHeroSection.style.maxHeight = '14rem';
+                    mobileHeroContent.style.height = '14rem';
+                    mobileHeroContent.style.minHeight = '14rem';
+                    mobileHeroContent.style.maxHeight = '14rem';
+                    mobileHeroContent.style.justifyContent = 'flex-end';
+                    mobileHeroContent.style.padding = '0.35rem 0.7rem 0.6rem 0.7rem';
+                    mobileHeroContent.style.transform = 'translateY(-1.9rem)';
+                } else {
+                    mobileHeroSection.style.height = '';
+                    mobileHeroSection.style.minHeight = '';
+                    mobileHeroSection.style.maxHeight = '';
+                    mobileHeroContent.style.height = '';
+                    mobileHeroContent.style.minHeight = '';
+                    mobileHeroContent.style.maxHeight = '';
+                    mobileHeroContent.style.justifyContent = '';
+                    mobileHeroContent.style.padding = '';
+                    mobileHeroContent.style.transform = '';
+                }
+            };
 
-                    if (label) {
-                        label.textContent = `${value}/5`;
-                    }
-                };
-
-                buttons.forEach((button) => {
-                    button.addEventListener('click', () => {
-                        const value = Number(button.dataset.ratingValue);
-                        target.value = value;
-                        render(value);
-                    });
-                });
-
-                render(Number(target.value || 5));
-            });
+            updateHeaderOffset();
+            syncMobileHeroHeight();
+            window.addEventListener('resize', updateHeaderOffset);
+            window.addEventListener('resize', syncMobileHeroHeight);
         });
     </script>
     <script>

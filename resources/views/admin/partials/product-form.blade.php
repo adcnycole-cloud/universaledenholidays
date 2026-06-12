@@ -1,6 +1,23 @@
 <form method="POST" action="{{ route('admin.products.store') }}" enctype="multipart/form-data" class="mt-6 space-y-4" data-form-persist="admin-products-create-{{ $category }}">
     @csrf
     <input type="hidden" name="category" value="{{ $category }}">
+    @if ($category === 'package')
+        @php
+            $pricingGroupSizeLabels = old('pricing_group_size_label', ['']);
+            $pricingMalaysiaAdultPrices = old('pricing_malaysia_adult_price_myr', ['']);
+            $pricingMalaysiaChildPrices = old('pricing_malaysia_child_price_myr', ['']);
+            $pricingInternationalAdultPrices = old('pricing_international_adult_price_myr', ['']);
+            $pricingInternationalChildPrices = old('pricing_international_child_price_myr', ['']);
+            $pricingRowCount = max(
+                count($pricingGroupSizeLabels),
+                count($pricingMalaysiaAdultPrices),
+                count($pricingMalaysiaChildPrices),
+                count($pricingInternationalAdultPrices),
+                count($pricingInternationalChildPrices),
+                1
+            );
+        @endphp
+    @endif
     <div class="grid gap-4 lg:grid-cols-2">
         <div>
             <label for="{{ $category }}_name" class="mb-2 block text-sm font-medium text-stone-700">{{ $title }} name</label>
@@ -68,7 +85,11 @@
                 <input id="{{ $category }}_capacity" name="capacity" type="number" value="{{ old('capacity') }}" class="w-full rounded-2xl border border-stone-300 px-3 py-2.5 text-sm text-stone-800">
             </div>
         </div>
-        <div class="grid gap-4 md:grid-cols-2 xl:max-w-[32rem] xl:items-start">
+        <div class="grid gap-4 md:grid-cols-3 xl:max-w-[48rem] xl:items-start">
+            <div>
+                <label for="{{ $category }}_departure_time" class="mb-2 block text-sm font-medium text-stone-700">Departure Time</label>
+                <input id="{{ $category }}_departure_time" name="departure_time" type="text" value="{{ old('departure_time') }}" class="w-full rounded-2xl border border-stone-300 px-4 py-3 text-stone-800" placeholder="Example: 7:30 AM">
+            </div>
             <div>
                 <label for="{{ $category }}_minimum_age_mode" class="mb-2 block text-sm font-medium text-stone-700">Minimum Age</label>
                 <select id="{{ $category }}_minimum_age_mode" name="minimum_age_mode" class="w-full rounded-2xl border border-stone-300 px-4 py-3 text-stone-800" data-minimum-age-mode>
@@ -94,6 +115,89 @@
             </div>
         </div>
     @endif
+    @if ($category === 'package')
+        <div class="rounded-[1.5rem] border border-stone-200 bg-stone-50/60 p-4">
+            <div class="flex items-center justify-between gap-3">
+                <div>
+                    <p class="text-sm font-semibold uppercase tracking-[0.18em] text-stone-500">Group Pricing</p>
+                    <p class="mt-1 text-sm text-stone-600">Add one row for each pax range and its prices.</p>
+                </div>
+                <button type="button" class="rounded-full border border-stone-300 bg-white px-4 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-stone-700 transition hover:bg-stone-100" data-pricing-row-add>
+                    Add Group Size
+                </button>
+            </div>
+            <div class="mt-4 overflow-x-auto">
+                <div class="space-y-3" data-pricing-rows>
+                    @foreach (range(0, $pricingRowCount - 1) as $pricingIndex)
+                        <div class="rounded-[1.25rem] border border-stone-200 bg-white p-4" data-pricing-row>
+                            <div class="flex flex-col gap-3">
+                                <div class="grid gap-3 md:grid-cols-[12rem_minmax(0,1fr)_auto] md:items-center">
+                                    <span class="text-[11px] font-semibold uppercase tracking-[0.16em] text-stone-500">Group Size / No. Pax</span>
+                                    <input name="pricing_group_size_label[]" type="text" value="{{ $pricingGroupSizeLabels[$pricingIndex] ?? '' }}" class="w-full rounded-2xl border border-stone-300 bg-white px-4 py-3 text-stone-800" placeholder="Example: 1 - 2 Pax">
+                                    <button type="button" class="rounded-full border border-rose-200 bg-white px-3 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-rose-600 transition hover:bg-rose-50" data-pricing-row-remove>
+                                        Remove
+                                    </button>
+                                </div>
+                                <div class="grid gap-3 md:grid-cols-2">
+                                    <div class="grid gap-3 md:grid-cols-[8rem_minmax(0,1fr)] md:items-center">
+                                        <span class="text-[11px] font-semibold uppercase tracking-[0.16em] text-stone-500">MY Adult</span>
+                                        <input name="pricing_malaysia_adult_price_myr[]" type="number" step="0.01" value="{{ $pricingMalaysiaAdultPrices[$pricingIndex] ?? '' }}" class="w-full rounded-2xl border border-stone-300 bg-white px-4 py-3 text-stone-800" placeholder="0.00">
+                                    </div>
+                                    <div class="grid gap-3 md:grid-cols-[8rem_minmax(0,1fr)] md:items-center">
+                                        <span class="text-[11px] font-semibold uppercase tracking-[0.16em] text-stone-500">MY Child</span>
+                                        <input name="pricing_malaysia_child_price_myr[]" type="number" step="0.01" value="{{ $pricingMalaysiaChildPrices[$pricingIndex] ?? '' }}" class="w-full rounded-2xl border border-stone-300 bg-white px-4 py-3 text-stone-800" placeholder="0.00">
+                                    </div>
+                                </div>
+                                <div class="grid gap-3 md:grid-cols-2">
+                                    <div class="grid gap-3 md:grid-cols-[8rem_minmax(0,1fr)] md:items-center">
+                                        <span class="text-[11px] font-semibold uppercase tracking-[0.16em] text-stone-500">INT Adult</span>
+                                        <input name="pricing_international_adult_price_myr[]" type="number" step="0.01" value="{{ $pricingInternationalAdultPrices[$pricingIndex] ?? '' }}" class="w-full rounded-2xl border border-stone-300 bg-white px-4 py-3 text-stone-800" placeholder="0.00">
+                                    </div>
+                                    <div class="grid gap-3 md:grid-cols-[8rem_minmax(0,1fr)] md:items-center">
+                                        <span class="text-[11px] font-semibold uppercase tracking-[0.16em] text-stone-500">INT Child</span>
+                                        <input name="pricing_international_child_price_myr[]" type="number" step="0.01" value="{{ $pricingInternationalChildPrices[$pricingIndex] ?? '' }}" class="w-full rounded-2xl border border-stone-300 bg-white px-4 py-3 text-stone-800" placeholder="0.00">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+            <template data-pricing-row-template>
+                <div class="rounded-[1.25rem] border border-stone-200 bg-white p-4" data-pricing-row>
+                    <div class="flex flex-col gap-3">
+                        <div class="grid gap-3 md:grid-cols-[12rem_minmax(0,1fr)_auto] md:items-center">
+                            <span class="text-[11px] font-semibold uppercase tracking-[0.16em] text-stone-500">Group Size / No. Pax</span>
+                            <input name="pricing_group_size_label[]" type="text" class="w-full rounded-2xl border border-stone-300 bg-white px-4 py-3 text-stone-800" placeholder="Example: 1 - 2 Pax">
+                            <button type="button" class="rounded-full border border-rose-200 bg-white px-3 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-rose-600 transition hover:bg-rose-50" data-pricing-row-remove>
+                                Remove
+                            </button>
+                        </div>
+                        <div class="grid gap-3 md:grid-cols-2">
+                            <div class="grid gap-3 md:grid-cols-[8rem_minmax(0,1fr)] md:items-center">
+                                <span class="text-[11px] font-semibold uppercase tracking-[0.16em] text-stone-500">MY Adult</span>
+                                <input name="pricing_malaysia_adult_price_myr[]" type="number" step="0.01" class="w-full rounded-2xl border border-stone-300 bg-white px-4 py-3 text-stone-800" placeholder="0.00">
+                            </div>
+                            <div class="grid gap-3 md:grid-cols-[8rem_minmax(0,1fr)] md:items-center">
+                                <span class="text-[11px] font-semibold uppercase tracking-[0.16em] text-stone-500">MY Child</span>
+                                <input name="pricing_malaysia_child_price_myr[]" type="number" step="0.01" class="w-full rounded-2xl border border-stone-300 bg-white px-4 py-3 text-stone-800" placeholder="0.00">
+                            </div>
+                        </div>
+                        <div class="grid gap-3 md:grid-cols-2">
+                            <div class="grid gap-3 md:grid-cols-[8rem_minmax(0,1fr)] md:items-center">
+                                <span class="text-[11px] font-semibold uppercase tracking-[0.16em] text-stone-500">INT Adult</span>
+                                <input name="pricing_international_adult_price_myr[]" type="number" step="0.01" class="w-full rounded-2xl border border-stone-300 bg-white px-4 py-3 text-stone-800" placeholder="0.00">
+                            </div>
+                            <div class="grid gap-3 md:grid-cols-[8rem_minmax(0,1fr)] md:items-center">
+                                <span class="text-[11px] font-semibold uppercase tracking-[0.16em] text-stone-500">INT Child</span>
+                                <input name="pricing_international_child_price_myr[]" type="number" step="0.01" class="w-full rounded-2xl border border-stone-300 bg-white px-4 py-3 text-stone-800" placeholder="0.00">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </template>
+        </div>
+    @else
     <div class="grid gap-4 lg:grid-cols-2">
         <div>
             <label for="{{ $category }}_malaysia_adult_price_myr" class="mb-2 block text-sm font-medium text-stone-700">Malaysia adult price</label>
@@ -112,6 +216,7 @@
             <input id="{{ $category }}_international_child_price_myr" name="international_child_price_myr" type="number" step="0.01" value="{{ old('international_child_price_myr') }}" class="w-full rounded-2xl border border-stone-300 px-4 py-3 text-stone-800">
         </div>
     </div>
+    @endif
     <div class="grid gap-4 lg:grid-cols-[1fr_1.2fr]">
         <div>
             @if ($category === 'package')
@@ -153,8 +258,11 @@
             const tourCodeInput = document.querySelector('[data-tour-code-input]');
             const minimumAgeMode = document.querySelector('[data-minimum-age-mode]');
             const minimumAgeYears = document.querySelector('[data-minimum-age-years]');
+            const pricingRows = document.querySelector('[data-pricing-rows]');
+            const pricingRowTemplate = document.querySelector('[data-pricing-row-template]');
+            const pricingAddButton = document.querySelector('[data-pricing-row-add]');
 
-            if (!packageTypeSelect || !durationInput || !tourCodeInput || !minimumAgeMode || !minimumAgeYears) {
+            if (!packageTypeSelect || !durationInput || !tourCodeInput || !minimumAgeMode || !minimumAgeYears || !pricingRows || !pricingRowTemplate || !pricingAddButton) {
                 return;
             }
 
@@ -205,6 +313,28 @@
 
             packageTypeSelect.addEventListener('change', syncDurationField);
             minimumAgeMode.addEventListener('change', syncMinimumAgeFields);
+            pricingAddButton.addEventListener('click', () => {
+                const nextRow = pricingRowTemplate.content.cloneNode(true);
+                pricingRows.appendChild(nextRow);
+            });
+            pricingRows.addEventListener('click', (event) => {
+                const removeButton = event.target.closest('[data-pricing-row-remove]');
+
+                if (!removeButton) {
+                    return;
+                }
+
+                const row = removeButton.closest('[data-pricing-row]');
+
+                if (!row || pricingRows.querySelectorAll('[data-pricing-row]').length <= 1) {
+                    row?.querySelectorAll('input').forEach((input) => {
+                        input.value = '';
+                    });
+                    return;
+                }
+
+                row.remove();
+            });
             syncDurationField();
             syncMinimumAgeFields();
         });

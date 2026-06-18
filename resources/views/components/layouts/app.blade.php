@@ -19,6 +19,7 @@
             :root {
                 --app-header-offset: 0px;
                 --admin-sidebar-width: 16rem;
+                --admin-sidebar-collapsed-width: 5.5rem;
             }
 
             .js-app-header {
@@ -66,6 +67,69 @@
 
             .admin-shell {
                 min-width: 0;
+                transition: margin-left 0.22s ease, width 0.22s ease;
+            }
+
+            .admin-sidebar {
+                transition: width 0.22s ease, box-shadow 0.22s ease;
+            }
+
+            .admin-sidebar-label,
+            .admin-sidebar-brand-copy,
+            .admin-sidebar-footer-copy,
+            .admin-sidebar-logo {
+                transition: opacity 0.18s ease, max-width 0.18s ease, margin 0.18s ease;
+            }
+
+            .admin-sidebar-toggle-icon {
+                transition: transform 0.18s ease;
+            }
+
+            [data-admin-sidebar-collapsed='true'] .admin-sidebar {
+                width: var(--admin-sidebar-collapsed-width) !important;
+            }
+
+            [data-admin-sidebar-collapsed='true'] .admin-sidebar-brand {
+                justify-content: center;
+                padding-left: 0.75rem;
+                padding-right: 0.75rem;
+            }
+
+            [data-admin-sidebar-collapsed='true'] .admin-sidebar-brand-wrap {
+                justify-content: center;
+            }
+
+            [data-admin-sidebar-collapsed='true'] .admin-sidebar-brand {
+                flex: 0;
+                width: 0;
+                padding: 0;
+                overflow: hidden;
+                opacity: 0;
+                pointer-events: none;
+            }
+
+            [data-admin-sidebar-collapsed='true'] .admin-sidebar-brand-copy,
+            [data-admin-sidebar-collapsed='true'] .admin-sidebar-label,
+            [data-admin-sidebar-collapsed='true'] .admin-sidebar-footer-copy,
+            [data-admin-sidebar-collapsed='true'] .admin-sidebar-logo {
+                opacity: 0;
+                max-width: 0;
+                margin: 0 !important;
+                overflow: hidden;
+                pointer-events: none;
+                white-space: nowrap;
+            }
+
+            [data-admin-sidebar-collapsed='true'] .admin-sidebar-link,
+            [data-admin-sidebar-collapsed='true'] .admin-sidebar-footer-link,
+            [data-admin-sidebar-collapsed='true'] .admin-sidebar-logout {
+                justify-content: center;
+                padding-left: 0.75rem;
+                padding-right: 0.75rem;
+            }
+
+            [data-admin-sidebar-collapsed='true'] .admin-sidebar-toggle-icon {
+                transform: rotate(180deg);
             }
 
             .site-nav-details > summary::-webkit-details-marker {
@@ -185,6 +249,11 @@
                     position: relative;
                     margin-left: var(--admin-sidebar-width);
                     width: calc(100% - var(--admin-sidebar-width));
+                }
+
+                [data-admin-sidebar-collapsed='true'] .admin-shell.with-sidebar {
+                    margin-left: var(--admin-sidebar-collapsed-width);
+                    width: calc(100% - var(--admin-sidebar-collapsed-width));
                 }
 
                 .admin-shell.with-sidebar::before {
@@ -404,6 +473,9 @@
                 const toasts = Array.from(document.querySelectorAll('.js-app-toast'));
                 const siteNavDetails = Array.from(document.querySelectorAll('.js-site-nav'));
                 const toursMenus = Array.from(document.querySelectorAll('[data-tours-menu]'));
+                const adminSidebar = document.querySelector('[data-admin-sidebar]');
+                const adminSidebarToggles = Array.from(document.querySelectorAll('[data-admin-sidebar-toggle]'));
+                const adminSidebarStorageKey = 'ue-admin-sidebar-collapsed';
                 const anchorOffsetExtra = 0;
                 const anchorOffsetOverrides = {
                     '#popular-picks': 24,
@@ -437,6 +509,31 @@
 
                 updateHeaderOffset();
                 window.addEventListener('resize', updateHeaderOffset);
+
+                const setAdminSidebarCollapsed = (collapsed) => {
+                    if (!adminSidebar) {
+                        return;
+                    }
+
+                    root.dataset.adminSidebarCollapsed = collapsed ? 'true' : 'false';
+                    adminSidebarToggles.forEach((toggle) => {
+                        toggle.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+                        toggle.setAttribute('aria-label', collapsed ? 'Expand admin sidebar' : 'Collapse admin sidebar');
+                    });
+                };
+
+                if (adminSidebar) {
+                    const storedSidebarState = window.localStorage.getItem(adminSidebarStorageKey);
+                    setAdminSidebarCollapsed(storedSidebarState === 'true');
+
+                    adminSidebarToggles.forEach((toggle) => {
+                        toggle.addEventListener('click', () => {
+                            const nextCollapsedState = root.dataset.adminSidebarCollapsed !== 'true';
+                            setAdminSidebarCollapsed(nextCollapsedState);
+                            window.localStorage.setItem(adminSidebarStorageKey, nextCollapsedState ? 'true' : 'false');
+                        });
+                    });
+                }
 
                 document.querySelectorAll('a[href*="#"]').forEach((link) => {
                     link.addEventListener('click', (event) => {

@@ -400,6 +400,8 @@ class AdminController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'category' => ['required', 'in:transport,package'],
             'location' => ['required', 'string', 'max:255'],
+            'pickup_location' => ['nullable', 'string', 'max:255'],
+            'dropoff_location' => ['nullable', 'string', 'max:255'],
             'summary' => ['required', 'string', 'max:255'],
             'image_url' => $this->productImageUrlRules(),
             'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],

@@ -201,6 +201,8 @@ class AdminController extends Controller
             'email' => ['required', 'string', 'email:rfc,dns', 'max:255', 'unique:users,email'],
             'phone' => ['nullable', 'string', 'max:50'],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
+        ], [
+            'tour_code.unique' => 'This tour code is already being used by another package. Please use a different code.',
         ]);
 
         User::create([
@@ -225,6 +227,8 @@ class AdminController extends Controller
             'email' => ['required', 'string', 'email:rfc,dns', 'max:255', Rule::unique('users', 'email')->ignore($user->id)],
             'phone' => ['nullable', 'string', 'max:50'],
             'password' => ['nullable', 'string', 'min:8', 'confirmed'],
+        ], [
+            'tour_code.unique' => 'This tour code is already being used by another package. Please use a different code.',
         ]);
 
         $updates = [

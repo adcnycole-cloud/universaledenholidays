@@ -116,14 +116,19 @@
                     'value' => 'Everyday',
                 ],
                 [
+                    'icon' => 'location',
+                    'label' => 'Location',
+                    'value' => $product->location ?: 'To be confirmed',
+                ],
+                [
                     'icon' => 'pickup',
                     'label' => 'Pick Up',
-                    'value' => $product->pickup_location ?: $product->location ?: 'To be confirmed',
+                    'value' => $product->pickup_location ?: 'To be confirmed',
                 ],
                 [
                     'icon' => 'dropoff',
                     'label' => 'Drop Off',
-                    'value' => $product->dropoff_location ?: $product->location ?: 'To be confirmed',
+                    'value' => $product->dropoff_location ?: 'To be confirmed',
                 ],
                 [
                     'icon' => 'pax',
@@ -519,6 +524,7 @@
                                                 @break
                                             @case('pickup')
                                             @case('dropoff')
+                                            @case('location')
                                                 <svg viewBox="0 0 24 24" class="h-5 w-5" fill="currentColor" aria-hidden="true"><path d="M12 22s6-5.69 6-11a6 6 0 1 0-12 0c0 5.31 6 11 6 11zm0-8a3 3 0 1 1 0-6 3 3 0 0 1 0 6z"/></svg>
                                                 @break
                                             @case('pax')

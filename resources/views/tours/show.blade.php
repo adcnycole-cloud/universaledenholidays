@@ -92,9 +92,13 @@
                                         <div>
                                             <p style="margin: 0; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: #b45309;">Starting From</p>
                                             @if ($package->has_active_discount)
-                                                <p style="margin: 0.25rem 0 0; font-size: 0.82rem; color: #78716c; text-decoration: line-through;">RM {{ number_format($originalPrice, 2) }}</p>
+                                                <p style="margin: 0.25rem 0 0; font-size: 0.82rem; color: #78716c; text-decoration: line-through;">
+                                                    <span class="currency-price" data-myr="{{ $originalPrice }}" data-currency-decimals="2">RM {{ number_format($originalPrice, 2) }}</span>
+                                                </p>
                                             @endif
-                                            <p style="margin: 0.18rem 0 0; font-size: 1.55rem; font-weight: 700; line-height: 1; color: #0f4fb5;">RM {{ number_format($currentPrice, 2) }}</p>
+                                            <p style="margin: 0.18rem 0 0; font-size: 1.55rem; font-weight: 700; line-height: 1; color: #0f4fb5;">
+                                                <span class="currency-price" data-myr="{{ $currentPrice }}" data-currency-decimals="2">RM {{ number_format($currentPrice, 2) }}</span>
+                                            </p>
                                         </div>
                                         <div class="flex flex-col gap-2">
                                             <a href="{{ route('products.show', $package) }}" style="display: inline-flex; align-items: center; justify-content: center; border: 1px solid #1d4ed8; padding: 0.7rem 1rem; font-size: 0.74rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: #1d4ed8; text-decoration: none;">

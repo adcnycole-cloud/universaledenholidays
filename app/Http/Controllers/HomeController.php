@@ -153,6 +153,50 @@ class HomeController extends Controller
         ]);
     }
 
+    public function showPaymentOptions(): View
+    {
+        return view('payment-options', [
+            'paymentOptions' => [
+                [
+                    'title' => 'Bank Transfer',
+                    'badge' => 'Default flow',
+                    'description' => 'The standard booking flow currently submits with bank transfer as the default payment method.',
+                    'notes' => [
+                        'Best for customers who prefer manual payment coordination.',
+                        'Useful when the booking needs review before payment is finalized.',
+                    ],
+                ],
+                [
+                    'title' => 'Credit Card',
+                    'badge' => 'Supported',
+                    'description' => 'Credit card is supported in the booking validation flow and can continue through the payment step after booking confirmation.',
+                    'notes' => [
+                        'Works well for faster online payment completion.',
+                        'Ideal for travelers who want a more direct payment path.',
+                    ],
+                ],
+                [
+                    'title' => 'E-Wallet',
+                    'badge' => 'Supported',
+                    'description' => 'E-wallet payment is available as a supported payment option in the booking workflow.',
+                    'notes' => [
+                        'A practical option for mobile-first customers.',
+                        'Useful when customers prefer digital wallet checkout.',
+                    ],
+                ],
+                [
+                    'title' => 'Pay at Counter',
+                    'badge' => 'Supported',
+                    'description' => 'Pay at counter is also supported for customers who need an offline or in-person payment arrangement.',
+                    'notes' => [
+                        'Helpful for customers who want to confirm details first.',
+                        'Suitable for arrangements that require manual follow-up.',
+                    ],
+                ],
+            ],
+        ]);
+    }
+
     public function showProduct(Product $product): View
     {
         $packageTestimonials = Testimonial::where('display_location', 'package')

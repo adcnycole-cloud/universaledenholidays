@@ -23,6 +23,7 @@ Route::get('/blog/{blogPost}', [HomeController::class, 'showBlogPost'])->name('b
 Route::post('/testimonials', [HomeController::class, 'storeLandingTestimonial'])->name('testimonials.store');
 Route::get('/products/{product}', [HomeController::class, 'showProduct'])->name('products.show');
 Route::post('/products/{product}/testimonials', [HomeController::class, 'storeProductTestimonial'])->name('products.testimonials.store');
+Route::get('/payment-options', [HomeController::class, 'showPaymentOptions'])->name('payment-options');
 Route::get('/booking', [HomeController::class, 'showBookingForm'])->name('booking.create');
 Route::post('/bookings', [HomeController::class, 'book'])->name('bookings.store');
 Route::get('/booking-tracker', [BookingAccessController::class, 'showTrackingForm'])->name('bookings.track.form');

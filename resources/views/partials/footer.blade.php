@@ -7,7 +7,7 @@
 <footer class="mt-auto border-t border-white/10 text-stone-200" style="background: #1f2937;">
 
     {{-- Main Footer --}}
-    <div class="mx-auto max-w-7xl px-8 py-10 lg:px-12">
+    <div class="mx-auto max-w-7xl px-8 pb-10 pt-4 lg:px-12">
         <div class="flex flex-col gap-10 lg:flex-row lg:items-start lg:justify-between">
 
             {{-- Brand Column --}}

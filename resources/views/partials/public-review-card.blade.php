@@ -8,12 +8,7 @@
                 style="aspect-ratio: 1 / 1; border-radius: 9999px;"
             >
             <div>
-                <div class="flex flex-wrap items-center gap-2">
-                    <h3 class="text-lg font-semibold text-stone-900">{{ $review['name'] }}</h3>
-                    <span class="rounded-full px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] {{ $review['source'] === 'google' ? 'bg-rose-100 text-rose-700' : 'bg-sky-100 text-sky-700' }}">
-                        {{ $review['source_label'] }}
-                    </span>
-                </div>
+                <h3 class="text-lg font-semibold text-stone-900">{{ $review['name'] }}</h3>
                 <p class="text-sm text-stone-500">
                     {{ $review['location'] }}
                     @if (!empty($review['trip_name']))

@@ -233,7 +233,7 @@
             border: 1px solid rgba(186, 230, 253, 0.9);
             border-radius: 1.75rem;
             background: linear-gradient(180deg, rgba(240, 249, 255, 0.92), rgba(255, 255, 255, 0.96));
-            padding: 1.1rem 0;
+            padding: 0.7rem 0 0;
         }
 
         .reviews-carousel-shell::before,
@@ -688,8 +688,8 @@
                     <div class="hero-copy-stack" style="display:flex; width:100%; flex-direction:column; align-items:flex-start; gap:0; text-align:left;">
                         <h2 id="discover-heading" style="display: block; width: 100%; max-width: 34rem; font-family: 'Vendura', sans-serif; font-size: clamp(2.3rem, 4.2vw, 4rem); font-weight: 600; line-height: 0.9; letter-spacing: 0.01em; text-transform: uppercase; color: #ffffff; transform: scaleX(0.76); transform-origin: left center; white-space: nowrap;">TRAVEL AND RIDE</h2>
                         <h2 id="discover-subheading" style="display: block; width: 100%; max-width: 40rem; margin-left: 6.2rem; text-align: center; font-family: 'Vendura', sans-serif; font-size: clamp(2.45rem, 4.8vw, 4.5rem); font-weight: 700; color: #ffffff;">WITH US</h2>
-                        <div class="hero-tagline" style="margin-top: 1.15rem; display: inline-flex; align-items: center; justify-content: center; border-radius: 999px; padding: 0.22rem; background: linear-gradient(90deg, rgba(38,164,232,0.96), rgba(58,86,195,0.96)); box-shadow: 0 14px 28px rgba(15,23,42,0.22);">
-                            <div class="hero-tagline-inner" style="width: 100%; border-radius: 999px; border: 2px solid rgba(255,255,255,0.45); padding: 0.22rem 1.9rem 0.3rem; background: linear-gradient(90deg, rgba(62,180,242,0.18), rgba(76,65,186,0.18));">
+                        <div class="hero-tagline" style="margin-top: 1.15rem; display: inline-flex; align-items: center; justify-content: center; border-radius: 999px; padding: 0.22rem; background: rgba(0,0,0,0.42); box-shadow: 0 14px 28px rgba(15,23,42,0.18);">
+                            <div class="hero-tagline-inner" style="width: 100%; border-radius: 999px; border: 2px solid rgba(255,255,255,0.38); padding: 0.22rem 1.9rem 0.3rem; background: rgba(0,0,0,0.12);">
                                 <span class="hero-tagline-text" style="display: block; width: 100%; text-align: center; font-family: 'Oswald', sans-serif; font-size: clamp(1.12rem, 1.9vw, 1.72rem); font-weight: 700; line-height: 1; letter-spacing: 0.05em; color: #ffffff; text-transform: none; transform: scaleX(1.04); transform-origin: center;">Discover All Of Sabah Borneo</span>
                             </div>
                         </div>
@@ -837,9 +837,13 @@
                                         <div>
                                             <p style="margin: 0; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: #b45309;">Starting From</p>
                                             @if ($package->has_active_discount)
-                                                <p style="margin: 0.25rem 0 0; font-size: 0.82rem; color: #78716c; text-decoration: line-through;">RM {{ number_format($originalPrice, 2) }}</p>
+                                                <p style="margin: 0.25rem 0 0; font-size: 0.82rem; color: #78716c; text-decoration: line-through;">
+                                                    <span class="currency-price" data-myr="{{ $originalPrice }}" data-currency-decimals="2">RM {{ number_format($originalPrice, 2) }}</span>
+                                                </p>
                                             @endif
-                                            <p style="margin: 0.18rem 0 0; font-size: 1.55rem; font-weight: 700; line-height: 1; color: #0f4fb5;">RM {{ number_format($currentPrice, 2) }}</p>
+                                            <p style="margin: 0.18rem 0 0; font-size: 1.55rem; font-weight: 700; line-height: 1; color: #0f4fb5;">
+                                                <span class="currency-price" data-myr="{{ $currentPrice }}" data-currency-decimals="2">RM {{ number_format($currentPrice, 2) }}</span>
+                                            </p>
                                         </div>
                                         <div class="flex flex-col gap-2">
                                             <a href="{{ route('products.show', $package) }}" style="display: inline-flex; align-items: center; justify-content: center; border: 1px solid #1d4ed8; padding: 0.7rem 1rem; font-size: 0.74rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: #1d4ed8; text-decoration: none;">
@@ -879,14 +883,14 @@
                             <div class="min-w-0 lg:flex-1">
                                 <div class="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
                                     <div>
-                                        <p class="font-['Oswald'] text-sm font-bold uppercase tracking-[0.28em] text-[#b45309]">Promotions</p>
+                                        <p class="font-['Oswald'] font-bold uppercase text-[#b45309]" style="font-size: clamp(1.2rem, 2.8vw, 2.35rem); line-height: 1;">Promotions</p>
                                     </div>
                                 </div>
 
                                 <?php if ($promoSlides->isNotEmpty()): ?>
                                     <div class="mt-8 flex flex-col gap-6 md:grid md:grid-cols-2 lg:flex lg:flex-row lg:flex-nowrap" style="width: fit-content; max-width: none; column-gap: 0; row-gap: 0;">
                                         <?php foreach ($promoSlides as $promo): ?>
-                                            <article class="overflow-hidden rounded-[1.6rem] border bg-white shadow-[0_18px_40px_rgba(15,23,42,0.08)]" style="width: 23rem; max-width: 23rem; margin-right: 2.5rem; border-color: rgba(120,113,108,0.16);">
+                                            <article class="overflow-hidden border bg-white shadow-[0_18px_40px_rgba(15,23,42,0.08)]" style="width: 23rem; max-width: 23rem; margin-right: 2.5rem; border-color: rgba(120,113,108,0.16);">
                                                 <?php if (!empty($promo['poster_url'])): ?>
                                                     <button
                                                         type="button"
@@ -921,11 +925,11 @@
 
                                                 <div class="space-y-4 px-5 pb-5 pt-1">
                                                     <div class="flex flex-wrap gap-2">
-                                                        <span class="rounded-full font-bold uppercase {{ ($promo['is_active_offer'] ?? false) ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700' }}" style="padding: 0.08rem 0.45rem; font-size: 0.42rem; letter-spacing: 0; line-height: 1;">
+                                                        <span class="rounded-full font-bold uppercase {{ ($promo['is_active_offer'] ?? false) ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700' }}" style="padding: 0.16rem 0.62rem; font-size: 0.52rem; letter-spacing: 0; line-height: 1;">
                                                             {{ $promo['status'] ?? (($promo['is_active_offer'] ?? false) ? 'Active offer' : 'Promotion') }}
                                                         </span>
                                                         <?php if (!empty($promo['date_label'])): ?>
-                                                            <span class="rounded-full bg-amber-100 font-bold uppercase text-amber-700" style="padding: 0.08rem 0.45rem; font-size: 0.42rem; letter-spacing: 0; line-height: 1;">
+                                                            <span class="rounded-full bg-amber-100 font-bold uppercase text-amber-700" style="padding: 0.16rem 0.62rem; font-size: 0.52rem; letter-spacing: 0; line-height: 1;">
                                                                 {{ $promo['date_label'] }}
                                                             </span>
                                                         <?php endif; ?>
@@ -949,7 +953,7 @@
                                 <?php endif; ?>
                             </div>
 
-                            <aside class="w-full px-1 py-2 md:px-2 lg:w-[22rem] lg:min-w-[22rem] lg:flex-shrink-0" style="margin-top: 5.5rem; position: relative; left: 32rem; border-left: 1px solid rgba(120, 74, 34, 0.18); padding-left: 3.5rem;">
+                            <aside class="w-full px-1 py-2 md:px-2 lg:w-[22rem] lg:min-w-[22rem] lg:flex-shrink-0" style="margin-top: 2.5rem; position: relative; top: -1rem; left: 32rem; border-left: 1px solid rgba(120, 74, 34, 0.18); padding-left: 3.5rem;">
                                 <div class="flex flex-wrap items-center gap-x-4 gap-y-2">
                                     <h3 class="font-['Oswald'] text-[1.45rem] font-bold uppercase tracking-[0.12em] text-[#243f67]">
                                         Sabah Travel Articles
@@ -1157,11 +1161,11 @@
                                 <div class="text-right">
                                     <?php if ($package->has_active_discount): ?>
                                         <div class="text-xs text-stone-400 line-through">
-                                            <span class="currency-price" data-myr="{{ $originalPrice }}">{{ number_format($originalPrice, 2) }}</span>
+                                            <span class="currency-price" data-myr="{{ $originalPrice }}" data-currency-decimals="2">RM {{ number_format($originalPrice, 2) }}</span>
                                         </div>
                                     <?php endif; ?>
                                     <div class="text-lg font-semibold text-stone-900">
-                                        <span class="currency-price" data-myr="{{ $currentPrice }}">{{ number_format($currentPrice, 2) }}</span>
+                                        <span class="currency-price" data-myr="{{ $currentPrice }}" data-currency-decimals="2">RM {{ number_format($currentPrice, 2) }}</span>
                                     </div>
                                 </div>
                             </div>
@@ -1171,29 +1175,26 @@
             </div>
         </section>
 
-        <section id="testimonials" class="home-screen-section px-6 pb-0 pt-6 md:px-8 md:pb-0 md:pt-8" style="margin-top: 0; margin-left: calc(50% - 50vw); margin-right: calc(50% - 50vw); background: #ffffff;">
-            <div class="mx-auto bg-white px-4 pb-0 pt-4 md:px-4 md:pb-0 md:pt-7" style="max-width: 1920px; margin-bottom: 0;">
-            <div class="-mt-1 flex flex-col items-center gap-3 text-center">
+        <section id="testimonials" class="home-screen-section px-6 pb-0 pt-6 md:px-8 md:pb-0 md:pt-8" style="position: relative; margin-top: 0; margin-bottom: -4rem; margin-left: calc(50% - 50vw); margin-right: calc(50% - 50vw); background: #ffffff; top: 0;">
+            <div class="mx-auto bg-white px-4 pb-0 pt-4 md:px-4 md:pb-0 md:pt-7" style="max-width: 1920px; margin-bottom: 0; padding-bottom: 0 !important;">
+            <div class="-mt-1 flex flex-col items-center gap-1 text-center">
                 <div>
-                    <h2 class="font-['Oswald'] text-4xl font-bold uppercase tracking-[0.22em] text-stone-900 md:text-5xl">Customer reviews</h2>
+                    <h2 class="font-['Oswald'] font-bold uppercase text-stone-900" style="font-size: 2.55rem; line-height: 1; letter-spacing: 0.16em;">Customer reviews</h2>
                 </div>
-                <div class="flex flex-wrap justify-center gap-2">
-                    @if (($websiteReviewStats['reviews_count'] ?? 0) > 0 && !is_null($websiteReviewStats['average_rating'] ?? null))
+                @if (($websiteReviewStats['reviews_count'] ?? 0) > 0 && !is_null($websiteReviewStats['average_rating'] ?? null))
+                    <div class="flex justify-center">
                         <div class="rounded-full bg-amber-50 px-4 py-2 text-sm font-semibold text-amber-700">
                             {{ number_format((float) $websiteReviewStats['average_rating'], 1) }}/5 from {{ $websiteReviewStats['reviews_count'] }} review{{ $websiteReviewStats['reviews_count'] === 1 ? '' : 's' }}
                         </div>
-                    @endif
-                    <a href="{{ route('reviews.index') }}" class="inline-flex items-center justify-center rounded-full bg-[#315fbd] px-5 py-2 text-sm font-semibold text-white transition hover:bg-[#264a94]">
-                        View all reviews
-                    </a>
-                </div>
+                    </div>
+                @endif
             </div>
-            <section class="mt-4 border border-sky-200 bg-sky-50/50 px-4 pb-2 pt-4 shadow-sm">
+            <section class="mt-0 border border-sky-200 bg-sky-50/50 px-4 pb-0 pt-1 shadow-sm" style="margin-top: -0.85rem; margin-bottom: -3.25rem; padding-bottom: 0 !important;">
                 <div class="text-center">
                     <p class="text-sm uppercase tracking-[0.28em] text-sky-600">Reviews</p>
                     <h3 class="mt-2 font-['Prata'] text-2xl text-stone-900">What travellers are saying</h3>
                 </div>
-                <div class="mt-5">
+                <div class="mt-3">
                     @if ($websiteReviews->isNotEmpty())
                         <div class="reviews-carousel-shell">
                             <div class="reviews-carousel-track">
@@ -1214,6 +1215,11 @@
                             No website customer reviews are available yet.
                         </div>
                     @endif
+                </div>
+                <div class="flex justify-center pb-3 pt-2">
+                    <a href="{{ route('reviews.index') }}" class="inline-flex items-center justify-center rounded-full bg-[#315fbd] px-5 py-2 text-sm font-semibold text-white transition hover:bg-[#264a94]">
+                        View all reviews
+                    </a>
                 </div>
             </section>
             </div>

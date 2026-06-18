@@ -317,7 +317,7 @@
                                             <a href="{{ route('reviews.index') }}" class="tours-menu-link" style="border-radius: 0;">Customer Reviews</a>
                                             <a href="{{ route('blog.index') }}" class="tours-menu-link" style="border-radius: 0;">Travel Blog</a>
                                             <a href="{{ route('legal.terms-and-conditions') }}" class="tours-menu-link" style="border-radius: 0;">Terms and Condition</a>
-                                            <a href="{{ route('booking.create') }}" class="tours-menu-link" style="border-radius: 0;">Payment Options</a>
+                                            <a href="{{ route('payment-options') }}" class="tours-menu-link" style="border-radius: 0;">Payment Options</a>
                                         </div>
                                     </div>
                                     <a href="{{ route('bookings.track.form') }}" class="main-nav-link is-light whitespace-nowrap">Track Booking</a>
@@ -401,7 +401,7 @@
                                             <a href="{{ route('reviews.index') }}" class="tours-menu-link" style="border-radius: 0;">Customer Reviews</a>
                                             <a href="{{ route('blog.index') }}" class="tours-menu-link" style="border-radius: 0;">Travel Blog</a>
                                             <a href="{{ route('legal.terms-and-conditions') }}" class="tours-menu-link" style="border-radius: 0;">Terms and Condition</a>
-                                            <a href="{{ route('booking.create') }}" class="tours-menu-link" style="border-radius: 0;">Payment Options</a>
+                                            <a href="{{ route('payment-options') }}" class="tours-menu-link" style="border-radius: 0;">Payment Options</a>
                                         </div>
                                     </div>
                                     <a href="{{ route('bookings.track.form') }}" class="main-nav-link whitespace-nowrap">Track Booking</a>
@@ -468,6 +468,23 @@
         </div>
         <script>
             document.addEventListener('DOMContentLoaded', () => {
+                const publicCurrencySelector = document.getElementById('currency-selector');
+                const publicCurrencyStorageKey = 'ueh-selected-currency';
+                const supportedCurrencies = ['MYR', 'KRW', 'USD', 'SGD', 'CNY'];
+                const publicCurrencyRates = {
+                    MYR: 1,
+                    KRW: 308.50,
+                    USD: 0.21,
+                    SGD: 0.28,
+                    CNY: 1.716,
+                };
+                const publicCurrencySymbols = {
+                    MYR: 'RM ',
+                    KRW: 'KRW ',
+                    USD: '$',
+                    SGD: 'S$',
+                    CNY: 'CNY ',
+                };
                 const root = document.documentElement;
                 const header = document.querySelector('.js-app-header');
                 const toasts = Array.from(document.querySelectorAll('.js-app-toast'));
@@ -483,6 +500,58 @@
 
                 const updateHeaderOffset = () => {
                     root.style.setProperty('--app-header-offset', `${header?.offsetHeight ?? 0}px`);
+                };
+
+                const formatPublicCurrencyAmount = (amount, currency, decimals = 2) => {
+                    const safeDecimals = Number.isFinite(decimals) ? Math.max(0, decimals) : 2;
+
+                    return `${publicCurrencySymbols[currency] ?? ''}${new Intl.NumberFormat('en-US', {
+                        minimumFractionDigits: safeDecimals,
+                        maximumFractionDigits: safeDecimals,
+                    }).format(Number(amount || 0))}`;
+                };
+
+                const updatePublicCurrencyPrices = (currency) => {
+                    document.querySelectorAll('.currency-price[data-myr]').forEach((element) => {
+                        const amountMyr = Number(element.dataset.myr || 0);
+                        const decimals = Number(element.dataset.currencyDecimals || 2);
+                        const rate = publicCurrencyRates[currency] ?? 1;
+                        element.textContent = formatPublicCurrencyAmount(amountMyr * rate, currency, decimals);
+                    });
+                };
+
+                const setPublicCurrency = (currency, { persist = true, notify = true } = {}) => {
+                    const nextCurrency = supportedCurrencies.includes(currency) ? currency : 'MYR';
+
+                    root.dataset.selectedCurrency = nextCurrency;
+
+                    if (publicCurrencySelector) {
+                        publicCurrencySelector.value = nextCurrency;
+                    }
+
+                    document.querySelectorAll('input[name="currency_code"]').forEach((input) => {
+                        if (input instanceof HTMLInputElement) {
+                            input.value = nextCurrency;
+                        }
+                    });
+
+                    updatePublicCurrencyPrices(nextCurrency);
+
+                    if (persist) {
+                        try {
+                            window.localStorage.setItem(publicCurrencyStorageKey, nextCurrency);
+                        } catch (error) {
+                            // Ignore localStorage failures.
+                        }
+                    }
+
+                    if (notify) {
+                        document.dispatchEvent(new CustomEvent('ueh:currencychange', {
+                            detail: {
+                                currency: nextCurrency,
+                            },
+                        }));
+                    }
                 };
 
                 const scrollToHashTarget = (hash, behavior = 'auto') => {
@@ -509,6 +578,26 @@
 
                 updateHeaderOffset();
                 window.addEventListener('resize', updateHeaderOffset);
+
+                if (publicCurrencySelector) {
+                    let initialCurrency = publicCurrencySelector.value || 'MYR';
+
+                    try {
+                        const storedCurrency = window.localStorage.getItem(publicCurrencyStorageKey);
+
+                        if (storedCurrency && supportedCurrencies.includes(storedCurrency)) {
+                            initialCurrency = storedCurrency;
+                        }
+                    } catch (error) {
+                        // Ignore localStorage failures.
+                    }
+
+                    publicCurrencySelector.addEventListener('change', () => {
+                        setPublicCurrency(publicCurrencySelector.value);
+                    });
+
+                    setPublicCurrency(initialCurrency, { persist: false, notify: true });
+                }
 
                 const setAdminSidebarCollapsed = (collapsed) => {
                     if (!adminSidebar) {

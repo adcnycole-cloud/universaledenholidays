@@ -809,15 +809,16 @@
                 const selectedOption = getSelectedOption();
 
                 if (!selectedOption || !selectedOption.value) {
+                    const activeCurrency = getActiveCurrency();
                     if (packageDuration) {
                         packageDuration.textContent = 'Select a product to view duration';
                     }
                     updateMarketPriceCards();
-                    malaysiaTotal.textContent = 'RM 0.00';
+                    malaysiaTotal.textContent = formatPrice(0, activeCurrency);
                     malaysiaCount.textContent = '0 guests';
-                    internationalTotal.textContent = 'RM 0.00';
+                    internationalTotal.textContent = formatPrice(0, activeCurrency);
                     internationalCount.textContent = '0 guests';
-                    grandTotal.textContent = 'RM 0.00';
+                    grandTotal.textContent = formatPrice(0, activeCurrency);
                     grandTotalMyr.textContent = 'Base MYR total: RM 0.00';
                     return;
                 }
@@ -860,6 +861,10 @@
 
             productSelector?.addEventListener('change', syncServiceTypeToProduct);
             navbarCurrencySelector?.addEventListener('change', () => {
+                syncBookingCurrency();
+                updateBookingEstimate();
+            });
+            document.addEventListener('ueh:currencychange', () => {
                 syncBookingCurrency();
                 updateBookingEstimate();
             });

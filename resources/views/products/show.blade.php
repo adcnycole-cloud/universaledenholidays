@@ -485,10 +485,12 @@
                                 <div>
                                     <p class="text-xs font-semibold uppercase tracking-[0.24em] text-stone-500">Starting From</p>
                                     @if ($product->has_active_discount)
-                                        <p class="mt-1 text-sm font-medium text-stone-400 line-through">MYR {{ number_format($originalStartingPrice, 2) }}</p>
+                                        <p class="mt-1 text-sm font-medium text-stone-400 line-through">
+                                            <span class="currency-price" data-myr="{{ $originalStartingPrice }}" data-currency-decimals="2">MYR {{ number_format($originalStartingPrice, 2) }}</span>
+                                        </p>
                                     @endif
                                     <div class="mt-1 flex items-end gap-2">
-                                        <span class="text-3xl font-bold leading-none" style="color: #455499;">MYR {{ number_format($startingPrice, 0) }}</span>
+                                        <span class="currency-price text-3xl font-bold leading-none" data-myr="{{ $startingPrice }}" data-currency-decimals="0" style="color: #455499;">MYR {{ number_format($startingPrice, 0) }}</span>
                                     </div>
                                 </div>
                             </div>
@@ -585,16 +587,24 @@
                                                 <div class="grid gap-3 md:grid-cols-2">
                                                     <div class="rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3">
                                                         <div class="text-[11px] font-semibold uppercase tracking-[0.16em] text-stone-400">Adult</div>
-                                                        <div class="mt-1 font-semibold text-stone-900">MYR {{ number_format($tier['adult_price'], 2) }}</div>
+                                                        <div class="mt-1 font-semibold text-stone-900">
+                                                            <span class="currency-price" data-myr="{{ $tier['adult_price'] }}" data-currency-decimals="2">MYR {{ number_format($tier['adult_price'], 2) }}</span>
+                                                        </div>
                                                         @if (($tier['original_adult_price'] ?? null) !== null && $tier['original_adult_price'] > $tier['adult_price'])
-                                                            <div class="mt-1 text-xs text-stone-400 line-through">MYR {{ number_format($tier['original_adult_price'], 2) }}</div>
+                                                            <div class="mt-1 text-xs text-stone-400 line-through">
+                                                                <span class="currency-price" data-myr="{{ $tier['original_adult_price'] }}" data-currency-decimals="2">MYR {{ number_format($tier['original_adult_price'], 2) }}</span>
+                                                            </div>
                                                         @endif
                                                     </div>
                                                     <div class="rounded-2xl border px-4 py-3" style="border-color: #f4d35e; background-color: #fff8db;">
                                                         <div class="text-[11px] font-semibold uppercase tracking-[0.16em] text-stone-400">Child / Kid</div>
-                                                        <div class="mt-1 font-semibold" style="color: #111111;">MYR {{ number_format($tier['child_price'], 2) }}</div>
+                                                        <div class="mt-1 font-semibold" style="color: #111111;">
+                                                            <span class="currency-price" data-myr="{{ $tier['child_price'] }}" data-currency-decimals="2">MYR {{ number_format($tier['child_price'], 2) }}</span>
+                                                        </div>
                                                         @if (($tier['original_child_price'] ?? null) !== null && $tier['original_child_price'] > $tier['child_price'])
-                                                            <div class="mt-1 text-xs line-through" style="color: #6b7280;">MYR {{ number_format($tier['original_child_price'], 2) }}</div>
+                                                            <div class="mt-1 text-xs line-through" style="color: #6b7280;">
+                                                                <span class="currency-price" data-myr="{{ $tier['original_child_price'] }}" data-currency-decimals="2">MYR {{ number_format($tier['original_child_price'], 2) }}</span>
+                                                            </div>
                                                         @endif
                                                     </div>
                                                 </div>
@@ -629,16 +639,24 @@
                                                 <div class="grid gap-3 md:grid-cols-2">
                                                     <div class="rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3">
                                                         <div class="text-[11px] font-semibold uppercase tracking-[0.16em] text-stone-400">Adult</div>
-                                                        <div class="mt-1 font-semibold text-stone-900">MYR {{ number_format($tier['adult_price'], 2) }}</div>
+                                                        <div class="mt-1 font-semibold text-stone-900">
+                                                            <span class="currency-price" data-myr="{{ $tier['adult_price'] }}" data-currency-decimals="2">MYR {{ number_format($tier['adult_price'], 2) }}</span>
+                                                        </div>
                                                         @if (($tier['original_adult_price'] ?? null) !== null && $tier['original_adult_price'] > $tier['adult_price'])
-                                                            <div class="mt-1 text-xs text-stone-400 line-through">MYR {{ number_format($tier['original_adult_price'], 2) }}</div>
+                                                            <div class="mt-1 text-xs text-stone-400 line-through">
+                                                                <span class="currency-price" data-myr="{{ $tier['original_adult_price'] }}" data-currency-decimals="2">MYR {{ number_format($tier['original_adult_price'], 2) }}</span>
+                                                            </div>
                                                         @endif
                                                     </div>
                                                     <div class="rounded-2xl border px-4 py-3" style="border-color: #f4d35e; background-color: #fff8db;">
                                                         <div class="text-[11px] font-semibold uppercase tracking-[0.16em] text-stone-400">Child / Kid</div>
-                                                        <div class="mt-1 font-semibold" style="color: #111111;">MYR {{ number_format($tier['child_price'], 2) }}</div>
+                                                        <div class="mt-1 font-semibold" style="color: #111111;">
+                                                            <span class="currency-price" data-myr="{{ $tier['child_price'] }}" data-currency-decimals="2">MYR {{ number_format($tier['child_price'], 2) }}</span>
+                                                        </div>
                                                         @if (($tier['original_child_price'] ?? null) !== null && $tier['original_child_price'] > $tier['child_price'])
-                                                            <div class="mt-1 text-xs line-through" style="color: #6b7280;">MYR {{ number_format($tier['original_child_price'], 2) }}</div>
+                                                            <div class="mt-1 text-xs line-through" style="color: #6b7280;">
+                                                                <span class="currency-price" data-myr="{{ $tier['original_child_price'] }}" data-currency-decimals="2">MYR {{ number_format($tier['original_child_price'], 2) }}</span>
+                                                            </div>
                                                         @endif
                                                     </div>
                                                 </div>

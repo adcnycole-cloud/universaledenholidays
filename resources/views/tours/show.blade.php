@@ -5,29 +5,50 @@
                 grid-template-columns: var(--footer-grid-columns-lg, 1fr);
             }
         }
+
+        .tour-package-image-frame {
+            overflow: hidden;
+        }
+
+        .tour-package-image {
+            transition: transform 0.28s ease;
+        }
+
+        .tour-package-card:hover .tour-package-image {
+            transform: scale(1.06);
+        }
     </style>
-    <main class="min-h-[calc(100vh-var(--app-header-offset,0px))] px-0 pt-0 pb-10" style="background: linear-gradient(180deg, #f3ede2 0%, #dcb07e 100%);">
-        <section style="position: relative; overflow: hidden; width: 100%; {{ $tourPage['slug'] === 'day-trip' ? 'background-image: url(\''.asset('images/tourist.png').'\'); background-size: cover; background-position: center center;' : 'background: linear-gradient(135deg, #f5ede0 0%, #f3dfc4 52%, #e5b883 100%);' }} box-shadow: 0 22px 45px rgba(15,23,42,0.16); padding: 7.5rem 1.5rem 6.9rem;">
-            @if ($tourPage['slug'] === 'day-trip')
+    @php
+        $heroImageStyle = match ($tourPage['slug']) {
+            'day-trip' => 'background-image: url(\''.asset('images/tourist.png').'\'); background-size: cover; background-position: center center;',
+            '2d1n-trip' => 'background-image: url(\''.asset('images/2d1n.png').'\'); background-size: cover; background-position: center center;',
+            '3d2n-trip' => 'background-image: url(\''.asset('images/3d2n.png').'\'); background-size: cover; background-position: center center;',
+            '4d3n-trip' => 'background-image: url(\''.asset('images/4d3n.png').'\'); background-size: cover; background-position: center center;',
+            default => 'background: linear-gradient(135deg, #f5ede0 0%, #f3dfc4 52%, #e5b883 100%);',
+        };
+    @endphp
+    <main class="min-h-[calc(100vh-var(--app-header-offset,0px))] px-0 pt-0 pb-10" style="background: #ffffff;">
+        <section style="position: relative; overflow: hidden; width: 100%; {{ $heroImageStyle }} box-shadow: 0 22px 45px rgba(15,23,42,0.16); padding: 7.5rem 1.5rem 6.9rem;">
+            @if (in_array($tourPage['slug'], ['day-trip', '2d1n-trip', '3d2n-trip', '4d3n-trip'], true))
                 <div style="position: absolute; inset: 0; background: linear-gradient(90deg, rgba(15,23,42,0.58) 0%, rgba(15,23,42,0.32) 38%, rgba(15,23,42,0.14) 100%);"></div>
             @else
                 <div style="position: absolute; inset: 0; background: linear-gradient(135deg, rgba(255,255,255,0.22), rgba(255,255,255,0.08) 48%, rgba(120,53,15,0.08) 100%);"></div>
                 <div style="position: absolute; right: -2rem; top: -2.5rem; height: 10rem; width: 10rem; border-radius: 999px; background: radial-gradient(circle, rgba(59,130,246,0.16) 0%, rgba(59,130,246,0) 70%);"></div>
             @endif
             <div style="position: relative; z-index: 1; margin: 0 auto; width: min(100%, 1180px);">
-                <h1 style="margin: 0; font-family: 'Prata', serif; font-size: clamp(2.35rem, 5.6vw, 4.4rem); line-height: 1.08; color: {{ $tourPage['slug'] === 'day-trip' ? '#ffffff' : '#1c1917' }}; text-shadow: {{ $tourPage['slug'] === 'day-trip' ? '0 10px 28px rgba(15,23,42,0.34)' : 'none' }};">
+                <h1 style="margin: 0; font-family: 'Prata', serif; font-size: clamp(2.35rem, 5.6vw, 4.4rem); line-height: 1.08; color: {{ in_array($tourPage['slug'], ['day-trip', '2d1n-trip', '3d2n-trip', '4d3n-trip'], true) ? '#ffffff' : '#1c1917' }}; text-shadow: {{ in_array($tourPage['slug'], ['day-trip', '2d1n-trip', '3d2n-trip', '4d3n-trip'], true) ? '0 10px 28px rgba(15,23,42,0.34)' : 'none' }};">
                     {{ $tourPage['heading'] }}
                 </h1>
-                <p style="margin: 1rem 0 0; max-width: 54rem; font-size: 1.02rem; line-height: 1.9; color: {{ $tourPage['slug'] === 'day-trip' ? 'rgba(255,255,255,0.94)' : '#57534e' }}; text-shadow: {{ $tourPage['slug'] === 'day-trip' ? '0 6px 20px rgba(15,23,42,0.28)' : 'none' }};">
+                <p style="margin: 1rem 0 0; max-width: 54rem; font-size: 1.02rem; line-height: 1.9; color: {{ in_array($tourPage['slug'], ['day-trip', '2d1n-trip', '3d2n-trip', '4d3n-trip'], true) ? 'rgba(255,255,255,0.94)' : '#57534e' }}; text-shadow: {{ in_array($tourPage['slug'], ['day-trip', '2d1n-trip', '3d2n-trip', '4d3n-trip'], true) ? '0 6px 20px rgba(15,23,42,0.28)' : 'none' }};">
                     {{ $tourPage['description'] }}
                 </p>
             </div>
         </section>
 
-        <div class="mx-auto px-4 lg:px-6" style="max-width: 1320px;">
+        <div class="mx-auto px-4 lg:px-6" style="max-width: 1480px;">
             @if ($tourPackages->isNotEmpty())
                 <section class="mt-8 px-6 lg:px-10">
-                    <div class="grid gap-6 lg:grid-cols-3">
+                    <div class="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
                         @foreach ($tourPackages as $package)
                             @php
                                 $tripCode = strtoupper(str_replace([' days', ' day', ' nights', ' night', ' '], ['D', 'D', 'N', 'N', ''], $package->duration));
@@ -37,13 +58,13 @@
                                 $currentPrice = (float) $package->discounted_malaysia_adult_price_myr;
                                 $originalPrice = (float) $package->malaysia_adult_price_myr;
                             @endphp
-                            <article style="display: flex; flex-direction: column; overflow: hidden; border: 1px solid rgba(120,113,108,0.18); background: rgba(255,255,255,0.96); box-shadow: 0 18px 32px rgba(15,23,42,0.14);">
+                            <article class="tour-package-card" style="display: flex; flex-direction: column; overflow: hidden; border: 1px solid rgba(120,113,108,0.18); background: rgba(255,255,255,0.96); box-shadow: 0 18px 32px rgba(15,23,42,0.14);">
                                 <a href="{{ route('products.show', $package) }}" style="display: block; color: inherit; text-decoration: none;">
-                                    <div style="position: relative;">
+                                    <div class="tour-package-image-frame" style="position: relative;">
                                         @if ($package->image_url)
-                                            <img src="{{ $package->image_url }}" alt="{{ $package->name }}" style="display: block; height: 15.5rem; width: 100%; object-fit: cover;">
+                                            <img src="{{ $package->image_url }}" alt="{{ $package->name }}" class="tour-package-image" style="display: block; height: 16rem; width: 100%; object-fit: cover;">
                                         @else
-                                            <div style="display: flex; height: 15.5rem; align-items: center; justify-content: center; background: linear-gradient(135deg, #60a5fa, #bfdbfe 40%, #fde68a); padding: 1rem; text-align: center;">
+                                            <div style="display: flex; height: 16rem; align-items: center; justify-content: center; background: linear-gradient(135deg, #60a5fa, #bfdbfe 40%, #fde68a); padding: 1rem; text-align: center;">
                                                 <span style="font-family: 'Prata', serif; font-size: 1.5rem; line-height: 1.3; color: #1e3a8a;">{{ $package->name }}</span>
                                             </div>
                                         @endif
@@ -90,7 +111,7 @@
                     </div>
                 </section>
             @else
-                <section class="mt-8" style="position: relative; left: 50%; width: min(1320px, calc(100vw - 3rem)); transform: translateX(-50%); border: 1px solid rgba(120,113,108,0.18); background: rgba(255,255,255,0.92); box-shadow: 0 18px 32px rgba(15,23,42,0.1); padding: 2rem;">
+                <section class="mt-8" style="position: relative; left: 50%; width: min(1480px, calc(100vw - 3rem)); transform: translateX(-50%); border: 1px solid rgba(120,113,108,0.18); background: rgba(255,255,255,0.92); box-shadow: 0 18px 32px rgba(15,23,42,0.1); padding: 2rem;">
                     <h2 style="margin: 0; font-family: 'Prata', serif; font-size: 2rem; color: #1c1917;">No packages yet for {{ $tourPage['label'] }}</h2>
                     <p style="margin: 0.9rem 0 0; max-width: 42rem; font-size: 0.98rem; line-height: 1.8; color: #57534e;">
                         This page is ready. Once packages with matching duration are added in the admin dashboard, they will show here automatically.

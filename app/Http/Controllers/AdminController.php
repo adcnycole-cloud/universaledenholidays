@@ -403,7 +403,7 @@ class AdminController extends Controller
             'gallery_image_files' => ['nullable', 'array', 'max:20'],
             'gallery_image_files.*' => ['image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
             'itinerary_items_text' => ['nullable', 'string', 'max:5000'],
-            'description' => ['required', 'string', 'max:1000'],
+            'description' => ['nullable', 'string', 'max:1000'],
             'package_type' => [
                 Rule::requiredIf($request->input('category') === 'package'),
                 'nullable',
@@ -532,6 +532,9 @@ class AdminController extends Controller
             $validated['pricing_international_child_price_myr'],
         );
 
+        $legacyItineraryText = trim((string) ($validated['itinerary_items_text'] ?? ''));
+        unset($validated['itinerary_items_text']);
+
         $productPayload = $validated + [
             'price_myr' => $validated['price_myr'] ?? $validated['malaysia_adult_price_myr'],
             'gallery_images' => $galleryImages,
@@ -544,9 +547,10 @@ class AdminController extends Controller
                 : null,
             'is_active' => true,
         ];
+        $productPayload['description'] = (string) ($validated['description'] ?? '');
 
-        if ($validated['category'] === 'package') {
-            $productPayload['itinerary_items'] = $this->normalizeMultilineEntries($validated['itinerary_items_text'] ?? null);
+        if ($validated['category'] === 'package' && $legacyItineraryText !== '') {
+            $productPayload['itinerary_items'] = $this->normalizeMultilineEntries($legacyItineraryText);
         }
 
         Product::create($productPayload);
@@ -566,6 +570,8 @@ class AdminController extends Controller
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'location' => ['required', 'string', 'max:255'],
+            'pickup_location' => ['nullable', 'string', 'max:255'],
+            'dropoff_location' => ['nullable', 'string', 'max:255'],
             'summary' => ['required', 'string', 'max:255'],
             'image_url' => $this->productImageUrlRules(),
             'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
@@ -574,7 +580,7 @@ class AdminController extends Controller
             'gallery_image_files' => ['nullable', 'array', 'max:20'],
             'gallery_image_files.*' => ['image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
             'itinerary_items_text' => ['nullable', 'string', 'max:5000'],
-            'description' => ['required', 'string', 'max:1000'],
+            'description' => ['nullable', 'string', 'max:1000'],
             'package_type' => [
                 Rule::requiredIf($product->category === 'package'),
                 'nullable',
@@ -711,6 +717,9 @@ class AdminController extends Controller
             $validated['pricing_international_child_price_myr'],
         );
 
+        $legacyItineraryText = trim((string) ($validated['itinerary_items_text'] ?? ''));
+        unset($validated['itinerary_items_text']);
+
         $productPayload = $validated + [
             'price_myr' => $validated['price_myr'] ?? $validated['malaysia_adult_price_myr'],
             'gallery_images' => $galleryImages,
@@ -723,9 +732,10 @@ class AdminController extends Controller
                 : null,
             'is_active' => $request->boolean('is_active', true),
         ];
+        $productPayload['description'] = (string) ($validated['description'] ?? $product->description ?? '');
 
-        if ($product->category === 'package') {
-            $productPayload['itinerary_items'] = $this->normalizeMultilineEntries($validated['itinerary_items_text'] ?? null);
+        if ($product->category === 'package' && $legacyItineraryText !== '') {
+            $productPayload['itinerary_items'] = $this->normalizeMultilineEntries($legacyItineraryText);
         }
 
         $product->update($productPayload);
@@ -862,22 +872,87 @@ class AdminController extends Controller
         return back()->with('success', 'Package itinerary updated successfully.');
     }
 
-    public function updateProductServiceInclusions(Request $request, Product $product): RedirectResponse
+    public function updateProductPackageDetails(Request $request, Product $product): RedirectResponse
     {
         abort_unless($product->category === 'package', 404);
 
         $validated = $request->validate([
-            'service_inclusion_label' => ['nullable', 'array', 'max:40'],
-            'service_inclusion_label.*' => ['nullable', 'string', 'max:100'],
-            'service_inclusion_value' => ['nullable', 'array', 'max:40'],
-            'service_inclusion_value.*' => ['nullable', 'string', 'max:2000'],
+            'package_detail_include_symbol' => ['nullable', 'array', 'max:30'],
+            'package_detail_include_symbol.*' => ['nullable', 'string', 'in:tick,round'],
+            'package_detail_include_value' => ['nullable', 'array', 'max:30'],
+            'package_detail_include_value.*' => ['nullable', 'string', 'max:1000'],
+            'package_detail_exclude_symbol' => ['nullable', 'array', 'max:30'],
+            'package_detail_exclude_symbol.*' => ['nullable', 'string', 'in:x,round'],
+            'package_detail_exclude_value' => ['nullable', 'array', 'max:30'],
+            'package_detail_exclude_value.*' => ['nullable', 'string', 'max:1000'],
+            'package_detail_bring_symbol' => ['nullable', 'array', 'max:30'],
+            'package_detail_bring_symbol.*' => ['nullable', 'string', 'in:exclamation,round'],
+            'package_detail_bring_value' => ['nullable', 'array', 'max:30'],
+            'package_detail_bring_value.*' => ['nullable', 'string', 'max:1000'],
+            'package_detail_note_symbol' => ['nullable', 'array', 'max:30'],
+            'package_detail_note_symbol.*' => ['nullable', 'string', 'in:exclamation,round'],
+            'package_detail_note_value' => ['nullable', 'array', 'max:30'],
+            'package_detail_note_value.*' => ['nullable', 'string', 'max:1000'],
+        ]);
+
+        $packageDetails = [
+            'includes' => $this->buildStructuredPackageDetailItems(
+                $validated['package_detail_include_symbol'] ?? [],
+                $validated['package_detail_include_value'] ?? [],
+                ['tick', 'round'],
+                'tick',
+            ),
+            'excludes' => $this->buildStructuredPackageDetailItems(
+                $validated['package_detail_exclude_symbol'] ?? [],
+                $validated['package_detail_exclude_value'] ?? [],
+                ['x', 'round'],
+                'x',
+            ),
+            'things_to_bring' => $this->buildStructuredPackageDetailItems(
+                $validated['package_detail_bring_symbol'] ?? [],
+                $validated['package_detail_bring_value'] ?? [],
+                ['exclamation', 'round'],
+                'exclamation',
+            ),
+            'important_notes' => $this->buildStructuredPackageDetailItems(
+                $validated['package_detail_note_symbol'] ?? [],
+                $validated['package_detail_note_value'] ?? [],
+                ['exclamation', 'round'],
+                'exclamation',
+            ),
+        ];
+
+        $product->update([
+            'package_details' => $packageDetails,
+            'service_inclusions' => $this->buildLegacyServiceInclusionsFromPackageDetails($packageDetails),
+        ]);
+
+        return back()->with('success', 'Package details updated successfully.');
+    }
+
+    public function updateProductPackageContent(Request $request, Product $product): RedirectResponse
+    {
+        abort_unless($product->category === 'package', 404);
+
+        $validated = $request->validate([
+            'tour_highlights' => ['nullable', 'array', 'max:20'],
+            'tour_highlights.*' => ['nullable', 'string', 'max:500'],
+            'recommended_attire' => ['nullable', 'array', 'max:20'],
+            'recommended_attire.*' => ['nullable', 'string', 'max:500'],
+            'things_to_know' => ['nullable', 'array', 'max:20'],
+            'things_to_know.*' => ['nullable', 'string', 'max:1000'],
+            'travel_tips' => ['nullable', 'array', 'max:20'],
+            'travel_tips.*' => ['nullable', 'string', 'max:1000'],
         ]);
 
         $product->update([
-            'service_inclusions' => $this->buildStructuredServiceInclusions($validated),
+            'tour_highlights' => $this->buildStructuredTextList($validated['tour_highlights'] ?? []),
+            'recommended_attire' => $this->buildStructuredTextList($validated['recommended_attire'] ?? []),
+            'things_to_know' => $this->buildStructuredTextList($validated['things_to_know'] ?? []),
+            'travel_tips' => $this->buildStructuredTextList($validated['travel_tips'] ?? []),
         ]);
 
-        return back()->with('success', 'Package service inclusions updated successfully.');
+        return back()->with('success', 'Other package content updated successfully.');
     }
 
     public function updateProductActive(Request $request, Product $product)
@@ -1015,6 +1090,64 @@ class AdminController extends Controller
                 ];
             })
             ->filter()
+            ->values()
+            ->all();
+    }
+
+    private function buildStructuredPackageDetailItems(array $symbols, array $values, array $allowedSymbols, string $defaultSymbol): array
+    {
+        $rowCount = max(count($symbols), count($values));
+
+        return collect(range(0, max(0, $rowCount - 1)))
+            ->map(function (int $index) use ($symbols, $values, $allowedSymbols, $defaultSymbol) {
+                $symbol = trim((string) ($symbols[$index] ?? $defaultSymbol));
+                $value = trim((string) ($values[$index] ?? ''));
+
+                if ($value === '') {
+                    return null;
+                }
+
+                if (! in_array($symbol, $allowedSymbols, true)) {
+                    $symbol = $defaultSymbol;
+                }
+
+                return [
+                    'symbol' => $symbol,
+                    'text' => $value,
+                ];
+            })
+            ->filter()
+            ->values()
+            ->all();
+    }
+
+    private function buildStructuredTextList(array $values): array
+    {
+        return collect($values)
+            ->map(fn ($value) => trim((string) $value))
+            ->filter(fn ($value) => $value !== '')
+            ->values()
+            ->all();
+    }
+
+    private function buildLegacyServiceInclusionsFromPackageDetails(array $packageDetails): array
+    {
+        $labelMap = [
+            'includes' => 'Inclusion',
+            'excludes' => 'Exclusion',
+            'things_to_bring' => 'Things to Bring',
+            'important_notes' => 'Important Notes',
+        ];
+
+        return collect($labelMap)
+            ->flatMap(function (string $label, string $key) use ($packageDetails) {
+                return collect($packageDetails[$key] ?? [])
+                    ->filter(fn ($item) => is_array($item) && filled($item['text'] ?? null))
+                    ->map(fn ($item) => [
+                        'label' => $label,
+                        'value' => (string) ($item['text'] ?? ''),
+                    ]);
+            })
             ->values()
             ->all();
     }

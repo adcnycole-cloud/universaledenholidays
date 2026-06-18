@@ -4,7 +4,7 @@
         @include('partials.footer')
 --}}
 
-<footer class="mt-auto border-t border-white/10 bg-stone-950 text-stone-200">
+<footer class="mt-auto border-t border-white/10 text-stone-200" style="background: #1f2937;">
 
     {{-- Main Footer --}}
     <div class="mx-auto max-w-7xl px-8 py-10 lg:px-12">
@@ -14,9 +14,10 @@
             <div class="max-w-sm">
                 <div class="flex items-center gap-3">
                     <img
-                        src="{{ asset('images/ue_logo.jpg') }}"
+                        src="{{ asset('images/ue white.png') }}"
                         alt="Universal Eden Holidays Logo"
-                        class="h-12 w-12 rounded-full object-cover ring-2 ring-white/10"
+                        class="w-auto object-contain"
+                        style="height: 1.8rem;"
                     >
                     <div>
                         <h3 class="font-['Prata'] text-xl text-white">
@@ -44,7 +45,7 @@
                         <a href="{{ route('home') }}#promos" class="hover:text-white transition">Promos</a>
                         <a href="{{ route('home') }}#transport" class="hover:text-white transition">Transport</a>
                         <a href="{{ route('home') }}#packages-showcase" class="hover:text-white transition">Packages</a>
-                        <a href="{{ route('home') }}#testimonials" class="hover:text-white transition">Testimonials</a>
+                        <a href="{{ route('reviews.index') }}" class="hover:text-white transition">Testimonials</a>
                     </div>
                 </div>
 

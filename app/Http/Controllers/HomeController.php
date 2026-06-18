@@ -110,6 +110,23 @@ class HomeController extends Controller
         return view('home', $this->sharedPageData());
     }
 
+    public function showReviewsIndex(): View
+    {
+        $landingTestimonials = $this->landingTestimonials();
+        $googleReviewData = $this->googlePlaceReviewService->getPlaceReviews();
+        $websiteReviews = $this->mapWebsiteReviews($landingTestimonials);
+
+        return view('reviews.index', [
+            'websiteReviews' => $websiteReviews,
+            'googleReviews' => collect($googleReviewData['reviews'] ?? []),
+            'allReviews' => $websiteReviews
+                ->concat(collect($googleReviewData['reviews'] ?? []))
+                ->values(),
+            'websiteReviewStats' => $this->buildWebsiteReviewStats($landingTestimonials),
+            'googleReviewData' => $googleReviewData,
+        ]);
+    }
+
     public function showBookingForm(Request $request): View
     {
         $selectedProductId = $request->query('product_id');
@@ -144,7 +161,7 @@ class HomeController extends Controller
             ->orderByDesc('rating')
             ->take(3)
             ->get();
-
+        $transportFeatures = $this->transportFeatures();
         $googleReviewData = $this->googlePlaceReviewService->getPlaceReviews();
 
         $relatedProducts = Product::where('is_active', true)
@@ -180,6 +197,7 @@ class HomeController extends Controller
             'recommendedProducts' => $recommendedProducts,
             'reviews' => $this->mergePublicReviews($packageTestimonials, $googleReviewData),
             'googleReviewData' => $googleReviewData,
+            'transportFeatures' => $transportFeatures,
             'currencyRates' => self::CURRENCY_RATES,
             'currencySymbols' => self::CURRENCY_SYMBOLS,
             'malaysiaPricingTiers' => $this->resolveProductPricingTiers($product, 'malaysia'),
@@ -398,10 +416,7 @@ class HomeController extends Controller
     private function sharedPageData(): array
     {
         $products = Product::where('is_active', true)->orderBy('category')->orderBy('price_myr')->get();
-        $landingTestimonials = Testimonial::where('display_location', 'landing')
-            ->where('is_featured', true)
-            ->orderByDesc('rating')
-            ->get();
+        $landingTestimonials = $this->landingTestimonials();
         $packageReviewStats = Testimonial::query()
             ->selectRaw('product_id, AVG(rating) as average_rating, COUNT(*) as reviews_count')
             ->where('display_location', 'package')
@@ -420,7 +435,10 @@ class HomeController extends Controller
 
         $travelPackages = $products->where('category', 'package')->values();
         $transportServices = $products->where('category', 'transport')->values();
-        $popularPackages = $travelPackages->where('is_featured', true)->take(3)->values();
+        $popularPackages = $travelPackages
+            ->filter(fn (Product $package) => $package->is_top_choice || $package->is_featured)
+            ->sortByDesc(fn (Product $package) => (int) $package->is_top_choice)
+            ->values();
         $transportImageMap = [
             '41/44 Seaters Bus' => asset('images/44pax.png'),
             '17 Seaters Van' => asset('images/17pax.png'),
@@ -434,12 +452,7 @@ class HomeController extends Controller
                 'url' => route('products.show', $transport),
             ];
         })->values();
-        $transportFeatures = collect([
-            ['label' => 'HYGIENE', 'icon' => 'spark'],
-            ['label' => 'SAFETY', 'icon' => 'shield'],
-            ['label' => 'PROFESIONAL DRIVER', 'icon' => 'driver'],
-            ['label' => 'LICENSED VAN/BUS PERSIARAN', 'icon' => 'license'],
-        ]);
+        $transportFeatures = $this->transportFeatures();
         $packageSections = collect([
             [
                 'key' => 'kundasang',
@@ -496,8 +509,11 @@ class HomeController extends Controller
             ? $otherPromoSlides->take($secondaryPromoLimit)->values()
             : $otherPromoSlides->take($totalVisiblePromoPosters)->values();
         $pastPromos = collect();
-        $latestBlogPosts = Schema::hasTable('blog_posts')
-            ? BlogPost::query()
+        $homepageBlogPostCount = 5;
+        $latestBlogPosts = collect();
+
+        if (Schema::hasTable('blog_posts')) {
+            $latestBlogPosts = BlogPost::query()
                 ->where('is_published', true)
                 ->where(function ($query) {
                     $query->whereNull('published_at')
@@ -505,9 +521,24 @@ class HomeController extends Controller
                 })
                 ->orderByDesc('published_at')
                 ->latest()
-                ->take(3)
-                ->get()
-            : collect();
+                ->take($homepageBlogPostCount)
+                ->get();
+
+            if ($latestBlogPosts->count() < $homepageBlogPostCount) {
+                $latestBlogPosts = $latestBlogPosts
+                    ->concat(
+                        BlogPost::query()
+                            ->where('is_published', true)
+                            ->whereNotIn('id', $latestBlogPosts->pluck('id'))
+                            ->orderByDesc('published_at')
+                            ->latest()
+                            ->take($homepageBlogPostCount - $latestBlogPosts->count())
+                            ->get()
+                    )
+                    ->take($homepageBlogPostCount)
+                    ->values();
+            }
+        }
         $heroSlides = Schema::hasTable('home_hero_slides')
             ? HomeHeroSlide::query()
                 ->where('is_active', true)
@@ -556,14 +587,37 @@ class HomeController extends Controller
             'newsFeatures' => (clone $activeNewsQuery)->latest()->take(6)->get(),
             'testimonials' => $landingTestimonials,
             'websiteReviews' => $this->mapWebsiteReviews($landingTestimonials),
-            'websiteReviewStats' => [
-                'average_rating' => $landingTestimonials->isNotEmpty() ? round((float) $landingTestimonials->avg('rating'), 1) : null,
-                'reviews_count' => $landingTestimonials->count(),
-            ],
+            'websiteReviewStats' => $this->buildWebsiteReviewStats($landingTestimonials),
             'recentBookings' => Booking::with('product')->latest()->take(5)->get(),
             'currencyRates' => self::CURRENCY_RATES,
             'currencySymbols' => self::CURRENCY_SYMBOLS,
         ];
+    }
+
+    private function landingTestimonials(): EloquentCollection
+    {
+        return Testimonial::where('display_location', 'landing')
+            ->where('is_featured', true)
+            ->orderByDesc('rating')
+            ->get();
+    }
+
+    private function buildWebsiteReviewStats(EloquentCollection $landingTestimonials): array
+    {
+        return [
+            'average_rating' => $landingTestimonials->isNotEmpty() ? round((float) $landingTestimonials->avg('rating'), 1) : null,
+            'reviews_count' => $landingTestimonials->count(),
+        ];
+    }
+
+    private function transportFeatures(): Collection
+    {
+        return collect([
+            ['label' => 'HYGIENE', 'icon' => 'spark'],
+            ['label' => 'SAFETY', 'icon' => 'shield'],
+            ['label' => 'PROFESIONAL DRIVER', 'icon' => 'driver'],
+            ['label' => 'LICENSED VAN/BUS PERSIARAN', 'icon' => 'license'],
+        ]);
     }
 
     private function buildPromoSlide(NewsFeature $promo, string $status): array

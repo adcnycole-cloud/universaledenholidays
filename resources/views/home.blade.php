@@ -17,22 +17,22 @@
         }
 
         .home-screen-section--hero {
-            height: 85svh;
-            min-height: 85svh;
+            height: 89svh;
+            min-height: 89svh;
         }
 
         .home-screen-section--hero > div[style*="min-height"] {
-            min-height: 76svh !important;
+            min-height: 80svh !important;
         }
 
         .hero-content-shell {
             padding-left: clamp(1.25rem, 4vw, 3.25rem) !important;
-            transform: translateY(clamp(-4rem, -5vw, -1.5rem));
+            transform: translateY(0rem);
         }
 
         .hero-copy {
             margin-left: 0;
-            margin-top: clamp(2.5rem, 5vw, 4.75rem);
+            margin-top: clamp(5.5rem, 8.9vw, 8.6rem);
         }
 
         .hero-slider {
@@ -47,6 +47,7 @@
             background-position: center center;
             background-repeat: no-repeat;
             background-size: cover;
+            filter: brightness(1.05) saturate(1.08) contrast(1.02);
             opacity: 0;
             transform: scale(1.02);
             transition: opacity 0.9s ease;
@@ -60,8 +61,8 @@
             position: absolute;
             inset: 0;
             background:
-                linear-gradient(90deg, rgba(0,0,0,0.48) 0%, rgba(0,0,0,0.34) 35%, rgba(0,0,0,0.24) 100%),
-                linear-gradient(180deg, rgba(0,0,0,0.16) 0%, rgba(0,0,0,0.28) 100%);
+                linear-gradient(90deg, rgba(0,0,0,0.22) 0%, rgba(0,0,0,0.12) 35%, rgba(0,0,0,0.08) 100%),
+                linear-gradient(180deg, rgba(0,0,0,0.04) 0%, rgba(0,0,0,0.12) 100%);
         }
 
         .hero-slider-controls {
@@ -120,32 +121,32 @@
         }
 
         .hero-bus {
-            height: clamp(3.8rem, 6vw, 5.4rem) !important;
+            height: clamp(2.9rem, 4.3vw, 4rem) !important;
         }
 
         #discover-heading {
-            max-width: min(100%, 34rem) !important;
-            font-size: clamp(2.3rem, 4.8vw, 4.8rem) !important;
+            max-width: min(100%, 25rem) !important;
+            font-size: clamp(1.82rem, 3.3vw, 3.15rem) !important;
         }
 
         #discover-subheading {
-            max-width: min(100%, 40rem) !important;
-            margin-left: clamp(1.2rem, 7vw, 6.2rem) !important;
-            font-size: clamp(2.5rem, 5.3vw, 5.4rem) !important;
+            max-width: min(100%, 27rem) !important;
+            margin-left: clamp(1rem, 4.1vw, 3.7rem) !important;
+            font-size: clamp(1.98rem, 3.62vw, 3.45rem) !important;
         }
 
         .hero-tagline {
-            width: min(100%, 48rem) !important;
+            width: min(100%, 33rem) !important;
             min-width: 0 !important;
-            margin-left: clamp(0rem, 5vw, 4.2rem) !important;
+            margin-left: clamp(0rem, 3.15vw, 2.35rem) !important;
         }
 
         .hero-tagline-inner {
-            padding: clamp(0.45rem, 1vw, 0.55rem) clamp(1.1rem, 4vw, 3.4rem) clamp(0.5rem, 1.1vw, 0.65rem) !important;
+            padding: clamp(0.28rem, 0.68vw, 0.42rem) clamp(1rem, 2.35vw, 1.95rem) clamp(0.3rem, 0.72vw, 0.44rem) !important;
         }
 
         .hero-tagline-text {
-            font-size: clamp(1.15rem, 2.6vw, 2.7rem) !important;
+            font-size: clamp(0.96rem, 1.55vw, 1.36rem) !important;
         }
 
         .package-offer-section.home-screen-section {
@@ -193,160 +194,37 @@
             box-shadow: 0 16px 26px rgba(0, 0, 0, 0.2) !important;
         }
 
-        .popular-package-shell {
-            transition: transform 0.25s ease;
-            transform-origin: center center;
-        }
-
         .popular-package-card {
             transition: transform 0.25s ease, box-shadow 0.25s ease;
+        }
+
+        .popular-picks-track {
+            scrollbar-width: none;
+        }
+
+        .popular-picks-track::-webkit-scrollbar {
+            display: none;
+        }
+
+        .popular-package-image {
+            transition: transform 0.28s ease;
         }
 
         .popular-package-button {
             transition: transform 0.25s ease, box-shadow 0.25s ease;
         }
 
-        .popular-package-shell:hover {
-            transform: scale(1.06);
-        }
-
         .popular-package-shell:hover .popular-package-card {
             box-shadow: 0 20px 34px rgba(15, 23, 42, 0.14) !important;
+        }
+
+        .popular-package-shell:hover .popular-package-image {
+            transform: scale(1.06);
         }
 
         .popular-package-shell:hover .popular-package-button {
             box-shadow: 0 8px 14px rgba(0, 0, 0, 0.12) !important;
             transform: translateY(-0.05rem);
-        }
-
-        .bulletin-board {
-            position: relative;
-            overflow: visible;
-            border: 0;
-            border-radius: 0;
-            background:
-                linear-gradient(135deg, #5f3517 0%, #7b4720 18%, #9b6332 42%, #7d4821 68%, #5c3317 100%);
-            box-shadow:
-                inset 0 0 0 1px rgba(255,255,255,0.14),
-                inset 0 0 0 6px rgba(78,43,17,0.48),
-                inset 0 1px 0 rgba(255,255,255,0.14),
-                0 22px 42px rgba(15,23,42,0.14);
-        }
-
-        .bulletin-board::before {
-            content: "";
-            position: absolute;
-            inset: 1rem;
-            border-radius: 0;
-            background:
-                radial-gradient(circle at 18% 20%, rgba(255,222,173,0.18) 0, rgba(255,222,173,0) 22%),
-                radial-gradient(circle at 78% 34%, rgba(92,51,22,0.14) 0, rgba(92,51,22,0) 24%),
-                repeating-linear-gradient(
-                    0deg,
-                    rgba(121,73,38,0.16) 0,
-                    rgba(121,73,38,0.16) 2px,
-                    rgba(0,0,0,0) 2px,
-                    rgba(0,0,0,0) 34px
-                ),
-                repeating-linear-gradient(
-                    92deg,
-                    rgba(88,50,24,0.12) 0,
-                    rgba(88,50,24,0.12) 1px,
-                    rgba(0,0,0,0) 1px,
-                    rgba(0,0,0,0) 18px
-                ),
-                linear-gradient(180deg, #b97a45 0%, #a96936 44%, #955a2b 100%);
-            box-shadow:
-                inset 0 0 0 1px rgba(255,255,255,0.1),
-                inset 0 2px 10px rgba(255,255,255,0.08),
-                inset 0 -8px 18px rgba(84,46,19,0.18);
-            pointer-events: none;
-        }
-
-        .bulletin-board::after {
-            content: "";
-            position: absolute;
-            inset: 0.7rem;
-            border: 1px solid rgba(70, 38, 16, 0.38);
-            box-shadow: inset 0 0 0 1px rgba(255,255,255,0.08);
-            pointer-events: none;
-        }
-
-        .bulletin-board-inner {
-            position: relative;
-            z-index: 1;
-            padding: 1.55rem;
-        }
-
-        .bulletin-note {
-            position: relative;
-            border: 1px solid rgba(120,113,108,0.2);
-            border-radius: 1.5rem;
-            padding: 1rem;
-            box-shadow: 0 18px 28px rgba(15,23,42,0.14);
-            transition: transform 0.24s ease, box-shadow 0.24s ease;
-        }
-
-        .bulletin-note:hover {
-            transform: translateY(-4px) rotate(0deg) !important;
-            box-shadow: 0 22px 34px rgba(15,23,42,0.18);
-        }
-
-        .bulletin-note::before {
-            content: "";
-            position: absolute;
-            top: 0.85rem;
-            left: 50%;
-            height: 0.95rem;
-            width: 0.95rem;
-            transform: translateX(-50%);
-            border-radius: 999px;
-            background: radial-gradient(circle at 30% 30%, #fff7ed, #dc2626 55%, #7f1d1d 100%);
-            box-shadow: 0 3px 6px rgba(15,23,42,0.25);
-        }
-
-        .bulletin-note--gold {
-            background: linear-gradient(180deg, #fff8c9, #fef3a5);
-        }
-
-        .bulletin-note--blue {
-            background: linear-gradient(180deg, #eff6ff, #dbeafe);
-        }
-
-        .bulletin-note--rose {
-            background: linear-gradient(180deg, #fff1f2, #ffe4e6);
-        }
-
-        .bulletin-note--cream {
-            background: linear-gradient(180deg, #fffdf7, #f6efe1);
-        }
-
-        .bulletin-note--green {
-            border-color: rgba(22, 101, 52, 0.32);
-            background: linear-gradient(180deg, #86efac, #4ade80 52%, #22c55e 100%);
-            box-shadow: 0 18px 28px rgba(22,101,52,0.24);
-        }
-
-        .bulletin-note--red {
-            border-color: rgba(153, 27, 27, 0.32);
-            background: linear-gradient(180deg, #fca5a5, #f87171 52%, #ef4444 100%);
-            box-shadow: 0 18px 28px rgba(153,27,27,0.22);
-        }
-
-        .bulletin-photo {
-            border-radius: 1.1rem;
-            border: 1px solid rgba(120,113,108,0.18);
-            background: #ffffff;
-            box-shadow: 0 8px 18px rgba(15,23,42,0.08);
-        }
-
-        .promo-poster-card {
-            transition: transform 0.24s ease, filter 0.24s ease;
-        }
-
-        .promo-poster-card:hover {
-            transform: translateY(-6px) rotate(0deg) !important;
-            filter: drop-shadow(0 16px 24px rgba(15,23,42,0.16));
         }
 
         .reviews-carousel-shell {
@@ -396,6 +274,42 @@
             flex: 0 0 min(24rem, calc(100vw - 4.5rem));
         }
 
+        .collapsible-copy {
+            overflow: hidden;
+            transition: max-height 0.2s ease;
+        }
+
+        .collapsible-toggle {
+            margin-top: 0.55rem;
+            display: inline-flex;
+            align-items: center;
+            border: 0;
+            background: transparent;
+            padding: 0;
+            font-size: 0.82rem;
+            font-weight: 700;
+            color: #315fbd;
+            cursor: pointer;
+        }
+
+        .collapsible-toggle:hover {
+            color: #264a94;
+        }
+
+        .promo-poster-trigger {
+            display: block;
+            width: 100%;
+            border: 0;
+            background: transparent;
+            padding: 0;
+            text-align: left;
+            cursor: pointer;
+        }
+
+        .promo-poster-modal[hidden] {
+            display: none !important;
+        }
+
         @keyframes reviews-carousel-scroll {
             from {
                 transform: translateX(0);
@@ -404,50 +318,6 @@
             to {
                 transform: translateX(calc(-50% - 0.5rem));
             }
-        }
-
-        @media (min-width: 1024px) {
-            .promo-posters-row {
-                display: flex !important;
-                align-items: flex-start !important;
-                justify-content: flex-start !important;
-                gap: 5rem !important;
-                margin-top: 4.4rem !important;
-                margin-left: 8.3rem !important;
-                margin-right: 3.2rem !important;
-            }
-
-            .promo-primary-poster-card {
-                margin: 0 !important;
-                flex: 0 0 21rem !important;
-            }
-
-            .promo-secondary-posters {
-                margin-top: 0 !important;
-                margin-left: 0 !important;
-                width: auto !important;
-                flex: 0 0 auto !important;
-                justify-content: flex-start !important;
-                align-items: flex-start !important;
-            }
-
-            .promo-secondary-poster-card {
-                margin-left: 0 !important;
-                margin-right: 0 !important;
-            }
-        }
-
-        .promo-poster-pin {
-            position: absolute;
-            left: 50%;
-            top: 0.15rem;
-            z-index: 3;
-            width: 0.9rem;
-            height: 0.9rem;
-            transform: translateX(-50%);
-            border-radius: 999px;
-            background: radial-gradient(circle at 30% 30%, #fff7ed, #dc2626 55%, #7f1d1d 100%);
-            box-shadow: 0 3px 6px rgba(15,23,42,0.25);
         }
 
         @media (min-width: 1024px) {
@@ -477,11 +347,12 @@
         @media (max-width: 1365px) {
             .hero-content-shell {
                 padding: 3rem 1.75rem 3rem clamp(1.25rem, 4vw, 2.5rem) !important;
-                transform: translateY(-2.5rem);
+                transform: translateY(0rem);
             }
 
             .hero-copy {
                 margin-left: 0;
+                margin-top: clamp(4.5rem, 7.3vw, 6.2rem);
             }
 
             #discover-heading {
@@ -508,11 +379,12 @@
         @media (max-width: 1180px) {
             .hero-content-shell {
                 padding: 2.5rem 1.5rem 2.5rem clamp(1.1rem, 3.5vw, 2rem) !important;
-                transform: translateY(-1.5rem);
+                transform: translateY(0rem);
             }
 
             .hero-copy {
                 margin-left: 0 !important;
+                margin-top: clamp(3.9rem, 6.2vw, 5.2rem) !important;
             }
 
             .hero-bus {
@@ -650,7 +522,7 @@
 
             .popular-package-card {
                 width: min(100%, 390px) !important;
-                min-height: 35rem !important;
+                min-height: 31rem !important;
             }
 
             .package-showcase-card {
@@ -789,6 +661,7 @@
     @php($currentPromoSlide = $currentPromoSlide ?? null)
     @php($recentPromoSlides = collect($recentPromoSlides ?? []))
     @php($latestBlogPosts = collect($latestBlogPosts ?? []))
+    @php($promoSlides = collect($currentPromoSlide ? [$currentPromoSlide] : [])->merge($recentPromoSlides)->values())
     <section class="home-screen-section home-screen-section--hero relative w-full overflow-hidden bg-black" data-mobile-hero-section>
         <div class="absolute inset-0">
             <div class="hero-slider" data-hero-slider>
@@ -842,312 +715,292 @@
         @endif
     </section>
 
-        <div class="pointer-events-none absolute inset-x-0 top-8 -z-10 h-72 rounded-[3rem] bg-[radial-gradient(circle_at_top_left,_rgba(134,239,172,0.16),_transparent_38%),radial-gradient(circle_at_top_right,_rgba(190,242,100,0.14),_transparent_34%)]"></div>
-
-        <div>
-            <section id="promos" class="bg-white px-5 pb-12 pt-3 md:px-7 md:pb-16 md:pt-5 lg:px-8" style="margin-left: calc(50% - 50vw); margin-right: calc(50% - 50vw);">
-                <div class="relative mx-auto pt-6 md:pt-8" style="max-width: 1920px;">
-                    <div class="bulletin-board mx-auto mt-8 hidden md:block" style="width: min(96vw, 1880px); max-width: 1880px;">
-                        <div class="bulletin-board-inner">
-                            <div class="flex flex-row items-start justify-between gap-8">
-                                <div class="space-y-6 border p-4" style="width: 1160px; min-width: 0; flex: 0 1 1600px; height: 36rem; border-color: rgba(120, 74, 34, 0.28); background: linear-gradient(180deg, #f8f1e4 0%, #f1e4d1 100%);">
-                                    <div class="flex items-center justify-center px-4 py-2">
-                                        <div class="text-center">
-                                            <div style="position: relative; display: inline-block; border: 1px solid rgba(78,43,17,0.42); background: linear-gradient(180deg, rgba(255,255,255,0.14), rgba(255,255,255,0) 24%), repeating-linear-gradient(92deg, rgba(118,71,35,0.14) 0, rgba(118,71,35,0.14) 1px, rgba(0,0,0,0) 1px, rgba(0,0,0,0) 16px), linear-gradient(180deg, #d4a46f 0%, #bd834e 46%, #a46434 100%); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.12), inset 0 -4px 10px rgba(78,43,17,0.16), 0 8px 16px rgba(15,23,42,0.12); padding: 0.55rem 1.9rem 0.65rem; text-align: center;">
-                                                <span style="position: absolute; left: 0.7rem; top: 50%; width: 0.7rem; height: 0.7rem; transform: translateY(-50%); border-radius: 999px; background: radial-gradient(circle at 30% 30%, #fff7ed, #c2410c 56%, #7c2d12 100%); box-shadow: 0 2px 5px rgba(15,23,42,0.24);"></span>
-                                                <span style="position: absolute; right: 0.7rem; top: 50%; width: 0.7rem; height: 0.7rem; transform: translateY(-50%); border-radius: 999px; background: radial-gradient(circle at 30% 30%, #fff7ed, #c2410c 56%, #7c2d12 100%); box-shadow: 0 2px 5px rgba(15,23,42,0.24);"></span>
-                                                <h3 class="m-0 font-['Oswald'] font-bold uppercase text-[#fff8ed]" style="font-size: 1rem; letter-spacing: 0.18em; text-shadow: 0 2px 0 rgba(97,52,20,0.28);">Promotions & Offers</h3>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div class="promo-posters-row">
-                                    <?php if ($currentPromoSlide): ?>
-                                        <article class="promo-poster-card promo-primary-poster-card bulletin-note {{ ($currentPromoSlide['is_active_offer'] ?? false) ? 'bulletin-note--green' : 'bulletin-note--red' }} mx-auto" style="position: relative; width: min(100%, 21rem); margin-top: 2.8rem; margin-left: 3.5rem; margin-right: auto; padding: 0.18rem; border-radius: 0; transform: rotate(-1.2deg);" data-past-promo-card>
-                                            <button
-                                                type="button"
-                                                class="bulletin-photo overflow-hidden"
-                                                style="position: relative; display: block; width: 100%; max-width: 100%; cursor: pointer; padding: 0.15rem; background: #fff9ef; border-radius: 0;"
-                                                data-promo-modal-trigger
-                                                data-promo-title="{{ $currentPromoSlide['title'] }}"
-                                                data-promo-summary="{{ $currentPromoSlide['summary'] }}"
-                                                data-promo-poster="{{ $currentPromoSlide['poster_url'] }}"
-                                                data-promo-date="{{ $currentPromoSlide['date_label'] }}"
-                                            >
-                                                <span class="promo-poster-pin"></span>
-                                                <div style="position: absolute; left: 0.55rem; top: 0.55rem; z-index: 2; display: flex; flex-direction: column; gap: 0.35rem; align-items: flex-start;">
-                                                    <span style="border-radius: 999px; background: rgba(255,255,255,0.94); padding: 0.26rem 0.62rem; font-size: 0.48rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: #315fbd; box-shadow: 0 6px 12px rgba(15,23,42,0.12);">{{ $currentPromoSlide['status'] }}</span>
-                                                    <span style="border-radius: 999px; background: rgba(255,255,255,0.94); padding: 0.26rem 0.62rem; font-size: 0.46rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: #b45309; box-shadow: 0 6px 12px rgba(15,23,42,0.12);">{{ $currentPromoSlide['date_label'] }}</span>
-                                                </div>
-                                                <?php if ($currentPromoSlide['poster_url']): ?>
-                                                    <img src="{{ $currentPromoSlide['poster_url'] }}" alt="{{ $currentPromoSlide['title'] }}" class="mx-auto object-contain" style="display: block; width: 100%; height: auto; max-height: 40rem; background: #ffffff; border-radius: 0;">
-                                                <?php else: ?>
-                                                    <div class="mx-auto flex w-full items-center justify-center bg-[linear-gradient(145deg,#77a6d8_0%,#5f8fcb_45%,#315fbd_100%)] px-6 text-center" style="height: 31rem; border-radius: 0;">
-                                                        <span class="font-['Prata'] text-2xl leading-tight text-white">{{ $currentPromoSlide['title'] }}</span>
-                                                    </div>
-                                                <?php endif; ?>
-                                            </button>
-                                        </article>
-                                    <?php else: ?>
-                                        <article class="bulletin-note bulletin-note--cream" style="transform: rotate(-1deg);">
-                                            <div class="pt-6 text-center">
-                                                <p class="text-[0.72rem] font-bold uppercase tracking-[0.22em] text-stone-500">Notice</p>
-                                                <h3 class="mt-3 font-['Prata'] text-3xl text-stone-900">No current promotion yet</h3>
-                                                <p class="mx-auto mt-4 max-w-2xl text-sm leading-7 text-stone-600">
-                                                    New promotions uploaded from the admin dashboard will appear here as soon as they go live.
-                                                </p>
-                                            </div>
-                                        </article>
-                                    <?php endif; ?>
-
-                                    <div class="promo-secondary-posters flex flex-col md:flex-row md:items-start" style="margin-left: 5rem; margin-top: -15rem; gap: 4rem;">
-                                        <?php foreach ($recentPromoSlides->reverse()->values() as $index => $promo): ?>
-                                            <?php $isPortraitPromo = ($promo['poster_orientation'] ?? null) === 'portrait'; ?>
-                                            <article class="promo-poster-card promo-secondary-poster-card bulletin-note {{ ($promo['is_active_offer'] ?? false) ? 'bulletin-note--green' : 'bulletin-note--red' }}" style="margin-top: {{ $isPortraitPromo ? '-2.4rem' : '6.35rem' }}; margin-left: 0; margin-right: 0; width: {{ $isPortraitPromo ? 'min(100%, 21rem)' : '20rem' }}; flex: 0 0 {{ $isPortraitPromo ? '21rem' : '16.75rem' }}; padding: 0.18rem; border-radius: 0; transform: rotate({{ $index % 2 === 0 ? '-0.9deg' : '1.1deg' }});" data-past-promo-card>
-                                                <?php if ($promo['poster_url']): ?>
-                                                    <button
-                                                        type="button"
-                                                        class="bulletin-photo mx-auto overflow-hidden"
-                                                        style="position: relative; display: block; width: 100%; max-width: {{ $isPortraitPromo ? '100%' : '16.1rem' }}; cursor: pointer; padding: {{ $isPortraitPromo ? '0.15rem' : '0.08rem' }}; background: #fff9ef; border-radius: 0;"
-                                                        data-promo-modal-trigger
-                                                        data-promo-title="{{ $promo['title'] }}"
-                                                        data-promo-summary="{{ $promo['summary'] }}"
-                                                        data-promo-poster="{{ $promo['poster_url'] }}"
-                                                        data-promo-date="{{ $promo['date_label'] }}"
-                                                        data-past-promo-trigger
-                                                        data-promo-orientation="{{ $promo['poster_orientation'] }}"
-                                                    >
-                                                        <span class="promo-poster-pin"></span>
-                                                        <div style="position: absolute; left: 0.5rem; top: 0.5rem; z-index: 2; display: flex; flex-direction: column; gap: 0.35rem; align-items: flex-start;">
-                                                            <span style="border-radius: 999px; background: rgba(255,255,255,0.94); padding: 0.24rem 0.6rem; font-size: 0.46rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: #315fbd; box-shadow: 0 6px 12px rgba(15,23,42,0.12);">{{ $promo['status'] }}</span>
-                                                            <span style="border-radius: 999px; background: rgba(255,255,255,0.94); padding: 0.24rem 0.6rem; font-size: 0.44rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: #b45309; box-shadow: 0 6px 12px rgba(15,23,42,0.12);">{{ $promo['date_label'] }}</span>
-                                                        </div>
-                                                        <img src="{{ $promo['poster_url'] }}" alt="{{ $promo['title'] }}" class="w-full {{ $isPortraitPromo ? 'object-contain' : 'object-cover' }}" style="display: block; width: 100%; {{ $isPortraitPromo ? 'height: auto; max-height: 40rem;' : 'height: 22rem;' }} background: #ffffff; border-radius: 0; object-position: center;" data-past-promo-poster>
-                                                    </button>
-                                                <?php else: ?>
-                                                    <button
-                                                        type="button"
-                                                        class="bulletin-photo mx-auto overflow-hidden"
-                                                        style="position: relative; display: block; width: 100%; max-width: 16.1rem; cursor: pointer; padding: 0.08rem; background: #fff9ef; border-radius: 0;"
-                                                        data-promo-modal-trigger
-                                                        data-promo-title="{{ $promo['title'] }}"
-                                                        data-promo-summary="{{ $promo['summary'] }}"
-                                                        data-promo-poster=""
-                                                        data-promo-date="{{ $promo['date_label'] }}"
-                                                        data-past-promo-trigger
-                                                        data-promo-orientation="{{ $promo['poster_orientation'] }}"
-                                                    >
-                                                        <span class="promo-poster-pin"></span>
-                                                        <div style="position: absolute; left: 0.5rem; top: 0.5rem; z-index: 2; display: flex; flex-direction: column; gap: 0.35rem; align-items: flex-start;">
-                                                            <span style="border-radius: 999px; background: rgba(255,255,255,0.94); padding: 0.24rem 0.6rem; font-size: 0.46rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: #315fbd; box-shadow: 0 6px 12px rgba(15,23,42,0.12);">{{ $promo['status'] }}</span>
-                                                            <span style="border-radius: 999px; background: rgba(255,255,255,0.94); padding: 0.24rem 0.6rem; font-size: 0.44rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: #b45309; box-shadow: 0 6px 12px rgba(15,23,42,0.12);">{{ $promo['date_label'] }}</span>
-                                                        </div>
-                                                        <div class="flex w-full items-center justify-center bg-[linear-gradient(145deg,#77a6d8_0%,#5f8fcb_45%,#315fbd_100%)] px-4 text-center" style="min-height: 13.5rem; height: 16.5rem; border-radius: 0;">
-                                                            <span class="text-xs font-bold uppercase tracking-[0.12em] text-white">Promo</span>
-                                                        </div>
-                                                    </button>
-                                                <?php endif; ?>
-                                            </article>
-                                        <?php endforeach; ?>
-                                        <?php if ($recentPromoSlides->isEmpty()): ?>
-                                            <article class="bulletin-note bulletin-note--cream w-full" style="transform: rotate(0.4deg);">
-                                                <div class="pt-5 text-center">
-                                                    <p class="text-sm leading-7 text-stone-600">Recent promotions will be pinned here after new offers are uploaded.</p>
-                                                </div>
-                                            </article>
-                                        <?php endif; ?>
-                                    </div>
-                                    </div>
-                                </div>
-
-                                <div class="space-y-5 border p-4" style="width: 300px; min-width: 300px; flex: 0 0 300px; margin-left: auto; height: 36rem; border-color: rgba(120, 74, 34, 0.28); background: linear-gradient(180deg, #f8f1e4 0%, #f1e4d1 100%);">
-                                    <div class="flex items-center justify-center px-4 py-2">
-                                        <div class="text-center">
-                                            <div style="position: relative; display: inline-block; border: 1px solid rgba(78,43,17,0.42); background: linear-gradient(180deg, rgba(255,255,255,0.14), rgba(255,255,255,0) 24%), repeating-linear-gradient(92deg, rgba(118,71,35,0.14) 0, rgba(118,71,35,0.14) 1px, rgba(0,0,0,0) 1px, rgba(0,0,0,0) 16px), linear-gradient(180deg, #d4a46f 0%, #bd834e 46%, #a46434 100%); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.12), inset 0 -4px 10px rgba(78,43,17,0.16), 0 8px 16px rgba(15,23,42,0.12); padding: 0.55rem 1.9rem 0.65rem; text-align: center;">
-                                                <span style="position: absolute; left: 0.7rem; top: 50%; width: 0.7rem; height: 0.7rem; transform: translateY(-50%); border-radius: 999px; background: radial-gradient(circle at 30% 30%, #fff7ed, #c2410c 56%, #7c2d12 100%); box-shadow: 0 2px 5px rgba(15,23,42,0.24);"></span>
-                                                <span style="position: absolute; right: 0.7rem; top: 50%; width: 0.7rem; height: 0.7rem; transform: translateY(-50%); border-radius: 999px; background: radial-gradient(circle at 30% 30%, #fff7ed, #c2410c 56%, #7c2d12 100%); box-shadow: 0 2px 5px rgba(15,23,42,0.24);"></span>
-                                                <h3 class="m-0 font-['Oswald'] font-bold uppercase text-[#fff8ed]" style="font-size: 1rem; letter-spacing: 0.18em; text-shadow: 0 2px 0 rgba(97,52,20,0.28);">Blog News</h3>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <?php foreach ($latestBlogPosts as $index => $post): ?>
-                                        <a href="{{ route('blog.show', $post) }}" class="bulletin-note {{ $index % 2 === 0 ? 'bulletin-note--cream' : 'bulletin-note--rose' }} block" style="transform: rotate({{ $index % 2 === 0 ? '0.9deg' : '-0.8deg' }});">
-                                            <div class="flex gap-3 pt-3">
-                                                <div class="bulletin-photo h-20 w-20 shrink-0 overflow-hidden p-1.5">
-                                                    <?php if ($post->cover_image_url): ?>
-                                                        <img src="{{ $post->cover_image_url }}" alt="{{ $post->title }}" class="h-full w-full rounded-[0.75rem] object-cover">
-                                                    <?php else: ?>
-                                                        <div class="flex h-full w-full items-center justify-center rounded-[0.75rem] bg-[linear-gradient(145deg,#77a6d8_0%,#5f8fcb_45%,#315fbd_100%)] px-3 text-center">
-                                                            <span class="text-xs font-bold uppercase tracking-[0.12em] text-white">Blog</span>
-                                                        </div>
-                                                    <?php endif; ?>
-                                                </div>
-                                                <div class="min-w-0 flex-1" style="padding-top: 0.35rem;">
-                                                    <h3 class="line-clamp-2 text-[1.55rem] font-semibold leading-[1.15] text-stone-900">{{ $post->title }}</h3>
-                                                    <p class="mt-2 text-[0.68rem] font-bold uppercase tracking-[0.18em] text-stone-500">{{ $post->published_at?->format('d M Y') ?? 'Latest post' }}</p>
-                                                </div>
-                                            </div>
-                                        </a>
-                                    <?php endforeach; ?>
-                                    <?php if ($latestBlogPosts->isEmpty()): ?>
-                                        <article class="bulletin-note bulletin-note--cream" style="transform: rotate(0.8deg);">
-                                            <div class="pt-5 text-center">
-                                                <p class="text-sm leading-7 text-stone-600">No blog posts have been uploaded yet.</p>
-                                            </div>
-                                        </article>
-                                    <?php endif; ?>
-                                </div>
-                            </div>
+        <div id="promo-poster-modal" class="promo-poster-modal fixed inset-0 z-[9999] bg-[rgba(15,23,42,0.82)] px-4 py-6 md:px-8 md:py-10" style="z-index: 2147483647; isolation: isolate;" hidden>
+            <div class="flex min-h-full items-start justify-center pt-16 md:pt-24">
+                <div class="relative overflow-hidden rounded-[1.8rem] bg-white shadow-[0_30px_80px_rgba(15,23,42,0.32)]" style="width: 76rem; max-width: calc(100vw - 2.5rem); margin-top: 8rem; min-height: 24rem; z-index: 2147483647;">
+                    <button type="button" data-promo-modal-close class="absolute right-4 top-4 z-20 inline-flex h-12 w-12 items-center justify-center rounded-full border border-stone-200 bg-white text-[1.9rem] font-semibold leading-none text-stone-900 shadow-[0_10px_24px_rgba(15,23,42,0.18)] transition hover:bg-stone-100" aria-label="Close promo viewer">
+                        &times;
+                    </button>
+                    <div class="flex flex-row flex-nowrap items-stretch">
+                        <div class="flex w-[40rem] min-w-[40rem] items-start justify-center bg-[#f7efe3] p-6">
+                            <img id="promo-poster-modal-image" src="" alt="" class="h-auto w-auto object-contain" style="max-width: 41rem; max-height: 35rem; background: #ffffff;">
                         </div>
-                    </div>
-                    <div
-                        id="promo-poster-modal"
-                        style="position: fixed; inset: 0; z-index: 80; display: none; align-items: center; justify-content: center; background: rgba(15,23,42,0.72); padding: 1.25rem;"
-                    >
-                        <div
-                            id="promo-poster-modal-panel"
-                            style="position: relative; width: min(100%, 1100px); max-height: calc(100vh - 2.5rem); overflow-y: auto; border-radius: 1.6rem; background: linear-gradient(180deg, #fffdf7 0%, #f8f2e7 100%); box-shadow: 0 30px 80px rgba(15,23,42,0.3);"
-                        >
-                            <button
-                                type="button"
-                                id="promo-poster-modal-close"
-                                aria-label="Close promotion popup"
-                                style="position: absolute; top: 1rem; right: 1rem; display: inline-flex; height: 2.4rem; width: 2.4rem; align-items: center; justify-content: center; border: 0; border-radius: 999px; background: rgba(255,255,255,0.94); color: #1f2937; font-size: 1.5rem; cursor: pointer; box-shadow: 0 10px 24px rgba(15,23,42,0.16);"
-                            >
-                                ×
-                            </button>
-                            <div style="display: flex; align-items: flex-start; gap: 1.75rem; padding: 2rem;">
-                                <div id="promo-poster-modal-media" class="bulletin-photo overflow-hidden p-2" style="width: 500px; min-width: 500px; flex: 0 0 500px; margin: 0; background: #ffffff;">
-                                    <img id="promo-poster-modal-image" src="" alt="" class="w-full rounded-[1rem] object-contain" style="display: none; width: 100%; height: 520px; background: #ffffff;">
-                                    <div id="promo-poster-modal-fallback" class="flex items-center justify-center rounded-[1rem] bg-[linear-gradient(145deg,#77a6d8_0%,#5f8fcb_45%,#315fbd_100%)] px-5 text-center" style="display: none; min-height: 320px;">
-                                        <span id="promo-poster-modal-fallback-title" class="font-['Prata'] text-3xl leading-tight text-white"></span>
-                                    </div>
-                                </div>
-                                <div style="min-width: 0; flex: 1 1 auto; padding-top: 1.35rem; padding-right: 0.5rem;">
-                                    <p id="promo-poster-modal-date" style="margin: 0; font-size: 0.68rem; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: #b45309;"></p>
-                                    <h3 id="promo-poster-modal-title" style="margin: 0.9rem 0 0; font-family: 'Prata', serif; font-size: clamp(1.6rem, 2vw, 2.2rem); line-height: 1.15; color: #1c1917;"></h3>
-                                    <p id="promo-poster-modal-summary" style="margin: 1rem 0 0; font-size: 0.98rem; line-height: 1.8; color: #57534e;"></p>
-                                </div>
-                            </div>
+                        <div class="flex min-w-0 flex-1 flex-col justify-center px-14 py-10 md:px-16" style="min-width: 0; width: 100%;">
+                            <p id="promo-poster-modal-date" class="text-sm font-bold uppercase tracking-[0.22em] text-amber-600"></p>
+                            <h3 id="promo-poster-modal-title" class="mt-4 font-['Prata'] text-3xl leading-tight text-stone-900 md:text-4xl"></h3>
+                            <p id="promo-poster-modal-summary" class="mt-6 text-base leading-8 text-stone-700 md:text-[1.02rem]"></p>
                         </div>
                     </div>
                 </div>
-            </section>
+            </div>
         </div>
 
-        <section id="popular-picks" class="mt-10 home-screen-section relative overflow-hidden md:overflow-visible px-6 pb-8 pt-0 md:mt-12 md:px-8 md:pb-10 md:pt-0">
-
-                <div class="mb-4 flex flex-col gap-4 md:flex-row md:items-center">
-                    <div class="hidden md:block md:w-[18rem]"></div>
-                    <h2 class="popular-picks-heading flex-1 text-center font-['Oswald'] text-4xl font-bold uppercase tracking-[0.22em] md:text-5xl lg:text-6xl" style="position: relative; left: 0;">
-                        <span style="color: #ff2b2b;">Popular</span>
-                        <span class="ml-3" style="color: #315fbd;">Picks</span>
+        @php($initialPopularPackages = $popularPackages->take(3)->values())
+        @php($initialPopularPackageIds = $initialPopularPackages->pluck('id'))
+        @php($popularPackagesGrid = $initialPopularPackages
+            ->concat($travelPackages->reject(fn ($package) => $initialPopularPackageIds->contains($package->id))->values())
+            ->values())
+        <section id="popular-picks" class="home-screen-section px-4 pb-6 pt-8 md:px-6 md:pb-8 md:pt-12" style="background: #ffffff;">
+            <div class="mx-auto px-5 py-5 md:px-8 md:py-6" style="max-width: 1680px;">
+                <div class="mx-auto px-4 pb-10 pt-2 text-center md:px-8 md:pb-14 md:pt-2" style="max-width: 90rem;">
+                    <h2 class="mt-0 font-['Oswald'] font-bold text-stone-950" style="font-size: clamp(1.2rem, 2.8vw, 2.35rem); line-height: 1;">
+                        Let's Explore Your Dream Destination Here!
                     </h2>
-                    <div class="flex justify-center md:w-[18rem] md:justify-end">
-                        <a href="{{ route('home') }}#packages-showcase" class="inline-flex items-center justify-center rounded-full px-8 py-3.5 text-[0.95rem] font-semibold uppercase tracking-[0.28em] text-white shadow-[0_14px_30px_rgba(49,95,189,0.22)] transition hover:-translate-y-0.5 hover:shadow-[0_18px_34px_rgba(49,95,189,0.28)]" style="border: 1px solid #315fbd; background-color: #315fbd;">
-                            See All Package
-                        </a>
+
+                    <div class="mx-auto mt-3 rounded-[1.7rem] bg-white px-5 py-5 shadow-[0_24px_54px_rgba(15,23,42,0.10)] md:px-7" style="max-width: 72rem;">
+                        <div class="flex flex-nowrap items-end gap-3 overflow-x-auto pb-2" data-popular-filters>
+                            <label class="flex min-w-[18rem] flex-1 items-center gap-3 text-left">
+                                <span class="shrink-0 font-['Oswald'] text-[1.05rem] font-semibold text-stone-900">Location</span>
+                                <input type="text" data-popular-filter="location" placeholder="Search location" class="w-full rounded-[0.9rem] border border-stone-200 bg-stone-50 px-4 py-2 text-sm text-stone-700 outline-none transition focus:border-orange-300 focus:bg-white" />
+                            </label>
+                            <label class="flex min-w-[18rem] items-center gap-3 text-left">
+                                <span class="shrink-0 font-['Oswald'] text-[1.05rem] font-semibold text-stone-900">Duration</span>
+                                <select data-popular-filter="duration" class="w-full rounded-[0.9rem] border border-stone-200 bg-stone-50 px-4 py-2 text-sm text-stone-700 outline-none transition focus:border-orange-300 focus:bg-white">
+                                    <option value="">All</option>
+                                    <option value="day-trip">Day Trip</option>
+                                    <option value="2d1n">2D1N Trip</option>
+                                    <option value="3d2n">3D2N Trip</option>
+                                    <option value="4d3n">4D3N Trip</option>
+                                </select>
+                            </label>
+                            <button type="button" data-popular-filter-reset class="inline-flex min-w-[9rem] items-center justify-center rounded-[0.9rem] bg-[#f97316] px-7 py-2 text-sm font-semibold text-white shadow-[0_18px_35px_rgba(249,115,22,0.32)] transition hover:bg-[#ea6b10]">
+                                Reset
+                            </button>
+                        </div>
                     </div>
-                </div>
 
-            <div class="relative mx-auto rounded-[2rem] bg-white px-5 py-2 md:overflow-visible md:px-8 md:py-4" style="max-width: 1920px;">
-                <div class="popular-picks-mobile-nav hidden items-center justify-between px-2 pb-2 md:hidden">
-                    <button
-                        type="button"
-                        data-popular-prev
-                        aria-label="Show previous popular package"
-                        style="display: inline-flex; height: 2.8rem; width: 2.8rem; align-items: center; justify-content: center; border: none; border-radius: 999px; background: rgba(255,255,255,0.96); box-shadow: 0 8px 18px rgba(15,23,42,0.12); font-size: 2.2rem; font-weight: 300; line-height: 1; color: #8aa0d7;"
-                    >&lsaquo;</button>
-                    <button
-                        type="button"
-                        data-popular-next
-                        aria-label="Show next popular package"
-                        style="display: inline-flex; height: 2.8rem; width: 2.8rem; align-items: center; justify-content: center; border: none; border-radius: 999px; background: rgba(255,255,255,0.96); box-shadow: 0 8px 18px rgba(15,23,42,0.12); font-size: 2.2rem; font-weight: 300; line-height: 1; color: #8aa0d7;"
-                    >&rsaquo;</button>
-                </div>
-
-                <div class="mt-1 overflow-hidden px-2 py-4 md:overflow-visible md:py-6">
-                    <div class="popular-picks-track flex flex-wrap justify-center" data-popular-picks-track style="gap: 2.5rem;">
-                        <?php if ($popularPackages->isNotEmpty()): ?>
-                        <?php foreach ($popularPackages as $package): ?>
+                    <div class="mt-7 grid gap-6 xl:grid-cols-3" data-popular-grid>
+                        <?php if ($popularPackagesGrid->isNotEmpty()): ?>
+                        <?php foreach ($popularPackagesGrid as $package): ?>
                             <?php
-                                $packageLocation = strtolower((string) $package->location);
-                                $locationTag = str_contains($packageLocation, 'kundasang')
-                                    ? 'KUNDASANG'
-                                    : (str_contains($packageLocation, 'kota belud')
-                                        ? 'KOTA BELUD'
-                                        : (str_contains($packageLocation, 'ranau') ? 'KUNDASANG-RANAU' : 'KOTA KINABALU'));
-                                $tripCode = strtoupper(str_replace([' days', ' day', ' nights', ' night', ' '], ['D', 'D', 'N', 'N', ''], (string) $package->duration));
+                                $packageLocation = trim((string) $package->location);
+                                $packageSummary = trim((string) ($package->summary ?: $package->description ?: ''));
+                                $packageSummary = \Illuminate\Support\Str::limit($packageSummary !== '' ? $packageSummary : ($packageLocation !== '' ? $packageLocation : 'Sabah, Malaysia'), 150);
+                                $packageRating = $package->package_review_average;
                                 $discountBadge = $package->has_active_discount
                                     ? rtrim(rtrim(number_format((float) $package->discount_percentage, 2, '.', ''), '0'), '.').'% OFF'
                                     : null;
                                 $currentPrice = (float) $package->discounted_malaysia_adult_price_myr;
                                 $originalPrice = (float) $package->malaysia_adult_price_myr;
-                                $packageRating = $package->package_review_average;
-                                $packageReviewCount = (int) ($package->package_review_count ?? 0);
+                                $packageDuration = trim((string) $package->duration);
+                                $packageDurationKey = strtolower(preg_replace('/[^a-z0-9]+/', '', $packageDuration));
+                                $durationFilterValue = match (true) {
+                                    str_contains($packageDurationKey, '4d3n'),
+                                    str_contains($packageDurationKey, '4days3nights') => '4d3n',
+                                    str_contains($packageDurationKey, '3d2n'),
+                                    str_contains($packageDurationKey, '3days2nights') => '3d2n',
+                                    str_contains($packageDurationKey, '2d1n'),
+                                    str_contains($packageDurationKey, '2days1night') => '2d1n',
+                                    str_contains($packageDurationKey, 'daytrip'),
+                                    str_contains($packageDurationKey, 'daytime'),
+                                    str_contains($packageDurationKey, '1day'),
+                                    str_contains($packageDurationKey, 'oneday'),
+                                    str_contains($packageDurationKey, 'hour'),
+                                    str_contains($packageDurationKey, 'hours'),
+                                    str_contains($packageDurationKey, 'fullday'),
+                                    str_contains($packageDurationKey, 'halfday') => 'day-trip',
+                                    default => '',
+                                };
+                                $tripCode = strtoupper(str_replace([' days', ' day', ' nights', ' night', ' '], ['D', 'D', 'N', 'N', ''], $packageDuration));
                             ?>
-                            <div class="popular-package-shell flex h-full flex-col items-center">
-                                <a href="{{ route('products.show', $package) }}" class="popular-package-card flex h-full flex-col overflow-hidden text-left shadow-[0_14px_26px_rgba(15,23,42,0.08)] duration-300" style="width: 390px; min-height: 580px; border-radius: 1.6rem 1.6rem 0 0; background: #f1f0e9;">
+                            <article class="popular-package-shell flex h-full flex-col overflow-hidden text-left" style="min-height: 24rem; border: 1px solid rgba(120,113,108,0.18); background: rgba(255,255,255,0.96); box-shadow: 0 18px 32px rgba(15,23,42,0.14);" data-popular-card data-location="{{ strtolower($packageLocation !== '' ? $packageLocation : 'Sabah, Malaysia') }}" data-package="{{ strtolower((string) $package->name) }}" data-duration="{{ $durationFilterValue }}" data-rating="{{ $packageRating !== null ? number_format($packageRating, 1, '.', '') : '5.0' }}">
+                                <a href="{{ route('products.show', $package) }}" style="display: block; color: inherit; text-decoration: none;">
                                     <div class="relative overflow-hidden">
                                         @if ($package->image_url)
-                                            <img src="{{ $package->image_url }}" alt="{{ $package->name }}" class="h-52 w-full object-cover">
-                                            <img src="{{ asset('images/UE.png') }}" alt="Universal Eden trademark" class="pointer-events-none absolute z-10 h-7 w-auto opacity-90" style="right: 0; bottom: 0; transform: translate(-0.65rem, -0.65rem);">
+                                            <img src="{{ $package->image_url }}" alt="{{ $package->name }}" class="popular-package-image" style="display: block; height: 16rem; width: 100%; object-fit: cover;">
                                         @else
-                                            <div class="flex h-52 items-center justify-center bg-[linear-gradient(135deg,_#f59e0b,_#fde68a_45%,_#fed7aa)] px-6 text-center text-xl font-semibold text-stone-800">{{ $package->name }}</div>
-                                        @endif
-
-                                        <span style="position: absolute; left: 0.75rem; top: 0.75rem; z-index: 2; border-radius: 0.2rem; background: #2c22c9; padding: 0.28rem 0.55rem; font-size: 0.6rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #fff;">{{ $locationTag }}</span>
-
-                                        @if ($discountBadge)
-                                            <span style="position: absolute; right: 0.75rem; top: 0.75rem; z-index: 2; border-radius: 0.2rem; background: #ff1d0d; padding: 0.28rem 0.55rem; font-size: 0.6rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #fff;">{{ $discountBadge }}</span>
-                                        @endif
-                                    </div>
-
-                                    <div class="flex flex-1 flex-col p-4">
-                                        <div class="flex items-center justify-between gap-3">
-                                            <p class="font-['Oswald'] text-4xl font-bold leading-none" style="color: #ff1d0d;">{{ $tripCode }}</p>
-                                            <div class="rounded-full bg-white/80 px-3 py-1.5 text-right shadow-sm">
-                                                @if ($packageRating !== null && $packageReviewCount > 0)
-                                                    <div class="text-lg font-bold leading-none text-amber-500">{{ number_format($packageRating, 1) }}/5</div>
-                                                    <div class="mt-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-stone-500">{{ $packageReviewCount }} review{{ $packageReviewCount === 1 ? '' : 's' }}</div>
-                                                @else
-                                                    <div class="text-sm font-semibold leading-none text-stone-500">No reviews</div>
-                                                @endif
+                                            <div style="display: flex; height: 15.5rem; align-items: center; justify-content: center; background: linear-gradient(135deg, #60a5fa, #bfdbfe 40%, #fde68a); padding: 1rem; text-align: center;">
+                                                <span style="font-family: 'Prata', serif; font-size: 1.5rem; line-height: 1.3; color: #1e3a8a;">{{ $package->name }}</span>
                                             </div>
-                                        </div>
-
-                                        <h3 class="mt-3 font-['Oswald'] text-2xl font-bold uppercase leading-tight text-[#1c2f7d]">{{ $package->name }}</h3>
-                                        <p class="mt-3 flex-1 text-sm font-medium leading-6 text-stone-900">{{ \Illuminate\Support\Str::limit($package->description, 180) }}</p>
-
-                                        <div class="mt-5 pt-2">
-                                            <p class="text-xs font-bold uppercase tracking-[0.14em] text-[#ff1d0d]">Starting From</p>
-                                            @if ($package->has_active_discount)
-                                                <p class="mt-1 text-sm font-medium text-stone-500 line-through">
-                                                    <span class="currency-price" data-myr="{{ $originalPrice }}">{{ number_format($originalPrice, 2) }}</span>
-                                                </p>
-                                            @endif
-                                            <p class="mt-1 text-base text-stone-900">
-                                                <span class="currency-price text-2xl font-bold leading-none" data-myr="{{ $currentPrice }}" style="color: #0f4fb5;">{{ number_format($currentPrice, 2) }}</span> Per Pax
-                                            </p>
-                                        </div>
+                                        @endif
+                                        <span style="position: absolute; left: 0.85rem; top: 0.85rem; background: rgba(255,255,255,0.95); padding: 0.38rem 0.65rem; font-size: 0.66rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: #1d4ed8;">
+                                            {{ $tripCode !== '' ? $tripCode : '3D2N' }}
+                                        </span>
+                                        @if ($discountBadge)
+                                            <span style="position: absolute; right: 0.85rem; top: 0.85rem; background: #ffedd5; padding: 0.38rem 0.65rem; font-size: 0.66rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: #c2410c;">
+                                                {{ $discountBadge }}
+                                            </span>
+                                        @endif
+                                    </div>
+                                    <div style="padding: 1.2rem 1.2rem 1rem;">
+                                        <p style="margin: 0; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: #78716c;">{{ $packageLocation !== '' ? strtoupper($packageLocation) : 'SABAH, MALAYSIA' }}</p>
+                                        <h3 style="margin: 0.55rem 0 0; font-family: 'Oswald', sans-serif; font-size: 1.65rem; font-weight: 700; line-height: 1.08; color: #1f2937;">
+                                            {{ $package->name }}
+                                        </h3>
+                                        <p style="margin: 0.75rem 0 0; min-height: 3rem; font-size: 0.94rem; line-height: 1.75; color: #57534e;">
+                                            {{ $packageSummary }}
+                                        </p>
                                     </div>
                                 </a>
-
-                                <a href="{{ route('booking.create', ['product_id' => $package->id]) }}" class="popular-package-button mt-3 inline-flex min-w-[160px] items-center justify-center rounded-full px-8 py-3 font-['Oswald'] text-lg font-bold uppercase tracking-[0.08em] text-white shadow-[0_12px_18px_rgba(0,0,0,0.16)] transition hover:-translate-y-0.5 hover:shadow-[0_16px_24px_rgba(0,0,0,0.2)]" style="background-color: #ff1d0d;">
-                                    Book Now
-                                </a>
-                            </div>
+                                <div style="margin-top: auto; padding: 0 1.2rem 1.25rem;">
+                                    <div style="display: flex; align-items: flex-end; justify-content: space-between; gap: 1rem; border-top: 1px solid rgba(120,113,108,0.16); padding-top: 1rem;">
+                                        <div>
+                                            <p style="margin: 0; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: #b45309;">Starting From</p>
+                                            @if ($package->has_active_discount)
+                                                <p style="margin: 0.25rem 0 0; font-size: 0.82rem; color: #78716c; text-decoration: line-through;">RM {{ number_format($originalPrice, 2) }}</p>
+                                            @endif
+                                            <p style="margin: 0.18rem 0 0; font-size: 1.55rem; font-weight: 700; line-height: 1; color: #0f4fb5;">RM {{ number_format($currentPrice, 2) }}</p>
+                                        </div>
+                                        <div class="flex flex-col gap-2">
+                                            <a href="{{ route('products.show', $package) }}" style="display: inline-flex; align-items: center; justify-content: center; border: 1px solid #1d4ed8; padding: 0.7rem 1rem; font-size: 0.74rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: #1d4ed8; text-decoration: none;">
+                                                View Details
+                                            </a>
+                                            <a href="{{ route('booking.create', ['product_id' => $package->id]) }}" style="display: inline-flex; align-items: center; justify-content: center; background: #ff1d0d; padding: 0.7rem 1rem; font-size: 0.74rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: #ffffff; text-decoration: none;">
+                                                Book Now
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </article>
                         <?php endforeach; ?>
                         <?php else: ?>
-                            <div class="rounded-3xl border border-dashed border-stone-300 bg-stone-50 px-6 py-10 text-center text-sm text-stone-600">
+                            <div class="rounded-[1.8rem] border border-dashed border-stone-300 bg-white px-6 py-12 text-center text-sm text-stone-600 xl:col-span-3">
                                 No popular packages are available right now.
                             </div>
                         <?php endif; ?>
                     </div>
-                </div>
+                    <div class="mt-6 hidden rounded-[1.4rem] border border-dashed border-stone-300 bg-white px-6 py-8 text-center text-sm text-stone-600" data-popular-empty>
+                        No destinations match your current filters.
+                    </div>
+                    <div class="mt-6 text-center">
+                        <button type="button" data-popular-load-more class="hidden inline-flex items-center justify-center rounded-[0.85rem] border border-stone-900 bg-white px-6 py-2 text-[0.82rem] font-semibold uppercase tracking-[0.12em] text-black shadow-[0_10px_20px_rgba(15,23,42,0.08)] transition hover:bg-stone-100">
+                            View More
+                        </button>
+                    </div>
+
             </div>
         </section>
+
+        <div>
+            <section id="promos" class="px-5 pb-12 pt-0 md:px-7 md:pb-16 md:pt-0 lg:px-8" style="margin-left: calc(50% - 50vw); margin-right: calc(50% - 50vw); background: #ffffff;">
+                <div class="relative mx-auto pt-0 md:pt-0" style="max-width: 1680px;">
+                    <div class="mx-auto px-5 py-4 md:px-8 md:py-6">
+                        <div class="flex flex-col gap-8 lg:flex-row lg:flex-nowrap lg:items-start lg:justify-between lg:gap-10">
+                            <div class="min-w-0 lg:flex-1">
+                                <div class="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+                                    <div>
+                                        <p class="font-['Oswald'] text-sm font-bold uppercase tracking-[0.28em] text-[#b45309]">Promotions</p>
+                                    </div>
+                                </div>
+
+                                <?php if ($promoSlides->isNotEmpty()): ?>
+                                    <div class="mt-8 flex flex-col gap-6 md:grid md:grid-cols-2 lg:flex lg:flex-row lg:flex-nowrap" style="width: fit-content; max-width: none; column-gap: 0; row-gap: 0;">
+                                        <?php foreach ($promoSlides as $promo): ?>
+                                            <article class="overflow-hidden rounded-[1.6rem] border bg-white shadow-[0_18px_40px_rgba(15,23,42,0.08)]" style="width: 23rem; max-width: 23rem; margin-right: 2.5rem; border-color: rgba(120,113,108,0.16);">
+                                                <?php if (!empty($promo['poster_url'])): ?>
+                                                    <button
+                                                        type="button"
+                                                        class="promo-poster-trigger"
+                                                        data-promo-modal-trigger
+                                                        data-promo-poster="{{ $promo['poster_url'] }}"
+                                                        data-promo-title="{{ $promo['title'] }}"
+                                                        data-promo-date="{{ $promo['date_label'] ?? (($promo['status'] ?? (($promo['is_active_offer'] ?? false) ? 'Active offer' : 'Promotion'))) }}"
+                                                        data-promo-summary="{{ $promo['summary'] ?: 'New promotions uploaded from the admin dashboard will appear here.' }}"
+                                                        aria-label="View {{ $promo['title'] }} poster"
+                                                    >
+                                                        <div class="bg-white p-4">
+                                                            <img src="{{ $promo['poster_url'] }}" alt="{{ $promo['title'] }}" class="w-full object-contain" style="display: block; width: 100%; height: 19rem; background: #ffffff;">
+                                                        </div>
+                                                    </button>
+                                                <?php else: ?>
+                                                    <button
+                                                        type="button"
+                                                        class="promo-poster-trigger"
+                                                        data-promo-modal-trigger
+                                                        data-promo-poster=""
+                                                        data-promo-title="{{ $promo['title'] }}"
+                                                        data-promo-date="{{ $promo['date_label'] ?? (($promo['status'] ?? (($promo['is_active_offer'] ?? false) ? 'Active offer' : 'Promotion'))) }}"
+                                                        data-promo-summary="{{ $promo['summary'] ?: 'New promotions uploaded from the admin dashboard will appear here.' }}"
+                                                        aria-label="View {{ $promo['title'] }} details"
+                                                    >
+                                                        <div class="flex items-center justify-center bg-[linear-gradient(145deg,#77a6d8_0%,#5f8fcb_45%,#315fbd_100%)] px-6 text-center" style="height: 19rem;">
+                                                            <span class="font-['Oswald'] text-2xl font-semibold leading-tight text-white">{{ $promo['title'] }}</span>
+                                                        </div>
+                                                    </button>
+                                                <?php endif; ?>
+
+                                                <div class="space-y-4 px-5 pb-5 pt-1">
+                                                    <div class="flex flex-wrap gap-2">
+                                                        <span class="rounded-full font-bold uppercase {{ ($promo['is_active_offer'] ?? false) ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700' }}" style="padding: 0.08rem 0.45rem; font-size: 0.42rem; letter-spacing: 0; line-height: 1;">
+                                                            {{ $promo['status'] ?? (($promo['is_active_offer'] ?? false) ? 'Active offer' : 'Promotion') }}
+                                                        </span>
+                                                        <?php if (!empty($promo['date_label'])): ?>
+                                                            <span class="rounded-full bg-amber-100 font-bold uppercase text-amber-700" style="padding: 0.08rem 0.45rem; font-size: 0.42rem; letter-spacing: 0; line-height: 1;">
+                                                                {{ $promo['date_label'] }}
+                                                            </span>
+                                                        <?php endif; ?>
+                                                    </div>
+
+                                                    <div>
+                                                        <h3 class="font-['Oswald'] text-[1.7rem] font-semibold uppercase tracking-[0.04em] text-stone-900">{{ $promo['title'] }}</h3>
+                                                    </div>
+                                                </div>
+                                            </article>
+                                        <?php endforeach; ?>
+                                    </div>
+                                <?php else: ?>
+                                    <article class="mt-8 rounded-[1.6rem] border border-dashed bg-white px-6 py-10 text-center" style="border-color: rgba(120,113,108,0.28);">
+                                        <p class="font-['Oswald'] text-sm font-bold uppercase tracking-[0.22em] text-stone-500">Notice</p>
+                                        <h3 class="mt-3 font-['Prata'] text-3xl text-stone-900">No promotions yet</h3>
+                                        <p class="mx-auto mt-4 max-w-2xl text-sm leading-7 text-stone-600">
+                                            New promotions uploaded from the admin dashboard will appear here as soon as they go live.
+                                        </p>
+                                    </article>
+                                <?php endif; ?>
+                            </div>
+
+                            <aside class="w-full px-1 py-2 md:px-2 lg:w-[22rem] lg:min-w-[22rem] lg:flex-shrink-0" style="margin-top: 5.5rem; position: relative; left: 32rem; border-left: 1px solid rgba(120, 74, 34, 0.18); padding-left: 3.5rem;">
+                                <div class="flex flex-wrap items-center gap-x-4 gap-y-2">
+                                    <h3 class="font-['Oswald'] text-[1.45rem] font-bold uppercase tracking-[0.12em] text-[#243f67]">
+                                        Sabah Travel Articles
+                                    </h3>
+                                </div>
+
+                                <?php if ($latestBlogPosts->isNotEmpty()): ?>
+                                    <div class="mt-5 max-w-[22rem] space-y-7">
+                                        <?php foreach ($latestBlogPosts as $post): ?>
+                                            <a href="{{ route('blog.show', $post) }}" class="flex items-start gap-4 text-left transition hover:opacity-90">
+                                                <div class="flex-shrink-0 overflow-hidden bg-stone-200" style="width: 58px; height: 58px; min-width: 58px;">
+                                                    <?php if ($post->cover_image_url): ?>
+                                                        <img src="{{ $post->cover_image_url }}" alt="{{ $post->title }}" class="h-full w-full object-cover" style="width: 58px; height: 58px;">
+                                                    <?php else: ?>
+                                                        <div class="flex h-full w-full items-center justify-center bg-[linear-gradient(145deg,#77a6d8_0%,#5f8fcb_45%,#315fbd_100%)] text-center">
+                                                            <span class="text-[0.5rem] font-bold uppercase tracking-[0.08em] text-white">Blog</span>
+                                                        </div>
+                                                    <?php endif; ?>
+                                                </div>
+                                                <div class="min-w-0 flex-1">
+                                                    <h4 class="text-[0.86rem] font-semibold uppercase leading-[1.35] text-[#4a4a4a]">
+                                                        {{ $post->title }}
+                                                    </h4>
+                                                    <div class="mt-2 flex items-center gap-2 text-[0.82rem] text-[#a0aec0]">
+                                                        <svg viewBox="0 0 24 24" class="flex-shrink-0" style="width: 12px; height: 12px;" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                                            <circle cx="12" cy="12" r="9"></circle>
+                                                            <path d="M12 7v5l3 2"></path>
+                                                        </svg>
+                                                        <span>{{ $post->published_at?->format('F j, Y') ?? 'Latest article' }}</span>
+                                                    </div>
+                                                </div>
+                                            </a>
+                                        <?php endforeach; ?>
+                                    </div>
+                                    <div class="flex justify-start" style="margin-top: 12rem;">
+                                        <a href="{{ route('blog.index') }}" class="text-base font-semibold text-amber-500 transition hover:text-amber-600">
+                                            Read All Articles
+                                        </a>
+                                    </div>
+
+                                <?php else: ?>
+                                    <div class="mt-6 border border-dashed border-stone-200 bg-stone-50 px-5 py-8 text-center text-sm text-stone-500">
+                                        Travel blog articles will appear here once they are published.
+                                    </div>
+                                <?php endif; ?>
+                            </aside>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
 
 <section
     class="home-screen-section"
@@ -1160,9 +1013,9 @@
     <div style="display: flex; min-height: 100%; width: 100%; align-items: center; justify-content: flex-start;">
 
             <!-- LEFT SIDE -->
-            <div class="transport-copy" style="position: relative; z-index: 10; width: 100%; max-width: 980px; flex-shrink: 0; margin-top: 0.75rem; margin-left: 6rem;">
+            <div class="transport-copy" style="position: relative; z-index: 10; width: 100%; max-width: 980px; flex-shrink: 0; margin-top: 3rem; margin-left: 6rem;">
                 <!-- TRANSPORT BOX -->
-                <div class="transport-box" style="display: flex; flex-direction: column; justify-content: center; border-radius: 1rem; background: rgba(255,255,255,0.85); padding: 1.6rem 2.5rem 1.8rem; min-height: 330px; box-shadow: 0 14px 30px rgba(15,23,42,0.12); backdrop-filter: blur(4px);">
+                <div class="transport-box" style="display: flex; flex-direction: column; justify-content: center; border-radius: 1rem; background: #ffffff; padding: 1.6rem 2.5rem 1.8rem; min-height: 330px; box-shadow: 0 14px 30px rgba(15,23,42,0.12);">
 
                     <div style="text-align: center;">
                         <h2 style="margin: 0; font-family: 'Oswald', sans-serif; font-size: 2.55rem; font-weight: 700; text-transform: uppercase; line-height: 1; letter-spacing: 0.16em; color: #2f63bc;">
@@ -1203,7 +1056,7 @@
                 </div>
 
                 <!-- WHY CHOOSE US BOX -->
-                <div class="transport-box" style="margin-top: 1rem; border-radius: 1rem; background: rgba(255,255,255,0.85); padding: 1.8rem 2.5rem 2.5rem; min-height: 240px; box-shadow: 0 14px 30px rgba(15,23,42,0.12); backdrop-filter: blur(4px);">
+                <div class="transport-box" style="margin-top: 1rem; border-radius: 1rem; background: #ffffff; padding: 1.8rem 2.5rem 2.5rem; min-height: 240px; box-shadow: 0 14px 30px rgba(15,23,42,0.12);">
 
                     <h3 style="margin: 0; text-align: center; font-family: 'Oswald', sans-serif; font-size: 1.6rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.12em; color: #9b4a14;">
                         Why Choose Us?
@@ -1267,175 +1120,6 @@
 
 </section>
 
-        <section id="packages-showcase" style="box-sizing: border-box; margin-top: -4.5rem; margin-left: calc(50% - 50vw); margin-right: calc(50% - 50vw); padding-bottom: 2.25rem;">
-            <div style="display: flex; flex-direction: column; gap: 0;">
-                <?php foreach ($packageSections as $section): ?>
-                    <?php
-                        $sectionPackages = $travelPackages
-                            ->filter(function ($package) use ($section) {
-                                $haystack = strtolower(trim(($package->name ?? '').' '.($package->location ?? '').' '.($package->description ?? '')));
-
-                                foreach ($section['keywords'] as $keyword) {
-                                    if (str_contains($haystack, $keyword)) {
-                                        return true;
-                                    }
-                                }
-
-                                return false;
-                            })
-                            ->values();
-
-                        $visiblePackages = $sectionPackages->isNotEmpty() ? $sectionPackages : $travelPackages->take($packagePageSize)->values();
-                        $pageCount = max(1, $visiblePackages->count() - $packagePageSize + 1);
-                    ?>
-
-                    <article class="package-offer-section home-screen-section" data-package-section="{{ $section['key'] }}" style="position: relative; overflow: hidden; box-shadow: 0 20px 60px rgba(15,23,42,0.18);{{ $section['key'] === $defaultPackageSection ? '' : ' display: none;' }}">
-                        <div style="position: absolute; inset: 0; background-image: url('{{ $section['background'] }}'); background-size: cover; background-position: center center;"></div>
-                        <div style="position: absolute; inset: 0; background: linear-gradient(180deg, rgba(7,29,58,0.22), rgba(7,29,58,0.12));"></div>
-
-                        <div class="package-section-stage" style="position: relative; z-index: 2; padding: 0 3.2rem 2.75rem;">
-                            @if ($pageCount > 1)
-                                <div class="package-section-prev-wrap" style="position: absolute; left: 7rem; top: 50%; z-index: 20; display: flex; align-items: center; justify-content: center; transform: translateY(-50%);">
-                                    <button
-                                        type="button"
-                                        class="package-section-prev"
-                                        data-package-prev="{{ $section['key'] }}"
-                                        aria-label="Show previous {{ strtolower($section['title']) }} packages"
-                                        style="display: inline-flex; height: 3.2rem; width: 3.2rem; align-items: center; justify-content: center; border: none; border-radius: 999px; background: rgba(255,255,255,0.9); box-shadow: 0 8px 18px rgba(15,23,42,0.12); font-size: 2.8rem; font-weight: 300; line-height: 1; color: #8aa0d7; transition: transform 0.2s ease, color 0.2s ease;"
-                                        onmouseover="this.style.transform='scale(1.05)'; this.style.color='#6e87c9';"
-                                        onmouseout="this.style.transform='scale(1)'; this.style.color='#8aa0d7';"
-                                    >&lsaquo;</button>
-                                </div>
-
-                                <div class="package-section-next-wrap" style="position: absolute; right: 7rem; top: 50%; z-index: 20; display: flex; align-items: center; justify-content: center; transform: translateY(-50%);">
-                                    <button
-                                        type="button"
-                                        class="package-section-next"
-                                        data-package-next="{{ $section['key'] }}"
-                                        aria-label="Show more {{ strtolower($section['title']) }} packages"
-                                        style="display: inline-flex; height: 3.2rem; width: 3.2rem; align-items: center; justify-content: center; border: none; border-radius: 999px; background: rgba(255,255,255,0.9); box-shadow: 0 8px 18px rgba(15,23,42,0.12); font-size: 2.8rem; font-weight: 300; line-height: 1; color: #8aa0d7; transition: transform 0.2s ease, color 0.2s ease;"
-                                        onmouseover="this.style.transform='scale(1.05)'; this.style.color='#6e87c9';"
-                                        onmouseout="this.style.transform='scale(1)'; this.style.color='#8aa0d7';"
-                                    >&rsaquo;</button>
-                                </div>
-                            @endif
-
-                            <div style="position: relative; min-height: 4.5rem; margin-top: 0;">
-                                <div style="position: relative; left: 15rem; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 1rem 1.25rem;">
-                                    <div class="package-section-label" style="min-width: 320px; clip-path: polygon(10% 0, 90% 0, 100% 100%, 0 100%); transform: scaleY(-1); background: #00000060; padding: 0.9rem 2.4rem 1rem; text-align: center; margin-top: 0;">
-                                        <span style="display: inline-block; font-family: 'Prata', serif; font-size: 1.95rem; color: rgb(255, 255, 255); transform: scaleY(-1);">Packages</span>
-                                    </div>
-                                    <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 0.75rem;">
-                                        <?php foreach ($packageSections as $switchSection): ?>
-                                            <?php $isActivePackageSwitch = $section['key'] === $switchSection['key']; ?>
-                                            <button
-                                                type="button"
-                                                data-package-switch="{{ $switchSection['key'] }}"
-                                                aria-pressed="{{ $isActivePackageSwitch ? 'true' : 'false' }}"
-                                                style="border: 1px solid {{ $isActivePackageSwitch ? '#ffffff' : 'rgba(255,255,255,0.7)' }}; border-radius: 999px; background: {{ $isActivePackageSwitch ? '#ffffff' : 'rgba(255,255,255,0.14)' }}; padding: 0.68rem 1.2rem; font-size: 0.82rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: {{ $isActivePackageSwitch ? '#1f4da2' : '#ffffff' }}; box-shadow: {{ $isActivePackageSwitch ? '0 10px 22px rgba(15,23,42,0.14)' : 'none' }}; cursor: pointer; transition: transform 0.2s ease, background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;"
-                                            >
-                                                {{ $switchSection['title'] }}
-                                            </button>
-                                        <?php endforeach; ?>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div style="margin-top: 0;">
-                                <h2 style="font-family: 'Oswald', sans-serif; font-size: 2.5rem; font-weight: 700; line-height: 0.95; letter-spacing: 0.02em; color: #fff;">
-                                    {{ $section['title'] }}
-                                </h2>
-                                <p class="package-section-summary" style="margin-top: 0.45rem; max-width: 70rem; font-size: 1.3rem; line-height: 1.65; color: rgba(255,255,255,0.96);{{ in_array($section['key'], ['kk-beach', 'kundasang'], true) ? ' white-space: nowrap;' : '' }}">
-                                    {{ $section['summary'] }}
-                                </p>
-                            </div>
-
-                            <?php if ($visiblePackages->isNotEmpty()): ?>
-                                <div class="package-carousel-shell" style="margin: 1.7rem auto 0; max-width: calc((390px * 3) + 5rem); padding: 0.8rem 1rem 1.2rem; overflow: visible;">
-                                <div class="package-section-grid" data-package-grid="{{ $section['key'] }}" data-package-page-count="{{ $pageCount }}" style="display: flex; gap: 2.5rem; align-items: start; transition: transform 0.45s ease;">
-                                    <?php foreach ($visiblePackages as $package): ?>
-                                        <?php
-                                            $locationTag = strtoupper(str_contains(strtolower($package->location), 'kundasang') ? 'Kundasang' : (str_contains(strtolower($package->location), 'marine') || str_contains(strtolower($package->location), 'island') ? 'Semporna' : 'Kota Kinabalu'));
-                                            $tripCode = strtoupper(str_replace([' days', ' day', ' nights', ' night', ' '], ['D', 'D', 'N', 'N', ''], $package->duration));
-                                            $discountBadge = $package->has_active_discount
-                                                ? rtrim(rtrim(number_format((float) $package->discount_percentage, 2, '.', ''), '0'), '.').'% OFF'
-                                                : null;
-                                            $currentPrice = (float) $package->discounted_malaysia_adult_price_myr;
-                                            $originalPrice = (float) $package->malaysia_adult_price_myr;
-                                            $packageRating = $package->package_review_average;
-                                            $packageReviewCount = (int) ($package->package_review_count ?? 0);
-                                        ?>
-                                        <div class="package-section-card" data-package-card="{{ $section['key'] }}" style="display: flex; width: 390px; min-width: 390px; flex-direction: column; align-items: center;">
-                                            <a href="{{ route('products.show', $package) }}" class="package-showcase-card" style="display: flex; width: 100%; max-width: 390px; min-height: 520px; flex-direction: column; overflow: hidden; border-radius: 1.6rem 1.6rem 0 0; background: #fff; text-decoration: none; box-shadow: 0 18px 30px rgba(15,23,42,0.22);">
-                                                <div style="position: relative;">
-                                                    @if ($package->image_url)
-                                                        <img src="{{ $package->image_url }}" alt="{{ $package->name }}" style="display: block; height: 210px; width: 100%; object-fit: cover;">
-                                                        <img src="{{ asset('images/UE.png') }}" alt="Universal Eden trademark" style="pointer-events: none; position: absolute; right: 0.75rem; bottom: 0.75rem; height: 1.85rem; width: auto; opacity: 0.9;">
-                                                    @else
-                                                        <div style="display: flex; height: 230px; align-items: center; justify-content: center; background: linear-gradient(135deg, #60a5fa, #bfdbfe 40%, #fde68a); padding: 1rem; text-align: center; font-size: 1.25rem; font-weight: 700; color: #1e3a8a;">
-                                                            {{ $package->name }}
-                                                        </div>
-                                                    @endif
-                                                    <span style="position: absolute; left: 0.7rem; top: 0.7rem; border-radius: 0.2rem; background: #2c22c9; padding: 0.28rem 0.55rem; font-size: 0.56rem; font-weight: 700; text-transform: uppercase; color: #fff;">
-                                                        {{ $locationTag }}
-                                                    </span>
-                                                    @if ($discountBadge)
-                                                        <span style="position: absolute; right: 0.7rem; top: 0.7rem; border-radius: 0.2rem; background: #ff1d0d; padding: 0.28rem 0.55rem; font-size: 0.56rem; font-weight: 700; text-transform: uppercase; color: #fff;">
-                                                            {{ $discountBadge }}
-                                                        </span>
-                                                    @endif
-                                                </div>
-
-                                                <div class="package-card-copy" style="padding: 0.95rem 0.95rem 0.8rem;">
-                                                    <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 0.8rem;">
-                                                        <p style="margin: 0; font-family: 'Oswald', sans-serif; font-size: 2rem; font-weight: 700; line-height: 1; color: #ff1d0d;">{{ $tripCode }}</p>
-                                                        <div style="min-width: 84px; border-radius: 999px; background: rgba(255,255,255,0.92); padding: 0.42rem 0.7rem; text-align: right; box-shadow: 0 8px 18px rgba(15,23,42,0.08);">
-                                                            @if ($packageRating !== null && $packageReviewCount > 0)
-                                                                <div style="font-size: 1rem; font-weight: 700; line-height: 1; color: #f59e0b;">{{ number_format($packageRating, 1) }}/5</div>
-                                                                <div style="margin-top: 0.22rem; font-size: 0.55rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #78716c;">{{ $packageReviewCount }} review{{ $packageReviewCount === 1 ? '' : 's' }}</div>
-                                                            @else
-                                                                <div style="font-size: 0.7rem; font-weight: 700; line-height: 1.1; color: #78716c;">No reviews</div>
-                                                            @endif
-                                                        </div>
-                                                    </div>
-                                                    <h3 class="package-card-title" style="margin-top: 0.35rem; font-family: 'Oswald', sans-serif; font-size: 1.65rem; font-weight: 700; line-height: 1.04; color: #1c2f7d;">
-                                                        {{ strtoupper($package->name) }}
-                                                    </h3>
-                                                    <p class="package-card-description" style="margin-top: 0.45rem; flex: 1; min-height: 5.8rem; font-size: 0.86rem; line-height: 1.3; color: #111827;">
-                                                        {{ \Illuminate\Support\Str::limit($package->description, 170) }}
-                                                    </p>
-                                                    <div style="margin-top: auto; padding-top: 0.7rem;">
-                                                        <p style="margin: 0; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; color: #ff1d0d;">Starting from</p>
-                                                        @if ($package->has_active_discount)
-                                                            <p style="margin: 0.15rem 0 0; font-size: 0.85rem; color: #78716c; text-decoration: line-through;">
-                                                                <span class="currency-price" data-myr="{{ $originalPrice }}">{{ number_format($originalPrice, 2) }}</span>
-                                                            </p>
-                                                        @endif
-                                                        <p style="margin: 0.1rem 0 0; font-size: 1rem; color: #111827;">
-                                                            <span class="currency-price" data-myr="{{ $currentPrice }}" style="font-size: 1.5rem; font-weight: 700; color: #0f4fb5;">{{ number_format($currentPrice, 2) }}</span> Per Pax
-                                                        </p>
-                                                    </div>
-                                                </div>
-                                            </a>
-
-                                            <a href="{{ route('booking.create', ['product_id' => $package->id]) }}" class="package-book-button" style="margin-top: 0.65rem; display: inline-flex; min-width: 170px; align-items: center; justify-content: center; border-radius: 999px; background: #ff1d0d; padding: 0.7rem 1.6rem; font-family: 'Oswald', sans-serif; font-size: 1rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #fff; text-decoration: none; box-shadow: 0 12px 18px rgba(0,0,0,0.18);">
-                                                Book Now
-                                            </a>
-                                        </div>
-                                    <?php endforeach; ?>
-                                </div>
-                                </div>
-                            <?php else: ?>
-                                <div style="margin-top: 1.7rem; background: rgba(255,255,255,0.88); padding: 1.5rem 1.75rem; color: #1f2937;">
-                                    Packages for this destination will show here once they are added.
-                                </div>
-                            <?php endif; ?>
-                        </div>
-                    </article>
-                <?php endforeach; ?>
-            </div>
-        </section>
-
         <section id="packages" class="hidden w-full rounded-[2rem] border border-white/70 bg-white/90 p-6 shadow-[0_20px_60px_rgba(15,23,42,0.08)] backdrop-blur">
             <div class="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
                 <div>
@@ -1462,7 +1146,12 @@
                         <div class="p-5">
                             <h3 class="text-2xl font-semibold text-stone-900">{{ $package->name }}</h3>
                             <p class="mt-2 text-sm text-stone-500">{{ $package->location }} · {{ $package->duration }}</p>
-                            <p class="mt-4 text-sm leading-6 text-stone-600">{{ $package->description }}</p>
+                            <div data-collapsible>
+                                <p class="collapsible-copy mt-4 text-sm leading-6 text-stone-600" data-collapsible-copy data-collapsed-height="2.5rem">
+                                    {{ $package->description }}
+                                </p>
+                                <button type="button" class="collapsible-toggle" data-collapsible-toggle style="display: none;">See more</button>
+                            </div>
                             <div class="mt-5 flex items-center justify-between">
                                 <span class="text-sm text-stone-500">Package rate</span>
                                 <div class="text-right">
@@ -1482,8 +1171,8 @@
             </div>
         </section>
 
-        <section id="testimonials" class="mt-[4.5rem] home-screen-section px-6 pb-8 pt-6 md:mt-24 md:px-8 md:pb-12 md:pt-8">
-            <div class="mx-auto rounded-[2rem] border border-white/70 bg-white/90 px-4 pb-8 pt-4 shadow-[0_20px_60px_rgba(15,23,42,0.08)] backdrop-blur md:px-4 md:pb-10 md:pt-7" style="max-width: 1920px;">
+        <section id="testimonials" class="home-screen-section px-6 pb-0 pt-6 md:px-8 md:pb-0 md:pt-8" style="margin-top: 0; margin-left: calc(50% - 50vw); margin-right: calc(50% - 50vw); background: #ffffff;">
+            <div class="mx-auto bg-white px-4 pb-0 pt-4 md:px-4 md:pb-0 md:pt-7" style="max-width: 1920px; margin-bottom: 0;">
             <div class="-mt-1 flex flex-col items-center gap-3 text-center">
                 <div>
                     <h2 class="font-['Oswald'] text-4xl font-bold uppercase tracking-[0.22em] text-stone-900 md:text-5xl">Customer reviews</h2>
@@ -1494,9 +1183,12 @@
                             {{ number_format((float) $websiteReviewStats['average_rating'], 1) }}/5 from {{ $websiteReviewStats['reviews_count'] }} review{{ $websiteReviewStats['reviews_count'] === 1 ? '' : 's' }}
                         </div>
                     @endif
+                    <a href="{{ route('reviews.index') }}" class="inline-flex items-center justify-center rounded-full bg-[#315fbd] px-5 py-2 text-sm font-semibold text-white transition hover:bg-[#264a94]">
+                        View all reviews
+                    </a>
                 </div>
             </div>
-            <section class="mt-4 rounded-[1.75rem] border border-sky-200 bg-sky-50/50 p-4 shadow-sm">
+            <section class="mt-4 border border-sky-200 bg-sky-50/50 px-4 pb-2 pt-4 shadow-sm">
                 <div class="text-center">
                     <p class="text-sm uppercase tracking-[0.28em] text-sky-600">Reviews</p>
                     <h3 class="mt-2 font-['Prata'] text-2xl text-stone-900">What travellers are saying</h3>
@@ -1526,8 +1218,6 @@
             </section>
             </div>
         </section>
-
-        <div class="h-12 md:h-16"></div>
     </main>
 
     @include('partials.footer')
@@ -1575,6 +1265,184 @@
             syncMobileHeroHeight();
             window.addEventListener('resize', updateHeaderOffset);
             window.addEventListener('resize', syncMobileHeroHeight);
+        });
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const popularFilterSection = document.querySelector('[data-popular-filters]');
+            const popularCards = Array.from(document.querySelectorAll('[data-popular-card]'));
+            const popularEmptyState = document.querySelector('[data-popular-empty]');
+            const popularLoadMoreButton = document.querySelector('[data-popular-load-more]');
+
+            if (popularFilterSection && popularCards.length) {
+                const locationInput = popularFilterSection.querySelector('[data-popular-filter="location"]');
+                const durationSelect = popularFilterSection.querySelector('[data-popular-filter="duration"]');
+                const resetButton = popularFilterSection.querySelector('[data-popular-filter-reset]');
+                const popularBatchSize = 3;
+                let visiblePopularCount = popularBatchSize;
+
+                const applyPopularFilters = () => {
+                    const locationValue = (locationInput?.value || '').trim().toLowerCase();
+                    const durationValue = (durationSelect?.value || '').trim().toLowerCase();
+                    const matchingCards = [];
+                    const hasActiveFilters = Boolean(locationValue || durationValue);
+
+                    popularCards.forEach((card) => {
+                        const cardLocation = card.dataset.location || '';
+                        const cardDuration = card.dataset.duration || '';
+
+                        const matchesLocation = !locationValue || cardLocation.includes(locationValue);
+                        const matchesDuration = !durationValue || cardDuration === durationValue;
+                        const isVisible = matchesLocation && matchesDuration;
+
+                        if (isVisible) {
+                            matchingCards.push(card);
+                        }
+
+                        card.style.display = 'none';
+                    });
+
+                    const maxVisibleCards = hasActiveFilters ? matchingCards.length : visiblePopularCount;
+
+                    matchingCards.forEach((card, index) => {
+                        card.style.display = index < maxVisibleCards ? '' : 'none';
+                    });
+
+                    if (popularEmptyState) {
+                        popularEmptyState.style.display = matchingCards.length === 0 ? 'block' : 'none';
+                    }
+
+                    if (popularLoadMoreButton) {
+                        popularLoadMoreButton.style.display = !hasActiveFilters && matchingCards.length > visiblePopularCount ? 'inline-flex' : 'none';
+                    }
+                };
+
+                [locationInput, durationSelect].forEach((field) => {
+                    field?.addEventListener('input', () => {
+                        visiblePopularCount = popularBatchSize;
+                        applyPopularFilters();
+                    });
+                    field?.addEventListener('change', () => {
+                        visiblePopularCount = popularBatchSize;
+                        applyPopularFilters();
+                    });
+                });
+
+                resetButton?.addEventListener('click', () => {
+                    if (locationInput) {
+                        locationInput.value = '';
+                    }
+                    if (durationSelect) {
+                        durationSelect.value = '';
+                    }
+
+                    visiblePopularCount = popularBatchSize;
+                    applyPopularFilters();
+                });
+
+                popularLoadMoreButton?.addEventListener('click', () => {
+                    visiblePopularCount += popularBatchSize;
+                    applyPopularFilters();
+                });
+
+                applyPopularFilters();
+            }
+
+            const promoModal = document.getElementById('promo-poster-modal');
+            const promoModalImage = document.getElementById('promo-poster-modal-image');
+            const promoModalDate = document.getElementById('promo-poster-modal-date');
+            const promoModalTitle = document.getElementById('promo-poster-modal-title');
+            const promoModalSummary = document.getElementById('promo-poster-modal-summary');
+            const promoModalCloseButton = promoModal?.querySelector('[data-promo-modal-close]');
+            const promoModalTriggers = Array.from(document.querySelectorAll('[data-promo-modal-trigger]'));
+
+            const closePromoModal = () => {
+                if (!promoModal) {
+                    return;
+                }
+
+                promoModal.hidden = true;
+                document.body.style.overflow = '';
+            };
+
+            promoModalTriggers.forEach((trigger) => {
+                trigger.addEventListener('click', () => {
+                    if (!promoModal || !promoModalImage || !promoModalDate || !promoModalTitle || !promoModalSummary) {
+                        return;
+                    }
+
+                    const posterUrl = trigger.getAttribute('data-promo-poster') || '';
+                    const promoTitle = trigger.getAttribute('data-promo-title') || 'Promotion';
+                    const promoDate = trigger.getAttribute('data-promo-date') || '';
+                    const promoSummary = trigger.getAttribute('data-promo-summary') || '';
+
+                    promoModalImage.src = posterUrl;
+                    promoModalImage.alt = promoTitle;
+                    promoModalImage.style.display = posterUrl ? 'block' : 'none';
+                    promoModalDate.textContent = promoDate;
+                    promoModalTitle.textContent = promoTitle;
+                    promoModalSummary.textContent = promoSummary;
+                    promoModal.hidden = false;
+                    document.body.style.overflow = 'hidden';
+                });
+            });
+
+            promoModalCloseButton?.addEventListener('click', closePromoModal);
+
+            promoModal?.addEventListener('click', (event) => {
+                if (event.target === promoModal) {
+                    closePromoModal();
+                }
+            });
+
+            document.addEventListener('keydown', (event) => {
+                if (event.key === 'Escape' && promoModal && !promoModal.hidden) {
+                    closePromoModal();
+                }
+            });
+
+            const collapsibleBlocks = Array.from(document.querySelectorAll('[data-collapsible]'));
+
+            collapsibleBlocks.forEach((block) => {
+                const copy = block.querySelector('[data-collapsible-copy]');
+                const toggle = block.querySelector('[data-collapsible-toggle]');
+
+                if (!copy || !toggle) {
+                    return;
+                }
+
+                const collapsedHeight = copy.dataset.collapsedHeight || '4.5rem';
+                copy.style.maxHeight = collapsedHeight;
+
+                const syncCollapsibleState = () => {
+                    copy.style.maxHeight = 'none';
+                    const expandedHeight = copy.scrollHeight;
+                    copy.style.maxHeight = collapsedHeight;
+                    const collapsedPixels = copy.clientHeight;
+                    const needsToggle = expandedHeight - collapsedPixels > 6;
+
+                    if (!needsToggle) {
+                        copy.style.maxHeight = 'none';
+                        toggle.style.display = 'none';
+                        return;
+                    }
+
+                    const isExpanded = toggle.getAttribute('aria-expanded') === 'true';
+                    toggle.style.display = 'inline-flex';
+                    copy.style.maxHeight = isExpanded ? `${expandedHeight}px` : collapsedHeight;
+                    toggle.textContent = isExpanded ? 'See less' : 'See more';
+                };
+
+                toggle.setAttribute('aria-expanded', 'false');
+                toggle.addEventListener('click', () => {
+                    const isExpanded = toggle.getAttribute('aria-expanded') === 'true';
+                    toggle.setAttribute('aria-expanded', isExpanded ? 'false' : 'true');
+                    syncCollapsibleState();
+                });
+
+                syncCollapsibleState();
+                window.addEventListener('resize', syncCollapsibleState);
+            });
         });
     </script>
     <script>
@@ -1722,21 +1590,23 @@
                 return;
             }
 
-            let activePopularIndex = 0;
+            const cardStep = () => {
+                const firstCard = popularCards[0];
 
-            const updatePopularButtons = () => {
-                if (window.innerWidth >= 768) {
-                    popularPrevButton.disabled = false;
-                    popularNextButton.disabled = false;
-                    popularPrevButton.style.opacity = '1';
-                    popularNextButton.style.opacity = '1';
-                    popularPrevButton.style.cursor = 'pointer';
-                    popularNextButton.style.cursor = 'pointer';
-                    return;
+                if (!firstCard) {
+                    return 0;
                 }
 
-                const isAtStart = activePopularIndex <= 0;
-                const isAtEnd = activePopularIndex >= popularCards.length - 1;
+                const cardStyles = window.getComputedStyle(firstCard);
+                const cardGap = Number.parseFloat(cardStyles.marginRight || '0');
+
+                return firstCard.getBoundingClientRect().width + cardGap + 20;
+            };
+
+            const updatePopularButtons = () => {
+                const maxScrollLeft = popularTrack.scrollWidth - popularTrack.clientWidth;
+                const isAtStart = popularTrack.scrollLeft <= 4;
+                const isAtEnd = popularTrack.scrollLeft >= maxScrollLeft - 4;
 
                 popularPrevButton.disabled = isAtStart;
                 popularNextButton.disabled = isAtEnd;
@@ -1746,40 +1616,18 @@
                 popularNextButton.style.cursor = isAtEnd ? 'not-allowed' : 'pointer';
             };
 
-            const renderPopularSlide = (nextIndex) => {
-                if (window.innerWidth >= 768) {
-                    activePopularIndex = 0;
-                    popularTrack.style.transform = 'translateX(0)';
-                    updatePopularButtons();
-                    return;
-                }
-
-                activePopularIndex = Math.max(0, Math.min(nextIndex, popularCards.length - 1));
-                popularTrack.style.transform = `translateX(-${activePopularIndex * 100}%)`;
-                updatePopularButtons();
-            };
-
             popularPrevButton.addEventListener('click', () => {
-                if (activePopularIndex <= 0) {
-                    return;
-                }
-
-                renderPopularSlide(activePopularIndex - 1);
+                popularTrack.scrollBy({ left: -cardStep(), behavior: 'smooth' });
             });
 
             popularNextButton.addEventListener('click', () => {
-                if (activePopularIndex >= popularCards.length - 1) {
-                    return;
-                }
-
-                renderPopularSlide(activePopularIndex + 1);
+                popularTrack.scrollBy({ left: cardStep(), behavior: 'smooth' });
             });
 
-            window.addEventListener('resize', () => {
-                renderPopularSlide(activePopularIndex);
-            });
+            popularTrack.addEventListener('scroll', updatePopularButtons, { passive: true });
+            window.addEventListener('resize', updatePopularButtons);
 
-            renderPopularSlide(0);
+            updatePopularButtons();
         });
     </script>
     <script>
@@ -1911,197 +1759,6 @@
                 startHeroAutoplay();
             }
 
-            const pastPromoPosters = Array.from(document.querySelectorAll('[data-past-promo-poster]'));
-
-            const applyPastPromoShape = (image) => {
-                if (!image.naturalWidth || !image.naturalHeight) {
-                    return;
-                }
-
-                const orientation = image.closest('[data-past-promo-trigger]')?.dataset.promoOrientation || '';
-                const isLandscape = orientation
-                    ? orientation === 'landscape'
-                    : image.naturalWidth >= image.naturalHeight;
-                const card = image.closest('[data-past-promo-card]');
-                const trigger = image.closest('[data-past-promo-trigger]');
-
-                if (card) {
-                    card.style.marginTop = isLandscape ? '6.35rem' : '-2.4rem';
-                    card.style.marginLeft = '0';
-                    card.style.marginRight = '0';
-                    card.style.width = isLandscape ? '20rem' : 'min(100%, 21rem)';
-                    card.style.flex = isLandscape ? '0 0 16.75rem' : '0 0 21rem';
-                    card.style.padding = '0.18rem';
-                }
-
-                if (trigger) {
-                    trigger.style.maxWidth = isLandscape ? '16.1rem' : '100%';
-                    trigger.style.padding = isLandscape ? '0.08rem' : '0.15rem';
-                }
-
-                image.style.maxHeight = isLandscape ? '22rem' : '40rem';
-                image.style.height = isLandscape ? '22rem' : 'auto';
-                image.style.objectFit = isLandscape ? 'cover' : 'contain';
-            };
-
-            pastPromoPosters.forEach((image) => {
-                if (image.complete) {
-                    applyPastPromoShape(image);
-                } else {
-                    image.addEventListener('load', () => applyPastPromoShape(image), { once: true });
-                }
-            });
-        });
-    </script>
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const promoModal = document.getElementById('promo-poster-modal');
-            const promoModalPanel = document.getElementById('promo-poster-modal-panel');
-            const promoModalClose = document.getElementById('promo-poster-modal-close');
-            const promoModalImage = document.getElementById('promo-poster-modal-image');
-            const promoModalFallback = document.getElementById('promo-poster-modal-fallback');
-            const promoModalFallbackTitle = document.getElementById('promo-poster-modal-fallback-title');
-            const promoModalDate = document.getElementById('promo-poster-modal-date');
-            const promoModalTitle = document.getElementById('promo-poster-modal-title');
-            const promoModalSummary = document.getElementById('promo-poster-modal-summary');
-            const promoTriggers = Array.from(document.querySelectorAll('[data-promo-modal-trigger]'));
-
-            if (
-                !promoModal ||
-                !promoModalPanel ||
-                !promoModalClose ||
-                !promoModalImage ||
-                !promoModalFallback ||
-                !promoModalFallbackTitle ||
-                !promoModalDate ||
-                !promoModalTitle ||
-                !promoModalSummary ||
-                !promoTriggers.length
-            ) {
-                return;
-            }
-
-            const closePromoModal = () => {
-                promoModal.style.display = 'none';
-                document.body.style.overflow = '';
-            };
-
-            const setPromoModalImageHeight = () => {
-                if (!promoModalImage.naturalWidth || !promoModalImage.naturalHeight) {
-                    promoModalImage.style.height = '520px';
-                    promoModalImage.style.width = '100%';
-                    return;
-                }
-
-                const isLandscape = promoModalImage.naturalWidth > promoModalImage.naturalHeight;
-
-                promoModalImage.style.height = isLandscape ? '320px' : '520px';
-                promoModalImage.style.width = '100%';
-            };
-
-            const openPromoModal = (trigger) => {
-                const posterUrl = trigger.dataset.promoPoster || '';
-                const title = trigger.dataset.promoTitle || 'Promotion';
-                const summary = trigger.dataset.promoSummary || 'No description available yet.';
-                const dateLabel = trigger.dataset.promoDate || '';
-
-                promoModalDate.textContent = dateLabel;
-                promoModalTitle.textContent = title;
-                promoModalSummary.textContent = summary;
-                promoModalImage.alt = title;
-                promoModalFallbackTitle.textContent = title;
-
-                if (posterUrl) {
-                    promoModalImage.src = posterUrl;
-                    promoModalImage.style.display = 'block';
-                    promoModalImage.style.height = '520px';
-                    promoModalImage.style.width = '100%';
-                    promoModalFallback.style.display = 'none';
-
-                    if (promoModalImage.complete) {
-                        setPromoModalImageHeight();
-                    } else {
-                        promoModalImage.addEventListener('load', setPromoModalImageHeight, { once: true });
-                    }
-                } else {
-                    promoModalImage.removeAttribute('src');
-                    promoModalImage.style.display = 'none';
-                    promoModalImage.style.height = '520px';
-                    promoModalImage.style.width = '100%';
-                    promoModalFallback.style.display = 'flex';
-                }
-
-                promoModal.style.display = 'flex';
-                document.body.style.overflow = 'hidden';
-            };
-
-            promoTriggers.forEach((trigger) => {
-                trigger.addEventListener('click', () => {
-                    openPromoModal(trigger);
-                });
-            });
-
-            promoModalClose.addEventListener('click', closePromoModal);
-
-            promoModal.addEventListener('click', (event) => {
-                if (event.target === promoModal) {
-                    closePromoModal();
-                }
-            });
-
-            document.addEventListener('keydown', (event) => {
-                if (event.key === 'Escape' && promoModal.style.display === 'flex') {
-                    closePromoModal();
-                }
-            });
-        });
-    </script>
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const sectionPanels = Array.from(document.querySelectorAll('[data-package-section]'));
-            const switchButtons = Array.from(document.querySelectorAll('[data-package-switch]'));
-
-            if (!sectionPanels.length || !switchButtons.length) {
-                return;
-            }
-
-            const setActiveSection = (sectionKey) => {
-                sectionPanels.forEach((panel) => {
-                    panel.style.display = panel.dataset.packageSection === sectionKey ? 'block' : 'none';
-                });
-
-                switchButtons.forEach((button) => {
-                    const isActive = button.dataset.packageSwitch === sectionKey;
-
-                    button.setAttribute('aria-pressed', isActive ? 'true' : 'false');
-                    button.style.borderColor = isActive ? '#ffffff' : 'rgba(255,255,255,0.7)';
-                    button.style.background = isActive ? '#ffffff' : 'rgba(255,255,255,0.14)';
-                    button.style.color = isActive ? '#1f4da2' : '#ffffff';
-                    button.style.boxShadow = isActive ? '0 10px 22px rgba(15,23,42,0.14)' : 'none';
-                    button.style.transform = 'translateY(0)';
-                });
-
-                window.dispatchEvent(new Event('resize'));
-            };
-
-            switchButtons.forEach((button) => {
-                button.addEventListener('click', () => {
-                    setActiveSection(button.dataset.packageSwitch || 'kundasang');
-                });
-
-                button.addEventListener('mouseenter', () => {
-                    if (button.getAttribute('aria-pressed') !== 'true') {
-                        button.style.transform = 'translateY(-2px)';
-                    }
-                });
-
-                button.addEventListener('mouseleave', () => {
-                    button.style.transform = 'translateY(0)';
-                });
-            });
-
-            const initialButton = switchButtons.find((button) => button.getAttribute('aria-pressed') === 'true') ?? switchButtons[0];
-            setActiveSection(initialButton?.dataset.packageSwitch || 'kundasang');
         });
     </script>
     </div>

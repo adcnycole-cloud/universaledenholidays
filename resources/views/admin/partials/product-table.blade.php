@@ -1,7 +1,9 @@
-@php($editable = $editable ?? false)
-@php($wrapperId = $wrapperId ?? null)
-@php($itemAttribute = $itemAttribute ?? null)
-@php($gridColumns = $gridColumns ?? 1)
+@php
+    $editable = $editable ?? false;
+    $wrapperId = $wrapperId ?? null;
+    $itemAttribute = $itemAttribute ?? null;
+    $gridColumns = $gridColumns ?? 1;
+@endphp
 
 <div
     @if($wrapperId) id="{{ $wrapperId }}" @endif
@@ -9,21 +11,23 @@
     @if($gridColumns > 1) style="display: grid; grid-template-columns: repeat({{ $gridColumns }}, minmax(0, 1fr)); gap: 1rem; align-items: start;" @endif
 >
     @forelse ($products as $product)
-        @php($cardImage = $product->image_url ?: (collect($product->gallery_images ?? [])->filter()->first()))
-        @php($isPackage = $product->category === 'package')
-        @php($packageDurationToken = strtolower(preg_replace('/\s+/', '', trim((string) $product->duration)) ?? ''))
-        @php($tourCodeToken = strtoupper(trim((string) ($product->tour_code ?? ''))))
-        @php($packageDurationFilter = match (true) {
-            str_starts_with($tourCodeToken, 'DT-UEH') => 'day-trip',
-            str_starts_with($tourCodeToken, 'OT-UEH') && str_contains($packageDurationToken, '2d1n'), str_starts_with($tourCodeToken, 'OT-UEH') && str_contains($packageDurationToken, '2days1night'), str_starts_with($tourCodeToken, 'OT-UEH') && str_contains($packageDurationToken, '2days1nights') => '2d1n',
-            str_starts_with($tourCodeToken, 'OT-UEH') && str_contains($packageDurationToken, '3d2n'), str_starts_with($tourCodeToken, 'OT-UEH') && str_contains($packageDurationToken, '3days2night'), str_starts_with($tourCodeToken, 'OT-UEH') && str_contains($packageDurationToken, '3days2nights') => '3d2n',
-            str_starts_with($tourCodeToken, 'OT-UEH') && str_contains($packageDurationToken, '4d3n'), str_starts_with($tourCodeToken, 'OT-UEH') && str_contains($packageDurationToken, '4days3night'), str_starts_with($tourCodeToken, 'OT-UEH') && str_contains($packageDurationToken, '4days3nights') => '4d3n',
-            str_contains($packageDurationToken, 'daytrip'), str_contains($packageDurationToken, '1day') => 'day-trip',
-            str_contains($packageDurationToken, '2d1n'), str_contains($packageDurationToken, '2days1night'), str_contains($packageDurationToken, '2days1nights') => '2d1n',
-            str_contains($packageDurationToken, '3d2n'), str_contains($packageDurationToken, '3days2night'), str_contains($packageDurationToken, '3days2nights') => '3d2n',
-            str_contains($packageDurationToken, '4d3n'), str_contains($packageDurationToken, '4days3night'), str_contains($packageDurationToken, '4days3nights') => '4d3n',
-            default => 'other',
-        })
+        @php
+            $cardImage = $product->image_url ?: collect($product->gallery_images ?? [])->filter()->first();
+            $isPackage = $product->category === 'package';
+            $packageDurationToken = strtolower(preg_replace('/\s+/', '', trim((string) $product->duration)) ?? '');
+            $tourCodeToken = strtoupper(trim((string) ($product->tour_code ?? '')));
+            $packageDurationFilter = match (true) {
+                str_starts_with($tourCodeToken, 'DT-UEH') => 'day-trip',
+                str_starts_with($tourCodeToken, 'OT-UEH') && str_contains($packageDurationToken, '2d1n'), str_starts_with($tourCodeToken, 'OT-UEH') && str_contains($packageDurationToken, '2days1night'), str_starts_with($tourCodeToken, 'OT-UEH') && str_contains($packageDurationToken, '2days1nights') => '2d1n',
+                str_starts_with($tourCodeToken, 'OT-UEH') && str_contains($packageDurationToken, '3d2n'), str_starts_with($tourCodeToken, 'OT-UEH') && str_contains($packageDurationToken, '3days2night'), str_starts_with($tourCodeToken, 'OT-UEH') && str_contains($packageDurationToken, '3days2nights') => '3d2n',
+                str_starts_with($tourCodeToken, 'OT-UEH') && str_contains($packageDurationToken, '4d3n'), str_starts_with($tourCodeToken, 'OT-UEH') && str_contains($packageDurationToken, '4days3night'), str_starts_with($tourCodeToken, 'OT-UEH') && str_contains($packageDurationToken, '4days3nights') => '4d3n',
+                str_contains($packageDurationToken, 'daytrip'), str_contains($packageDurationToken, '1day') => 'day-trip',
+                str_contains($packageDurationToken, '2d1n'), str_contains($packageDurationToken, '2days1night'), str_contains($packageDurationToken, '2days1nights') => '2d1n',
+                str_contains($packageDurationToken, '3d2n'), str_contains($packageDurationToken, '3days2night'), str_contains($packageDurationToken, '3days2nights') => '3d2n',
+                str_contains($packageDurationToken, '4d3n'), str_contains($packageDurationToken, '4days3night'), str_contains($packageDurationToken, '4days3nights') => '4d3n',
+                default => 'other',
+            };
+        @endphp
 
         <article @if($itemAttribute) {{ $itemAttribute }}="true" @endif class="relative rounded-3xl border border-stone-200 bg-stone-50 p-5" @if($isPackage) data-package-inline-row data-list-filter-value="{{ $packageDurationFilter }}" @endif>
             <div
@@ -50,84 +54,171 @@
 
                 <div class="min-w-0">
                     @if ($isPackage && $editable)
-                        @php($inlineFormId = 'package-inline-form-'.$product->id)
-                        @php($itineraryFormId = 'package-itinerary-form-'.$product->id)
-                        @php($serviceInclusionFormId = 'package-service-inclusion-form-'.$product->id)
-                        @php($normalizedPackageDuration = strtolower(trim((string) $product->duration)))
-                        @php($currentPackageType = match (true) {
-                            str_starts_with(strtoupper(trim((string) ($product->tour_code ?? ''))), 'DT-UEH') => 'Day Trip',
-                            str_contains($normalizedPackageDuration, 'day trip') || str_contains(str_replace(' ', '', $normalizedPackageDuration), '1day') => 'Day Trip',
-                            str_contains(str_replace(' ', '', $normalizedPackageDuration), '2d1n') || str_contains(str_replace(' ', '', $normalizedPackageDuration), '2days1night') || str_contains(str_replace(' ', '', $normalizedPackageDuration), '2days1nights') => '2D1N',
-                            str_contains(str_replace(' ', '', $normalizedPackageDuration), '3d2n') || str_contains(str_replace(' ', '', $normalizedPackageDuration), '3days2night') || str_contains(str_replace(' ', '', $normalizedPackageDuration), '3days2nights') => '3D2N',
-                            str_contains(str_replace(' ', '', $normalizedPackageDuration), '4d3n') || str_contains(str_replace(' ', '', $normalizedPackageDuration), '4days3night') || str_contains(str_replace(' ', '', $normalizedPackageDuration), '4days3nights') => '4D3N',
-                            default => 'Day Trip',
-                        })
-                        @php($packageDurationDetail = $currentPackageType === 'Day Trip' ? $product->duration : '')
-                        @php($minimumAgeLabel = trim((string) ($product->minimum_age ?? '')))
-                        @php($minimumAgeMode = str_starts_with(strtolower($minimumAgeLabel), 'above ') ? 'above_age' : 'no_limit')
-                        @php($minimumAgeYears = preg_match('/(\d+)/', $minimumAgeLabel, $minimumAgeMatches) ? (int) $minimumAgeMatches[1] : null)
-                        @php($packagePricingTiers = collect($product->pricing_tiers ?? [])->filter(fn ($tier) => is_array($tier) && filled($tier['group_size_label'] ?? null))->values())
-                        @php($packagePricingTiers = $packagePricingTiers->isNotEmpty() ? $packagePricingTiers : collect([[
-                            'group_size_label' => $product->group_size_label ?? '',
-                            'malaysia_adult_price_myr' => $product->malaysia_adult_price_myr,
-                            'malaysia_child_price_myr' => $product->malaysia_child_price_myr,
-                            'international_adult_price_myr' => $product->international_adult_price_myr,
-                            'international_child_price_myr' => $product->international_child_price_myr,
-                        ]]))
-                        @php($packageItineraryItems = collect($product->itinerary_items ?? [])->filter()->values())
-                        @php($packageDurationDays = preg_match('/(\d+)\s*day/i', $product->duration ?? '', $packageDurationMatches) ? max(1, (int) $packageDurationMatches[1]) : 1)
-                        @php($packageItineraryRows = collect(range(0, $packageDurationDays - 1))->map(function ($index) use ($packageItineraryItems) {
-                            $existingRow = $packageItineraryItems->get($index);
-                            if (is_array($existingRow) && array_key_exists('activity', $existingRow)) {
-                                return [
-                                    'day_number' => $existingRow['day_number'] ?? 'Day '.($index + 1),
-                                    'time' => $existingRow['time'] ?? '',
-                                    'activity' => $existingRow['activity'] ?? '',
+                        @php
+                            $inlineFormId = 'package-inline-form-'.$product->id;
+                            $itineraryFormId = 'package-itinerary-form-'.$product->id;
+                            $packageDetailsFormId = 'package-details-form-'.$product->id;
+                            $packageContentFormId = 'package-content-form-'.$product->id;
+                            $normalizedPackageDuration = strtolower(trim((string) $product->duration));
+                            $compactPackageDuration = str_replace(' ', '', $normalizedPackageDuration);
+                            $currentPackageType = match (true) {
+                                str_starts_with(strtoupper(trim((string) ($product->tour_code ?? ''))), 'DT-UEH') => 'Day Trip',
+                                str_contains($normalizedPackageDuration, 'day trip') || str_contains($compactPackageDuration, '1day') => 'Day Trip',
+                                str_contains($compactPackageDuration, '2d1n') || str_contains($compactPackageDuration, '2days1night') || str_contains($compactPackageDuration, '2days1nights') => '2D1N',
+                                str_contains($compactPackageDuration, '3d2n') || str_contains($compactPackageDuration, '3days2night') || str_contains($compactPackageDuration, '3days2nights') => '3D2N',
+                                str_contains($compactPackageDuration, '4d3n') || str_contains($compactPackageDuration, '4days3night') || str_contains($compactPackageDuration, '4days3nights') => '4D3N',
+                                default => 'Day Trip',
+                            };
+                            $packageDurationDetail = $currentPackageType === 'Day Trip' ? $product->duration : '';
+                            $minimumAgeLabel = trim((string) ($product->minimum_age ?? ''));
+                            $minimumAgeMode = str_starts_with(strtolower($minimumAgeLabel), 'above ') ? 'above_age' : 'no_limit';
+                            $minimumAgeYears = preg_match('/(\d+)/', $minimumAgeLabel, $minimumAgeMatches) ? (int) $minimumAgeMatches[1] : null;
+                            $packagePricingTiers = collect($product->pricing_tiers ?? [])->filter(fn ($tier) => is_array($tier) && filled($tier['group_size_label'] ?? null))->values();
+                            $packagePricingTiers = $packagePricingTiers->isNotEmpty() ? $packagePricingTiers : collect([[
+                                'group_size_label' => $product->group_size_label ?? '',
+                                'malaysia_adult_price_myr' => $product->malaysia_adult_price_myr,
+                                'malaysia_child_price_myr' => $product->malaysia_child_price_myr,
+                                'international_adult_price_myr' => $product->international_adult_price_myr,
+                                'international_child_price_myr' => $product->international_child_price_myr,
+                            ]]);
+                            $packageItineraryItems = collect($product->itinerary_items ?? [])->filter()->values();
+                            $packageDurationDays = preg_match('/(\d+)\s*day/i', $product->duration ?? '', $packageDurationMatches) ? max(1, (int) $packageDurationMatches[1]) : 1;
+                            $packageItineraryRows = $packageItineraryItems->isNotEmpty()
+                                ? $packageItineraryItems->map(function ($existingRow, $index) {
+                                    if (is_array($existingRow) && array_key_exists('activity', $existingRow)) {
+                                        return [
+                                            'day_number' => trim((string) ($existingRow['day_number'] ?? '')) ?: 'Day '.($index + 1),
+                                            'time' => $existingRow['time'] ?? '',
+                                            'activity' => $existingRow['activity'] ?? '',
+                                        ];
+                                    }
+
+                                    return [
+                                        'day_number' => 'Day '.($index + 1),
+                                        'time' => '',
+                                        'activity' => is_string($existingRow) ? $existingRow : '',
+                                    ];
+                                })
+                                : collect(range(0, $packageDurationDays - 1))->map(function ($index) {
+                                    return [
+                                        'day_number' => 'Day '.($index + 1),
+                                        'time' => '',
+                                        'activity' => '',
+                                    ];
+                                });
+                            $packageItineraryGroups = $packageItineraryRows->groupBy(fn ($row) => $row['day_number'] ?: 'Day 1')->values();
+                            $itineraryTimeOptions = collect(range(0, 47))->map(fn ($index) => \Carbon\Carbon::createFromTime(0, 0)->addMinutes($index * 30)->format('h:i A'))->all();
+                            $itineraryTimeOptionsId = 'package-itinerary-time-options-'.$product->id;
+
+                            $legacyServiceRows = collect(is_array($product->service_inclusions) ? $product->service_inclusions : [])->filter()->values();
+                            $legacyPackageDetailSections = [
+                                'includes' => [],
+                                'excludes' => [],
+                                'things_to_bring' => [],
+                                'important_notes' => [],
+                            ];
+
+                            foreach ($legacyServiceRows as $legacyRow) {
+                                $label = trim((string) ($legacyRow['label'] ?? ''));
+                                $value = trim((string) ($legacyRow['value'] ?? ''));
+
+                                if ($value === '') {
+                                    continue;
+                                }
+
+                                $normalizedLabel = strtolower($label);
+                                $targetKey = match (true) {
+                                    str_contains($normalizedLabel, 'exclusion') => 'excludes',
+                                    str_contains($normalizedLabel, 'bring') => 'things_to_bring',
+                                    str_contains($normalizedLabel, 'important'), str_contains($normalizedLabel, 'note') => 'important_notes',
+                                    default => 'includes',
+                                };
+
+                                $legacyPackageDetailSections[$targetKey][] = [
+                                    'symbol' => match ($targetKey) {
+                                        'excludes' => 'x',
+                                        'things_to_bring', 'important_notes' => 'exclamation',
+                                        default => 'tick',
+                                    },
+                                    'text' => $value,
                                 ];
                             }
 
-                            return [
-                                'day_number' => 'Day '.($index + 1),
-                                'time' => '',
-                                'activity' => is_string($existingRow) ? $existingRow : '',
-                            ];
-                        }))
-                        @php($packageItineraryGroups = $packageItineraryRows->groupBy(fn ($row) => $row['day_number'] ?: 'Day 1')->values())
-                        @php($itineraryTimeOptions = collect(range(0, 47))->map(fn ($index) => \Carbon\Carbon::createFromTime(0, 0)->addMinutes($index * 30)->format('h:i A'))->all())
-                        @php($rawPackageServiceInclusions = collect(is_array($product->service_inclusions) ? $product->service_inclusions : [])->filter()->values())
-                        @php($packageServiceInclusionRows = $rawPackageServiceInclusions->isNotEmpty()
-                            ? $rawPackageServiceInclusions->map(function ($row, $index) {
-                                if (is_array($row) && array_key_exists('value', $row)) {
-                                    return [
-                                        'label' => $row['label'] ?? '',
-                                        'value' => $row['value'] ?? '',
-                                    ];
+                            $normalizePackageDetailRows = function ($rows, $fallbackRows, $defaultSymbol, $allowedSymbols) {
+                                $normalizedRows = collect(is_array($rows) ? $rows : [])
+                                    ->map(function ($row) use ($defaultSymbol, $allowedSymbols) {
+                                        if (is_array($row)) {
+                                            $text = trim((string) ($row['text'] ?? $row['value'] ?? ''));
+                                            $symbol = trim((string) ($row['symbol'] ?? $defaultSymbol));
+
+                                            if ($text === '') {
+                                                return null;
+                                            }
+
+                                            return [
+                                                'symbol' => in_array($symbol, $allowedSymbols, true) ? $symbol : $defaultSymbol,
+                                                'text' => $text,
+                                            ];
+                                        }
+
+                                        $text = trim((string) $row);
+
+                                        return $text === ''
+                                            ? null
+                                            : ['symbol' => $defaultSymbol, 'text' => $text];
+                                    })
+                                    ->filter()
+                                    ->values();
+
+                                if ($normalizedRows->isNotEmpty()) {
+                                    return $normalizedRows;
                                 }
 
-                                $legacyMap = [
-                                    'meals' => 'Meals',
-                                    'inclusion' => 'Inclusion',
-                                    'accommodation' => 'Accommodation',
-                                    'exclusion' => 'Exclusion',
-                                ];
+                                $fallbackCollection = collect($fallbackRows)->filter(fn ($row) => filled($row['text'] ?? null))->values();
 
-                                if (is_array($row) && count($row) === 1) {
-                                    $legacyKey = array_key_first($row);
-                                    return [
-                                        'label' => $legacyMap[$legacyKey] ?? (string) $legacyKey,
-                                        'value' => (string) ($row[$legacyKey] ?? ''),
-                                    ];
-                                }
+                                return $fallbackCollection->isNotEmpty()
+                                    ? $fallbackCollection
+                                    : collect([['symbol' => $defaultSymbol, 'text' => '']]);
+                            };
 
-                                return [
-                                    'label' => 'Row '.($index + 1),
-                                    'value' => is_string($row) ? $row : '',
-                                ];
-                            })
-                            : collect([
-                                ['label' => 'Meals', 'value' => ''],
-                                ['label' => 'Inclusion', 'value' => ''],
-                            ]))
+                            $packageDetails = is_array($product->package_details) ? $product->package_details : [];
+                            $packageTourHighlightRows = collect(is_array($product->tour_highlights) ? $product->tour_highlights : [])
+                                ->map(fn ($item) => trim((string) $item))
+                                ->filter()
+                                ->values();
+
+                            if ($packageTourHighlightRows->isEmpty()) {
+                                $packageTourHighlightRows = collect([$product->summary, $product->description])
+                                    ->filter(fn ($text) => filled($text))
+                                    ->flatMap(fn ($text) => preg_split('/(?<=[.!?])\s+/', trim((string) $text)) ?: [])
+                                    ->map(fn ($item) => trim((string) $item))
+                                    ->filter()
+                                    ->take(4)
+                                    ->values();
+                            }
+
+                            if ($packageTourHighlightRows->isEmpty()) {
+                                $packageTourHighlightRows = collect(['']);
+                            }
+
+                            $packageIncludeRows = $normalizePackageDetailRows($packageDetails['includes'] ?? [], $legacyPackageDetailSections['includes'], 'tick', ['tick', 'round']);
+                            $packageExcludeRows = $normalizePackageDetailRows($packageDetails['excludes'] ?? [], $legacyPackageDetailSections['excludes'], 'x', ['x', 'round']);
+                            $packageBringRows = $normalizePackageDetailRows($packageDetails['things_to_bring'] ?? [], $legacyPackageDetailSections['things_to_bring'], 'exclamation', ['exclamation', 'round']);
+                            $packageNoteRows = $normalizePackageDetailRows($packageDetails['important_notes'] ?? [], $legacyPackageDetailSections['important_notes'], 'exclamation', ['exclamation', 'round']);
+
+                            $normalizeSimpleRows = function ($rows) {
+                                $collection = collect(is_array($rows) ? $rows : [])
+                                    ->map(fn ($item) => trim((string) $item))
+                                    ->filter()
+                                    ->values();
+
+                                return $collection->isNotEmpty() ? $collection : collect(['']);
+                            };
+
+                            $packageRecommendedAttireRows = $normalizeSimpleRows($product->recommended_attire ?? []);
+                            $packageThingsToKnowRows = $normalizeSimpleRows($product->things_to_know ?? []);
+                            $packageTravelTipsRows = $normalizeSimpleRows($product->travel_tips ?? []);
+                        @endphp
                         <form id="{{ $inlineFormId }}" method="POST" action="{{ route('admin.products.update', $product) }}" enctype="multipart/form-data" class="space-y-3" data-package-inline-form data-form-persist="admin-products-update-{{ $product->id }}">
                             @csrf
                             @method('PATCH')
@@ -148,7 +239,12 @@
                                     @endif
                                 </div>
                                 <p class="text-sm text-stone-500">{{ $product->location }} | {{ $product->duration }}</p>
-                                <p class="text-sm leading-6 text-stone-600">{{ $product->summary }}</p>
+                                <div class="space-y-2">
+                                    <p class="text-sm leading-6 text-stone-600">{{ $product->summary }}</p>
+                                    @if (filled($product->description))
+                                        <p class="text-sm leading-6 text-stone-500">{{ $product->description }}</p>
+                                    @endif
+                                </div>
                                 <div class="flex flex-wrap gap-2 text-xs font-semibold uppercase tracking-[0.2em]">
                                     <span class="rounded-full bg-white px-3 py-1 text-stone-600">RM {{ number_format((float) $product->malaysia_adult_price_myr, 2) }}</span>
                                     @if ($product->group_size_label)
@@ -196,6 +292,10 @@
                                                     <span class="mb-1 block text-[11px] font-semibold uppercase tracking-[0.14em] text-stone-500">Upload main image</span>
                                                     <input name="image" type="file" accept=".jpg,.jpeg,.png,.webp" class="w-full rounded-2xl border border-dashed border-stone-300 bg-white px-3 py-2 text-xs text-stone-700">
                                                 </label>
+                                                <div class="mt-4">
+                                                    <label class="mb-1 block text-sm font-medium uppercase tracking-[0.02em] text-stone-500">Description</label>
+                                                    <textarea name="description" rows="5" class="w-full rounded-lg border border-stone-300 bg-white px-4 py-3 text-sm text-stone-800">{{ $product->description }}</textarea>
+                                                </div>
                                             </div>
 
                                             <div class="min-w-0">
@@ -275,6 +375,14 @@
                                     <div>
                                         <label class="mb-1 block text-sm font-medium uppercase tracking-[0.02em] text-stone-500">Location</label>
                                         <input name="location" type="text" value="{{ $product->location }}" class="w-full rounded-lg border border-stone-300 bg-white px-4 py-2.5 text-sm text-stone-800">
+                                    </div>
+                                    <div>
+                                        <label class="mb-1 block text-sm font-medium uppercase tracking-[0.02em] text-stone-500">Pickup Location</label>
+                                        <input name="pickup_location" type="text" value="{{ $product->pickup_location }}" class="w-full rounded-lg border border-stone-300 bg-white px-4 py-2.5 text-sm text-stone-800">
+                                    </div>
+                                    <div>
+                                        <label class="mb-1 block text-sm font-medium uppercase tracking-[0.02em] text-stone-500">Dropoff Location</label>
+                                        <input name="dropoff_location" type="text" value="{{ $product->dropoff_location }}" class="w-full rounded-lg border border-stone-300 bg-white px-4 py-2.5 text-sm text-stone-800">
                                     </div>
                                     <div>
                                         <label class="mb-1 block text-sm font-medium uppercase tracking-[0.02em] text-stone-500">Package Type</label>
@@ -399,10 +507,6 @@
                                         <label class="mb-1 block text-sm font-medium uppercase tracking-[0.02em] text-stone-500">Summary</label>
                                         <textarea name="summary" rows="6" class="w-full rounded-lg border border-stone-300 bg-white px-4 py-3 text-sm text-stone-800">{{ $product->summary }}</textarea>
                                     </div>
-                                    <div style="grid-column: span 2 / span 2;">
-                                        <label class="mb-1 block text-sm font-medium uppercase tracking-[0.02em] text-stone-500">Description</label>
-                                        <textarea name="description" rows="6" class="w-full rounded-lg border border-stone-300 bg-white px-4 py-3 text-sm text-stone-800">{{ $product->description }}</textarea>
-                                    </div>
                                 </div>
                                     </div>
                                 </div>
@@ -448,7 +552,12 @@
                                 </span>
                             </div>
                             <p class="mt-2 text-sm text-stone-500">{{ $product->location }} | {{ $product->duration }}</p>
-                            <p class="mt-3 text-sm leading-6 text-stone-600">{{ $product->summary }}</p>
+                            <div class="mt-3 space-y-2">
+                                <p class="text-sm leading-6 text-stone-600">{{ $product->summary }}</p>
+                                @if (filled($product->description))
+                                    <p class="text-sm leading-6 text-stone-500">{{ $product->description }}</p>
+                                @endif
+                            </div>
                             <div class="mt-4 flex flex-wrap gap-2 text-xs font-semibold uppercase tracking-[0.2em]">
                                 <span class="rounded-full bg-white px-3 py-1 text-stone-600">RM {{ number_format((float) $product->malaysia_adult_price_myr, 2) }}</span>
                                 @if ($product->capacity)
@@ -469,8 +578,12 @@
                             @if ($product->capacity)
                                 <p class="mt-2 text-sm font-medium text-stone-500">Capacity: {{ $product->capacity }}</p>
                             @endif
-                            <p class="mt-3 text-sm leading-6 text-stone-600">{{ $product->summary }}</p>
-                            <p class="mt-3 text-sm leading-7 text-stone-500">{{ $product->description }}</p>
+                            <div class="mt-3 space-y-2">
+                                <p class="text-sm leading-6 text-stone-600">{{ $product->summary }}</p>
+                                @if (filled($product->description))
+                                    <p class="text-sm leading-6 text-stone-500">{{ $product->description }}</p>
+                                @endif
+                            </div>
                         @endif
                     @endif
                 </div>
@@ -484,8 +597,11 @@
                             <button type="button" class="min-w-[8.75rem] rounded-full border border-sky-300 bg-sky-50 px-4 py-2 text-center text-xs font-semibold uppercase tracking-[0.2em] text-sky-700 transition hover:bg-sky-100" data-package-inline-open="itinerary">
                                 Add Itinerary
                             </button>
-                            <button type="button" class="min-w-[8.75rem] rounded-full border border-emerald-300 bg-emerald-50 px-4 py-2 text-center text-xs font-semibold uppercase tracking-[0.2em] text-emerald-700 transition hover:bg-emerald-100" data-package-inline-open="service-inclusions">
-                                Add Package Details
+                            <button type="button" class="min-w-[8.75rem] rounded-full border border-emerald-300 bg-emerald-50 px-4 py-2 text-center text-xs font-semibold uppercase tracking-[0.2em] text-emerald-700 transition hover:bg-emerald-100" data-package-inline-open="package-details">
+                                Package Details
+                            </button>
+                            <button type="button" class="min-w-[8.75rem] rounded-full border border-amber-300 bg-amber-50 px-4 py-2 text-center text-xs font-semibold uppercase tracking-[0.2em] text-amber-700 transition hover:bg-amber-100" data-package-inline-open="package-content">
+                                Other Content
                             </button>
                             <button type="submit" form="{{ $inlineFormId }}" class="hidden min-w-[8.75rem] rounded-full bg-sky-600 px-4 py-2 text-center text-xs font-semibold uppercase tracking-[0.2em] text-white transition hover:bg-sky-700 package-inline-save">
                                 Save
@@ -493,11 +609,16 @@
                             <button type="button" class="hidden min-w-[8.75rem] rounded-full border border-stone-300 bg-white px-4 py-2 text-center text-xs font-semibold uppercase tracking-[0.2em] text-stone-700 transition hover:bg-stone-100 package-inline-cancel" data-package-inline-cancel>
                                 Cancel
                             </button>
-                            <div class="package-itinerary-modal hidden fixed inset-0 z-[1200] items-center justify-center overflow-y-auto bg-stone-950/55 px-8 py-6" data-package-itinerary-modal>
-                                <div class="w-full max-w-5xl rounded-[2rem] border border-stone-200 bg-stone-100 p-5 shadow-[0_24px_60px_rgba(15,23,42,0.24)]">
-                                    <form id="{{ $itineraryFormId }}" method="POST" action="{{ route('admin.products.itinerary', $product) }}" class="space-y-4" data-form-persist="admin-products-itinerary-{{ $product->id }}">
+                            <div class="package-itinerary-modal hidden fixed inset-0 z-[1200] items-start justify-center overflow-y-auto bg-stone-950/55 px-6 py-6 md:px-8" data-package-itinerary-modal>
+                                <div class="flex max-h-[calc(100vh-3rem)] w-full max-w-6xl flex-col overflow-hidden rounded-[2rem] border border-stone-200 bg-stone-100 p-5 shadow-[0_24px_60px_rgba(15,23,42,0.24)]">
+                                    <form id="{{ $itineraryFormId }}" method="POST" action="{{ route('admin.products.itinerary', $product) }}" class="flex min-h-0 flex-1 flex-col gap-4" data-form-persist="admin-products-itinerary-{{ $product->id }}">
                                         @csrf
                                         @method('PATCH')
+                                        <datalist id="{{ $itineraryTimeOptionsId }}">
+                                            @foreach ($itineraryTimeOptions as $timeOption)
+                                                <option value="{{ $timeOption }}"></option>
+                                            @endforeach
+                                        </datalist>
                                         <div class="flex items-start justify-between gap-4">
                                             <div>
                                                 <p class="text-sm font-medium uppercase tracking-[0.02em] text-stone-500">Package Itinerary</p>
@@ -508,14 +629,15 @@
                                                 Close
                                             </button>
                                         </div>
-                                        <div class="overflow-hidden rounded-[1.25rem] border border-stone-200 bg-white">
-                                            <table class="min-w-full text-left text-sm">
+                                        <div class="min-h-0 flex-1 overflow-y-auto pr-2" data-package-itinerary-scroll>
+                                        <div class="overflow-x-auto rounded-[1.25rem] border border-stone-200 bg-white">
+                                            <table class="min-w-[860px] w-full text-left text-sm">
                                                 <thead class="bg-stone-100 text-stone-700">
                                                     <tr>
-                                                        <th class="w-40 px-4 py-3 font-semibold">Day Number</th>
-                                                        <th class="w-48 px-4 py-3 font-semibold">Time</th>
+                                                        <th class="w-32 px-3 py-3 font-semibold">Day Number</th>
+                                                        <th class="w-36 px-3 py-3 font-semibold">Time</th>
                                                         <th class="px-4 py-3 font-semibold">Activity</th>
-                                                        <th class="w-24 px-4 py-3 font-semibold text-center"></th>
+                                                        <th class="w-20 px-3 py-3 font-semibold text-center"></th>
                                                     </tr>
                                                 </thead>
                                                 <tbody class="divide-y divide-stone-200" data-package-itinerary-table-body>
@@ -525,7 +647,7 @@
                                                         @foreach ($dayGroup as $slotIndex => $row)
                                                             <tr data-itinerary-slot-row data-itinerary-day-group="{{ $dayGroupId }}">
                                                                 @if ($slotIndex === 0)
-                                                                    <td rowspan="{{ max(1, $dayGroup->count()) }}" class="px-4 py-3 align-top" data-itinerary-day-cell>
+                                                                    <td rowspan="{{ max(1, $dayGroup->count()) }}" class="px-3 py-3 align-top" data-itinerary-day-cell>
                                                                         <input type="text" value="{{ $dayLabel }}" class="w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm text-stone-800" data-itinerary-day-label>
                                                                         <div class="mt-3 flex justify-start">
                                                                             <button type="button" class="inline-flex items-center justify-center rounded-full border border-rose-200 bg-rose-50 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-rose-700 transition hover:bg-rose-100" data-package-itinerary-remove-day aria-label="Remove day row">
@@ -534,23 +656,21 @@
                                                                         </div>
                                                                     </td>
                                                                 @endif
-                                                                <td class="px-4 py-3 align-top">
-                                                                    <div class="flex h-[96px] min-w-[11rem] items-stretch rounded-xl border border-stone-200 bg-stone-50 p-2.5" data-itinerary-time-slot>
+                                                                <td class="px-3 py-3 align-top">
+                                                                    <div class="flex h-[96px] min-w-[9rem] items-stretch rounded-xl border border-stone-200 bg-stone-50 p-2" data-itinerary-time-slot>
                                                                         <input type="hidden" name="itinerary_day_number[]" value="{{ $dayLabel }}" data-itinerary-day-hidden>
-                                                                        <select name="itinerary_time[]" class="h-full w-full min-w-[9.5rem] rounded-lg border border-stone-300 bg-white px-2.5 py-1.5 text-sm text-stone-800">
-                                                                            <option value="">Select time</option>
-                                                                            @foreach ($itineraryTimeOptions as $timeOption)
-                                                                                <option value="{{ $timeOption }}" @selected($row['time'] === $timeOption)>{{ $timeOption }}</option>
-                                                                            @endforeach
-                                                                        </select>
+                                                                        <div class="flex w-full flex-col gap-1">
+                                                                            <input name="itinerary_time[]" type="text" value="{{ $row['time'] }}" list="{{ $itineraryTimeOptionsId }}" class="h-full w-full min-w-[7.75rem] rounded-lg border border-stone-300 bg-white px-2 py-1.5 text-sm text-stone-800" placeholder="7:30 AM">
+                                                                            <p class="text-[11px] text-stone-500">Choose a preset or type any hour/minute.</p>
+                                                                        </div>
                                                                     </div>
                                                                 </td>
-                                                                <td class="px-4 py-3 align-top">
-                                                                    <div class="flex h-[96px] items-stretch gap-2 rounded-xl border border-stone-200 bg-stone-50 p-2.5" data-itinerary-activity-slot>
+                                                                <td class="px-3 py-3 align-top">
+                                                                    <div class="flex h-[96px] items-stretch gap-2 rounded-xl border border-stone-200 bg-stone-50 p-2" data-itinerary-activity-slot>
                                                                         <textarea name="itinerary_activity[]" rows="2" class="h-full flex-1 resize-none rounded-lg border border-stone-300 bg-white px-2.5 py-1.5 text-sm text-stone-800" placeholder="Arrival, transfer, check-in, and evening city walk">{{ $row['activity'] }}</textarea>
                                                                     </div>
                                                                 </td>
-                                                                <td class="px-4 py-3 align-top text-center">
+                                                                <td class="px-3 py-3 align-top text-center">
                                                                     <div class="flex h-[96px] flex-col items-center justify-center gap-2">
                                                                         <button type="button" class="inline-flex h-9 w-9 items-center justify-center rounded-full border border-stone-300 bg-white text-lg leading-none text-stone-600 transition hover:border-sky-300 hover:text-sky-700" data-package-itinerary-add-slot aria-label="Add slot">
                                                                             <span class="leading-none">+</span>
@@ -570,9 +690,10 @@
                                                 </tbody>
                                             </table>
                                         </div>
+                                        </div>
                                         <template data-package-itinerary-day-template>
                                             <tr data-itinerary-slot-row>
-                                                <td rowspan="1" class="px-4 py-3 align-top" data-itinerary-day-cell>
+                                                <td rowspan="1" class="px-3 py-3 align-top" data-itinerary-day-cell>
                                                     <input type="text" value="" class="w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm text-stone-800" data-itinerary-day-label>
                                                     <div class="mt-3 flex justify-start">
                                                         <button type="button" class="inline-flex items-center justify-center rounded-full border border-rose-200 bg-rose-50 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-rose-700 transition hover:bg-rose-100" data-package-itinerary-remove-day aria-label="Remove day row">
@@ -580,23 +701,21 @@
                                                         </button>
                                                     </div>
                                                 </td>
-                                                <td class="px-4 py-3 align-top">
-                                                    <div class="flex h-[96px] min-w-[11rem] items-stretch rounded-xl border border-stone-200 bg-stone-50 p-2.5" data-itinerary-time-slot>
+                                                <td class="px-3 py-3 align-top">
+                                                    <div class="flex h-[96px] min-w-[9rem] items-stretch rounded-xl border border-stone-200 bg-stone-50 p-2" data-itinerary-time-slot>
                                                         <input type="hidden" name="itinerary_day_number[]" value="" data-itinerary-day-hidden>
-                                                        <select name="itinerary_time[]" class="h-full w-full min-w-[9.5rem] rounded-lg border border-stone-300 bg-white px-2.5 py-1.5 text-sm text-stone-800">
-                                                            <option value="">Select time</option>
-                                                            @foreach ($itineraryTimeOptions as $timeOption)
-                                                                <option value="{{ $timeOption }}">{{ $timeOption }}</option>
-                                                            @endforeach
-                                                        </select>
+                                                        <div class="flex w-full flex-col gap-1">
+                                                            <input name="itinerary_time[]" type="text" value="" list="{{ $itineraryTimeOptionsId }}" class="h-full w-full min-w-[7.75rem] rounded-lg border border-stone-300 bg-white px-2 py-1.5 text-sm text-stone-800" placeholder="7:30 AM">
+                                                            <p class="text-[11px] text-stone-500">Choose a preset or type any hour/minute.</p>
+                                                        </div>
                                                     </div>
                                                 </td>
-                                                <td class="px-4 py-3 align-top">
-                                                    <div class="flex h-[96px] items-stretch gap-2 rounded-xl border border-stone-200 bg-stone-50 p-2.5" data-itinerary-activity-slot>
+                                                <td class="px-3 py-3 align-top">
+                                                    <div class="flex h-[96px] items-stretch gap-2 rounded-xl border border-stone-200 bg-stone-50 p-2" data-itinerary-activity-slot>
                                                         <textarea name="itinerary_activity[]" rows="2" class="h-full flex-1 resize-none rounded-lg border border-stone-300 bg-white px-2.5 py-1.5 text-sm text-stone-800" placeholder="Arrival, transfer, check-in, and evening city walk"></textarea>
                                                     </div>
                                                 </td>
-                                                <td class="px-4 py-3 align-top text-center">
+                                                <td class="px-3 py-3 align-top text-center">
                                                     <div class="flex h-[96px] flex-col items-center justify-center gap-2">
                                                         <button type="button" class="inline-flex h-9 w-9 items-center justify-center rounded-full border border-stone-300 bg-white text-lg leading-none text-stone-600 transition hover:border-sky-300 hover:text-sky-700" data-package-itinerary-add-slot aria-label="Add slot">
                                                             <span class="leading-none">+</span>
@@ -610,11 +729,11 @@
                                                 </td>
                                             </tr>
                                         </template>
-                                        <div class="flex justify-between gap-3">
+                                        <div class="flex flex-wrap justify-between gap-3 border-t border-stone-200 bg-stone-100 pt-4">
                                             <button type="button" class="rounded-full border border-emerald-300 bg-emerald-50 px-4 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-emerald-700 transition hover:bg-emerald-100" data-package-itinerary-add-day>
                                                 + Day
                                             </button>
-                                            <div class="flex justify-end gap-3">
+                                            <div class="flex flex-wrap justify-end gap-3">
                                             <button type="button" class="rounded-full border border-stone-300 bg-white px-5 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-stone-700 transition hover:bg-stone-100" data-package-itinerary-close>
                                                 Cancel
                                             </button>
@@ -626,78 +745,373 @@
                                     </form>
                                 </div>
                             </div>
-                            <div class="package-service-inclusion-modal hidden fixed inset-0 z-[410] items-center justify-center overflow-y-auto bg-stone-950/55 px-8 py-6" data-package-service-inclusion-modal>
-                                <div class="w-full max-w-4xl rounded-[2rem] border border-stone-200 bg-stone-100 p-5 shadow-[0_24px_60px_rgba(15,23,42,0.24)]">
-                                    <form id="{{ $serviceInclusionFormId }}" method="POST" action="{{ route('admin.products.service-inclusions', $product) }}" class="space-y-4" data-form-persist="admin-products-service-inclusions-{{ $product->id }}">
+                            <div class="package-service-inclusion-modal hidden fixed inset-0 z-[410] items-start justify-center overflow-y-auto bg-stone-950/55 px-6 py-6 md:px-8" data-package-service-inclusion-modal>
+                                <div class="flex max-h-[calc(100vh-3rem)] w-full max-w-[96rem] flex-col overflow-hidden rounded-[2rem] border border-stone-200 bg-stone-100 p-5 shadow-[0_24px_60px_rgba(15,23,42,0.24)]">
+                                    <form id="{{ $packageDetailsFormId }}" method="POST" action="{{ route('admin.products.package-details', $product) }}" class="flex min-h-0 flex-1 flex-col gap-5" data-form-persist="admin-products-package-details-{{ $product->id }}">
                                         @csrf
                                         @method('PATCH')
                                         <div class="flex items-start justify-between gap-4">
                                             <div>
                                                 <p class="text-sm font-medium uppercase tracking-[0.02em] text-stone-500">Package Details</p>
                                                 <h3 class="mt-1 text-2xl font-semibold text-stone-900">{{ $product->name }}</h3>
-                                                <p class="mt-2 text-sm text-stone-500">Add label and description rows for includes, excludes, things to bring, and important notes.</p>
+                                                <p class="mt-2 text-sm text-stone-500">Manage includes, excludes, things to bring, and important notes here.</p>
                                             </div>
                                             <button type="button" class="rounded-full border border-stone-300 bg-white px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-stone-700 transition hover:bg-stone-100" data-package-service-inclusion-close>
                                                 Close
                                             </button>
                                         </div>
-                                        <div class="overflow-hidden rounded-[1.25rem] border border-stone-200 bg-white">
-                                            <table class="min-w-full text-left text-sm">
-                                                <thead class="bg-stone-100 text-stone-700">
-                                                    <tr>
-                                                        <th class="w-52 px-4 py-3 font-semibold">Label</th>
-                                                        <th class="px-4 py-3 font-semibold">Description</th>
-                                                        <th class="w-16 px-4 py-3 text-center font-semibold">Delete</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody data-service-inclusion-table-body class="divide-y divide-stone-200">
-                                                    @foreach ($packageServiceInclusionRows as $row)
-                                                        <tr data-service-inclusion-row>
-                                                            <td class="px-4 py-3 align-top">
-                                                                <input name="service_inclusion_label[]" type="text" value="{{ $row['label'] }}" class="w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm text-stone-800" placeholder="Meals">
-                                                            </td>
-                                                            <td class="px-4 py-3 align-top">
-                                                                <textarea name="service_inclusion_value[]" rows="2" class="w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm text-stone-800" placeholder="Breakfast included daily.">{{ $row['value'] }}</textarea>
-                                                            </td>
-                                                            <td class="px-4 py-3 align-top text-center">
-                                                                <button type="button" class="inline-flex h-8 w-8 items-center justify-center rounded-full border border-rose-200 bg-rose-50 text-rose-700 transition hover:bg-rose-100" data-service-inclusion-remove-row aria-label="Remove service inclusion row">
-                                                                    <svg viewBox="0 0 20 20" fill="currentColor" class="h-4 w-4" aria-hidden="true">
-                                                                        <path fill-rule="evenodd" d="M8.5 2.5A1.5 1.5 0 0 0 7 4v.5H4.75a.75.75 0 0 0 0 1.5h.538l.813 9.21A2 2 0 0 0 8.094 17h3.812a2 2 0 0 0 1.993-1.79l.813-9.21h.538a.75.75 0 0 0 0-1.5H13V4a1.5 1.5 0 0 0-1.5-1.5h-3ZM11.5 4v.5h-3V4h3Z" clip-rule="evenodd" />
-                                                                    </svg>
-                                                                </button>
-                                                            </td>
-                                                        </tr>
-                                                    @endforeach
-                                                </tbody>
-                                            </table>
+                                        <div class="min-h-0 flex-1 overflow-y-auto pr-2" data-package-content-scroll>
+                                        <div class="grid gap-4" data-package-content-sections>
+                                            <section class="rounded-[1.25rem] border border-stone-200 bg-white p-4">
+                                                <div class="flex items-center justify-between gap-3">
+                                                    <div>
+                                                        <h4 class="text-base font-semibold text-stone-900">Package Details</h4>
+                                                        <p class="mt-1 text-xs text-stone-500">Use ✓, ✕, or ! for the detail title line, and use • for the description line under it.</p>
+                                                    </div>
+                                                </div>
+                                                <div class="mt-4 grid gap-4 md:grid-cols-2 items-start">
+                                                    <section class="rounded-[1rem] border border-stone-200 bg-stone-50 p-4">
+                                                        <div class="flex items-center justify-between gap-3">
+                                                            <h5 class="text-sm font-semibold uppercase tracking-[0.12em] text-stone-700">Includes</h5>
+                                                            <button type="button" class="rounded-full border border-emerald-300 bg-emerald-50 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-emerald-700 transition hover:bg-emerald-100" data-package-content-add-row="package-includes">Add Row</button>
+                                                        </div>
+                                                        <div class="mt-3 space-y-3" data-package-content-body="package-includes">
+                                                            @foreach ($packageIncludeRows as $row)
+                                                                <div class="flex w-full items-start gap-3" data-package-content-row>
+                                                                    <div class="relative flex-none" data-symbol-picker>
+                                                                        <input type="hidden" name="package_detail_include_symbol[]" value="{{ ($row['symbol'] ?? 'tick') === 'round' ? 'round' : 'tick' }}" data-symbol-picker-input>
+                                                                        <button type="button" class="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-stone-300 bg-white text-stone-800 shadow-sm transition hover:bg-stone-50" data-symbol-picker-trigger aria-haspopup="true" aria-expanded="false">
+                                                                            <span class="text-lg leading-none" data-symbol-picker-display>{{ ($row['symbol'] ?? 'tick') === 'round' ? '•' : '✓' }}</span>
+                                                                        </button>
+                                                                        <div class="absolute left-0 top-full z-20 mt-2 hidden min-w-[7.5rem] rounded-2xl border border-stone-200 bg-white p-2 shadow-xl" data-symbol-picker-menu>
+                                                                            <button type="button" class="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm text-stone-700 transition hover:bg-stone-100" data-symbol-option="tick" data-symbol-display="✓">
+                                                                                <span class="inline-flex h-7 w-7 items-center justify-center rounded-full bg-emerald-100 text-base text-emerald-700">✓</span>
+                                                                                <span>Title</span>
+                                                                            </button>
+                                                                            <button type="button" class="mt-1 flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm text-stone-700 transition hover:bg-stone-100" data-symbol-option="round" data-symbol-display="•">
+                                                                                <span class="inline-flex h-7 w-7 items-center justify-center rounded-full bg-stone-200 text-base text-stone-700">•</span>
+                                                                                <span>Description</span>
+                                                                            </button>
+                                                                        </div>
+                                                                    </div>
+                                                                    <textarea name="package_detail_include_value[]" rows="1" class="min-w-0 flex-1 rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm leading-6 text-stone-800" placeholder="Hotel accommodation, guide, and transfers included.">{{ $row['text'] ?? '' }}</textarea>
+                                                                    <button type="button" class="inline-flex h-10 w-10 flex-none items-center justify-center self-start rounded-full border border-rose-200 bg-rose-50 text-rose-700 transition hover:bg-rose-100" data-package-content-remove-row aria-label="Remove row"><span class="text-lg leading-none">×</span></button>
+                                                                </div>
+                                                            @endforeach
+                                                        </div>
+                                                    </section>
+                                                    <section class="rounded-[1rem] border border-stone-200 bg-stone-50 p-4">
+                                                        <div class="flex items-center justify-between gap-3">
+                                                            <h5 class="text-sm font-semibold uppercase tracking-[0.12em] text-stone-700">Excludes</h5>
+                                                            <button type="button" class="rounded-full border border-emerald-300 bg-emerald-50 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-emerald-700 transition hover:bg-emerald-100" data-package-content-add-row="package-excludes">Add Row</button>
+                                                        </div>
+                                                        <div class="mt-3 space-y-3" data-package-content-body="package-excludes">
+                                                            @foreach ($packageExcludeRows as $row)
+                                                                <div class="flex w-full items-start gap-3" data-package-content-row>
+                                                                    <div class="relative flex-none" data-symbol-picker>
+                                                                        <input type="hidden" name="package_detail_exclude_symbol[]" value="{{ ($row['symbol'] ?? 'x') === 'round' ? 'round' : 'x' }}" data-symbol-picker-input>
+                                                                        <button type="button" class="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-stone-300 bg-white text-stone-800 shadow-sm transition hover:bg-stone-50" data-symbol-picker-trigger aria-haspopup="true" aria-expanded="false">
+                                                                            <span class="text-lg leading-none" data-symbol-picker-display>{{ ($row['symbol'] ?? 'x') === 'round' ? '•' : '✕' }}</span>
+                                                                        </button>
+                                                                        <div class="absolute left-0 top-full z-20 mt-2 hidden min-w-[7.5rem] rounded-2xl border border-stone-200 bg-white p-2 shadow-xl" data-symbol-picker-menu>
+                                                                            <button type="button" class="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm text-stone-700 transition hover:bg-stone-100" data-symbol-option="x" data-symbol-display="✕">
+                                                                                <span class="inline-flex h-7 w-7 items-center justify-center rounded-full bg-rose-100 text-base text-rose-700">✕</span>
+                                                                                <span>Title</span>
+                                                                            </button>
+                                                                            <button type="button" class="mt-1 flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm text-stone-700 transition hover:bg-stone-100" data-symbol-option="round" data-symbol-display="•">
+                                                                                <span class="inline-flex h-7 w-7 items-center justify-center rounded-full bg-stone-200 text-base text-stone-700">•</span>
+                                                                                <span>Description</span>
+                                                                            </button>
+                                                                        </div>
+                                                                    </div>
+                                                                    <textarea name="package_detail_exclude_value[]" rows="1" class="min-w-0 flex-1 rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm leading-6 text-stone-800" placeholder="Flights, insurance, and personal expenses.">{{ $row['text'] ?? '' }}</textarea>
+                                                                    <button type="button" class="inline-flex h-10 w-10 flex-none items-center justify-center self-start rounded-full border border-rose-200 bg-rose-50 text-rose-700 transition hover:bg-rose-100" data-package-content-remove-row aria-label="Remove row"><span class="text-lg leading-none">×</span></button>
+                                                                </div>
+                                                            @endforeach
+                                                        </div>
+                                                    </section>
+                                                    <section class="rounded-[1rem] border border-stone-200 bg-stone-50 p-4">
+                                                        <div class="flex items-center justify-between gap-3">
+                                                            <h5 class="text-sm font-semibold uppercase tracking-[0.12em] text-stone-700">Things To Bring</h5>
+                                                            <button type="button" class="rounded-full border border-emerald-300 bg-emerald-50 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-emerald-700 transition hover:bg-emerald-100" data-package-content-add-row="package-bring">Add Row</button>
+                                                        </div>
+                                                        <div class="mt-3 space-y-3" data-package-content-body="package-bring">
+                                                            @foreach ($packageBringRows as $row)
+                                                                <div class="flex w-full items-start gap-3" data-package-content-row>
+                                                                    <div class="relative flex-none" data-symbol-picker>
+                                                                        <input type="hidden" name="package_detail_bring_symbol[]" value="{{ ($row['symbol'] ?? 'exclamation') === 'round' ? 'round' : 'exclamation' }}" data-symbol-picker-input>
+                                                                        <button type="button" class="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-stone-300 bg-white text-stone-800 shadow-sm transition hover:bg-stone-50" data-symbol-picker-trigger aria-haspopup="true" aria-expanded="false">
+                                                                            <span class="text-lg leading-none" data-symbol-picker-display>{{ ($row['symbol'] ?? 'exclamation') === 'round' ? '•' : '!' }}</span>
+                                                                        </button>
+                                                                        <div class="absolute left-0 top-full z-20 mt-2 hidden min-w-[7.5rem] rounded-2xl border border-stone-200 bg-white p-2 shadow-xl" data-symbol-picker-menu>
+                                                                            <button type="button" class="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm text-stone-700 transition hover:bg-stone-100" data-symbol-option="exclamation" data-symbol-display="!">
+                                                                                <span class="inline-flex h-7 w-7 items-center justify-center rounded-full bg-amber-100 text-base font-semibold text-amber-700">!</span>
+                                                                                <span>Title</span>
+                                                                            </button>
+                                                                            <button type="button" class="mt-1 flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm text-stone-700 transition hover:bg-stone-100" data-symbol-option="round" data-symbol-display="•">
+                                                                                <span class="inline-flex h-7 w-7 items-center justify-center rounded-full bg-stone-200 text-base text-stone-700">•</span>
+                                                                                <span>Description</span>
+                                                                            </button>
+                                                                        </div>
+                                                                    </div>
+                                                                    <textarea name="package_detail_bring_value[]" rows="1" class="min-w-0 flex-1 rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm leading-6 text-stone-800" placeholder="Water bottle, sunblock, and a change of clothes.">{{ $row['text'] ?? '' }}</textarea>
+                                                                    <button type="button" class="inline-flex h-10 w-10 flex-none items-center justify-center self-start rounded-full border border-rose-200 bg-rose-50 text-rose-700 transition hover:bg-rose-100" data-package-content-remove-row aria-label="Remove row"><span class="text-lg leading-none">×</span></button>
+                                                                </div>
+                                                            @endforeach
+                                                        </div>
+                                                    </section>
+                                                    <section class="rounded-[1rem] border border-stone-200 bg-stone-50 p-4">
+                                                        <div class="flex items-center justify-between gap-3">
+                                                            <h5 class="text-sm font-semibold uppercase tracking-[0.12em] text-stone-700">Important Notes</h5>
+                                                            <button type="button" class="rounded-full border border-emerald-300 bg-emerald-50 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-emerald-700 transition hover:bg-emerald-100" data-package-content-add-row="package-notes">Add Row</button>
+                                                        </div>
+                                                        <div class="mt-3 space-y-3" data-package-content-body="package-notes">
+                                                            @foreach ($packageNoteRows as $row)
+                                                                <div class="flex w-full items-start gap-3" data-package-content-row>
+                                                                    <div class="relative flex-none" data-symbol-picker>
+                                                                        <input type="hidden" name="package_detail_note_symbol[]" value="{{ ($row['symbol'] ?? 'exclamation') === 'round' ? 'round' : 'exclamation' }}" data-symbol-picker-input>
+                                                                        <button type="button" class="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-stone-300 bg-white text-stone-800 shadow-sm transition hover:bg-stone-50" data-symbol-picker-trigger aria-haspopup="true" aria-expanded="false">
+                                                                            <span class="text-lg leading-none" data-symbol-picker-display>{{ ($row['symbol'] ?? 'exclamation') === 'round' ? '•' : '!' }}</span>
+                                                                        </button>
+                                                                        <div class="absolute left-0 top-full z-20 mt-2 hidden min-w-[7.5rem] rounded-2xl border border-stone-200 bg-white p-2 shadow-xl" data-symbol-picker-menu>
+                                                                            <button type="button" class="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm text-stone-700 transition hover:bg-stone-100" data-symbol-option="exclamation" data-symbol-display="!">
+                                                                                <span class="inline-flex h-7 w-7 items-center justify-center rounded-full bg-amber-100 text-base font-semibold text-amber-700">!</span>
+                                                                                <span>Title</span>
+                                                                            </button>
+                                                                            <button type="button" class="mt-1 flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm text-stone-700 transition hover:bg-stone-100" data-symbol-option="round" data-symbol-display="•">
+                                                                                <span class="inline-flex h-7 w-7 items-center justify-center rounded-full bg-stone-200 text-base text-stone-700">•</span>
+                                                                                <span>Description</span>
+                                                                            </button>
+                                                                        </div>
+                                                                    </div>
+                                                                    <textarea name="package_detail_note_value[]" rows="1" class="min-w-0 flex-1 rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm leading-6 text-stone-800" placeholder="Timing may change due to weather or traffic conditions.">{{ $row['text'] ?? '' }}</textarea>
+                                                                    <button type="button" class="inline-flex h-10 w-10 flex-none items-center justify-center self-start rounded-full border border-rose-200 bg-rose-50 text-rose-700 transition hover:bg-rose-100" data-package-content-remove-row aria-label="Remove row"><span class="text-lg leading-none">×</span></button>
+                                                                </div>
+                                                            @endforeach
+                                                        </div>
+                                                    </section>
+                                                </div>
+                                            </section>
                                         </div>
-                                        <template data-service-inclusion-row-template>
-                                            <tr data-service-inclusion-row>
-                                                <td class="px-4 py-3 align-top">
-                                                    <input name="service_inclusion_label[]" type="text" value="" class="w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm text-stone-800" placeholder="Label">
-                                                </td>
-                                                <td class="px-4 py-3 align-top">
-                                                    <textarea name="service_inclusion_value[]" rows="2" class="w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm text-stone-800" placeholder="Description"></textarea>
-                                                </td>
-                                                <td class="px-4 py-3 align-top text-center">
-                                                    <button type="button" class="inline-flex h-8 w-8 items-center justify-center rounded-full border border-rose-200 bg-rose-50 text-rose-700 transition hover:bg-rose-100" data-service-inclusion-remove-row aria-label="Remove service inclusion row">
-                                                        <svg viewBox="0 0 20 20" fill="currentColor" class="h-4 w-4" aria-hidden="true">
-                                                            <path fill-rule="evenodd" d="M8.5 2.5A1.5 1.5 0 0 0 7 4v.5H4.75a.75.75 0 0 0 0 1.5h.538l.813 9.21A2 2 0 0 0 8.094 17h3.812a2 2 0 0 0 1.993-1.79l.813-9.21h.538a.75.75 0 0 0 0-1.5H13V4a1.5 1.5 0 0 0-1.5-1.5h-3ZM11.5 4v.5h-3V4h3Z" clip-rule="evenodd" />
-                                                        </svg>
+                                        </div>
+                                        <template data-package-content-template="package-includes">
+                                            <div class="flex w-full items-start gap-3" data-package-content-row>
+                                                <div class="relative flex-none" data-symbol-picker>
+                                                    <input type="hidden" name="package_detail_include_symbol[]" value="tick" data-symbol-picker-input>
+                                                    <button type="button" class="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-stone-300 bg-white text-stone-800 shadow-sm transition hover:bg-stone-50" data-symbol-picker-trigger aria-haspopup="true" aria-expanded="false">
+                                                        <span class="text-lg leading-none" data-symbol-picker-display>✓</span>
                                                     </button>
-                                                </td>
-                                            </tr>
+                                                    <div class="absolute left-0 top-full z-20 mt-2 hidden min-w-[7.5rem] rounded-2xl border border-stone-200 bg-white p-2 shadow-xl" data-symbol-picker-menu>
+                                                        <button type="button" class="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm text-stone-700 transition hover:bg-stone-100" data-symbol-option="tick" data-symbol-display="✓">
+                                                            <span class="inline-flex h-7 w-7 items-center justify-center rounded-full bg-emerald-100 text-base text-emerald-700">✓</span>
+                                                            <span>Title</span>
+                                                        </button>
+                                                        <button type="button" class="mt-1 flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm text-stone-700 transition hover:bg-stone-100" data-symbol-option="round" data-symbol-display="•">
+                                                            <span class="inline-flex h-7 w-7 items-center justify-center rounded-full bg-stone-200 text-base text-stone-700">•</span>
+                                                            <span>Description</span>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                                <textarea name="package_detail_include_value[]" rows="1" class="min-w-0 flex-1 rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm leading-6 text-stone-800" placeholder="Hotel accommodation, guide, and transfers included."></textarea>
+                                                <button type="button" class="inline-flex h-10 w-10 flex-none items-center justify-center self-start rounded-full border border-rose-200 bg-rose-50 text-rose-700 transition hover:bg-rose-100" data-package-content-remove-row aria-label="Remove row"><span class="text-lg leading-none">×</span></button>
+                                            </div>
                                         </template>
-                                        <div class="flex justify-between gap-3">
-                                            <button type="button" class="rounded-full border border-emerald-300 bg-emerald-50 px-4 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-emerald-700 transition hover:bg-emerald-100" data-service-inclusion-add-row>
-                                                Add Row
+                                        <template data-package-content-template="package-excludes">
+                                            <div class="flex w-full items-start gap-3" data-package-content-row>
+                                                <div class="relative flex-none" data-symbol-picker>
+                                                    <input type="hidden" name="package_detail_exclude_symbol[]" value="x" data-symbol-picker-input>
+                                                    <button type="button" class="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-stone-300 bg-white text-stone-800 shadow-sm transition hover:bg-stone-50" data-symbol-picker-trigger aria-haspopup="true" aria-expanded="false">
+                                                        <span class="text-lg leading-none" data-symbol-picker-display>✕</span>
+                                                    </button>
+                                                    <div class="absolute left-0 top-full z-20 mt-2 hidden min-w-[7.5rem] rounded-2xl border border-stone-200 bg-white p-2 shadow-xl" data-symbol-picker-menu>
+                                                        <button type="button" class="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm text-stone-700 transition hover:bg-stone-100" data-symbol-option="x" data-symbol-display="✕">
+                                                            <span class="inline-flex h-7 w-7 items-center justify-center rounded-full bg-rose-100 text-base text-rose-700">✕</span>
+                                                            <span>Title</span>
+                                                        </button>
+                                                        <button type="button" class="mt-1 flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm text-stone-700 transition hover:bg-stone-100" data-symbol-option="round" data-symbol-display="•">
+                                                            <span class="inline-flex h-7 w-7 items-center justify-center rounded-full bg-stone-200 text-base text-stone-700">•</span>
+                                                            <span>Description</span>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                                <textarea name="package_detail_exclude_value[]" rows="1" class="min-w-0 flex-1 rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm leading-6 text-stone-800" placeholder="Flights, insurance, and personal expenses."></textarea>
+                                                <button type="button" class="inline-flex h-10 w-10 flex-none items-center justify-center self-start rounded-full border border-rose-200 bg-rose-50 text-rose-700 transition hover:bg-rose-100" data-package-content-remove-row aria-label="Remove row"><span class="text-lg leading-none">×</span></button>
+                                            </div>
+                                        </template>
+                                        <template data-package-content-template="package-bring">
+                                            <div class="flex w-full items-start gap-3" data-package-content-row>
+                                                <div class="relative flex-none" data-symbol-picker>
+                                                    <input type="hidden" name="package_detail_bring_symbol[]" value="exclamation" data-symbol-picker-input>
+                                                    <button type="button" class="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-stone-300 bg-white text-stone-800 shadow-sm transition hover:bg-stone-50" data-symbol-picker-trigger aria-haspopup="true" aria-expanded="false">
+                                                        <span class="text-lg leading-none" data-symbol-picker-display>!</span>
+                                                    </button>
+                                                    <div class="absolute left-0 top-full z-20 mt-2 hidden min-w-[7.5rem] rounded-2xl border border-stone-200 bg-white p-2 shadow-xl" data-symbol-picker-menu>
+                                                        <button type="button" class="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm text-stone-700 transition hover:bg-stone-100" data-symbol-option="exclamation" data-symbol-display="!">
+                                                            <span class="inline-flex h-7 w-7 items-center justify-center rounded-full bg-amber-100 text-base font-semibold text-amber-700">!</span>
+                                                            <span>Title</span>
+                                                        </button>
+                                                        <button type="button" class="mt-1 flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm text-stone-700 transition hover:bg-stone-100" data-symbol-option="round" data-symbol-display="•">
+                                                            <span class="inline-flex h-7 w-7 items-center justify-center rounded-full bg-stone-200 text-base text-stone-700">•</span>
+                                                            <span>Description</span>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                                <textarea name="package_detail_bring_value[]" rows="1" class="min-w-0 flex-1 rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm leading-6 text-stone-800" placeholder="Water bottle, sunblock, and a change of clothes."></textarea>
+                                                <button type="button" class="inline-flex h-10 w-10 flex-none items-center justify-center self-start rounded-full border border-rose-200 bg-rose-50 text-rose-700 transition hover:bg-rose-100" data-package-content-remove-row aria-label="Remove row"><span class="text-lg leading-none">×</span></button>
+                                            </div>
+                                        </template>
+                                        <template data-package-content-template="package-notes">
+                                            <div class="flex w-full items-start gap-3" data-package-content-row>
+                                                <div class="relative flex-none" data-symbol-picker>
+                                                    <input type="hidden" name="package_detail_note_symbol[]" value="exclamation" data-symbol-picker-input>
+                                                    <button type="button" class="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-stone-300 bg-white text-stone-800 shadow-sm transition hover:bg-stone-50" data-symbol-picker-trigger aria-haspopup="true" aria-expanded="false">
+                                                        <span class="text-lg leading-none" data-symbol-picker-display>!</span>
+                                                    </button>
+                                                    <div class="absolute left-0 top-full z-20 mt-2 hidden min-w-[7.5rem] rounded-2xl border border-stone-200 bg-white p-2 shadow-xl" data-symbol-picker-menu>
+                                                        <button type="button" class="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm text-stone-700 transition hover:bg-stone-100" data-symbol-option="exclamation" data-symbol-display="!">
+                                                            <span class="inline-flex h-7 w-7 items-center justify-center rounded-full bg-amber-100 text-base font-semibold text-amber-700">!</span>
+                                                            <span>Title</span>
+                                                        </button>
+                                                        <button type="button" class="mt-1 flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm text-stone-700 transition hover:bg-stone-100" data-symbol-option="round" data-symbol-display="•">
+                                                            <span class="inline-flex h-7 w-7 items-center justify-center rounded-full bg-stone-200 text-base text-stone-700">•</span>
+                                                            <span>Description</span>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                                <textarea name="package_detail_note_value[]" rows="1" class="min-w-0 flex-1 rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm leading-6 text-stone-800" placeholder="Timing may change due to weather or traffic conditions."></textarea>
+                                                <button type="button" class="inline-flex h-10 w-10 flex-none items-center justify-center self-start rounded-full border border-rose-200 bg-rose-50 text-rose-700 transition hover:bg-rose-100" data-package-content-remove-row aria-label="Remove row"><span class="text-lg leading-none">×</span></button>
+                                            </div>
+                                        </template>
+                                        <div class="flex flex-wrap justify-end gap-3 border-t border-stone-200 bg-stone-100 pt-4">
+                                            <button type="button" class="rounded-full border border-stone-300 bg-white px-4 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-stone-700 transition hover:bg-stone-100" data-package-service-inclusion-close>
+                                                Cancel
                                             </button>
+                                            <button type="submit" class="rounded-full bg-sky-600 px-4 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-white transition hover:bg-sky-700">
+                                                Save Details
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                            <div class="package-content-modal hidden fixed inset-0 z-[411] items-start justify-center overflow-y-auto bg-stone-950/55 px-6 py-6 md:px-8" data-package-content-modal>
+                                <div class="flex max-h-[calc(100vh-3rem)] w-full max-w-[96rem] flex-col overflow-hidden rounded-[2rem] border border-stone-200 bg-stone-100 p-5 shadow-[0_24px_60px_rgba(15,23,42,0.24)]">
+                                    <form id="{{ $packageContentFormId }}" method="POST" action="{{ route('admin.products.package-content', $product) }}" class="flex min-h-0 flex-1 flex-col gap-5" data-form-persist="admin-products-package-content-{{ $product->id }}">
+                                        @csrf
+                                        @method('PATCH')
+                                        <div class="flex items-start justify-between gap-4">
+                                            <div>
+                                                <p class="text-sm font-medium uppercase tracking-[0.02em] text-stone-500">Other Package Content</p>
+                                                <h3 class="mt-1 text-2xl font-semibold text-stone-900">{{ $product->name }}</h3>
+                                                <p class="mt-2 text-sm text-stone-500">Manage highlights, attire, things you should know, and travel tips here.</p>
+                                            </div>
+                                            <button type="button" class="rounded-full border border-stone-300 bg-white px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-stone-700 transition hover:bg-stone-100" data-package-content-close>
+                                                Close
+                                            </button>
+                                        </div>
+                                        <div class="min-h-0 flex-1 overflow-y-auto pr-2" data-package-other-content-scroll>
+                                        <div class="grid gap-4 md:grid-cols-2 items-start" data-package-other-content-sections>
+                                            <section class="rounded-[1.25rem] border border-stone-200 bg-white p-4">
+                                                <div class="flex items-center justify-between gap-3">
+                                                    <div>
+                                                        <h4 class="text-base font-semibold text-stone-900">Tour Highlights</h4>
+                                                        <p class="mt-1 text-xs text-stone-500">Short standout points for this package.</p>
+                                                    </div>
+                                                    <button type="button" class="rounded-full border border-emerald-300 bg-emerald-50 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-emerald-700 transition hover:bg-emerald-100" data-package-content-add-row="tour-highlights">Add Row</button>
+                                                </div>
+                                                <div class="mt-4 space-y-3" data-package-content-body="tour-highlights">
+                                                    @foreach ($packageTourHighlightRows as $highlight)
+                                                        <div class="grid gap-3 md:grid-cols-[1fr_auto]" data-package-content-row>
+                                                            <textarea name="tour_highlights[]" rows="2" class="w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm text-stone-800" placeholder="Scenic coastal drive with guided photo stops.">{{ $highlight }}</textarea>
+                                                            <button type="button" class="inline-flex h-10 w-10 items-center justify-center self-start rounded-full border border-rose-200 bg-rose-50 text-rose-700 transition hover:bg-rose-100" data-package-content-remove-row aria-label="Remove row"><span class="text-lg leading-none">×</span></button>
+                                                        </div>
+                                                    @endforeach
+                                                </div>
+                                            </section>
+                                            <section class="rounded-[1.25rem] border border-stone-200 bg-white p-4">
+                                                <div class="flex items-center justify-between gap-3">
+                                                    <div>
+                                                        <h4 class="text-base font-semibold text-stone-900">Recommended Attire</h4>
+                                                        <p class="mt-1 text-xs text-stone-500">What guests should wear or prepare clothing-wise.</p>
+                                                    </div>
+                                                    <button type="button" class="rounded-full border border-emerald-300 bg-emerald-50 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-emerald-700 transition hover:bg-emerald-100" data-package-content-add-row="recommended-attire">Add Row</button>
+                                                </div>
+                                                <div class="mt-4 space-y-3" data-package-content-body="recommended-attire">
+                                                    @foreach ($packageRecommendedAttireRows as $attire)
+                                                        <div class="grid gap-3 md:grid-cols-[1fr_auto]" data-package-content-row>
+                                                            <textarea name="recommended_attire[]" rows="2" class="w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm text-stone-800" placeholder="Comfortable clothing, hat, and non-slip shoes.">{{ $attire }}</textarea>
+                                                            <button type="button" class="inline-flex h-10 w-10 items-center justify-center self-start rounded-full border border-rose-200 bg-rose-50 text-rose-700 transition hover:bg-rose-100" data-package-content-remove-row aria-label="Remove row"><span class="text-lg leading-none">×</span></button>
+                                                        </div>
+                                                    @endforeach
+                                                </div>
+                                            </section>
+                                            <section class="rounded-[1.25rem] border border-stone-200 bg-white p-4">
+                                                <div class="flex items-center justify-between gap-3">
+                                                    <div>
+                                                        <h4 class="text-base font-semibold text-stone-900">Things You Should Know</h4>
+                                                        <p class="mt-1 text-xs text-stone-500">Useful operational notes for guests before departure.</p>
+                                                    </div>
+                                                    <button type="button" class="rounded-full border border-emerald-300 bg-emerald-50 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-emerald-700 transition hover:bg-emerald-100" data-package-content-add-row="things-to-know">Add Row</button>
+                                                </div>
+                                                <div class="mt-4 space-y-3" data-package-content-body="things-to-know">
+                                                    @foreach ($packageThingsToKnowRows as $note)
+                                                        <div class="grid gap-3 md:grid-cols-[1fr_auto]" data-package-content-row>
+                                                            <textarea name="things_to_know[]" rows="2" class="w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm text-stone-800" placeholder="Pickup timing may shift slightly based on traffic and hotel location.">{{ $note }}</textarea>
+                                                            <button type="button" class="inline-flex h-10 w-10 items-center justify-center self-start rounded-full border border-rose-200 bg-rose-50 text-rose-700 transition hover:bg-rose-100" data-package-content-remove-row aria-label="Remove row"><span class="text-lg leading-none">×</span></button>
+                                                        </div>
+                                                    @endforeach
+                                                </div>
+                                            </section>
+                                            <section class="rounded-[1.25rem] border border-stone-200 bg-white p-4">
+                                                <div class="flex items-center justify-between gap-3">
+                                                    <div>
+                                                        <h4 class="text-base font-semibold text-stone-900">Useful Travel Tips</h4>
+                                                        <p class="mt-1 text-xs text-stone-500">Helpful reminders that make the trip smoother.</p>
+                                                    </div>
+                                                    <button type="button" class="rounded-full border border-emerald-300 bg-emerald-50 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-emerald-700 transition hover:bg-emerald-100" data-package-content-add-row="travel-tips">Add Row</button>
+                                                </div>
+                                                <div class="mt-4 space-y-3" data-package-content-body="travel-tips">
+                                                    @foreach ($packageTravelTipsRows as $tip)
+                                                        <div class="grid gap-3 md:grid-cols-[1fr_auto]" data-package-content-row>
+                                                            <textarea name="travel_tips[]" rows="2" class="w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm text-stone-800" placeholder="Carry small cash, water, and a charged phone.">{{ $tip }}</textarea>
+                                                            <button type="button" class="inline-flex h-10 w-10 items-center justify-center self-start rounded-full border border-rose-200 bg-rose-50 text-rose-700 transition hover:bg-rose-100" data-package-content-remove-row aria-label="Remove row"><span class="text-lg leading-none">×</span></button>
+                                                        </div>
+                                                    @endforeach
+                                                </div>
+                                            </section>
+                                        </div>
+                                        </div>
+                                        <template data-package-content-template="tour-highlights">
+                                            <div class="grid gap-3 md:grid-cols-[1fr_auto]" data-package-content-row>
+                                                <textarea name="tour_highlights[]" rows="2" class="w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm text-stone-800" placeholder="Scenic coastal drive with guided photo stops."></textarea>
+                                                <button type="button" class="inline-flex h-10 w-10 items-center justify-center self-start rounded-full border border-rose-200 bg-rose-50 text-rose-700 transition hover:bg-rose-100" data-package-content-remove-row aria-label="Remove row"><span class="text-lg leading-none">×</span></button>
+                                            </div>
+                                        </template>
+                                        <template data-package-content-template="recommended-attire">
+                                            <div class="grid gap-3 md:grid-cols-[1fr_auto]" data-package-content-row>
+                                                <textarea name="recommended_attire[]" rows="2" class="w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm text-stone-800" placeholder="Comfortable clothing, hat, and non-slip shoes."></textarea>
+                                                <button type="button" class="inline-flex h-10 w-10 items-center justify-center self-start rounded-full border border-rose-200 bg-rose-50 text-rose-700 transition hover:bg-rose-100" data-package-content-remove-row aria-label="Remove row"><span class="text-lg leading-none">×</span></button>
+                                            </div>
+                                        </template>
+                                        <template data-package-content-template="things-to-know">
+                                            <div class="grid gap-3 md:grid-cols-[1fr_auto]" data-package-content-row>
+                                                <textarea name="things_to_know[]" rows="2" class="w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm text-stone-800" placeholder="Pickup timing may shift slightly based on traffic and hotel location."></textarea>
+                                                <button type="button" class="inline-flex h-10 w-10 items-center justify-center self-start rounded-full border border-rose-200 bg-rose-50 text-rose-700 transition hover:bg-rose-100" data-package-content-remove-row aria-label="Remove row"><span class="text-lg leading-none">×</span></button>
+                                            </div>
+                                        </template>
+                                        <template data-package-content-template="travel-tips">
+                                            <div class="grid gap-3 md:grid-cols-[1fr_auto]" data-package-content-row>
+                                                <textarea name="travel_tips[]" rows="2" class="w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm text-stone-800" placeholder="Carry small cash, water, and a charged phone."></textarea>
+                                                <button type="button" class="inline-flex h-10 w-10 items-center justify-center self-start rounded-full border border-rose-200 bg-rose-50 text-rose-700 transition hover:bg-rose-100" data-package-content-remove-row aria-label="Remove row"><span class="text-lg leading-none">×</span></button>
+                                            </div>
+                                        </template>
+                                        <div class="flex flex-wrap justify-between gap-3 border-t border-stone-200 bg-stone-100 pt-4">
+                                            <div></div>
                                             <div class="flex gap-3">
-                                                <button type="button" class="rounded-full border border-stone-300 bg-white px-4 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-stone-700 transition hover:bg-stone-100" data-package-service-inclusion-close>
+                                                <button type="button" class="rounded-full border border-stone-300 bg-white px-4 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-stone-700 transition hover:bg-stone-100" data-package-content-close>
                                                     Cancel
                                                 </button>
                                                 <button type="submit" class="rounded-full bg-sky-600 px-4 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-white transition hover:bg-sky-700">
-                                                    Save
+                                                    Save Content
                                                 </button>
                                             </div>
                                         </div>
@@ -837,10 +1251,6 @@
                                                 <label class="mb-2 block text-xs font-medium uppercase tracking-[0.18em] text-stone-500">Summary</label>
                                                 <textarea name="summary" rows="3" class="w-full rounded-xl border border-stone-300 px-4 py-3 text-sm text-stone-800">{{ $product->summary }}</textarea>
                                             </div>
-                                            <div class="md:col-span-2">
-                                                <label class="mb-2 block text-xs font-medium uppercase tracking-[0.18em] text-stone-500">Description</label>
-                                                <textarea name="description" rows="3" class="w-full rounded-xl border border-stone-300 px-4 py-3 text-sm text-stone-800">{{ $product->description }}</textarea>
-                                            </div>
                                         </div>
                                     </div>
                                 @endif
@@ -879,10 +1289,6 @@
                                             <textarea name="gallery_images" rows="3" class="w-full rounded-2xl border border-stone-300 px-4 py-3 text-sm text-stone-800">@if(is_array($product->gallery_images)){{ implode("\n", $product->gallery_images) }}@endif</textarea>
                                         </div>
                                     @endif
-                                    <div class="{{ $product->category === 'package' ? 'md:col-span-2' : '' }}">
-                                        <label class="mb-1 block text-xs font-medium uppercase tracking-[0.18em] text-stone-500">Description</label>
-                                        <textarea name="description" rows="3" class="w-full rounded-2xl border border-stone-300 px-4 py-3 text-sm text-stone-800">{{ $product->description }}</textarea>
-                                    </div>
                                 </div>
                                 <div class="flex flex-wrap gap-5 pt-1 {{ $product->category !== 'package' ? 'hidden' : '' }}">
                                     <label class="flex items-center gap-2 text-sm text-stone-600">
@@ -951,7 +1357,8 @@
             const pricingTemplate = row.querySelector('[data-package-edit-pricing-template]');
             const pricingAddButton = row.querySelector('[data-package-edit-pricing-add]');
             const itineraryButton = row.querySelector('[data-package-inline-open="itinerary"]');
-            const serviceInclusionButton = row.querySelector('[data-package-inline-open="service-inclusions"]');
+            const packageDetailsButton = row.querySelector('[data-package-inline-open="package-details"]');
+            const packageContentButton = row.querySelector('[data-package-inline-open="package-content"]');
             const cancelButton = row.querySelector('[data-package-inline-cancel]');
             const saveButton = row.querySelector('.package-inline-save');
             const itineraryModal = row.querySelector('[data-package-itinerary-modal]');
@@ -961,9 +1368,10 @@
             const itineraryAddDayButton = row.querySelector('[data-package-itinerary-add-day]');
             const serviceInclusionModal = row.querySelector('[data-package-service-inclusion-modal]');
             const serviceInclusionCloseButtons = row.querySelectorAll('[data-package-service-inclusion-close]');
-            const serviceInclusionTableBody = row.querySelector('[data-service-inclusion-table-body]');
-            const serviceInclusionRowTemplate = row.querySelector('[data-service-inclusion-row-template]');
-            const serviceInclusionAddRowButton = row.querySelector('[data-service-inclusion-add-row]');
+            const packageContentModal = row.querySelector('[data-package-content-modal]');
+            const packageContentCloseButtons = row.querySelectorAll('[data-package-content-close]');
+            const packageDetailsSections = row.querySelector('[data-package-content-sections]');
+            const packageOtherContentSections = row.querySelector('[data-package-other-content-sections]');
 
             if (!form || !viewSection || !editSection || !editButton || !cancelButton || !saveButton) {
                 return;
@@ -1069,8 +1477,9 @@
                 const isEditOpen = !editSection.classList.contains('hidden');
                 const isItineraryOpen = itineraryModal && !itineraryModal.classList.contains('hidden');
                 const isServiceInclusionOpen = serviceInclusionModal && !serviceInclusionModal.classList.contains('hidden');
+                const isPackageContentOpen = packageContentModal && !packageContentModal.classList.contains('hidden');
 
-                setRowOverlayState(isEditOpen || isItineraryOpen || isServiceInclusionOpen);
+                setRowOverlayState(isEditOpen || isItineraryOpen || isServiceInclusionOpen || isPackageContentOpen);
             };
 
             const updateEditPosition = () => {
@@ -1120,10 +1529,16 @@
                 syncRowOverlayState();
             });
 
-            serviceInclusionButton?.addEventListener('click', () => {
+            packageDetailsButton?.addEventListener('click', () => {
                 setRowOverlayState(true);
                 serviceInclusionModal?.classList.remove('hidden');
                 serviceInclusionModal?.classList.add('flex');
+            });
+
+            packageContentButton?.addEventListener('click', () => {
+                setRowOverlayState(true);
+                packageContentModal?.classList.remove('hidden');
+                packageContentModal?.classList.add('flex');
             });
 
             serviceInclusionCloseButtons.forEach((button) => {
@@ -1144,24 +1559,138 @@
                 syncRowOverlayState();
             });
 
-            serviceInclusionAddRowButton?.addEventListener('click', () => {
-                const templateContent = serviceInclusionRowTemplate?.content?.cloneNode(true);
+            packageContentCloseButtons.forEach((button) => {
+                button.addEventListener('click', () => {
+                    packageContentModal?.classList.add('hidden');
+                    packageContentModal?.classList.remove('flex');
+                    syncRowOverlayState();
+                });
+            });
 
-                if (!templateContent || !serviceInclusionTableBody) {
+            packageContentModal?.addEventListener('click', (event) => {
+                if (event.target !== packageContentModal) {
                     return;
                 }
 
-                serviceInclusionTableBody.appendChild(templateContent);
+                packageContentModal.classList.add('hidden');
+                packageContentModal.classList.remove('flex');
+                syncRowOverlayState();
             });
 
-            serviceInclusionTableBody?.addEventListener('click', (event) => {
-                const removeRowButton = event.target.closest('[data-service-inclusion-remove-row]');
+            const closeSymbolPickers = (scope = row) => {
+                scope?.querySelectorAll('[data-symbol-picker-menu]').forEach((menu) => {
+                    menu.classList.add('hidden');
+                });
+
+                scope?.querySelectorAll('[data-symbol-picker-trigger]').forEach((trigger) => {
+                    trigger.setAttribute('aria-expanded', 'false');
+                });
+            };
+
+            const handlePackageContentSectionClick = (event) => {
+                const addButton = event.target.closest('[data-package-content-add-row]');
+                const removeRowButton = event.target.closest('[data-package-content-remove-row]');
+                const symbolOptionButton = event.target.closest('[data-symbol-option]');
+                const symbolTriggerButton = event.target.closest('[data-symbol-picker-trigger]');
+
+                if (symbolOptionButton) {
+                    const picker = symbolOptionButton.closest('[data-symbol-picker]');
+                    const input = picker?.querySelector('[data-symbol-picker-input]');
+                    const display = picker?.querySelector('[data-symbol-picker-display]');
+
+                    if (!picker || !input || !display) {
+                        return;
+                    }
+
+                    input.value = symbolOptionButton.getAttribute('data-symbol-option') ?? input.value;
+                    display.textContent = symbolOptionButton.getAttribute('data-symbol-display') ?? display.textContent;
+                    closeSymbolPickers(row);
+                    return;
+                }
+
+                if (symbolTriggerButton) {
+                    const picker = symbolTriggerButton.closest('[data-symbol-picker]');
+                    const menu = picker?.querySelector('[data-symbol-picker-menu]');
+                    const willOpen = menu?.classList.contains('hidden');
+
+                    closeSymbolPickers(row);
+
+                    if (menu && willOpen) {
+                        menu.classList.remove('hidden');
+                        symbolTriggerButton.setAttribute('aria-expanded', 'true');
+                    }
+
+                    return;
+                }
+
+                closeSymbolPickers(row);
+
+                if (addButton) {
+                    const sectionKey = addButton.getAttribute('data-package-content-add-row');
+                    const templateContent = row.querySelector(`[data-package-content-template="${sectionKey}"]`)?.content?.cloneNode(true);
+                    const targetBody = row.querySelector(`[data-package-content-body="${sectionKey}"]`);
+
+                    if (!templateContent || !targetBody) {
+                        return;
+                    }
+
+                    targetBody.appendChild(templateContent);
+                    targetBody.querySelector('[data-package-content-row]:last-child textarea, [data-package-content-row]:last-child input, [data-package-content-row]:last-child [data-symbol-picker-trigger]')?.focus();
+                    return;
+                }
 
                 if (!removeRowButton) {
                     return;
                 }
 
-                removeRowButton.closest('[data-service-inclusion-row]')?.remove();
+                const currentRow = removeRowButton.closest('[data-package-content-row]');
+                const targetBody = currentRow?.parentElement;
+
+                if (!currentRow || !targetBody) {
+                    return;
+                }
+
+                if (targetBody.querySelectorAll('[data-package-content-row]').length <= 1) {
+                    currentRow.querySelectorAll('input, textarea, select').forEach((field) => {
+                        if (field.matches('[data-symbol-picker-input]')) {
+                            const picker = field.closest('[data-symbol-picker]');
+                            const defaultOption = picker?.querySelector('[data-symbol-option]');
+                            const display = picker?.querySelector('[data-symbol-picker-display]');
+
+                            field.value = defaultOption?.getAttribute('data-symbol-option') ?? '';
+
+                            if (display) {
+                                display.textContent = defaultOption?.getAttribute('data-symbol-display') ?? '';
+                            }
+
+                            return;
+                        }
+
+                        if (field.tagName === 'SELECT') {
+                            field.selectedIndex = 0;
+                            return;
+                        }
+
+                        if (field.type !== 'hidden') {
+                            field.value = '';
+                        }
+                    });
+
+                    closeSymbolPickers(currentRow);
+                    return;
+                }
+
+                currentRow.remove();
+            };
+
+            packageDetailsSections?.addEventListener('click', handlePackageContentSectionClick);
+            packageOtherContentSections?.addEventListener('click', handlePackageContentSectionClick);
+            packageDetailsSections?.addEventListener('focusout', (event) => {
+                if (event.currentTarget?.contains(event.relatedTarget)) {
+                    return;
+                }
+
+                closeSymbolPickers(row);
             });
 
             const syncItineraryDayValues = (slotRow) => {
@@ -1188,7 +1717,7 @@
                 const dayCell = slotRow.querySelector('[data-itinerary-day-cell]');
                 const dayLabelInput = slotRow.querySelector('[data-itinerary-day-label]');
                 const hiddenDayInput = slotRow.querySelector('[data-itinerary-day-hidden]');
-                const timeInput = slotRow.querySelector('select[name="itinerary_time[]"]');
+                const timeInput = slotRow.querySelector('input[name="itinerary_time[]"]');
                 const activityInput = slotRow.querySelector('textarea[name="itinerary_activity[]"]');
                 const removeButton = slotRow.querySelector('[data-package-itinerary-remove-slot]');
 

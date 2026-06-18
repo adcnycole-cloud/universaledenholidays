@@ -52,6 +52,10 @@
                 <input id="{{ $category }}_image" name="image" type="file" accept=".jpg,.jpeg,.png,.webp" class="w-full rounded-2xl border border-dashed border-stone-300 px-4 py-3 text-stone-700">
             </div>
         </div>
+        <div>
+            <label for="{{ $category }}_description" class="mb-2 block text-sm font-medium text-stone-700">Description</label>
+            <textarea id="{{ $category }}_description" name="description" rows="4" class="w-full rounded-2xl border border-stone-300 px-4 py-3 text-stone-800">{{ old('description') }}</textarea>
+        </div>
     @else
         <div class="grid gap-4 lg:grid-cols-[1.3fr_1fr]">
             <div>
@@ -63,6 +67,10 @@
                 <input id="{{ $category }}_image" name="image" type="file" accept=".jpg,.jpeg,.png,.webp" class="w-full rounded-2xl border border-dashed border-stone-300 px-4 py-3 text-stone-700">
             </div>
         </div>
+        <div>
+            <label for="{{ $category }}_description" class="mb-2 block text-sm font-medium text-stone-700">Description</label>
+            <textarea id="{{ $category }}_description" name="description" rows="4" class="w-full rounded-2xl border border-stone-300 px-4 py-3 text-stone-800">{{ old('description') }}</textarea>
+        </div>
     @endif
     @if ($category === 'package')
         <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4 xl:items-start">
@@ -71,24 +79,37 @@
                 <input id="{{ $category }}_location" name="location" type="text" value="{{ old('location') }}" class="w-full rounded-2xl border border-stone-300 px-4 py-3 text-stone-800">
             </div>
             <div>
+                <label for="{{ $category }}_pickup_location" class="mb-2 block text-sm font-medium text-stone-700">Pickup Location</label>
+                <input id="{{ $category }}_pickup_location" name="pickup_location" type="text" value="{{ old('pickup_location') }}" class="w-full rounded-2xl border border-stone-300 px-4 py-3 text-stone-800">
+            </div>
+            <div>
+                <label for="{{ $category }}_dropoff_location" class="mb-2 block text-sm font-medium text-stone-700">Dropoff Location</label>
+                <input id="{{ $category }}_dropoff_location" name="dropoff_location" type="text" value="{{ old('dropoff_location') }}" class="w-full rounded-2xl border border-stone-300 px-4 py-3 text-stone-800">
+            </div>
+            <div>
                 <label for="{{ $category }}_tour_code" class="mb-2 block text-sm font-medium text-stone-700">Tour Code</label>
                 <input id="{{ $category }}_tour_code" name="tour_code" type="text" value="{{ old('tour_code') }}" placeholder="{{ old('package_type') === 'Day Trip' ? 'DT-UEH01' : 'OT-UEH01' }}" class="w-full rounded-2xl border border-stone-300 px-3 py-2.5 text-sm text-stone-800" data-tour-code-input>
                 <p class="mt-2 text-xs text-stone-500">Saved as `DT-UEH...` for day trips and `OT-UEH...` for overnight trips.</p>
             </div>
-            <div>
-                <label for="{{ $category }}_duration_detail" class="mb-2 block text-sm font-medium text-stone-700">Duration</label>
-                <input id="{{ $category }}_duration_detail" name="duration_detail" type="text" value="{{ old('duration_detail') }}" placeholder="Example: 6 hours" class="w-full rounded-2xl border border-stone-300 px-3 py-2.5 text-sm text-stone-800" data-package-duration-row @disabled(old('package_type') !== 'Day Trip')>
-                <p class="mt-2 text-xs text-stone-500">Day trip only.</p>
-            </div>
-            <div>
-                <label for="{{ $category }}_capacity" class="mb-2 block text-sm font-medium text-stone-700">Capacity</label>
-                <input id="{{ $category }}_capacity" name="capacity" type="number" value="{{ old('capacity') }}" class="w-full rounded-2xl border border-stone-300 px-3 py-2.5 text-sm text-stone-800">
-            </div>
         </div>
-        <div class="grid gap-4 md:grid-cols-3 xl:max-w-[48rem] xl:items-start">
+        <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4 xl:max-w-[64rem] xl:items-start">
             <div>
                 <label for="{{ $category }}_departure_time" class="mb-2 block text-sm font-medium text-stone-700">Departure Time</label>
                 <input id="{{ $category }}_departure_time" name="departure_time" type="text" value="{{ old('departure_time') }}" class="w-full rounded-2xl border border-stone-300 px-4 py-3 text-stone-800" placeholder="Example: 7:30 AM">
+            </div>
+            <div>
+                <label for="{{ $category }}_duration_detail" class="mb-2 block text-sm font-medium text-stone-700">Duration</label>
+                <input
+                    id="{{ $category }}_duration_detail"
+                    name="duration_detail"
+                    type="text"
+                    value="{{ old('duration_detail') }}"
+                    class="w-full rounded-2xl border border-stone-300 px-4 py-3 text-stone-800"
+                    placeholder="Example: 4 hours"
+                    data-package-duration-detail
+                    @disabled(old('package_type') !== 'Day Trip')
+                >
+                <p class="mt-2 text-xs text-stone-500">Use this for day trips. Overnight packages use the package type as duration.</p>
             </div>
             <div>
                 <label for="{{ $category }}_minimum_age_mode" class="mb-2 block text-sm font-medium text-stone-700">Minimum Age</label>
@@ -112,6 +133,16 @@
             <div>
                 <label for="{{ $category }}_duration" class="mb-2 block text-sm font-medium text-stone-700">Duration</label>
                 <input id="{{ $category }}_duration" name="duration" type="text" value="{{ old('duration') }}" class="w-full rounded-2xl border border-stone-300 px-4 py-3 text-stone-800">
+            </div>
+        </div>
+        <div class="grid gap-4 lg:grid-cols-2">
+            <div>
+                <label for="{{ $category }}_pickup_location" class="mb-2 block text-sm font-medium text-stone-700">Pickup Location</label>
+                <input id="{{ $category }}_pickup_location" name="pickup_location" type="text" value="{{ old('pickup_location') }}" class="w-full rounded-2xl border border-stone-300 px-4 py-3 text-stone-800">
+            </div>
+            <div>
+                <label for="{{ $category }}_dropoff_location" class="mb-2 block text-sm font-medium text-stone-700">Dropoff Location</label>
+                <input id="{{ $category }}_dropoff_location" name="dropoff_location" type="text" value="{{ old('dropoff_location') }}" class="w-full rounded-2xl border border-stone-300 px-4 py-3 text-stone-800">
             </div>
         </div>
     @endif
@@ -217,16 +248,12 @@
         </div>
     </div>
     @endif
-    <div class="grid gap-4 lg:grid-cols-[1fr_1.2fr]">
+    <div class="grid gap-4 lg:grid-cols-1">
         <div>
             @if ($category === 'package')
                 <label for="{{ $category }}_gallery_image_files" class="mb-2 block text-sm font-medium text-stone-700">Upload gallery images</label>
                 <input id="{{ $category }}_gallery_image_files" name="gallery_image_files[]" type="file" accept=".jpg,.jpeg,.png,.webp" multiple class="w-full rounded-2xl border border-dashed border-stone-300 px-4 py-3 text-stone-700">
             @endif
-        </div>
-        <div>
-            <label for="{{ $category }}_description" class="mb-2 block text-sm font-medium text-stone-700">Description</label>
-            <textarea id="{{ $category }}_description" name="description" rows="3" class="w-full rounded-2xl border border-stone-300 px-4 py-3 text-stone-800">{{ old('description') }}</textarea>
         </div>
     </div>
     <div class="flex flex-wrap gap-6 pt-1">

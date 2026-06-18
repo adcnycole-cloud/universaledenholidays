@@ -1,5 +1,50 @@
 <x-layouts.app :title="$product->name.' | Universal Eden Holidays'">
-    <main class="mx-auto max-w-[120rem] px-6 py-10 lg:px-10" style="background-color: #ffffff;">
+    <style>
+        .price-info-tooltip {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .price-info-tooltip-bubble {
+            position: absolute;
+            left: 50%;
+            bottom: calc(100% + 0.6rem);
+            z-index: 20;
+            width: 14rem;
+            transform: translateX(-50%);
+            border-radius: 0.35rem;
+            background: rgba(17, 24, 39, 0.96);
+            padding: 0.55rem 0.7rem;
+            color: #ffffff;
+            font-size: 0.72rem;
+            line-height: 1.4;
+            text-align: center;
+            box-shadow: 0 12px 28px rgba(15, 23, 42, 0.22);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.18s ease;
+        }
+
+        .price-info-tooltip-bubble::after {
+            content: "";
+            position: absolute;
+            left: 50%;
+            top: 100%;
+            transform: translateX(-50%);
+            border-width: 0.42rem 0.38rem 0 0.38rem;
+            border-style: solid;
+            border-color: rgba(17, 24, 39, 0.96) transparent transparent transparent;
+        }
+
+        .price-info-tooltip:hover .price-info-tooltip-bubble,
+        .price-info-tooltip:focus-within .price-info-tooltip-bubble {
+            opacity: 1;
+        }
+    </style>
+        <div class="flex min-h-[calc(100vh-var(--app-header-offset,0px))] flex-col" style="background-color: #ffffff;">
+    <main class="mx-auto w-full px-6 py-10 lg:px-10" style="max-width: {{ $product->category === 'package' ? '92rem' : '120rem' }}; background-color: #ffffff;">
         <div class="mb-6 text-stone-500" style="font-size: 1.2rem; line-height: 1.25;">
             <a href="{{ route('home') }}" class="hover:text-sky-700">Home</a>
             <span class="mx-2">›</span>
@@ -25,16 +70,79 @@
                 ])
                 ->values();
             $serviceInclusions = is_array($product->service_inclusions) ? $product->service_inclusions : [];
+            $packageDetails = is_array($product->package_details) ? $product->package_details : [];
             $structuredServiceInclusions = collect($serviceInclusions)
                 ->filter(fn ($item) => is_array($item) && array_key_exists('value', $item))
                 ->values();
+            $tourHighlights = collect(is_array($product->tour_highlights) ? $product->tour_highlights : [])
+                ->map(fn ($item) => trim((string) $item))
+                ->filter(fn ($sentence) => $sentence !== '')
+                ->unique()
+                ->take(6)
+                ->values();
+
+            if ($tourHighlights->isEmpty()) {
+                $tourHighlights = collect([$product->summary, $product->description])
+                    ->filter(fn ($text) => filled($text))
+                    ->flatMap(function ($text) {
+                        return preg_split('/(?<=[.!?])\s+/', trim((string) $text)) ?: [];
+                    })
+                    ->map(fn ($sentence) => trim((string) $sentence))
+                    ->filter(fn ($sentence) => $sentence !== '')
+                    ->unique()
+                    ->take(4)
+                    ->values();
+            }
+            $minimumAgeLabel = filled($product->minimum_age) ? $product->minimum_age : 'No Limit';
+            $detailCards = [
+                [
+                    'icon' => 'code',
+                    'label' => 'Tour Code',
+                    'value' => $product->tour_code ?: 'To be confirmed',
+                ],
+                [
+                    'icon' => 'time',
+                    'label' => 'Departure Time',
+                    'value' => $product->departure_time ?: 'Anytime',
+                ],
+                [
+                    'icon' => 'age',
+                    'label' => 'Minimum Age',
+                    'value' => $minimumAgeLabel,
+                ],
+                [
+                    'icon' => 'calendar',
+                    'label' => 'Availability',
+                    'value' => 'Everyday',
+                ],
+                [
+                    'icon' => 'pickup',
+                    'label' => 'Pick Up',
+                    'value' => $product->pickup_location ?: $product->location ?: 'To be confirmed',
+                ],
+                [
+                    'icon' => 'dropoff',
+                    'label' => 'Drop Off',
+                    'value' => $product->dropoff_location ?: $product->location ?: 'To be confirmed',
+                ],
+                [
+                    'icon' => 'pax',
+                    'label' => 'Minimum Pax',
+                    'value' => '1 Person',
+                ],
+                [
+                    'icon' => 'duration',
+                    'label' => 'Duration',
+                    'value' => $product->duration ?: 'To be confirmed',
+                ],
+            ];
             $serviceInfoSections = collect([
                 'inclusion' => ['title' => 'Inclusion', 'items' => []],
                 'exclusion' => ['title' => 'Exclusion', 'items' => []],
                 'things_to_bring' => ['title' => 'Things to Bring', 'items' => []],
                 'important_notes' => ['title' => 'Important Notes', 'items' => []],
             ]);
-            $pushServiceSectionItem = function (string $key, string $value) use (&$serviceInfoSections) {
+            $pushServiceSectionItem = function (string $key, string $value, ?string $symbol = null) use (&$serviceInfoSections) {
                 $trimmedValue = trim($value);
 
                 if ($trimmedValue === '') {
@@ -42,11 +150,88 @@
                 }
 
                 $section = $serviceInfoSections->get($key);
-                $section['items'][] = $trimmedValue;
+                $defaultSymbol = match ($key) {
+                    'exclusion' => 'x',
+                    'things_to_bring', 'important_notes' => 'exclamation',
+                    default => 'tick',
+                };
+                $section['items'][] = [
+                    'symbol' => $symbol ?: $defaultSymbol,
+                    'text' => $trimmedValue,
+                ];
                 $serviceInfoSections->put($key, $section);
             };
 
-            if ($structuredServiceInclusions->isNotEmpty()) {
+            $packageDetailsSections = [
+                'inclusion' => collect($packageDetails['includes'] ?? [])
+                    ->map(function ($item) {
+                        $text = trim((string) ($item['text'] ?? $item['value'] ?? ''));
+
+                        if ($text === '') {
+                            return null;
+                        }
+
+                        return [
+                            'symbol' => ($item['symbol'] ?? 'tick') === 'round' ? 'round' : 'tick',
+                            'text' => $text,
+                        ];
+                    })
+                    ->filter()
+                    ->values(),
+                'exclusion' => collect($packageDetails['excludes'] ?? [])
+                    ->map(function ($item) {
+                        $text = trim((string) ($item['text'] ?? $item['value'] ?? ''));
+
+                        if ($text === '') {
+                            return null;
+                        }
+
+                        return [
+                            'symbol' => ($item['symbol'] ?? 'x') === 'round' ? 'round' : 'x',
+                            'text' => $text,
+                        ];
+                    })
+                    ->filter()
+                    ->values(),
+                'things_to_bring' => collect($packageDetails['things_to_bring'] ?? [])
+                    ->map(function ($item) {
+                        $text = trim((string) ($item['text'] ?? $item['value'] ?? ''));
+
+                        if ($text === '') {
+                            return null;
+                        }
+
+                        return [
+                            'symbol' => ($item['symbol'] ?? 'exclamation') === 'round' ? 'round' : 'exclamation',
+                            'text' => $text,
+                        ];
+                    })
+                    ->filter()
+                    ->values(),
+                'important_notes' => collect($packageDetails['important_notes'] ?? [])
+                    ->map(function ($item) {
+                        $text = trim((string) ($item['text'] ?? $item['value'] ?? ''));
+
+                        if ($text === '') {
+                            return null;
+                        }
+
+                        return [
+                            'symbol' => ($item['symbol'] ?? 'exclamation') === 'round' ? 'round' : 'exclamation',
+                            'text' => $text,
+                        ];
+                    })
+                    ->filter()
+                    ->values(),
+            ];
+
+            if (collect($packageDetailsSections)->flatten()->isNotEmpty()) {
+                foreach ($packageDetailsSections as $sectionKey => $items) {
+                    foreach ($items as $item) {
+                        $pushServiceSectionItem($sectionKey, $item['text'] ?? '', $item['symbol'] ?? null);
+                    }
+                }
+            } elseif ($structuredServiceInclusions->isNotEmpty()) {
                 foreach ($structuredServiceInclusions as $item) {
                     $label = trim((string) ($item['label'] ?? ''));
                     $value = trim((string) ($item['value'] ?? ''));
@@ -74,6 +259,69 @@
                 $pushServiceSectionItem('things_to_bring', 'Personal identification, comfortable clothing, and any trip-specific essentials confirmed after booking.');
                 $pushServiceSectionItem('important_notes', 'Timing, weather, and supplier arrangements may vary depending on the selected package and travel date.');
             }
+            $recommendedAttireItems = collect(is_array($product->recommended_attire) ? $product->recommended_attire : [])
+                ->map(fn ($item) => trim((string) $item))
+                ->filter(fn ($item) => $item !== '')
+                ->values();
+
+            if ($recommendedAttireItems->isEmpty()) {
+                $recommendedAttireItems = collect($serviceInfoSections->get('things_to_bring')['items'] ?? [])
+                    ->map(fn ($item) => trim((string) ($item['text'] ?? '')))
+                    ->filter(function (string $item) {
+                        $normalizedItem = Str::lower($item);
+
+                        foreach (['wear', 'clothing', 'cloth', 'shirt', 'pants', 'shoe', 'sandals', 'sneaker', 'jacket', 'hat', 'cap', 'attire', 'comfortable'] as $keyword) {
+                            if (str_contains($normalizedItem, $keyword)) {
+                                return true;
+                            }
+                        }
+
+                        return false;
+                    })
+                    ->values();
+            }
+
+            if ($recommendedAttireItems->isEmpty()) {
+                $recommendedAttireItems = collect([
+                    'Comfortable casual clothing suitable for the weather.',
+                    'Walking shoes or sandals with good grip.',
+                    'A cap or hat for sun protection during outdoor activities.',
+                    'A light jacket or spare change of clothes if conditions change.',
+                ]);
+            }
+            $thingsYouShouldKnowItems = collect(is_array($product->things_to_know) ? $product->things_to_know : [])
+                ->map(fn ($item) => trim((string) $item))
+                ->filter(fn ($item) => $item !== '')
+                ->values();
+
+            if ($thingsYouShouldKnowItems->isEmpty()) {
+                $thingsYouShouldKnowItems = collect($serviceInfoSections->get('important_notes')['items'] ?? [])
+                    ->map(fn ($item) => trim((string) ($item['text'] ?? '')))
+                    ->filter(fn (string $item) => trim($item) !== '')
+                    ->values();
+            }
+
+            if ($thingsYouShouldKnowItems->isEmpty()) {
+                $thingsYouShouldKnowItems = collect([
+                    'Schedules and visit timing may change depending on weather, traffic, or local operator arrangements.',
+                    'Please keep your phone reachable for last-minute coordination before departure.',
+                    'Some activities may involve light walking, waiting time, or shared timing with other guests.',
+                ]);
+            }
+
+            $usefulTravelTipsItems = collect(is_array($product->travel_tips) ? $product->travel_tips : [])
+                ->map(fn ($item) => trim((string) $item))
+                ->filter(fn ($item) => $item !== '')
+                ->values();
+
+            if ($usefulTravelTipsItems->isEmpty()) {
+                $usefulTravelTipsItems = collect([
+                    'Keep drinking water, sunscreen, and personal essentials ready before departure.',
+                    'Bring a power bank or fully charged phone for photos, contact, and navigation support.',
+                    'Carry some cash for snacks, entrance add-ons, or personal spending during the trip.',
+                    'Arrive a little earlier than the stated pickup time to avoid delays.',
+                ]);
+            }
             $itineraryItems = collect($product->itinerary_items ?? [])->filter()->values();
             $structuredItineraryItems = $itineraryItems
                 ->filter(fn ($item) => is_array($item) && array_key_exists('activity', $item))
@@ -85,6 +333,7 @@
                     'items' => $items->values(),
                 ])
                 ->values();
+            $groupedItineraryDayRows = $groupedItineraryDays->chunk(2)->values();
         @endphp
 
         @if ($isTransport)
@@ -93,15 +342,36 @@
                 <div>
                     <div class="flex h-full flex-col overflow-hidden rounded-[2rem] border border-stone-200 bg-white shadow-sm">
                         @if ($primaryImage)
-                            <button
-                                type="button"
-                                class="relative block w-full overflow-hidden text-left"
-                                data-image-preview-trigger="0"
-                                aria-label="Open main image preview"
-                            >
-                                <img src="{{ $primaryImage }}" alt="{{ $product->name }}" class="h-[26rem] w-full object-cover">
-                                <img src="{{ asset('images/UE.png') }}" alt="Universal Eden trademark" class="pointer-events-none absolute z-10 h-14 w-auto opacity-90" style="right: 0; bottom: 0; transform: translate(-0.75rem, -0.75rem);">
-                            </button>
+                            <div class="px-5 pt-5" data-product-carousel>
+                                <div class="relative mx-auto overflow-hidden bg-white" style="width: min(100%, 720px); height: 420px;">
+                                    <button
+                                        type="button"
+                                        class="relative block h-full w-full overflow-hidden text-left"
+                                        data-product-carousel-open
+                                        aria-label="Open image preview"
+                                    >
+                                        <img src="{{ $primaryImage }}" alt="{{ $product->name }}" class="h-full w-full object-cover" data-product-carousel-image>
+                                        <img src="{{ asset('images/UE.png') }}" alt="Universal Eden trademark" class="pointer-events-none absolute z-10 h-12 w-auto opacity-90" style="right: 0; bottom: 0; transform: translate(-0.75rem, -0.75rem);">
+                                    </button>
+                                    @if ($previewImages->count() > 1)
+                                        <button type="button" class="absolute left-4 top-1/2 z-20 inline-flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-slate-800/75 text-3xl leading-none text-white transition hover:bg-slate-900" data-product-carousel-prev aria-label="Previous image">&#8249;</button>
+                                        <button type="button" class="absolute right-4 top-1/2 z-20 inline-flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-slate-800/75 text-3xl leading-none text-white transition hover:bg-slate-900" data-product-carousel-next aria-label="Next image">&#8250;</button>
+                                    @endif
+                                </div>
+                                @if ($previewImages->count() > 1)
+                                    <div class="flex items-center justify-center gap-3 py-5" data-product-carousel-dots>
+                                        @foreach ($previewImages as $imageIndex => $image)
+                                            <button
+                                                type="button"
+                                                class="h-3 w-3 rounded-full border border-stone-400 bg-white transition"
+                                                data-product-carousel-dot="{{ $imageIndex }}"
+                                                aria-label="Show image {{ $imageIndex + 1 }}"
+                                                aria-pressed="{{ $imageIndex === 0 ? 'true' : 'false' }}"
+                                            ></button>
+                                        @endforeach
+                                    </div>
+                                @endif
+                            </div>
                         @else
                             <div class="flex h-[26rem] items-center justify-center bg-[linear-gradient(135deg,_#dbeafe,_#fff7ed_55%,_#ecfeff)] px-8 text-center">
                                 <div>
@@ -110,32 +380,13 @@
                                 </div>
                             </div>
                         @endif
-                        @if ($thumbnailImages->isNotEmpty())
-                            <div class="grid grid-cols-2 gap-3 border-t border-stone-200 bg-stone-50 p-4 md:grid-cols-4">
-                                @foreach ($thumbnailImages as $index => $image)
-                                    <button
-                                        type="button"
-                                        class="relative overflow-hidden rounded-[1.25rem] text-left"
-                                        data-image-preview-trigger="{{ $index + 1 }}"
-                                        aria-label="Open gallery image {{ $index + 2 }}"
-                                    >
-                                        <img src="{{ $image }}" alt="{{ $product->name }} gallery image {{ $index + 2 }}" class="h-28 w-full object-cover">
-                                        <img src="{{ asset('images/UE.png') }}" alt="Universal Eden trademark" class="pointer-events-none absolute z-10 h-6 w-auto opacity-90" style="right: 0; bottom: 0; transform: translate(-0.35rem, -0.35rem);">
-                                        @if ($remainingGalleryCount > 0 && $loop->last)
-                                            <div class="absolute inset-0 flex items-center justify-center bg-black/45 text-2xl font-semibold text-white">
-                                                +{{ $remainingGalleryCount }}
-                                            </div>
-                                @endif
-                                    </button>
-                                @endforeach
-                            </div>
-                        @endif
                         <div class="flex-1 p-8">
                             <p class="text-sm uppercase tracking-[0.3em] text-sky-700">{{ ucfirst($product->category) }}</p>
                             <h1 class="mt-3 font-['Prata'] text-4xl text-stone-900 md:text-5xl">{{ $product->name }}</h1>
                             <p class="mt-4 text-sm leading-7 text-stone-500">View the gallery for this transport option and review the service details in the card beside it.</p>
                         </div>
                     </div>
+
                 </div>
             </div>
 
@@ -171,15 +422,36 @@
                 <div>
                     <div class="overflow-hidden" style="background: #ffffff;">
                         @if ($primaryImage)
-                            <button
-                                type="button"
-                                class="relative block w-full overflow-hidden text-left"
-                                data-image-preview-trigger="0"
-                                aria-label="Open main image preview"
-                            >
-                                <img src="{{ $primaryImage }}" alt="{{ $product->name }}" class="h-[26rem] w-full object-cover">
-                                <img src="{{ asset('images/UE.png') }}" alt="Universal Eden trademark" class="pointer-events-none absolute z-10 h-14 w-auto opacity-90" style="right: 0; bottom: 0; transform: translate(-0.75rem, -0.75rem);">
-                            </button>
+                            <div class="px-5 pt-5" data-product-carousel>
+                                <div class="relative mx-auto overflow-hidden bg-white" style="width: min(100%, 720px); height: 420px;">
+                                    <button
+                                        type="button"
+                                        class="relative block h-full w-full overflow-hidden text-left"
+                                        data-product-carousel-open
+                                        aria-label="Open image preview"
+                                    >
+                                        <img src="{{ $primaryImage }}" alt="{{ $product->name }}" class="h-full w-full object-cover" data-product-carousel-image>
+                                        <img src="{{ asset('images/UE.png') }}" alt="Universal Eden trademark" class="pointer-events-none absolute z-10 h-12 w-auto opacity-90" style="right: 0; bottom: 0; transform: translate(-0.75rem, -0.75rem);">
+                                    </button>
+                                    @if ($previewImages->count() > 1)
+                                        <button type="button" class="absolute left-4 top-1/2 z-20 inline-flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-slate-800/75 text-3xl leading-none text-white transition hover:bg-slate-900" data-product-carousel-prev aria-label="Previous image">&#8249;</button>
+                                        <button type="button" class="absolute right-4 top-1/2 z-20 inline-flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-slate-800/75 text-3xl leading-none text-white transition hover:bg-slate-900" data-product-carousel-next aria-label="Next image">&#8250;</button>
+                                    @endif
+                                </div>
+                                @if ($previewImages->count() > 1)
+                                    <div class="flex items-center justify-center gap-3 py-5" data-product-carousel-dots>
+                                        @foreach ($previewImages as $imageIndex => $image)
+                                            <button
+                                                type="button"
+                                                class="h-3 w-3 rounded-full border border-stone-400 bg-white transition"
+                                                data-product-carousel-dot="{{ $imageIndex }}"
+                                                aria-label="Show image {{ $imageIndex + 1 }}"
+                                                aria-pressed="{{ $imageIndex === 0 ? 'true' : 'false' }}"
+                                            ></button>
+                                        @endforeach
+                                    </div>
+                                @endif
+                            </div>
                         @else
                             <div class="flex h-[26rem] items-center justify-center bg-[linear-gradient(135deg,_#dbeafe,_#fff7ed_55%,_#ecfeff)] px-8 text-center">
                                 <div>
@@ -188,67 +460,80 @@
                                 </div>
                             </div>
                         @endif
-                        @if ($thumbnailImages->isNotEmpty())
-                            <div class="grid grid-cols-2 gap-3 border-t border-stone-200 bg-white p-4 md:grid-cols-4">
-                                @foreach ($thumbnailImages as $index => $image)
-                                    <button
-                                        type="button"
-                                        class="relative overflow-hidden rounded-[1.25rem] text-left"
-                                        data-image-preview-trigger="{{ $index + 1 }}"
-                                        aria-label="Open gallery image {{ $index + 2 }}"
-                                    >
-                                        <img src="{{ $image }}" alt="{{ $product->name }} gallery image {{ $index + 2 }}" class="h-28 w-full object-cover">
-                                        <img src="{{ asset('images/UE.png') }}" alt="Universal Eden trademark" class="pointer-events-none absolute z-10 h-6 w-auto opacity-90" style="right: 0; bottom: 0; transform: translate(-0.35rem, -0.35rem);">
-                                        @if ($remainingGalleryCount > 0 && $loop->last)
-                                            <div class="absolute inset-0 flex items-center justify-center bg-black/45 text-2xl font-semibold text-white">
-                                                +{{ $remainingGalleryCount }}
-                                            </div>
-                                        @endif
-                                    </button>
-                                @endforeach
-                            </div>
-                        @endif
-                        <div class="p-8">
-                            <p class="text-sm uppercase tracking-[0.3em] text-sky-700">{{ ucfirst($product->category) }}</p>
-                            <h1 class="mt-3 font-['Prata'] text-4xl text-stone-900 md:text-5xl">{{ $product->name }}</h1>
-                            <p class="mt-4 max-w-3xl text-base leading-8 text-stone-600">{{ $product->description }}</p>
-                            <div class="mt-8 grid gap-0 border-y border-stone-200 md:grid-cols-3">
-                                <div class="p-5 md:border-r md:border-stone-200">
-                                    <p class="text-sm text-stone-500">Location</p>
-                                    <p class="mt-2 text-lg font-semibold text-stone-900">{{ $product->location }}</p>
-                                </div>
-                                <div class="border-t border-stone-200 p-5 md:border-t-0 md:border-r md:border-stone-200">
-                                    <p class="text-sm text-stone-500">Duration</p>
-                                    <p class="mt-2 text-lg font-semibold text-stone-900">{{ $product->duration }}</p>
-                                </div>
-                                <div class="border-t border-stone-200 p-5 md:border-t-0">
-                                    <p class="text-sm text-stone-500">Capacity</p>
-                                    <p class="mt-2 text-lg font-semibold text-stone-900">{{ $product->capacity ?? 'Flexible' }}</p>
-                                </div>
-                            </div>
-                        </div>
                     </div>
                 </div>
             </div>
 
             <aside class="space-y-6">
                 <section class="p-0" style="background: #ffffff;">
-                    <div class="space-y-0 text-sm text-stone-700">
-                        <div class="flex justify-between gap-4 border-b border-stone-200 py-4"><span class="font-semibold">Description</span><span class="text-right">{{ $product->name }}</span></div>
-                        <div class="flex justify-between gap-4 border-b border-stone-200 py-4"><span class="font-semibold">Region</span><span class="text-right">{{ $product->location }}</span></div>
-                        <div class="flex justify-between gap-4 border-b border-stone-200 py-4"><span class="font-semibold">Duration</span><span class="text-right">{{ $product->duration }}</span></div>
-                        <div class="flex justify-between gap-4 border-b border-stone-200 py-4"><span class="font-semibold">Minimum</span><span class="text-right">1 Pax</span></div>
-                        <div class="flex justify-between gap-4 border-b border-stone-200 py-4"><span class="font-semibold">Availability</span><span class="text-right">Daily / Subject to booking</span></div>
+                    <div class="border-b border-stone-200 pb-6">
+                        <p class="text-sm uppercase tracking-[0.3em] text-sky-700">{{ ucfirst($product->category) }}</p>
+                        <h1 class="mt-3 font-['Prata'] text-4xl text-stone-900 md:text-5xl">{{ $product->name }}</h1>
                     </div>
 
-                    <div class="mt-6 border-b border-stone-200 pb-6">
-                        <div>
-                            <p class="text-sm uppercase tracking-[0.3em] text-emerald-700">Starting From</p>
-                            @if ($product->has_active_discount)
-                                <p class="mt-2 text-sm font-medium text-stone-500 line-through">RM {{ number_format($originalStartingPrice, 2) }}</p>
-                            @endif
-                            <p class="mt-2 text-4xl font-bold text-emerald-700">RM {{ number_format($startingPrice, 2) }}</p>
-                            <p class="mt-2 text-sm text-stone-500">Malaysia adult rate</p>
+                    <div class="mt-6 overflow-hidden rounded-[1.2rem] border" style="border-color: #455499;">
+                        <div class="grid overflow-hidden md:grid-cols-[1fr_13rem]">
+                            <div class="flex items-center gap-4 bg-white px-6 py-5">
+                                <div class="flex h-12 w-12 items-center justify-center rounded-xl text-white" style="background: #455499; box-shadow: 0 10px 18px rgba(69,84,153,0.28);">
+                                    <svg viewBox="0 0 24 24" class="h-5 w-5" fill="currentColor" aria-hidden="true"><path d="M10.59 13.41 9.17 12a1 1 0 0 0-1.41 1.41l2.12 2.12a1 1 0 0 0 1.41 0l5.66-5.66A1 1 0 0 0 15.54 8.46z"/><path d="M12 2a3 3 0 0 0-3 3v1H7a3 3 0 0 0-3 3v3.59a3 3 0 0 0 .88 2.12l5.41 5.41a3 3 0 0 0 2.12.88H17a3 3 0 0 0 3-3v-7.59a3 3 0 0 0-.88-2.12l-6-6A3 3 0 0 0 12 2zm-1 4V5a1 1 0 0 1 2 0v1z"/></svg>
+                                </div>
+                                <div>
+                                    <p class="text-xs font-semibold uppercase tracking-[0.24em] text-stone-500">Starting From</p>
+                                    @if ($product->has_active_discount)
+                                        <p class="mt-1 text-sm font-medium text-stone-400 line-through">MYR {{ number_format($originalStartingPrice, 2) }}</p>
+                                    @endif
+                                    <div class="mt-1 flex items-end gap-2">
+                                        <span class="text-3xl font-bold leading-none" style="color: #455499;">MYR {{ number_format($startingPrice, 0) }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex items-center justify-center gap-2 px-5 py-5 text-center text-sm font-semibold uppercase tracking-[0.12em] text-white" style="background: #455499;">
+                                <span class="price-info-tooltip">
+                                    <span class="inline-flex h-5 w-5 items-center justify-center">
+                                        <svg viewBox="0 0 24 24" class="h-5 w-5 shrink-0" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm1 15h-2v-6h2zm0-8h-2V7h2z"/></svg>
+                                    </span>
+                                    <span class="price-info-tooltip-bubble">The initial price based on 1 adult with the lowest price in low season</span>
+                                </span>
+                                <span>Price Value Guarantee</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 rounded-[1.5rem] border border-stone-200 bg-white px-6 py-5">
+                        <div class="grid gap-x-10 gap-y-5 md:grid-cols-2 xl:grid-cols-3">
+                            @foreach ($detailCards as $detail)
+                                <div class="flex items-start gap-3">
+                                    <span class="mt-0.5 inline-flex h-7 w-7 items-center justify-center text-[#8cb000]">
+                                        @switch($detail['icon'])
+                                            @case('code')
+                                                <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 7h16"/><path d="M7 4h10"/><path d="M6 12h12"/><path d="M5 17h14"/><path d="M8 20h8"/></svg>
+                                                @break
+                                            @case('time')
+                                                <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="5" y="4" width="14" height="14" rx="2"/><path d="M8 2v4"/><path d="M16 2v4"/><path d="M5 9h14"/></svg>
+                                                @break
+                                            @case('age')
+                                                <svg viewBox="0 0 24 24" class="h-5 w-5" fill="currentColor" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M5 20a7 7 0 0 1 14 0z"/></svg>
+                                                @break
+                                            @case('calendar')
+                                                <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4"/><path d="M8 3v4"/><path d="M3 11h18"/><path d="M8 15h.01"/><path d="M12 15h.01"/><path d="M16 15h.01"/></svg>
+                                                @break
+                                            @case('pickup')
+                                            @case('dropoff')
+                                                <svg viewBox="0 0 24 24" class="h-5 w-5" fill="currentColor" aria-hidden="true"><path d="M12 22s6-5.69 6-11a6 6 0 1 0-12 0c0 5.31 6 11 6 11zm0-8a3 3 0 1 1 0-6 3 3 0 0 1 0 6z"/></svg>
+                                                @break
+                                            @case('pax')
+                                                <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 20a8 8 0 0 1 16 0"/></svg>
+                                                @break
+                                            @default
+                                                <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l2.5 2.5"/></svg>
+                                        @endswitch
+                                    </span>
+                                    <div class="text-[1rem] leading-7 text-stone-700">
+                                        <span class="font-semibold text-stone-800">{{ $detail['label'] }} :</span>
+                                        <span>{{ $detail['value'] }}</span>
+                                    </div>
+                                </div>
+                            @endforeach
                         </div>
                     </div>
 
@@ -258,121 +543,21 @@
                         <a href="{{ route('booking.create', ['product_id' => $product->id, 'action' => 'instant_book']) }}" class="rounded-full bg-rose-500 px-5 py-3 text-sm font-semibold text-white transition hover:bg-rose-600">Instant Book</a>
                     </div>
                 </section>
-
-                <section class="border-t border-stone-200 pt-8" data-package-details style="background: #ffffff;">
-                    <h2 class="font-['Oswald'] text-3xl font-bold uppercase tracking-[0.08em] text-stone-900">Package Details</h2>
-                    <div class="mt-6 grid gap-0 border-y border-stone-200 md:grid-cols-4" style="background-color: #455499;">
-                        @foreach ($serviceInfoSections as $key => $section)
-                            <button
-                                type="button"
-                                class="px-4 py-4 text-center text-xs font-semibold uppercase tracking-[0.22em] transition"
-                                style="background-color: #455499; color: #111111; border-right: 1px solid rgba(255,255,255,0.35);"
-                                data-package-detail-tab="{{ $key }}"
-                                aria-pressed="{{ $loop->first ? 'true' : 'false' }}"
-                            >
-                                {{ $key === 'inclusion' ? 'Includes' : ($key === 'exclusion' ? 'Excludes' : $section['title']) }}
-                            </button>
-                        @endforeach
-                    </div>
-                    <div class="mt-10 border-t border-stone-200 pt-6">
-                        @foreach ($serviceInfoSections as $key => $section)
-                            <div @class(['hidden' => !$loop->first]) data-package-detail-panel="{{ $key }}">
-                                @if (!empty($section['items']))
-                                    <ul class="space-y-3 text-sm leading-8 text-stone-600">
-                                        @foreach ($section['items'] as $entry)
-                                            <li class="flex items-center gap-3">
-                                                <span class="text-base font-bold leading-none text-stone-500">{{ $key === 'exclusion' ? '•' : '✓' }}</span>
-                                                <span>{{ $entry }}</span>
-                                            </li>
-                                        @endforeach
-                                    </ul>
-                                @else
-                                    <p class="text-sm leading-7 text-stone-500">Details will be confirmed with this package.</p>
-                                @endif
-                            </div>
-                        @endforeach
-                    </div>
-                </section>
             </aside>
         </section>
         @endif
 
         @if ($product->category !== 'transport')
-            @if ($itineraryItems->isNotEmpty())
-                <section class="mt-8 w-full border-t border-stone-200 pt-8">
-                        <h2 class="text-3xl font-semibold text-stone-900">Package Itinerary</h2>
-                        @if ($structuredItineraryItems->isNotEmpty())
-                            <div class="mt-6 w-full border-y border-stone-200">
-                                @foreach ($groupedItineraryDays as $day)
-                                    <section class="min-w-0 {{ $loop->last ? '' : 'border-b border-stone-200' }}" data-itinerary-day>
-                                        <button
-                                            type="button"
-                                            class="flex w-full items-center justify-between gap-4 px-4 py-4 text-left transition hover:bg-stone-50"
-                                            data-itinerary-toggle
-                                            aria-expanded="{{ $loop->first ? 'true' : 'false' }}"
-                                        >
-                                            <h3 class="text-xl font-semibold text-stone-900">{{ $day['label'] }}</h3>
-                                            <div class="flex items-center gap-3">
-                                                <span class="rounded-full bg-emerald-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-emerald-700">
-                                                    {{ $day['items']->count() }} stop{{ $day['items']->count() === 1 ? '' : 's' }}
-                                                </span>
-                                                <span class="text-lg leading-none text-stone-500" data-itinerary-icon>{{ $loop->first ? '−' : '+' }}</span>
-                                            </div>
-                                        </button>
-                                        <div class="{{ $loop->first ? '' : 'hidden' }}" data-itinerary-panel>
-                                            <div class="border-t border-stone-200 bg-white">
-                                                <div class="max-w-[58rem] overflow-x-auto">
-                                                    <table class="w-full min-w-0 table-fixed text-sm">
-                                                    <colgroup>
-                                                        <col style="width: 120px;">
-                                                        <col style="width: auto;">
-                                                    </colgroup>
-                                                    <thead class="bg-stone-100/80 text-stone-600">
-                                                        <tr>
-                                                            <th class="px-4 py-3 text-center text-xs font-semibold uppercase tracking-[0.18em]">Time</th>
-                                                            <th class="px-4 py-3 text-center text-xs font-semibold uppercase tracking-[0.18em]">Activity</th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody class="bg-white text-stone-700">
-                                                        @foreach ($day['items'] as $item)
-                                                            <tr class="{{ $loop->last ? '' : 'border-b border-stone-200' }}">
-                                                                <td class="px-4 py-3 text-center align-top font-semibold text-sky-700 whitespace-nowrap">
-                                                                    {{ filled($item['time'] ?? null) ? $item['time'] : 'Flexible time' }}
-                                                                </td>
-                                                                <td class="px-4 py-3 text-justify leading-6">
-                                                                    {{ $item['activity'] ?? '' }}
-                                                                </td>
-                                                            </tr>
-                                                        @endforeach
-                                                    </tbody>
-                                                    </table>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </section>
-                                @endforeach
-                            </div>
-                        @else
-                            <div class="mt-6 w-full border-y border-stone-200">
-                                @foreach ($itineraryItems as $item)
-                                    <div class="{{ $loop->last ? '' : 'border-b border-stone-200' }} px-5 py-4 text-sm leading-7 text-stone-700">
-                                        {{ $item }}
-                                    </div>
-                                @endforeach
-                            </div>
-                        @endif
-                </section>
-            @endif
             <section class="mt-8 rounded-[2rem] border border-stone-200 bg-white p-6 shadow-sm">
                 <div class="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
                     <div>
-                        <h2 class="text-3xl font-semibold text-stone-900">Market Pricing</h2>
+                        <h2 class="text-3xl font-semibold text-stone-900">2026 Pricing</h2>
                         <p class="mt-2 text-sm leading-6 text-stone-600">Malaysia and international price lists are shown side by side for easier comparison.</p>
                     </div>
                 </div>
                 <div class="mt-6 grid gap-6 lg:grid-cols-2">
-                    <div class="overflow-hidden rounded-3xl border border-blue-200">
-                        <div class="bg-blue-50 px-5 py-4 text-center text-lg font-semibold text-blue-700">Malaysia Market Pricing</div>
+                    <div class="overflow-hidden border bg-white" style="border-color: #455499;">
+                        <div class="px-5 py-4 text-center text-lg font-semibold" style="background-color: rgba(69, 84, 153, 0.12); color: #455499;">Malaysian Price</div>
                         <table class="min-w-full text-left text-sm">
                             <thead class="bg-stone-100 text-stone-700">
                                 <tr>
@@ -384,21 +569,29 @@
                                 @foreach ($malaysiaPricingTiers as $tier)
                                     <tr class="border-t border-stone-200">
                                         <td class="px-5 py-4">
-                                            <div class="font-semibold text-sky-700">Adult / Child</div>
-                                            <div class="mt-1 text-stone-500">{{ $tier['label'] }}</div>
+                                            <div class="text-[11px] font-semibold uppercase tracking-[0.16em] text-stone-400">Group Size</div>
+                                            <div class="mt-2 font-semibold" style="color: #455499;">{{ $tier['label'] }}</div>
                                         </td>
                                         <td class="px-5 py-4">
                                             @if ($tier['enquire'])
                                                 <div class="font-semibold text-stone-900">Please Enquire</div>
                                             @else
-                                                <div class="font-semibold text-stone-900">MYR {{ number_format($tier['adult_price'], 2) }}</div>
-                                                @if (($tier['original_adult_price'] ?? null) !== null && $tier['original_adult_price'] > $tier['adult_price'])
-                                                    <div class="mt-1 text-xs text-stone-400 line-through">MYR {{ number_format($tier['original_adult_price'], 2) }}</div>
-                                                @endif
-                                                <div class="mt-1 font-semibold text-rose-600">{{ number_format($tier['child_price'], 2) }}</div>
-                                                @if (($tier['original_child_price'] ?? null) !== null && $tier['original_child_price'] > $tier['child_price'])
-                                                    <div class="mt-1 text-xs text-stone-400 line-through">MYR {{ number_format($tier['original_child_price'], 2) }}</div>
-                                                @endif
+                                                <div class="grid gap-3 md:grid-cols-2">
+                                                    <div class="rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3">
+                                                        <div class="text-[11px] font-semibold uppercase tracking-[0.16em] text-stone-400">Adult</div>
+                                                        <div class="mt-1 font-semibold text-stone-900">MYR {{ number_format($tier['adult_price'], 2) }}</div>
+                                                        @if (($tier['original_adult_price'] ?? null) !== null && $tier['original_adult_price'] > $tier['adult_price'])
+                                                            <div class="mt-1 text-xs text-stone-400 line-through">MYR {{ number_format($tier['original_adult_price'], 2) }}</div>
+                                                        @endif
+                                                    </div>
+                                                    <div class="rounded-2xl border px-4 py-3" style="border-color: #f4d35e; background-color: #fff8db;">
+                                                        <div class="text-[11px] font-semibold uppercase tracking-[0.16em] text-stone-400">Child / Kid</div>
+                                                        <div class="mt-1 font-semibold" style="color: #111111;">MYR {{ number_format($tier['child_price'], 2) }}</div>
+                                                        @if (($tier['original_child_price'] ?? null) !== null && $tier['original_child_price'] > $tier['child_price'])
+                                                            <div class="mt-1 text-xs line-through" style="color: #6b7280;">MYR {{ number_format($tier['original_child_price'], 2) }}</div>
+                                                        @endif
+                                                    </div>
+                                                </div>
                                             @endif
                                         </td>
                                     </tr>
@@ -407,10 +600,10 @@
                         </table>
                     </div>
 
-                    <div class="overflow-hidden rounded-3xl border border-amber-200">
-                        <div class="bg-amber-50 px-5 py-4 text-center text-lg font-semibold text-amber-700">International Market Pricing</div>
+                    <div class="overflow-hidden border bg-white" style="border-color: #22c55e;">
+                        <div class="px-5 py-4 text-center text-lg font-semibold" style="background-color: rgba(34, 197, 94, 0.18); color: #15803d;">Non-Malaysian Price</div>
                         <table class="min-w-full text-left text-sm">
-                            <thead class="bg-stone-100 text-stone-700">
+                            <thead class="text-stone-700" style="background-color: #f3f4f6;">
                                 <tr>
                                     <th class="px-5 py-3">Group Size</th>
                                     <th class="px-5 py-3">Price Per Person</th>
@@ -420,21 +613,29 @@
                                 @foreach ($internationalPricingTiers as $tier)
                                     <tr class="border-t border-stone-200">
                                         <td class="px-5 py-4">
-                                            <div class="font-semibold text-sky-700">Adult / Child</div>
-                                            <div class="mt-1 text-stone-500">{{ $tier['label'] }}</div>
+                                            <div class="text-[11px] font-semibold uppercase tracking-[0.16em] text-stone-400">Group Size</div>
+                                            <div class="mt-2 font-semibold" style="color: #15803d;">{{ $tier['label'] }}</div>
                                         </td>
                                         <td class="px-5 py-4">
                                             @if ($tier['enquire'])
                                                 <div class="font-semibold text-stone-900">Please Enquire</div>
                                             @else
-                                                <div class="font-semibold text-stone-900">MYR {{ number_format($tier['adult_price'], 2) }}</div>
-                                                @if (($tier['original_adult_price'] ?? null) !== null && $tier['original_adult_price'] > $tier['adult_price'])
-                                                    <div class="mt-1 text-xs text-stone-400 line-through">MYR {{ number_format($tier['original_adult_price'], 2) }}</div>
-                                                @endif
-                                                <div class="mt-1 font-semibold text-rose-600">{{ number_format($tier['child_price'], 2) }}</div>
-                                                @if (($tier['original_child_price'] ?? null) !== null && $tier['original_child_price'] > $tier['child_price'])
-                                                    <div class="mt-1 text-xs text-stone-400 line-through">MYR {{ number_format($tier['original_child_price'], 2) }}</div>
-                                                @endif
+                                                <div class="grid gap-3 md:grid-cols-2">
+                                                    <div class="rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3">
+                                                        <div class="text-[11px] font-semibold uppercase tracking-[0.16em] text-stone-400">Adult</div>
+                                                        <div class="mt-1 font-semibold text-stone-900">MYR {{ number_format($tier['adult_price'], 2) }}</div>
+                                                        @if (($tier['original_adult_price'] ?? null) !== null && $tier['original_adult_price'] > $tier['adult_price'])
+                                                            <div class="mt-1 text-xs text-stone-400 line-through">MYR {{ number_format($tier['original_adult_price'], 2) }}</div>
+                                                        @endif
+                                                    </div>
+                                                    <div class="rounded-2xl border px-4 py-3" style="border-color: #f4d35e; background-color: #fff8db;">
+                                                        <div class="text-[11px] font-semibold uppercase tracking-[0.16em] text-stone-400">Child / Kid</div>
+                                                        <div class="mt-1 font-semibold" style="color: #111111;">MYR {{ number_format($tier['child_price'], 2) }}</div>
+                                                        @if (($tier['original_child_price'] ?? null) !== null && $tier['original_child_price'] > $tier['child_price'])
+                                                            <div class="mt-1 text-xs line-through" style="color: #6b7280;">MYR {{ number_format($tier['original_child_price'], 2) }}</div>
+                                                        @endif
+                                                    </div>
+                                                </div>
                                             @endif
                                         </td>
                                     </tr>
@@ -445,36 +646,381 @@
                 </div>
             </section>
 
+            <section class="mt-4 w-full min-w-0 overflow-hidden" data-itinerary-section>
+                        <button
+                            type="button"
+                            class="flex w-full items-center justify-between gap-4 rounded-[1rem] border border-stone-300 bg-stone-50/80 px-5 py-5 text-left"
+                            data-itinerary-toggle
+                            aria-expanded="false"
+                        >
+                            <span class="flex items-center gap-4">
+                                <span class="inline-flex h-8 w-8 items-center justify-center rounded-full text-white" style="background: #455499;">
+                                    <svg viewBox="0 0 24 24" class="h-4 w-4" fill="currentColor" aria-hidden="true"><path d="M9.55 16.6 4.8 11.85l1.4-1.4 3.35 3.35 8.25-8.25 1.4 1.4z"/></svg>
+                                </span>
+                                <span class="text-sm font-semibold uppercase tracking-[0.18em] text-slate-800">Itinerary</span>
+                            </span>
+                            <span class="inline-flex text-stone-400 transition-[transform,color] duration-200" data-itinerary-icon>
+                                <svg viewBox="0 0 20 20" class="h-5 w-5" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 11.18l3.71-3.95a.75.75 0 1 1 1.1 1.02l-4.25 4.52a.75.75 0 0 1-1.1 0L5.21 8.27a.75.75 0 0 1 .02-1.06Z" clip-rule="evenodd"/></svg>
+                            </span>
+                        </button>
+                        @if ($structuredItineraryItems->isNotEmpty())
+                            <div class="mt-4 hidden w-full min-w-0 overflow-hidden" data-itinerary-panel>
+                                <div class="grid gap-5 justify-items-center xl:gap-6">
+                                @foreach ($groupedItineraryDayRows as $dayRow)
+                                    <div class="flex w-full flex-wrap justify-center items-start gap-5 xl:gap-6">
+                                    @foreach ($dayRow as $day)
+                                    <section class="max-w-full min-w-0 overflow-hidden border border-[#d8e3f7] bg-white shadow-[0_16px_34px_rgba(15,23,42,0.08)]" style="width: 600px; max-width: 600px; flex: 0 0 600px;">
+                                        <div class="flex w-full items-center justify-between gap-2 border-b border-[#d8e3f7] px-3 py-3" style="background: linear-gradient(135deg, #f8fbff 0%, #edf4ff 100%);">
+                                            <h3 class="text-base font-semibold text-stone-900" style="font-family: 'Oswald', sans-serif; letter-spacing: 0.04em;">{{ $day['label'] }}</h3>
+                                            <div class="flex items-center gap-3">
+                                                <span class="rounded-full px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-[0.12em] text-emerald-700" style="background: linear-gradient(180deg, #ecfdf5 0%, #d1fae5 100%); border: 1px solid rgba(16,185,129,0.18);">
+                                                    {{ $day['items']->count() }} stop{{ $day['items']->count() === 1 ? '' : 's' }}
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <div class="w-full min-w-0 px-0 pb-0 pt-0">
+                                            <div class="w-full min-w-0 overflow-hidden bg-white">
+                                                <div class="w-full min-w-0 overflow-hidden">
+                                                    <table class="w-full min-w-0 table-fixed border-collapse text-[0.9rem]" style="width: 600px; max-width: 600px;">
+                                                    <colgroup>
+                                                        <col style="width: 124px;">
+                                                        <col style="width: auto;">
+                                                    </colgroup>
+                                                    <thead class="text-white" style="background: linear-gradient(135deg, #315fbd 0%, #244b98 100%);">
+                                                        <tr>
+                                                            <th class="border-b border-[#244b98] px-3.5 py-1.5 text-center text-[0.7rem] font-semibold uppercase tracking-[0.12em]">Time</th>
+                                                            <th class="border-b border-[#244b98] px-6 py-1.5 text-left text-[0.7rem] font-semibold uppercase tracking-[0.12em]">Activity</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody class="bg-white text-stone-700">
+                                                        @foreach ($day['items'] as $item)
+                                                            <tr class="{{ $loop->last ? '' : 'border-b border-[#e8eef6]' }}">
+                                                                <td class="px-3.5 py-2 text-center align-top text-[0.7rem] font-semibold text-sky-700 whitespace-nowrap">
+                                                                    {{ filled($item['time'] ?? null) ? $item['time'] : 'Flexible time' }}
+                                                                </td>
+                                                                <td class="px-6 py-2 text-left text-[0.7rem] leading-4 text-stone-700" style="word-break: break-word; overflow-wrap: anywhere;">
+                                                                    {{ $item['activity'] ?? '' }}
+                                                                </td>
+                                                            </tr>
+                                                        @endforeach
+                                                    </tbody>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </section>
+                                    @endforeach
+                                    </div>
+                                @endforeach
+                                </div>
+                            </div>
+                        @elseif ($itineraryItems->isNotEmpty())
+                            <div class="mt-4 hidden w-full min-w-0 overflow-hidden" data-itinerary-panel>
+                                <div class="w-full overflow-hidden rounded-[1.5rem] border border-stone-200">
+                                    @foreach ($itineraryItems as $item)
+                                        <div class="{{ $loop->last ? '' : 'border-b border-stone-200' }} px-5 py-4 text-sm leading-7 text-stone-700">
+                                            {{ $item }}
+                                        </div>
+                                    @endforeach
+                                </div>
+                            </div>
+                        @else
+                            <div class="mt-4 hidden w-full min-w-0 overflow-hidden" data-itinerary-panel>
+                                <div class="rounded-[1.5rem] border border-stone-200 bg-white px-5 py-5 text-sm leading-7 text-stone-500">
+                                    Detailed itinerary will be updated soon for this product.
+                                </div>
+                            </div>
+                        @endif
+            </section>
+
+            <section class="mt-4 w-full min-w-0 overflow-hidden" data-package-details-section>
+                <button
+                    type="button"
+                    class="flex w-full items-center justify-between gap-4 rounded-[1rem] border border-stone-300 bg-stone-50/80 px-5 py-5 text-left"
+                    data-package-details-toggle
+                    aria-expanded="false"
+                >
+                    <span class="flex items-center gap-4">
+                        <span class="inline-flex h-8 w-8 items-center justify-center rounded-full text-white" style="background: #455499;">
+                            <svg viewBox="0 0 24 24" class="h-4 w-4" fill="currentColor" aria-hidden="true"><path d="M9.55 16.6 4.8 11.85l1.4-1.4 3.35 3.35 8.25-8.25 1.4 1.4z"/></svg>
+                        </span>
+                        <span class="text-sm font-semibold uppercase tracking-[0.18em] text-slate-800">Package Details</span>
+                    </span>
+                    <span class="inline-flex text-stone-400 transition-[transform,color] duration-200" data-package-details-icon>
+                        <svg viewBox="0 0 20 20" class="h-5 w-5" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 11.18l3.71-3.95a.75.75 0 1 1 1.1 1.02l-4.25 4.52a.75.75 0 0 1-1.1 0L5.21 8.27a.75.75 0 0 1 .02-1.06Z" clip-rule="evenodd"/></svg>
+                    </span>
+                </button>
+                <div class="mt-4 hidden" data-package-details-panel>
+                    <section data-package-details style="background: #ffffff;">
+                        <div class="grid gap-0 border-y border-stone-200 md:grid-cols-4" style="background-color: #455499;">
+                            @foreach ($serviceInfoSections as $key => $section)
+                                <button
+                                    type="button"
+                                    class="px-4 py-4 text-center text-xs font-semibold uppercase tracking-[0.22em] transition"
+                                    style="background-color: {{ $loop->first ? '#ffffff' : '#455499' }}; color: {{ $loop->first ? '#111111' : '#ffffff' }}; border: 1px solid rgba(0,0,0,0.65);"
+                                    data-package-detail-tab="{{ $key }}"
+                                    aria-pressed="{{ $loop->first ? 'true' : 'false' }}"
+                                >
+                                    {{ $key === 'inclusion' ? 'Includes' : ($key === 'exclusion' ? 'Excludes' : $section['title']) }}
+                                </button>
+                            @endforeach
+                        </div>
+                        <div class="mt-4 pt-2">
+                            @foreach ($serviceInfoSections as $key => $section)
+                                <div @class(['hidden' => !$loop->first]) data-package-detail-panel="{{ $key }}">
+                                    @if (!empty($section['items']))
+                                        <ul class="space-y-3 text-sm leading-8 text-stone-600">
+                                            @foreach ($section['items'] as $entry)
+                                                @php
+                                                    $entrySymbol = $entry['symbol'] ?? ($key === 'exclusion' ? 'x' : ($key === 'inclusion' ? 'tick' : 'exclamation'));
+                                                    $entryText = $entry['text'] ?? '';
+                                                    $entryDisplaySymbol = match ($entrySymbol) {
+                                                        'round' => '•',
+                                                        'x' => '✕',
+                                                        'exclamation' => '!',
+                                                        default => '✓',
+                                                    };
+                                                @endphp
+                                                <li class="flex items-start gap-3 {{ $entrySymbol === 'round' ? 'pl-8 text-stone-500' : 'font-semibold text-stone-700' }}">
+                                                    <span class="mt-1 text-base font-bold leading-none {{ $entrySymbol === 'round' ? 'text-stone-400' : 'text-stone-600' }}">{{ $entryDisplaySymbol }}</span>
+                                                    <span>{{ $entryText }}</span>
+                                                </li>
+                                            @endforeach
+                                        </ul>
+                                    @else
+                                        <p class="text-sm leading-7 text-stone-500">Details will be confirmed with this package.</p>
+                                    @endif
+                                </div>
+                            @endforeach
+                        </div>
+                    </section>
+                </div>
+            </section>
+
+            <section class="mt-4 w-full min-w-0 overflow-hidden" data-recommended-attire-section>
+                <button
+                    type="button"
+                    class="flex w-full items-center justify-between gap-4 rounded-[1rem] border border-stone-300 bg-stone-50/80 px-5 py-5 text-left"
+                    data-recommended-attire-toggle
+                    aria-expanded="false"
+                >
+                    <span class="flex items-center gap-4">
+                        <span class="inline-flex h-8 w-8 items-center justify-center rounded-full text-white" style="background: #455499;">
+                            <svg viewBox="0 0 24 24" class="h-4 w-4" fill="currentColor" aria-hidden="true"><path d="M12 3a2 2 0 0 1 2 2v1h1.25a2.75 2.75 0 0 1 2.75 2.75V10H6V8.75A2.75 2.75 0 0 1 8.75 6H10V5a2 2 0 0 1 2-2Zm-6 8h12v6.75A2.25 2.25 0 0 1 15.75 20h-7.5A2.25 2.25 0 0 1 6 17.75Z"/></svg>
+                        </span>
+                        <span class="text-sm font-semibold uppercase tracking-[0.18em] text-slate-800">Recommended Attire</span>
+                    </span>
+                    <span class="inline-flex text-stone-400 transition-[transform,color] duration-200" data-recommended-attire-icon>
+                        <svg viewBox="0 0 20 20" class="h-5 w-5" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 11.18l3.71-3.95a.75.75 0 1 1 1.1 1.02l-4.25 4.52a.75.75 0 0 1-1.1 0L5.21 8.27a.75.75 0 0 1 .02-1.06Z" clip-rule="evenodd"/></svg>
+                    </span>
+                </button>
+                <div class="mt-4 hidden" data-recommended-attire-panel>
+                    <div class="w-full min-w-0">
+                        <div class="grid gap-4">
+                            @foreach ($recommendedAttireItems as $attire)
+                                <article class="rounded-[1.5rem] border border-stone-200 bg-white px-5 py-4">
+                                    <div class="flex items-start gap-3">
+                                        <span class="mt-1 inline-flex h-7 w-7 items-center justify-center rounded-full bg-stone-100 text-stone-700">
+                                            <svg viewBox="0 0 24 24" class="h-4 w-4" fill="currentColor" aria-hidden="true"><path d="M12 3a2 2 0 0 1 2 2v1h1.25a2.75 2.75 0 0 1 2.75 2.75V10H6V8.75A2.75 2.75 0 0 1 8.75 6H10V5a2 2 0 0 1 2-2Zm-6 8h12v6.75A2.25 2.25 0 0 1 15.75 20h-7.5A2.25 2.25 0 0 1 6 17.75Z"/></svg>
+                                        </span>
+                                        <p class="text-sm leading-7 text-stone-700">{{ $attire }}</p>
+                                    </div>
+                                </article>
+                            @endforeach
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            @if ($tourHighlights->isNotEmpty())
+                <section class="mt-4 w-full min-w-0 overflow-hidden" data-tour-highlight-section>
+                    <button
+                        type="button"
+                        class="flex w-full items-center justify-between gap-4 rounded-[1rem] border border-stone-300 bg-stone-50/80 px-5 py-5 text-left"
+                        data-tour-highlight-toggle
+                        aria-expanded="false"
+                    >
+                        <span class="flex items-center gap-4">
+                            <span class="inline-flex h-8 w-8 items-center justify-center rounded-full text-white" style="background: #455499;">
+                                <svg viewBox="0 0 24 24" class="h-4 w-4" fill="currentColor" aria-hidden="true"><path d="M9.55 16.6 4.8 11.85l1.4-1.4 3.35 3.35 8.25-8.25 1.4 1.4z"/></svg>
+                            </span>
+                            <span class="text-sm font-semibold uppercase tracking-[0.18em] text-slate-800">Tour Highlight</span>
+                        </span>
+                        <span class="inline-flex text-stone-400 transition-[transform,color] duration-200" data-tour-highlight-icon>
+                            <svg viewBox="0 0 20 20" class="h-5 w-5" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 11.18l3.71-3.95a.75.75 0 1 1 1.1 1.02l-4.25 4.52a.75.75 0 0 1-1.1 0L5.21 8.27a.75.75 0 0 1 .02-1.06Z" clip-rule="evenodd"/></svg>
+                        </span>
+                    </button>
+                    <div class="mt-4 hidden" data-tour-highlight-panel>
+                        <div class="w-full min-w-0">
+                            <div class="grid gap-4">
+                            @foreach ($tourHighlights as $highlight)
+                                <article class="rounded-[1.5rem] border border-stone-200 bg-white px-5 py-4">
+                                    <div class="flex items-start gap-3">
+                                        <span class="mt-1 inline-flex h-7 w-7 items-center justify-center rounded-full bg-amber-100 text-amber-700">
+                                            <svg viewBox="0 0 24 24" class="h-4 w-4" fill="currentColor" aria-hidden="true"><path d="M12 2 9.5 8.5 3 9.3l5 4.5L6.6 21 12 17.7 17.4 21 16 13.8l5-4.5-6.5-.8z"/></svg>
+                                        </span>
+                                        <p class="text-sm leading-7 text-stone-700">{{ $highlight }}</p>
+                                    </div>
+                                </article>
+                            @endforeach
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            @endif
+
+            <section class="mt-4 w-full min-w-0 overflow-hidden" data-things-you-should-know-section>
+                <button
+                    type="button"
+                    class="flex w-full items-center justify-between gap-4 rounded-[1rem] border border-stone-300 bg-stone-50/80 px-5 py-5 text-left"
+                    data-things-you-should-know-toggle
+                    aria-expanded="false"
+                >
+                    <span class="flex items-center gap-4">
+                        <span class="inline-flex h-8 w-8 items-center justify-center rounded-full text-white" style="background: #455499;">
+                            <svg viewBox="0 0 24 24" class="h-4 w-4" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm1 15h-2v-6h2zm0-8h-2V7h2z"/></svg>
+                        </span>
+                        <span class="text-sm font-semibold uppercase tracking-[0.18em] text-slate-800">Things You Should Know</span>
+                    </span>
+                    <span class="inline-flex text-stone-400 transition-[transform,color] duration-200" data-things-you-should-know-icon>
+                        <svg viewBox="0 0 20 20" class="h-5 w-5" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 11.18l3.71-3.95a.75.75 0 1 1 1.1 1.02l-4.25 4.52a.75.75 0 0 1-1.1 0L5.21 8.27a.75.75 0 0 1 .02-1.06Z" clip-rule="evenodd"/></svg>
+                    </span>
+                </button>
+                <div class="mt-4 hidden" data-things-you-should-know-panel>
+                    <div class="w-full min-w-0">
+                        <div class="grid gap-4">
+                            @foreach ($thingsYouShouldKnowItems as $note)
+                                <article class="rounded-[1.5rem] border border-stone-200 bg-white px-5 py-4">
+                                    <div class="flex items-start gap-3">
+                                        <span class="mt-1 inline-flex h-7 w-7 items-center justify-center rounded-full bg-blue-50 text-[#455499]">
+                                            <svg viewBox="0 0 24 24" class="h-4 w-4" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm1 15h-2v-6h2zm0-8h-2V7h2z"/></svg>
+                                        </span>
+                                        <p class="text-sm leading-7 text-stone-700">{{ $note }}</p>
+                                    </div>
+                                </article>
+                            @endforeach
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="mt-4 w-full min-w-0 overflow-hidden" data-useful-travel-tips-section>
+                <button
+                    type="button"
+                    class="flex w-full items-center justify-between gap-4 rounded-[1rem] border border-stone-300 bg-stone-50/80 px-5 py-5 text-left"
+                    data-useful-travel-tips-toggle
+                    aria-expanded="false"
+                >
+                    <span class="flex items-center gap-4">
+                        <span class="inline-flex h-8 w-8 items-center justify-center rounded-full text-white" style="background: #455499;">
+                            <svg viewBox="0 0 24 24" class="h-4 w-4" fill="currentColor" aria-hidden="true"><path d="M12 2 9.5 8.5 3 9.3l5 4.5L6.6 21 12 17.7 17.4 21 16 13.8l5-4.5-6.5-.8z"/></svg>
+                        </span>
+                        <span class="text-sm font-semibold uppercase tracking-[0.18em] text-slate-800">Useful Travel Tips</span>
+                    </span>
+                    <span class="inline-flex text-stone-400 transition-[transform,color] duration-200" data-useful-travel-tips-icon>
+                        <svg viewBox="0 0 20 20" class="h-5 w-5" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 11.18l3.71-3.95a.75.75 0 1 1 1.1 1.02l-4.25 4.52a.75.75 0 0 1-1.1 0L5.21 8.27a.75.75 0 0 1 .02-1.06Z" clip-rule="evenodd"/></svg>
+                    </span>
+                </button>
+                <div class="mt-4 hidden" data-useful-travel-tips-panel>
+                    <div class="w-full min-w-0">
+                        <div class="grid gap-4">
+                            @foreach ($usefulTravelTipsItems as $tip)
+                                <article class="rounded-[1.5rem] border border-stone-200 bg-white px-5 py-4">
+                                    <div class="flex items-start gap-3">
+                                        <span class="mt-1 inline-flex h-7 w-7 items-center justify-center rounded-full bg-amber-100 text-amber-700">
+                                            <svg viewBox="0 0 24 24" class="h-4 w-4" fill="currentColor" aria-hidden="true"><path d="M12 2 9.5 8.5 3 9.3l5 4.5L6.6 21 12 17.7 17.4 21 16 13.8l5-4.5-6.5-.8z"/></svg>
+                                        </span>
+                                        <p class="text-sm leading-7 text-stone-700">{{ $tip }}</p>
+                                    </div>
+                                </article>
+                            @endforeach
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="relative mt-8 overflow-hidden rounded-[1.75rem] border border-stone-200/80 shadow-sm">
+                <!-- WHY CHOOSE US BOX -->
+                <div class="transport-box" style="margin-top: 1rem; border-radius: 1rem; background: #ffffff; padding: 1.8rem 2.5rem 2.5rem; min-height: 240px; box-shadow: 0 14px 30px rgba(15,23,42,0.12);">
+
+                    <h3 style="margin: 0; text-align: center; font-family: 'Oswald', sans-serif; font-size: 1.6rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.12em; color: #9b4a14;">
+                        Why Choose Us?
+                    </h3>
+
+                    <div class="transport-features" style="display: flex; justify-content: center; gap: 1rem; margin-top: 1.9rem;">
+                        @foreach ($transportFeatures as $feature)
+                            <div class="transport-feature-item" style="position: relative; display: flex; width: 8.5rem; flex-direction: column; align-items: center; text-align: center;">
+
+                                <div style="display: flex; height: 6.4rem; width: 6.4rem; align-items: center; justify-content: center; border-radius: 999px; border: 2.5px solid #2f63bc; background: #fff; color: #2f63bc; box-shadow: 0 1px 3px rgba(0,0,0,0.08);">
+
+                                    @if ($feature['icon'] === 'spark')
+                                        <svg style="height: 5.3rem; width: 5.3rem;" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.5" xmlns="http://www.w3.org/2000/svg">
+                                            <circle cx="24" cy="31" r="12"/>
+                                            <path d="M21 31h6"/>
+                                            <path d="M24 28v6"/>
+                                            <path d="M39 20c5 0 9 4 9 9 0 8-9 14-16 20-2-1-4-3-6-5"/>
+                                            <path d="m41 18 2 4 4 2-4 2-2 4-2-4-4-2 4-2 2-4Z"/>
+                                        </svg>
+                                    @elseif ($feature['icon'] === 'shield')
+                                        <svg style="height: 5.3rem; width: 5.3rem;" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.5" xmlns="http://www.w3.org/2000/svg">
+                                            <path d="M32 10 48 16v13c0 12-7 19-16 25-9-6-16-13-16-25V16l16-6Z"/>
+                                            <path d="m24 31 6 6 10-12"/>
+                                        </svg>
+                                    @elseif ($feature['icon'] === 'driver')
+                                        <svg style="height: 5.3rem; width: 5.3rem;" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.5" xmlns="http://www.w3.org/2000/svg">
+                                            <circle cx="32" cy="17" r="7"/>
+                                            <path d="M19 50v-8c0-8 6-13 13-13s13 5 13 13v8"/>
+                                            <circle cx="32" cy="42" r="8"/>
+                                            <path d="M24 42h16"/>
+                                            <path d="M32 34v16"/>
+                                        </svg>
+                                    @else
+                                        <svg style="height: 5.3rem; width: 5.3rem;" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.5" xmlns="http://www.w3.org/2000/svg">
+                                            <rect x="14" y="15" width="28" height="34" rx="4"/>
+                                            <path d="M21 24h14"/>
+                                            <path d="M21 31h14"/>
+                                            <path d="M21 38h8"/>
+                                            <rect x="41" y="21" width="10" height="16" rx="2"/>
+                                            <path d="m44 30 2 2 4-5"/>
+                                        </svg>
+                                    @endif
+
+                                </div>
+
+                                <p style="max-width: 8rem; margin-top: 0.95rem; font-size: 0.82rem; font-weight: 700; text-transform: uppercase; line-height: 1.1rem; letter-spacing: 0.1em; color: #9b4a14;">
+                                    {{ $feature['label'] }}
+                                </p>
+
+                            </div>
+                        @endforeach
+                    </div>
+
+                </div>
+            </section>
+
         @endif
 
     </main>
 
-    <div class="h-12"></div>
+@include('/partials.footer')
 
-    <div id="product-image-preview-modal" class="fixed inset-0 z-[260] hidden items-center justify-center bg-stone-950/80 px-2 py-6">
-        <div class="w-full rounded-[1.75rem] bg-white shadow-[0_24px_60px_rgba(15,23,42,0.28)]" style="max-width: min(1100px, calc(100vw - 1rem));">
-            <div class="flex items-center justify-between border-b border-stone-200 px-4 py-3">
-                <div>
-                    <p class="text-sm font-semibold text-stone-800">Image preview</p>
-                    <p id="product-image-preview-count" class="mt-1 text-xs uppercase tracking-[0.18em] text-stone-500"></p>
-                </div>
-                <button type="button" id="product-image-preview-close" class="inline-flex h-9 w-9 items-center justify-center rounded-full border border-stone-200 bg-white text-lg leading-none text-stone-500 transition hover:bg-stone-100" aria-label="Close image preview">&times;</button>
-            </div>
-            <div class="relative flex max-h-[88vh] items-center justify-center overflow-auto p-2">
-                <button type="button" id="product-image-preview-prev" class="absolute left-4 top-1/2 z-20 inline-flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-2xl leading-none text-stone-700 shadow-lg transition hover:bg-white" aria-label="Previous image">&#8249;</button>
-                <div id="product-image-preview-frame" class="relative inline-flex items-center justify-center" style="width: min(56vw, 980px); height: 68vh;">
-                    <img id="product-image-preview-image" src="" alt="" class="rounded-[1.25rem] object-contain" style="width: min(56vw, 980px); height: 68vh;">
-                    <img id="product-image-preview-trademark" src="{{ asset('images/UE.png') }}" alt="Universal Eden trademark" class="pointer-events-none absolute z-10 h-14 w-auto opacity-90" style="right: 1.5rem; bottom: 1.5rem;">
-                </div>
-                <button type="button" id="product-image-preview-next" class="absolute right-4 top-1/2 z-20 inline-flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-2xl leading-none text-stone-700 shadow-lg transition hover:bg-white" aria-label="Next image">&#8250;</button>
-            </div>
-        </div>
-    </div>
-
-    @include('/partials.footer')
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
+            const packageDetailsSection = document.querySelector('[data-package-details-section]');
+            const tourHighlightSection = document.querySelector('[data-tour-highlight-section]');
+            const recommendedAttireSection = document.querySelector('[data-recommended-attire-section]');
+
+            if (packageDetailsSection?.parentNode) {
+                if (tourHighlightSection) {
+                    packageDetailsSection.parentNode.insertBefore(tourHighlightSection, packageDetailsSection);
+                }
+
+                if (recommendedAttireSection) {
+                    packageDetailsSection.parentNode.insertBefore(recommendedAttireSection, packageDetailsSection.nextSibling);
+                }
+            }
+
             document.querySelectorAll('[data-package-details]').forEach((detailsBlock) => {
                 const tabs = Array.from(detailsBlock.querySelectorAll('[data-package-detail-tab]'));
                 const panels = Array.from(detailsBlock.querySelectorAll('[data-package-detail-panel]'));
@@ -488,7 +1034,8 @@
                         const isActive = tab.dataset.packageDetailTab === targetKey;
                         tab.setAttribute('aria-pressed', isActive ? 'true' : 'false');
                         tab.style.backgroundColor = isActive ? '#ffffff' : '#455499';
-                        tab.style.color = '#111111';
+                        tab.style.color = isActive ? '#111111' : '#ffffff';
+                        tab.style.borderColor = 'rgba(0,0,0,0.65)';
                     });
 
                     panels.forEach((panel) => {
@@ -505,24 +1052,216 @@
                 activateTab(tabs[0].dataset.packageDetailTab || '');
             });
 
-            document.querySelectorAll('[data-itinerary-day]').forEach((dayBlock) => {
-                const toggle = dayBlock.querySelector('[data-itinerary-toggle]');
-                const panel = dayBlock.querySelector('[data-itinerary-panel]');
-                const icon = dayBlock.querySelector('[data-itinerary-icon]');
+            document.querySelectorAll('[data-package-details-section]').forEach((section) => {
+                const toggle = section.querySelector('[data-package-details-toggle]');
+                const panel = section.querySelector('[data-package-details-panel]');
+                const icon = section.querySelector('[data-package-details-icon]');
 
                 if (!toggle || !panel || !icon) {
                     return;
                 }
 
+                const setExpanded = (expanded) => {
+                    toggle.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+                    panel.classList.toggle('hidden', !expanded);
+                    icon.classList.toggle('rotate-180', expanded);
+                    icon.classList.toggle('text-stone-400', !expanded);
+                    icon.classList.toggle('text-slate-700', expanded);
+                };
+
                 toggle.addEventListener('click', () => {
-                    const isExpanded = toggle.getAttribute('aria-expanded') === 'true';
-                    toggle.setAttribute('aria-expanded', isExpanded ? 'false' : 'true');
-                    panel.classList.toggle('hidden', isExpanded);
-                    icon.textContent = isExpanded ? '+' : '−';
+                    setExpanded(toggle.getAttribute('aria-expanded') !== 'true');
                 });
+
+                setExpanded(false);
+            });
+
+            document.querySelectorAll('[data-itinerary-section]').forEach((section) => {
+                const toggle = section.querySelector('[data-itinerary-toggle]');
+                const panels = Array.from(section.querySelectorAll('[data-itinerary-panel]'));
+                const icon = section.querySelector('[data-itinerary-icon]');
+
+                if (!toggle || !panels.length || !icon) {
+                    return;
+                }
+
+                const setExpanded = (expanded) => {
+                    toggle.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+                    panels.forEach((panel) => {
+                        panel.classList.toggle('hidden', !expanded);
+                    });
+                    icon.classList.toggle('rotate-180', expanded);
+                    icon.classList.toggle('text-stone-400', !expanded);
+                    icon.classList.toggle('text-slate-700', expanded);
+                };
+
+                toggle.addEventListener('click', () => {
+                    setExpanded(toggle.getAttribute('aria-expanded') !== 'true');
+                });
+
+                setExpanded(false);
+            });
+
+            document.querySelectorAll('[data-recommended-attire-section]').forEach((section) => {
+                const toggle = section.querySelector('[data-recommended-attire-toggle]');
+                const panel = section.querySelector('[data-recommended-attire-panel]');
+                const icon = section.querySelector('[data-recommended-attire-icon]');
+
+                if (!toggle || !panel || !icon) {
+                    return;
+                }
+
+                const setExpanded = (expanded) => {
+                    toggle.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+                    panel.classList.toggle('hidden', !expanded);
+                    icon.classList.toggle('rotate-180', expanded);
+                    icon.classList.toggle('text-stone-400', !expanded);
+                    icon.classList.toggle('text-slate-700', expanded);
+                };
+
+                toggle.addEventListener('click', () => {
+                    setExpanded(toggle.getAttribute('aria-expanded') !== 'true');
+                });
+
+                setExpanded(false);
+            });
+
+            document.querySelectorAll('[data-things-you-should-know-section]').forEach((section) => {
+                const toggle = section.querySelector('[data-things-you-should-know-toggle]');
+                const panel = section.querySelector('[data-things-you-should-know-panel]');
+                const icon = section.querySelector('[data-things-you-should-know-icon]');
+
+                if (!toggle || !panel || !icon) {
+                    return;
+                }
+
+                const setExpanded = (expanded) => {
+                    toggle.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+                    panel.classList.toggle('hidden', !expanded);
+                    icon.classList.toggle('rotate-180', expanded);
+                    icon.classList.toggle('text-stone-400', !expanded);
+                    icon.classList.toggle('text-slate-700', expanded);
+                };
+
+                toggle.addEventListener('click', () => {
+                    setExpanded(toggle.getAttribute('aria-expanded') !== 'true');
+                });
+
+                setExpanded(false);
+            });
+
+            document.querySelectorAll('[data-useful-travel-tips-section]').forEach((section) => {
+                const toggle = section.querySelector('[data-useful-travel-tips-toggle]');
+                const panel = section.querySelector('[data-useful-travel-tips-panel]');
+                const icon = section.querySelector('[data-useful-travel-tips-icon]');
+
+                if (!toggle || !panel || !icon) {
+                    return;
+                }
+
+                const setExpanded = (expanded) => {
+                    toggle.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+                    panel.classList.toggle('hidden', !expanded);
+                    icon.classList.toggle('rotate-180', expanded);
+                    icon.classList.toggle('text-stone-400', !expanded);
+                    icon.classList.toggle('text-slate-700', expanded);
+                };
+
+                toggle.addEventListener('click', () => {
+                    setExpanded(toggle.getAttribute('aria-expanded') !== 'true');
+                });
+
+                setExpanded(false);
+            });
+
+            document.querySelectorAll('[data-tour-highlight-section]').forEach((section) => {
+                const toggle = section.querySelector('[data-tour-highlight-toggle]');
+                const panel = section.querySelector('[data-tour-highlight-panel]');
+                const icon = section.querySelector('[data-tour-highlight-icon]');
+
+                if (!toggle || !panel || !icon) {
+                    return;
+                }
+
+                const setExpanded = (expanded) => {
+                    toggle.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+                    panel.classList.toggle('hidden', !expanded);
+                    icon.classList.toggle('rotate-180', expanded);
+                    icon.classList.toggle('text-stone-400', !expanded);
+                    icon.classList.toggle('text-slate-700', expanded);
+                };
+
+                toggle.addEventListener('click', () => {
+                    setExpanded(toggle.getAttribute('aria-expanded') !== 'true');
+                });
+
+                setExpanded(false);
             });
 
             const previewImages = @json($previewImages);
+
+            document.querySelectorAll('[data-product-carousel]').forEach((carousel) => {
+                const image = carousel.querySelector('[data-product-carousel-image]');
+                const openButton = carousel.querySelector('[data-product-carousel-open]');
+                const prev = carousel.querySelector('[data-product-carousel-prev]');
+                const next = carousel.querySelector('[data-product-carousel-next]');
+                const dots = Array.from(carousel.querySelectorAll('[data-product-carousel-dot]'));
+
+                if (!image || !openButton || !previewImages.length) {
+                    return;
+                }
+
+                let carouselIndex = 0;
+
+                const renderCarousel = () => {
+                    const currentImage = previewImages[carouselIndex];
+
+                    if (!currentImage) {
+                        return;
+                    }
+
+                    image.src = currentImage.src;
+                    image.alt = currentImage.alt;
+
+                    dots.forEach((dot) => {
+                        const dotIndex = Number.parseInt(dot.dataset.productCarouselDot || '0', 10);
+                        const isActive = dotIndex === carouselIndex;
+                        dot.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+                        dot.style.backgroundColor = isActive ? '#9ca3af' : '#ffffff';
+                    });
+                };
+
+                prev?.addEventListener('click', (event) => {
+                    event.stopPropagation();
+                    carouselIndex = (carouselIndex - 1 + previewImages.length) % previewImages.length;
+                    renderCarousel();
+                });
+
+                next?.addEventListener('click', (event) => {
+                    event.stopPropagation();
+                    carouselIndex = (carouselIndex + 1) % previewImages.length;
+                    renderCarousel();
+                });
+
+                dots.forEach((dot) => {
+                    dot.addEventListener('click', (event) => {
+                        event.stopPropagation();
+                        const dotIndex = Number.parseInt(dot.dataset.productCarouselDot || '0', 10);
+
+                        if (Number.isInteger(dotIndex)) {
+                            carouselIndex = dotIndex;
+                            renderCarousel();
+                        }
+                    });
+                });
+
+                openButton.addEventListener('click', () => {
+                    openModal(carouselIndex);
+                });
+
+                renderCarousel();
+            });
+
             const modal = document.getElementById('product-image-preview-modal');
             const imageFrame = document.getElementById('product-image-preview-frame');
             const modalImage = document.getElementById('product-image-preview-image');

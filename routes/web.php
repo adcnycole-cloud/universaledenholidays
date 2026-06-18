@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
+Route::get('/customer-reviews', [HomeController::class, 'showReviewsIndex'])->name('reviews.index');
 // Legal pages
 Route::get('/privacy-policy', [LegalController::class, 'privacyPolicy'])->name('legal.privacy-policy');
 Route::get('/terms-and-conditions', [LegalController::class, 'termsAndConditions'])->name('legal.terms-and-conditions');
@@ -86,7 +87,8 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     Route::post('/products', [AdminController::class, 'storeProduct'])->name('admin.products.store');
     Route::patch('/products/{product}', [AdminController::class, 'updateProduct'])->name('admin.products.update');
     Route::patch('/products/{product}/itinerary', [AdminController::class, 'updateProductItinerary'])->name('admin.products.itinerary');
-    Route::patch('/products/{product}/service-inclusions', [AdminController::class, 'updateProductServiceInclusions'])->name('admin.products.service-inclusions');
+    Route::patch('/products/{product}/package-details', [AdminController::class, 'updateProductPackageDetails'])->name('admin.products.package-details');
+    Route::patch('/products/{product}/package-content', [AdminController::class, 'updateProductPackageContent'])->name('admin.products.package-content');
     Route::patch('/products/{product}/active', [AdminController::class, 'updateProductActive'])->name('admin.products.active');
     Route::delete('/products/{product}', [AdminController::class, 'destroyProduct'])->name('admin.products.destroy');
     Route::post('/news-features', [AdminController::class, 'storeNewsFeature'])->name('admin.news-features.store');

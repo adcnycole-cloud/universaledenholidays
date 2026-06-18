@@ -11,6 +11,11 @@
     </head>
     <body class="min-h-screen bg-stone-50 text-stone-900" data-form-persist-success="{{ session('success') ? 'true' : 'false' }}">
         <style>
+            html {
+                overflow-y: scroll;
+                scrollbar-gutter: stable;
+            }
+
             :root {
                 --app-header-offset: 0px;
                 --admin-sidebar-width: 16rem;
@@ -158,7 +163,7 @@
                 border: 0;
                 border-radius: 999px;
                 background: transparent;
-                padding: 0.38rem 0.7rem;
+                padding: 0.28rem 0.62rem;
                 font: inherit;
                 cursor: pointer;
                 transition: background-color 0.18s ease, color 0.18s ease, transform 0.18s ease;
@@ -203,13 +208,13 @@
         <div class="flex min-h-screen flex-col bg-[radial-gradient(circle_at_top,_rgba(14,165,233,0.08),_transparent_30%),linear-gradient(180deg,_#fffdf9,_#f8fafc)]">
             @unless ($hideHeader)
                 <header class="js-app-header shadow-[0_10px_24px_rgba(15,23,42,0.08)] {{ $isAdminRoute ? 'border-b border-emerald-200 bg-white' : 'bg-white' }} ">
-                    <div class="{{ $isAdminRoute ? 'grid w-full grid-cols-[1fr_auto_1fr] items-center px-6 lg:px-10' : 'flex w-full items-center justify-between px-6 lg:px-10' }}" style="height: 70px; padding-top: 0; padding-bottom: 0;">
+                    <div class="{{ $isAdminRoute ? 'grid w-full grid-cols-[1fr_auto_1fr] items-center px-6 lg:px-10' : 'flex w-full items-center justify-between px-6 lg:px-10' }}" style="height: 62px; padding-top: 0; padding-bottom: 0;">
                         @if ($isAdminRoute)
                             <div class="justify-self-start" aria-hidden="true"></div>
                         @else
                             <a href="{{ route('home') }}" class="flex items-center gap-3" style="position: relative; left: 0.25rem;">
-                                <img src="{{ asset('images/ue blue logo.png') }}" alt="Universal Eden Logo" class="w-auto " style="height: 2rem;">
-                                <img src="{{ asset('images/Malaysia Truly Asia logo 2026.png') }}" alt="Malaysia Truly Asia Logo" class="w-auto" style="display: block; height: 4rem; margin: 0; padding: 0;">
+                                <img src="{{ asset('images/ue blue logo.png') }}" alt="Universal Eden Logo" class="w-auto " style="height: 1.8rem;">
+                                <img src="{{ asset('images/Malaysia Truly Asia logo 2026.png') }}" alt="Malaysia Truly Asia Logo" class="w-auto" style="display: block; height: 3.45rem; margin: 0; padding: 0;">
                                 <span class="hidden font-['Prata'] text-xl text-stone-900 md:inline">Universal Eden Holidays</span>
                             </a>
                         @endif
@@ -221,7 +226,6 @@
                                 <div class="flex items-center gap-5 font-semibold uppercase text-stone-700 xl:gap-6" style="font-size: 0.58rem; letter-spacing: 0.1em;">
                                     <a href="{{ route('home') }}" class="main-nav-link is-light whitespace-nowrap">Home</a>
                                     <a href="{{ route('home') }}#transport" class="main-nav-link is-light whitespace-nowrap">Transport</a>
-                                    <a href="{{ route('home') }}#packages-showcase" class="main-nav-link is-light whitespace-nowrap">Packages</a>
                                     <div class="tours-menu" data-tours-menu>
                                         <button type="button" class="main-nav-link is-light tours-menu-toggle whitespace-nowrap" data-tours-toggle aria-expanded="false" style="display: inline-flex; align-items: center; gap: 0.28rem;">
                                             <span>Tours</span>
@@ -241,7 +245,7 @@
                                         </button>
                                         <div class="tours-menu-panel" style="border-radius: 0;">
                                             <a href="{{ route('home') }}#about-us" class="tours-menu-link" style="border-radius: 0;">About Us</a>
-                                            <a href="{{ route('home') }}#testimonials" class="tours-menu-link" style="border-radius: 0;">Customer Reviews</a>
+                                            <a href="{{ route('reviews.index') }}" class="tours-menu-link" style="border-radius: 0;">Customer Reviews</a>
                                             <a href="{{ route('blog.index') }}" class="tours-menu-link" style="border-radius: 0;">Travel Blog</a>
                                             <a href="{{ route('legal.terms-and-conditions') }}" class="tours-menu-link" style="border-radius: 0;">Terms and Condition</a>
                                             <a href="{{ route('booking.create') }}" class="tours-menu-link" style="border-radius: 0;">Payment Options</a>
@@ -301,12 +305,11 @@
                         </div>
                     </div>
                     @if (! $isAdminRoute)
-                        <div class="hidden md:block" style="background: #455499;">
-                            <nav class="w-full px-6 lg:px-10" style="padding-top: 0.65rem; padding-bottom: 0.65rem; background: #455499;">
+                        <div class="hidden md:block" style="background: #1f2937;">
+                            <nav class="w-full px-6 lg:px-10" style="padding-top: 0.42rem; padding-bottom: 0.42rem; background: #1f2937;">
                                 <div class="flex items-center justify-center gap-8 font-semibold uppercase text-white xl:gap-10" style="font-size: 0.9rem; letter-spacing: 0.12em;">
                                     <a href="{{ route('home') }}" class="main-nav-link whitespace-nowrap">Home</a>
                                     <a href="{{ route('home') }}#transport" class="main-nav-link whitespace-nowrap">Transport</a>
-                                    <a href="{{ route('home') }}#packages-showcase" class="main-nav-link whitespace-nowrap">Packages</a>
                                     <div class="tours-menu" data-tours-menu>
                                         <button type="button" class="main-nav-link tours-menu-toggle whitespace-nowrap" data-tours-toggle aria-expanded="false" style="display: inline-flex; align-items: center; gap: 0.28rem;">
                                             <span>TOURS</span>
@@ -326,7 +329,7 @@
                                         </button>
                                         <div class="tours-menu-panel" style="border-radius: 0;">
                                             <a href="{{ route('home') }}#about-us" class="tours-menu-link" style="border-radius: 0;">About Us</a>
-                                            <a href="{{ route('home') }}#testimonials" class="tours-menu-link" style="border-radius: 0;">Customer Reviews</a>
+                                            <a href="{{ route('reviews.index') }}" class="tours-menu-link" style="border-radius: 0;">Customer Reviews</a>
                                             <a href="{{ route('blog.index') }}" class="tours-menu-link" style="border-radius: 0;">Travel Blog</a>
                                             <a href="{{ route('legal.terms-and-conditions') }}" class="tours-menu-link" style="border-radius: 0;">Terms and Condition</a>
                                             <a href="{{ route('booking.create') }}" class="tours-menu-link" style="border-radius: 0;">Payment Options</a>
@@ -643,6 +646,8 @@
                     let restoredDraft = false;
 
                     if (storedDraft && typeof storedDraft === 'object') {
+                        const restoreCounts = {};
+
                         Array.from(form.elements).forEach((field) => {
                             if (!(field instanceof HTMLInputElement || field instanceof HTMLTextAreaElement || field instanceof HTMLSelectElement)) {
                                 return;
@@ -659,6 +664,7 @@
                             }
 
                             const savedValue = storedDraft[fieldKey];
+                            const restoreIndex = restoreCounts[fieldKey] ?? 0;
 
                             if (field instanceof HTMLInputElement && field.type === 'checkbox') {
                                 field.checked = Array.isArray(savedValue)
@@ -674,13 +680,23 @@
                                 return;
                             }
 
-                            field.value = savedValue ?? '';
+                            field.value = Array.isArray(savedValue)
+                                ? (savedValue[restoreIndex] ?? '')
+                                : (savedValue ?? '');
+                            restoreCounts[fieldKey] = restoreIndex + 1;
                             restoredDraft = true;
                         });
                     }
 
                     const persistDraft = () => {
                         const payload = {};
+                        const fieldNameFrequency = Array.from(form.elements).reduce((counts, field) => {
+                            if ((field instanceof HTMLInputElement || field instanceof HTMLTextAreaElement || field instanceof HTMLSelectElement) && field.name) {
+                                counts[field.name] = (counts[field.name] ?? 0) + 1;
+                            }
+
+                            return counts;
+                        }, {});
 
                         Array.from(form.elements).forEach((field) => {
                             if (!(field instanceof HTMLInputElement || field instanceof HTMLTextAreaElement || field instanceof HTMLSelectElement)) {
@@ -696,6 +712,8 @@
                             if (!fieldKey) {
                                 return;
                             }
+
+                            const hasDuplicateName = field.name ? (fieldNameFrequency[field.name] ?? 0) > 1 : false;
 
                             if (field instanceof HTMLInputElement && field.type === 'checkbox') {
                                 if (!Array.isArray(payload[fieldKey])) {
@@ -714,6 +732,15 @@
                                     payload[fieldKey] = field.value;
                                 }
 
+                                return;
+                            }
+
+                            if (field.name && (field.name.endsWith('[]') || hasDuplicateName)) {
+                                if (!Array.isArray(payload[fieldKey])) {
+                                    payload[fieldKey] = [];
+                                }
+
+                                payload[fieldKey].push(field.value);
                                 return;
                             }
 

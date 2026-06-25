@@ -7,7 +7,7 @@
 <footer class="mt-auto border-t border-white/10 text-stone-200" style="background: #1f2937;">
 
     {{-- Main Footer --}}
-    <div class="mx-auto max-w-7xl px-8 pb-10 pt-4 lg:px-12">
+    <div class="mx-auto max-w-7xl px-8 pb-10 pt-8 lg:px-12">
         <div class="flex flex-col gap-10 lg:flex-row lg:items-start lg:justify-between">
 
             {{-- Brand Column --}}
@@ -42,10 +42,9 @@
                         Explore
                     </h4>
                     <div class="mt-4 flex flex-col gap-3 text-sm text-stone-400">
-                        <a href="{{ route('home') }}#promos" class="hover:text-white transition">Promos</a>
                         <a href="{{ route('home') }}#transport" class="hover:text-white transition">Transport</a>
-                        <a href="{{ route('home') }}#packages-showcase" class="hover:text-white transition">Packages</a>
-                        <a href="{{ route('reviews.index') }}" class="hover:text-white transition">Testimonials</a>
+                        <a href="{{ route('tours.show', 'day-trip') }}" class="hover:text-white transition">Tours</a>
+                        <a href="{{ route('blog.index') }}" class="hover:text-white transition">Travel Blog</a>
                     </div>
                 </div>
 
@@ -55,8 +54,8 @@
                         Company
                     </h4>
                     <div class="mt-4 flex flex-col gap-3 text-sm text-stone-400">
-                        <a href="{{ route('home') }}#about-us" class="hover:text-white transition">About Us</a>
-                        <a href="{{ route('home') }}#popular-picks" class="hover:text-white transition">Popular Picks</a>
+                        <a href="{{ route('about-us') }}" class="hover:text-white transition">About Us</a>
+                        <a href="{{ route('sabah-travel-info') }}" class="hover:text-white transition">Sabah Travel Info</a>
                         <a href="{{ route('bookings.track.form') }}" class="hover:text-white transition">Track Your Bookings</a>
                         @auth
                             <a href="{{ route('profile.show') }}" class="hover:text-white transition">Profile</a>
@@ -72,8 +71,8 @@
                         Contact
                     </h4>
                     <div class="mt-4 flex flex-col gap-3 text-sm text-stone-400">
-                        <a href="mailto:info@universaledenholiday.com" class="hover:text-white transition">Email: uniedenholidays@gmail.com</a>
-                        <a href="tel:+60168122921" class="hover:text-white transition">Phone: +6016 812 2921</a>
+                        <a href="mailto:info@universaledenholiday.com" class="whitespace-nowrap hover:text-white transition">Email: uniedenholidays@gmail.com</a>
+                        <a href="tel:+60103869077" class="hover:text-white transition">Phone: +60 10-386 9077</a>
                         <span>Kota Kinabalu, Sabah, Malaysia</span>
                     </div>
                 </div>

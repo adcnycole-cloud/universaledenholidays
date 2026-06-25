@@ -1,12 +1,12 @@
 <x-layouts.app :title="$blogPost->title.' | Universal Eden Holidays'">
-    <main class="mx-auto min-h-[calc(100vh-var(--app-header-offset))] max-w-[1680px] px-6 py-10 lg:px-8">
+    <main class="mx-auto min-h-[calc(100vh-var(--app-header-offset))] max-w-[1360px] px-6 py-10 lg:px-8">
         <style>
             .blog-watch-layout {
                 display: block;
             }
 
             .blog-fixed-panel {
-                width: min(100%, 1300px);
+                width: min(100%, 980px);
                 margin-left: auto;
                 margin-right: auto;
             }
@@ -83,8 +83,8 @@
             }
 
             .blog-media-frame {
-                width: min(100%, 1300px);
-                height: 700px;
+                width: min(100%, 980px);
+                height: 560px;
                 background: #fff;
                 display: flex;
                 align-items: center;
@@ -102,17 +102,18 @@
                 display: block;
                 width: 100%;
                 height: 100%;
-                object-fit: contain;
             }
 
             .blog-media-frame video {
                 background: #fff;
+                object-fit: contain;
             }
 
             .blog-media-frame img {
                 width: 100%;
                 height: 100%;
                 background: #fff;
+                object-fit: cover;
             }
 
             @media (max-width: 900px) {
@@ -123,7 +124,7 @@
             @media (min-width: 1100px) {
                 .blog-watch-layout {
                     display: grid;
-                    grid-template-columns: minmax(0, 1300px) 320px;
+                    grid-template-columns: minmax(0, 980px) 300px;
                     gap: 24px;
                     justify-content: center;
                     align-items: start;
@@ -189,7 +190,7 @@
                                 type="button"
                                 data-blog-share-button
                                 data-share-url="{{ route('blog.show', $blogPost) }}"
-                                style="display: inline-flex; align-items: center; justify-content: center; border: 1px solid #d6d3d1; border-radius: 999px; background: #fff; padding: 0.75rem 1.1rem; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: #1f2937; cursor: pointer;"
+                                style="display: inline-flex; align-items: center; justify-content: center; border: 1px solid #d6d3d1; border-radius: 999px; background: #fff; padding: 0.6rem 0.95rem; font-size: 0.68rem; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: #1f2937; cursor: pointer;"
                             >
                                 Share Post
                             </button>

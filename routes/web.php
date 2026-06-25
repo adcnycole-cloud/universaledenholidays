@@ -24,6 +24,8 @@ Route::post('/testimonials', [HomeController::class, 'storeLandingTestimonial'])
 Route::get('/products/{product}', [HomeController::class, 'showProduct'])->name('products.show');
 Route::post('/products/{product}/testimonials', [HomeController::class, 'storeProductTestimonial'])->name('products.testimonials.store');
 Route::get('/payment-options', [HomeController::class, 'showPaymentOptions'])->name('payment-options');
+Route::get('/about-us', [HomeController::class, 'showAboutUs'])->name('about-us');
+Route::get('/sabah-travel-info', [HomeController::class, 'showSabahTravelInfo'])->name('sabah-travel-info');
 Route::get('/booking', [HomeController::class, 'showBookingForm'])->name('booking.create');
 Route::post('/bookings', [HomeController::class, 'book'])->name('bookings.store');
 Route::get('/booking-tracker', [BookingAccessController::class, 'showTrackingForm'])->name('bookings.track.form');
@@ -73,6 +75,9 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     Route::get('/', [AdminController::class, 'index'])->name('admin.dashboard');
     Route::get('/profile', [AdminController::class, 'profile'])->name('admin.profile');
     Route::get('/landing-page', [AdminController::class, 'landingPage'])->name('admin.landing-page');
+    Route::get('/about-us', [AdminController::class, 'aboutUs'])->name('admin.about-us');
+    Route::get('/about-us/staff', [AdminController::class, 'staffs'])->name('admin.staff');
+    Route::get('/about-us/certifications', [AdminController::class, 'certifications'])->name('admin.about-us.certifications');
     Route::get('/promos', [AdminController::class, 'promos'])->name('admin.promos');
     Route::get('/blogs', [AdminController::class, 'blogs'])->name('admin.blogs');
     Route::get('/transport', [AdminController::class, 'transport'])->name('admin.transport');
@@ -104,6 +109,12 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     Route::post('/testimonials', [AdminController::class, 'storeTestimonial'])->name('admin.testimonials.store');
     Route::patch('/testimonials/{testimonial}', [AdminController::class, 'updateTestimonial'])->name('admin.testimonials.update');
     Route::delete('/testimonials/{testimonial}', [AdminController::class, 'destroyTestimonial'])->name('admin.testimonials.destroy');
+    Route::post('/staff', [AdminController::class, 'storeStaff'])->name('admin.staff.store');
+    Route::patch('/staff/{staff}', [AdminController::class, 'updateStaff'])->name('admin.staff.update');
+    Route::delete('/staff/{staff}', [AdminController::class, 'destroyStaff'])->name('admin.staff.destroy');
+    Route::post('/company-certifications', [AdminController::class, 'storeCompanyCertification'])->name('admin.company-certifications.store');
+    Route::patch('/company-certifications/{companyCertification}', [AdminController::class, 'updateCompanyCertification'])->name('admin.company-certifications.update');
+    Route::delete('/company-certifications/{companyCertification}', [AdminController::class, 'destroyCompanyCertification'])->name('admin.company-certifications.destroy');
     Route::post('/users/admins', [AdminController::class, 'storeAdminUser'])->name('admin.users.store');
     Route::patch('/users/admins/{user}', [AdminController::class, 'updateAdminUser'])->name('admin.users.update');
     Route::delete('/users/admins/{user}', [AdminController::class, 'destroyAdminUser'])->name('admin.users.destroy');

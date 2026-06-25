@@ -44,6 +44,19 @@
                     <p class="mt-2 text-xs leading-5 text-stone-600">Manage the homepage hero slider and other landing-page content.</p>
                 </a>
 
+                <a href="{{ route('admin.about-us') }}" class="group rounded-xl border border-stone-200 bg-gradient-to-br from-stone-50 to-white p-5 transition hover:border-orange-200 hover:shadow-md">
+                    <div class="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-orange-100 text-orange-700 group-hover:bg-orange-200">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="9" cy="7" r="4"></circle>
+                            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                        </svg>
+                    </div>
+                    <p class="mt-4 font-semibold text-stone-900">About Us</p>
+                    <p class="mt-2 text-xs leading-5 text-stone-600">Manage team profiles and company certifications for the About Us page.</p>
+                </a>
+
                 <a href="{{ route('admin.blogs') }}" class="group rounded-xl border border-stone-200 bg-gradient-to-br from-stone-50 to-white p-5 transition hover:border-emerald-200 hover:shadow-md">
                     <div class="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-100 text-emerald-700 group-hover:bg-emerald-200">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">

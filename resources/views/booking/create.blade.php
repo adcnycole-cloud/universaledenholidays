@@ -32,8 +32,11 @@
         $selectedPhoneCountryCode = $selectedPhoneCountryCode ?: $defaultPhoneCountryCode;
         $phoneLocalNumber = is_string($phoneLocalNumber) ? $phoneLocalNumber : '';
         $selectedBookingPurpose = old('booking_purpose', '');
+        $selectedProductPricingTiers = $selectedProduct
+            ? ($productPricingTiers[(string) $selectedProduct->id] ?? ['malaysia' => [], 'international' => []])
+            : ['malaysia' => [], 'international' => []];
     @endphp
-    <main class="mx-auto max-w-[96rem] px-5 py-8 lg:px-10">
+    <main class="mx-auto max-w-[144rem] px-4 py-8 sm:px-5 lg:px-6">
         <div class="mb-6 flex items-start justify-between gap-4">
             <div>
                 <p class="text-sm uppercase tracking-[0.3em] text-amber-600">{{ $isEnquiry ? 'Enquiry Form' : ($isReserveForm ? 'Reserve Form' : 'Booking Form') }}</p>
@@ -74,27 +77,25 @@
                 @endunless
                 @if ($isProductLocked && $selectedProduct)
                     <input type="hidden" name="locked_product_id" value="{{ $selectedProduct->id }}">
+                    <input
+                        type="hidden"
+                        id="locked_product_data"
+                        data-product-id="{{ $selectedProduct->id }}"
+                        data-category="{{ $selectedProduct->category }}"
+                        data-name="{{ $selectedProduct->name }}"
+                        data-duration="{{ $selectedProduct->duration }}"
+                        data-malaysia-adult="{{ $selectedProduct->discounted_malaysia_adult_price_myr }}"
+                        data-malaysia-child="{{ $selectedProduct->discounted_malaysia_child_price_myr }}"
+                        data-international-adult="{{ $selectedProduct->discounted_international_adult_price_myr }}"
+                        data-international-child="{{ $selectedProduct->discounted_international_child_price_myr }}"
+                    >
                 @endif
                 <div class="grid gap-4 md:grid-cols-2">
-                    <div>
-                        <label for="product_id" class="mb-2 block text-sm font-medium text-stone-700">Service / Product <span class="text-rose-600">*</span></label>
-                        @if ($isProductLocked && $selectedProduct)
-                            <input type="hidden" name="product_id" value="{{ $selectedProduct->id }}">
-                            <select id="product_id" class="w-full rounded-2xl border border-stone-300 bg-stone-100 px-4 py-3 text-stone-800" disabled>
-                                <option
-                                    value="{{ $selectedProduct->id }}"
-                                    data-category="{{ $selectedProduct->category }}"
-                                    data-name="{{ $selectedProduct->name }}"
-                                    data-duration="{{ $selectedProduct->duration }}"
-                                    data-malaysia-adult="{{ $selectedProduct->discounted_malaysia_adult_price_myr }}"
-                                    data-malaysia-child="{{ $selectedProduct->discounted_malaysia_child_price_myr }}"
-                                    data-international-adult="{{ $selectedProduct->discounted_international_adult_price_myr }}"
-                                    data-international-child="{{ $selectedProduct->discounted_international_child_price_myr }}"
-                                    selected
-                                >{{ $selectedProduct->name }} - {{ ucfirst($selectedProduct->category) }}</option>
-                            </select>
-                            <p class="mt-2 text-xs text-stone-500">This booking is locked to the product you selected from the previous page.</p>
-                        @else
+                    @if ($isProductLocked && $selectedProduct)
+                        <input type="hidden" name="product_id" value="{{ $selectedProduct->id }}">
+                    @else
+                        <div>
+                            <label for="product_id" class="mb-2 block text-sm font-medium text-stone-700">Service / Product <span class="text-rose-600">*</span></label>
                             <select id="product_id" name="product_id" class="w-full rounded-2xl border border-stone-300 bg-white px-4 py-3 text-stone-800" required>
                                 <option value="">Select a product</option>
                                 @foreach ($transportServices as $product)
@@ -124,18 +125,63 @@
                                     >{{ $product->name }} - Package</option>
                                 @endforeach
                             </select>
-                        @endif
-                    </div>
+                        </div>
+                    @endif
                     <div>
-                        <label for="service_type" class="mb-2 block text-sm font-medium text-stone-700">{{ $isEnquiry ? 'Enquiry type' : ($isReserveForm ? 'Reserve type' : 'Booking type') }} <span class="text-rose-600">*</span></label>
+                        @php
+                            $selectedPackageType = null;
+                            $showLockedPackageSummaryInline = false;
+
+                            if ($isProductLocked && $selectedProduct && $selectedProduct->category === 'package') {
+                                $packageDurationKey = strtolower(preg_replace('/\s+/', '', trim((string) $selectedProduct->duration)) ?? '');
+
+                                $selectedPackageType = match (true) {
+                                    str_contains($packageDurationKey, '4d3n'),
+                                    str_contains($packageDurationKey, '4days3night'),
+                                    str_contains($packageDurationKey, '4days3nights') => '4D3N',
+                                    str_contains($packageDurationKey, '3d2n'),
+                                    str_contains($packageDurationKey, '3days2night'),
+                                    str_contains($packageDurationKey, '3days2nights') => '3D2N',
+                                    str_contains($packageDurationKey, '2d1n'),
+                                    str_contains($packageDurationKey, '2days1night'),
+                                    str_contains($packageDurationKey, '2days1nights') => '2D1N',
+                                    str_contains($packageDurationKey, 'daytrip'),
+                                    str_contains($packageDurationKey, '1day'),
+                                    str_contains($packageDurationKey, 'halfday') => 'Day Trip',
+                                    default => $selectedProduct->duration ?: 'Package',
+                                };
+
+                                $showLockedPackageSummaryInline = !$isEnquiry;
+                            }
+                        @endphp
                         @if ($isProductLocked && $selectedProduct)
                             <input type="hidden" name="service_type" value="{{ $selectedProduct->category }}">
-                            <select id="service_type" class="w-full rounded-2xl border border-stone-300 bg-stone-100 px-4 py-3 text-stone-800" disabled>
-                                <option value="{{ $selectedProduct->category }}" selected>
-                                    {{ $selectedProduct->category === 'transport' ? 'Transport service' : 'Travel package' }}
-                                </option>
-                            </select>
+                            @if ($selectedPackageType && !$showLockedPackageSummaryInline)
+                                <div class="grid gap-4 md:grid-cols-2">
+                                    <div>
+                                        <label class="mb-2 block text-sm font-medium text-stone-700">Package name <span class="text-rose-600">*</span></label>
+                                        <select class="w-full appearance-none rounded-2xl border border-stone-300 bg-stone-100 px-4 py-3 text-stone-800" disabled>
+                                            <option value="{{ $selectedProduct->id }}" selected>{{ $selectedProduct->name }}</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label for="service_type" class="mb-2 block text-sm font-medium text-stone-700">Tour type <span class="text-rose-600">*</span></label>
+                                        <select id="service_type" class="w-full appearance-none rounded-2xl border border-stone-300 bg-stone-100 px-4 py-3 text-stone-800" disabled>
+                                            <option value="{{ $selectedProduct->category }}" selected>{{ $selectedPackageType }}</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            @elseif (!$selectedPackageType)
+                                <label for="service_type" class="mb-2 block text-sm font-medium text-stone-700">Booking type <span class="text-rose-600">*</span></label>
+                                <select id="service_type" class="w-full appearance-none rounded-2xl border border-stone-300 bg-stone-100 px-4 py-3 text-stone-800" disabled>
+                                    <option value="{{ $selectedProduct->category }}" selected>Transport service</option>
+                                </select>
+                            @endif
                         @else
+                            <label for="service_type" class="mb-2 block text-sm font-medium text-stone-700">
+                                {{ $isEnquiry ? 'Enquiry type' : ($isReserveForm ? 'Reserve type' : 'Booking type') }}
+                                <span class="text-rose-600">*</span>
+                            </label>
                             <select id="service_type" name="service_type" class="w-full rounded-2xl border border-stone-300 bg-white px-4 py-3 text-stone-800" required>
                                 <option value="transport" @selected($selectedServiceType === 'transport')>Transport service</option>
                                 <option value="package" @selected($selectedServiceType === 'package')>Travel package</option>
@@ -145,7 +191,7 @@
                 </div>
 
                 @if ($isEnquiry)
-                <div class="grid gap-6 lg:grid-cols-2 lg:items-start">
+                <div class="grid gap-6 lg:grid-cols-[minmax(0,1.65fr)_minmax(20rem,0.75fr)] lg:items-start">
                     <div class="rounded-[1.5rem] border border-stone-200 bg-stone-50/70 p-5 shadow-sm">
                         <p class="mb-4 text-sm font-semibold uppercase tracking-[0.25em] text-stone-600">Your Details</p>
                         <div class="grid gap-4 md:grid-cols-2">
@@ -230,17 +276,33 @@
                 @else
                 <div class="grid gap-6 lg:grid-cols-2 lg:items-start">
                     <div class="rounded-[1.5rem] border border-stone-200 bg-stone-50/70 p-5 shadow-sm">
+                        @if ($showLockedPackageSummaryInline)
+                            <div class="mb-5 grid gap-4 md:grid-cols-2">
+                                <div>
+                                    <label class="mb-2 block text-sm font-medium text-stone-700">Package name <span class="text-rose-600">*</span></label>
+                                    <select class="w-full appearance-none rounded-2xl border border-stone-300 bg-stone-100 px-4 py-3 text-stone-800" disabled>
+                                        <option value="{{ $selectedProduct->id }}" selected>{{ $selectedProduct->name }}</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label for="service_type" class="mb-2 block text-sm font-medium text-stone-700">Tour type <span class="text-rose-600">*</span></label>
+                                    <select id="service_type" class="w-full appearance-none rounded-2xl border border-stone-300 bg-stone-100 px-4 py-3 text-stone-800" disabled>
+                                        <option value="{{ $selectedProduct->category }}" selected>{{ $selectedPackageType }}</option>
+                                    </select>
+                                </div>
+                            </div>
+                        @endif
                         <p class="mb-4 text-sm font-semibold uppercase tracking-[0.25em] text-stone-600">Booking Purpose</p>
                         <div class="grid gap-3 md:grid-cols-2" data-booking-purpose-switcher>
                             <label class="block cursor-pointer">
                                 <input type="radio" name="booking_purpose" value="leisure" class="sr-only" @checked($selectedBookingPurpose === 'leisure')>
-                                <div class="rounded-[1.35rem] border border-stone-300 bg-white px-4 py-4 text-center text-stone-700 shadow-sm transition" data-booking-purpose-card="leisure">
+                                <div class="rounded-[1.35rem] border border-stone-300 bg-white px-4 py-2.5 text-center text-stone-700 shadow-sm transition" data-booking-purpose-card="leisure">
                                     <p class="text-sm font-semibold uppercase tracking-[0.22em] text-inherit">Leisure</p>
                                 </div>
                             </label>
                             <label class="block cursor-pointer">
                                 <input type="radio" name="booking_purpose" value="business" class="sr-only" @checked($selectedBookingPurpose === 'business')>
-                                <div class="rounded-[1.35rem] border border-stone-300 bg-white px-4 py-4 text-center text-stone-700 shadow-sm transition" data-booking-purpose-card="business">
+                                <div class="rounded-[1.35rem] border border-stone-300 bg-white px-4 py-2.5 text-center text-stone-700 shadow-sm transition" data-booking-purpose-card="business">
                                     <p class="text-sm font-semibold uppercase tracking-[0.22em] text-inherit">Business</p>
                                 </div>
                             </label>
@@ -284,22 +346,25 @@
                             </div>
                             <div class="mt-3">
                                 <label for="pickup_location" class="mb-2 block text-sm font-medium text-stone-700">Pickup location <span class="text-rose-600">*</span></label>
-                                <select id="pickup_location" name="pickup_location" class="w-full rounded-2xl border border-stone-300 bg-white px-4 py-3 text-stone-800">
-                                    <option value="">Select pickup location</option>
+                                <input
+                                    id="pickup_location"
+                                    name="pickup_location"
+                                    type="text"
+                                    list="pickup_location_options"
+                                    value="{{ old('pickup_location') }}"
+                                    class="w-full rounded-2xl border border-stone-300 bg-white px-4 py-3 text-stone-800"
+                                    placeholder="Select or type pickup location"
+                                >
+                                <datalist id="pickup_location_options">
                                     @foreach ($pickupLocations as $value => $label)
-                                        <option value="{{ $value }}" @selected(old('pickup_location') === $value)>{{ $label }}</option>
+                                        <option value="{{ $value }}">{{ $label }}</option>
                                     @endforeach
-                                </select>
+                                </datalist>
                             </div>
                         </div>
                     </div>
 
                     <div class="rounded-[1.5rem] border border-stone-200 bg-stone-50/70 p-4 shadow-sm">
-                        <div class="mb-4 rounded-[1.25rem] border border-sky-200 bg-sky-50/80 p-4">
-                            <p class="text-xs font-semibold uppercase tracking-[0.22em] text-sky-700">Selected Package Duration</p>
-                            <p id="booking-package-duration" class="mt-2 text-lg font-semibold text-stone-900">{{ $selectedProduct?->duration ?: 'Select a product to view duration' }}</p>
-                            <p class="mt-1 text-xs leading-5 text-stone-500">Shown from the package or service you selected for this booking or reserve request.</p>
-                        </div>
                         <p class="mb-4 text-sm font-semibold uppercase tracking-[0.25em] text-stone-600">Travel Dates</p>
                         <div
                             class="rounded-[1.35rem] border border-stone-200 bg-[linear-gradient(180deg,_#fffdf9,_#faf8ff)] p-3.5"
@@ -364,36 +429,48 @@
                     <div class="mt-4 grid gap-3 md:grid-cols-2">
                         <div class="rounded-[1.25rem] border border-blue-200 bg-white p-4">
                             <p class="text-xs font-semibold uppercase tracking-[0.25em] text-blue-700">Malaysia Market</p>
-                            <div class="mt-3 grid gap-3 sm:grid-cols-2">
-                                <div>
-                                    <p class="text-sm text-stone-500">Adult</p>
-                                    <p class="mt-1 text-xl font-semibold text-stone-900" id="booking-malaysia-adult">
-                                        {{ $selectedProduct ? 'RM '.number_format((float) $selectedProduct->discounted_malaysia_adult_price_myr, 2) : '--' }}
-                                    </p>
-                                </div>
-                                <div>
-                                    <p class="text-sm text-stone-500">Child</p>
-                                    <p class="mt-1 text-xl font-semibold text-stone-900" id="booking-malaysia-child">
-                                        {{ $selectedProduct ? 'RM '.number_format((float) $selectedProduct->discounted_malaysia_child_price_myr, 2) : '--' }}
-                                    </p>
-                                </div>
+                            <div class="mt-3 space-y-3" id="booking-malaysia-tiers">
+                                @forelse ($selectedProductPricingTiers['malaysia'] as $tier)
+                                    <div class="rounded-[1rem] border border-blue-100 bg-blue-50/30 p-3">
+                                        <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-stone-500">Group Size</p>
+                                        <p class="mt-1 text-sm font-semibold text-stone-900">{{ $tier['label'] }}</p>
+                                        <div class="mt-3 grid gap-3 sm:grid-cols-2">
+                                            <div>
+                                                <p class="text-sm text-stone-500">Adult</p>
+                                                <p class="mt-1 text-lg font-semibold text-stone-900">RM {{ number_format((float) $tier['adult_price'], 2) }}</p>
+                                            </div>
+                                            <div>
+                                                <p class="text-sm text-stone-500">Child</p>
+                                                <p class="mt-1 text-lg font-semibold text-stone-900">RM {{ number_format((float) $tier['child_price'], 2) }}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                @empty
+                                    <p class="text-sm text-stone-500">Select a product to view pricing.</p>
+                                @endforelse
                             </div>
                         </div>
                         <div class="rounded-[1.25rem] border border-amber-200 bg-white p-4">
                             <p class="text-xs font-semibold uppercase tracking-[0.25em] text-amber-700">International Market</p>
-                            <div class="mt-3 grid gap-3 sm:grid-cols-2">
-                                <div>
-                                    <p class="text-sm text-stone-500">Adult</p>
-                                    <p class="mt-1 text-xl font-semibold text-stone-900" id="booking-international-adult">
-                                        {{ $selectedProduct ? 'RM '.number_format((float) $selectedProduct->discounted_international_adult_price_myr, 2) : '--' }}
-                                    </p>
-                                </div>
-                                <div>
-                                    <p class="text-sm text-stone-500">Child</p>
-                                    <p class="mt-1 text-xl font-semibold text-stone-900" id="booking-international-child">
-                                        {{ $selectedProduct ? 'RM '.number_format((float) $selectedProduct->discounted_international_child_price_myr, 2) : '--' }}
-                                    </p>
-                                </div>
+                            <div class="mt-3 space-y-3" id="booking-international-tiers">
+                                @forelse ($selectedProductPricingTiers['international'] as $tier)
+                                    <div class="rounded-[1rem] border border-amber-100 bg-amber-50/30 p-3">
+                                        <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-stone-500">Group Size</p>
+                                        <p class="mt-1 text-sm font-semibold text-stone-900">{{ $tier['label'] }}</p>
+                                        <div class="mt-3 grid gap-3 sm:grid-cols-2">
+                                            <div>
+                                                <p class="text-sm text-stone-500">Adult</p>
+                                                <p class="mt-1 text-lg font-semibold text-stone-900">RM {{ number_format((float) $tier['adult_price'], 2) }}</p>
+                                            </div>
+                                            <div>
+                                                <p class="text-sm text-stone-500">Child</p>
+                                                <p class="mt-1 text-lg font-semibold text-stone-900">RM {{ number_format((float) $tier['child_price'], 2) }}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                @empty
+                                    <p class="text-sm text-stone-500">Select a product to view pricing.</p>
+                                @endforelse
                             </div>
                         </div>
                     </div>
@@ -694,14 +771,14 @@
             const serviceSelector = document.querySelector('#service_type');
             const currencySelector = document.querySelector('#currency_code');
             const navbarCurrencySelector = document.querySelector('#currency-selector');
+            const lockedProductData = document.querySelector('#locked_product_data');
+            const productPricingTiers = @json($productPricingTiers);
             const malaysiaAdultsInput = document.querySelector('#malaysian_adults');
             const malaysiaKidsInput = document.querySelector('#malaysian_kids');
             const internationalAdultsInput = document.querySelector('#international_adults');
             const internationalKidsInput = document.querySelector('#international_kids');
-            const malaysiaAdultPrice = document.querySelector('#booking-malaysia-adult');
-            const malaysiaChildPrice = document.querySelector('#booking-malaysia-child');
-            const internationalAdultPrice = document.querySelector('#booking-international-adult');
-            const internationalChildPrice = document.querySelector('#booking-international-child');
+            const malaysiaTiersContainer = document.querySelector('#booking-malaysia-tiers');
+            const internationalTiersContainer = document.querySelector('#booking-international-tiers');
             const malaysiaTotal = document.querySelector('#booking-malaysia-total');
             const malaysiaCount = document.querySelector('#booking-malaysia-count');
             const internationalTotal = document.querySelector('#booking-international-total');
@@ -717,12 +794,84 @@
                 return totalGuests === 1 ? '1 guest' : `${totalGuests} guests`;
             };
 
-            const getSelectedOption = () => {
-                if (!productSelector) {
+            const parsePricingTierBounds = (label) => {
+                const matches = String(label || '').match(/\d+/g) || [];
+                const numbers = matches.map((value) => Number(value));
+
+                if (numbers.length === 0) {
+                    return { min: null, max: null };
+                }
+
+                const hasPlusSuffix = String(label || '').includes('+');
+
+                if (numbers.length === 1) {
+                    return {
+                        min: numbers[0],
+                        max: hasPlusSuffix ? null : numbers[0],
+                    };
+                }
+
+                return {
+                    min: Math.min(numbers[0], numbers[1]),
+                    max: Math.max(numbers[0], numbers[1]),
+                };
+            };
+
+            const resolvePricingTierForGuestCount = (tiers, guestCount) => {
+                if (!Array.isArray(tiers) || tiers.length === 0 || guestCount < 1) {
                     return null;
                 }
 
-                return productSelector.options[productSelector.selectedIndex] || null;
+                const normalizedTiers = tiers.map((tier) => ({
+                    tier,
+                    ...parsePricingTierBounds(tier?.label || ''),
+                }));
+
+                const firstTier = normalizedTiers[0] || null;
+                if (guestCount > 0 && firstTier && firstTier.min !== null && guestCount < firstTier.min) {
+                    return firstTier.tier;
+                }
+
+                const matchingTier = normalizedTiers.find(({ min, max }) => {
+                    if (min === null && max === null) {
+                        return false;
+                    }
+
+                    if (min !== null && guestCount < min) {
+                        return false;
+                    }
+
+                    if (max !== null && guestCount > max) {
+                        return false;
+                    }
+
+                    return true;
+                });
+
+                return matchingTier?.tier || normalizedTiers[normalizedTiers.length - 1]?.tier || tiers[0];
+            };
+
+            const getSelectedOption = () => {
+                if (productSelector) {
+                    return productSelector.options[productSelector.selectedIndex] || null;
+                }
+
+                if (!lockedProductData) {
+                    return null;
+                }
+
+                return {
+                    value: lockedProductData.dataset.productId || '',
+                    dataset: {
+                        category: lockedProductData.dataset.category || '',
+                        name: lockedProductData.dataset.name || '',
+                        duration: lockedProductData.dataset.duration || '',
+                        malaysiaAdult: lockedProductData.dataset.malaysiaAdult || '0',
+                        malaysiaChild: lockedProductData.dataset.malaysiaChild || '0',
+                        internationalAdult: lockedProductData.dataset.internationalAdult || '0',
+                        internationalChild: lockedProductData.dataset.internationalChild || '0',
+                    },
+                };
             };
 
             const getSelectedDurationLabel = () => getSelectedOption()?.dataset.duration || '';
@@ -732,6 +881,13 @@
                 const durationMatch = durationLabel.match(/(\d+)\s*day/i);
 
                 return durationMatch ? Number(durationMatch[1]) : 0;
+            };
+
+            const getSelectedProductPricing = () => {
+                const selectedOption = getSelectedOption();
+                const productId = selectedOption?.value || '';
+
+                return productPricingTiers[productId] || { malaysia: [], international: [] };
             };
 
             const getActiveCurrency = () => navbarCurrencySelector?.value || currencySelector?.value || 'MYR';
@@ -756,46 +912,54 @@
                 serviceSelector.value = selectedOption.dataset.category;
             };
 
-            const updateMarketPriceCards = () => {
-                const selectedOption = getSelectedOption();
-                const currency = getActiveCurrency();
-                const rate = currencyRates[currency] ?? 1;
-
-                if (!selectedOption || !selectedOption.value) {
-                    if (malaysiaAdultPrice) {
-                        malaysiaAdultPrice.textContent = '--';
-                    }
-                    if (malaysiaChildPrice) {
-                        malaysiaChildPrice.textContent = '--';
-                    }
-                    if (internationalAdultPrice) {
-                        internationalAdultPrice.textContent = '--';
-                    }
-                    if (internationalChildPrice) {
-                        internationalChildPrice.textContent = '--';
-                    }
-
+            const renderMarketPricingTiers = (container, tiers, marketClass) => {
+                if (!container) {
                     return;
                 }
 
-                if (malaysiaAdultPrice) {
-                    malaysiaAdultPrice.textContent = formatPrice(Number(selectedOption.dataset.malaysiaAdult || 0) * rate, currency);
+                if (!Array.isArray(tiers) || tiers.length === 0) {
+                    container.innerHTML = '<p class="text-sm text-stone-500">Select a product to view pricing.</p>';
+                    return;
                 }
-                if (malaysiaChildPrice) {
-                    malaysiaChildPrice.textContent = formatPrice(Number(selectedOption.dataset.malaysiaChild || 0) * rate, currency);
+
+                const currency = getActiveCurrency();
+                const rate = currencyRates[currency] ?? 1;
+
+                container.innerHTML = tiers.map((tier) => `
+                    <div class="rounded-[1rem] border ${marketClass === 'blue' ? 'border-blue-100 bg-blue-50/30' : 'border-amber-100 bg-amber-50/30'} p-3">
+                        <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-stone-500">Group Size</p>
+                        <p class="mt-1 text-sm font-semibold text-stone-900">${tier.label || 'Per person'}</p>
+                        <div class="mt-3 grid gap-3 sm:grid-cols-2">
+                            <div>
+                                <p class="text-sm text-stone-500">Adult</p>
+                                <p class="mt-1 text-lg font-semibold text-stone-900">${formatPrice(Number(tier.adult_price || 0) * rate, currency)}</p>
+                            </div>
+                            <div>
+                                <p class="text-sm text-stone-500">Child</p>
+                                <p class="mt-1 text-lg font-semibold text-stone-900">${formatPrice(Number(tier.child_price || 0) * rate, currency)}</p>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            };
+
+            const updateMarketPriceCards = () => {
+                const selectedOption = getSelectedOption();
+                const pricing = getSelectedProductPricing();
+
+                if (!selectedOption || !selectedOption.value) {
+                    renderMarketPricingTiers(malaysiaTiersContainer, [], 'blue');
+                    renderMarketPricingTiers(internationalTiersContainer, [], 'amber');
+                    return;
                 }
-                if (internationalAdultPrice) {
-                    internationalAdultPrice.textContent = formatPrice(Number(selectedOption.dataset.internationalAdult || 0) * rate, currency);
-                }
-                if (internationalChildPrice) {
-                    internationalChildPrice.textContent = formatPrice(Number(selectedOption.dataset.internationalChild || 0) * rate, currency);
-                }
+
+                renderMarketPricingTiers(malaysiaTiersContainer, pricing.malaysia || [], 'blue');
+                renderMarketPricingTiers(internationalTiersContainer, pricing.international || [], 'amber');
             };
 
             const updateBookingEstimate = () => {
                 if (
-                    !productSelector
-                    || !currencySelector
+                    !currencySelector
                     || !malaysiaTotal
                     || !malaysiaCount
                     || !internationalTotal
@@ -834,18 +998,31 @@
                 const malaysiaKids = getCount(malaysiaKidsInput);
                 const internationalAdults = getCount(internationalAdultsInput);
                 const internationalKids = getCount(internationalKidsInput);
-                const malaysiaSubtotalMyr = (malaysiaAdults * Number(selectedOption.dataset.malaysiaAdult || 0))
-                    + (malaysiaKids * Number(selectedOption.dataset.malaysiaChild || 0));
-                const internationalSubtotalMyr = (internationalAdults * Number(selectedOption.dataset.internationalAdult || 0))
-                    + (internationalKids * Number(selectedOption.dataset.internationalChild || 0));
+                const malaysiaGuestCountValue = malaysiaAdults + malaysiaKids;
+                const internationalGuestCountValue = internationalAdults + internationalKids;
+                const pricing = getSelectedProductPricing();
+                const selectedMalaysiaTier = resolvePricingTierForGuestCount(pricing.malaysia || [], malaysiaGuestCountValue);
+                const selectedInternationalTier = resolvePricingTierForGuestCount(pricing.international || [], internationalGuestCountValue);
+                const malaysiaAdultRate = Number(selectedMalaysiaTier?.adult_price ?? selectedOption.dataset.malaysiaAdult ?? 0);
+                const malaysiaChildRate = Number(selectedMalaysiaTier?.child_price ?? selectedOption.dataset.malaysiaChild ?? 0);
+                const internationalAdultRate = Number(selectedInternationalTier?.adult_price ?? selectedOption.dataset.internationalAdult ?? 0);
+                const internationalChildRate = Number(selectedInternationalTier?.child_price ?? selectedOption.dataset.internationalChild ?? 0);
+                const malaysiaSubtotalMyr = (malaysiaAdults * malaysiaAdultRate)
+                    + (malaysiaKids * malaysiaChildRate);
+                const internationalSubtotalMyr = (internationalAdults * internationalAdultRate)
+                    + (internationalKids * internationalChildRate);
                 const totalMyr = malaysiaSubtotalMyr + internationalSubtotalMyr;
                 const currency = getActiveCurrency();
                 const rate = currencyRates[currency] ?? 1;
 
                 malaysiaTotal.textContent = formatPrice(malaysiaSubtotalMyr * rate, currency);
-                malaysiaCount.textContent = formatGuestLabel(malaysiaAdults, malaysiaKids);
+                malaysiaCount.textContent = selectedMalaysiaTier?.label
+                    ? `${formatGuestLabel(malaysiaAdults, malaysiaKids)} · ${selectedMalaysiaTier.label} rate`
+                    : formatGuestLabel(malaysiaAdults, malaysiaKids);
                 internationalTotal.textContent = formatPrice(internationalSubtotalMyr * rate, currency);
-                internationalCount.textContent = formatGuestLabel(internationalAdults, internationalKids);
+                internationalCount.textContent = selectedInternationalTier?.label
+                    ? `${formatGuestLabel(internationalAdults, internationalKids)} · ${selectedInternationalTier.label} rate`
+                    : formatGuestLabel(internationalAdults, internationalKids);
                 grandTotal.textContent = formatPrice(totalMyr * rate, currency);
                 grandTotalMyr.textContent = `Base MYR total: ${formatPrice(totalMyr, 'MYR')}`;
             };

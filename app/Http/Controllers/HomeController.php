@@ -5,9 +5,11 @@ namespace App\Http\Controllers;
 use App\Mail\BookingReferenceMail;
 use App\Models\BlogPost;
 use App\Models\Booking;
+use App\Models\CompanyCertification;
 use App\Models\HomeHeroSlide;
 use App\Models\NewsFeature;
 use App\Models\Product;
+use App\Models\Staff;
 use App\Models\Testimonial;
 use App\Services\GooglePlaceReviewService;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
@@ -133,6 +135,12 @@ class HomeController extends Controller
         $formMode = $request->query('mode') === 'enquiry' ? 'enquiry' : 'booking';
         $actionType = $request->query('action');
         $products = Product::where('is_active', true)->orderBy('category')->orderBy('price_myr')->get();
+        $productPricingTiers = $products->mapWithKeys(fn (Product $product) => [
+            (string) $product->id => [
+                'malaysia' => $this->resolveProductPricingTiers($product, 'malaysia'),
+                'international' => $this->resolveProductPricingTiers($product, 'international'),
+            ],
+        ])->all();
 
         $selectedProduct = null;
         if ($selectedProductId) {
@@ -150,6 +158,7 @@ class HomeController extends Controller
             'currencySymbols' => self::CURRENCY_SYMBOLS,
             'phoneCountryCodes' => self::PHONE_COUNTRY_CODES,
             'pickupLocations' => self::PICKUP_LOCATIONS,
+            'productPricingTiers' => $productPricingTiers,
         ]);
     }
 
@@ -192,6 +201,225 @@ class HomeController extends Controller
                         'Helpful for customers who want to confirm details first.',
                         'Suitable for arrangements that require manual follow-up.',
                     ],
+                ],
+            ],
+        ]);
+    }
+
+    public function showAboutUs(): View
+    {
+        $fallbackTeamCards = collect([
+            [
+                'name' => 'Reservations & Customer Support',
+                'designation' => 'Guest Support Desk',
+                'email' => null,
+                'contact' => null,
+                'photo_url' => 'https://ui-avatars.com/api/?name='.urlencode('Reservations Customer Support').'&background=1f2937&color=ffffff&size=320&bold=true',
+            ],
+            [
+                'name' => 'Tour Planning & Operations',
+                'designation' => 'Operations Team',
+                'email' => null,
+                'contact' => null,
+                'photo_url' => 'https://ui-avatars.com/api/?name='.urlencode('Tour Planning Operations').'&background=1f2937&color=ffffff&size=320&bold=true',
+            ],
+            [
+                'name' => 'Transport & Dispatch Team',
+                'designation' => 'Transport Coordination',
+                'email' => null,
+                'contact' => null,
+                'photo_url' => 'https://ui-avatars.com/api/?name='.urlencode('Transport Dispatch').'&background=1f2937&color=ffffff&size=320&bold=true',
+            ],
+            [
+                'name' => 'Admin & Documentation',
+                'designation' => 'Admin Support',
+                'email' => null,
+                'contact' => null,
+                'photo_url' => 'https://ui-avatars.com/api/?name='.urlencode('Admin Documentation').'&background=1f2937&color=ffffff&size=320&bold=true',
+            ],
+        ]);
+
+        $teamCards = Schema::hasTable('staff')
+            ? Staff::query()
+                ->orderBy('sort_order')
+                ->orderBy('name')
+                ->get()
+                ->map(fn (Staff $staff) => [
+                    'name' => $staff->name,
+                    'designation' => $staff->designation,
+                    'email' => $staff->email,
+                    'contact' => $staff->contact,
+                    'photo_url' => $staff->photo_url,
+                ])
+            : collect();
+
+        if ($teamCards->isEmpty()) {
+            $teamCards = $fallbackTeamCards;
+        }
+
+        $fallbackCertifications = [
+            [
+                'title' => 'SSM Company Registration',
+                'logo_url' => asset('images/ue blue logo.png'),
+                'certificate_url' => asset('images/UNIVERSAL EDEN HOLIDAYS - CERT 2026.pdf'),
+            ],
+            [
+                'title' => 'Tour & Transport License',
+                'logo_url' => asset('images/ue blue logo.png'),
+                'certificate_url' => asset('images/UEH trading license 2026.pdf'),
+            ],
+        ];
+
+        $certifications = Schema::hasTable('company_certifications')
+            ? CompanyCertification::query()
+                ->orderBy('sort_order')
+                ->orderBy('title')
+                ->get()
+                ->map(function (CompanyCertification $certification) {
+                    $certificationText = Str::lower(trim($certification->title.' '.$certification->value.' '.($certification->description ?? '')));
+
+                    $fallbackLogoUrl = asset('images/ue blue logo.png');
+                    $fallbackCertificateUrl = asset('images/UNIVERSAL EDEN HOLIDAYS - CERT 2026.pdf');
+
+                    if (Str::contains($certificationText, 'matta')) {
+                        $fallbackLogoUrl = asset('images/MATTA logo.png');
+                        $fallbackCertificateUrl = asset('images/UEH MEMBERSHIP CERT - MATTA.pdf');
+                    } elseif (Str::contains($certificationText, 'satta')) {
+                        $fallbackLogoUrl = asset('images/SATTA logo.png');
+                        $fallbackCertificateUrl = asset('images/UEH MEMBERSHIP CERT - S.A.T.T.A.pdf');
+                    } elseif (Str::contains($certificationText, 'setia')) {
+                        $fallbackLogoUrl = asset('images/SETIA logo.png');
+                        $fallbackCertificateUrl = asset('images/UEH MEMBERSHIP CERT - SETIA.pdf');
+                    } elseif (Str::contains($certificationText, ['license', 'kpl', 'tour', 'transport'])) {
+                        $fallbackCertificateUrl = asset('images/UEH trading license 2026.pdf');
+                    }
+
+                    return [
+                        'title' => $certification->title,
+                        'logo_url' => $certification->logo_url ?: $fallbackLogoUrl,
+                        'certificate_url' => $certification->certificate_url ?: $fallbackCertificateUrl,
+                    ];
+                })
+                ->all()
+            : [];
+
+        if ($certifications === []) {
+            $certifications = $fallbackCertifications;
+        }
+
+        return view('about-us', [
+            'companyOverview' => [
+                'eyebrow' => 'About Universal Eden Holidays',
+                'title' => 'Built to make Sabah travel feel clear, comfortable, and well supported.',
+                'summary' => 'Universal Eden Holidays Sdn. Bhd. is a Sabah-based travel and transport company focused on helping guests explore the region with practical planning support, responsive service, and flexible booking options. We support holiday packages, transport arrangements, and local trip coordination for travellers who want a smoother experience from first enquiry to final drop-off.',
+                'motto' => 'Discover Sabah with confidence.',
+            ],
+            'companyFacts' => [
+                ['label' => 'Established', 'value' => '2022'],
+                ['label' => 'Based in', 'value' => 'Kota Kinabalu, Sabah, Malaysia'],
+                ['label' => 'Company', 'value' => 'Universal Eden Holidays Sdn. Bhd.'],
+                ['label' => 'Focus', 'value' => 'Tours, transport, and trip coordination in Sabah'],
+            ],
+            'storyBlocks' => [
+                [
+                    'title' => 'What the company is about',
+                    'body' => 'We help travellers, families, and small groups arrange Sabah experiences with less friction. The company combines local travel knowledge with transport support so customers can handle airport transfers, day trips, multi-day packages, and booking follow-up in one place.',
+                ],
+                [
+                    'title' => 'Why Sabah stays at the center',
+                    'body' => 'Sabah offers island escapes, mountain scenery, wildlife, and city-based convenience in one destination. Universal Eden Holidays is built around that range, making it easier for guests to combine transport, nature, and holiday experiences without having to manage every detail separately.',
+                ],
+            ],
+            'teamCards' => $teamCards,
+            'certifications' => $certifications,
+            'officeLocation' => [
+                'title' => 'Our Office Location',
+                'address' => 'Jalan Kalansanan, Batu 6, Tuaran By Pass, 88450 Kota Kinabalu, Sabah, Malaysia',
+                'phone' => '+60 10-386 9077',
+                'email' => 'uniedenholidays@gmail.com',
+                'mapUrl' => 'https://share.google/e4fAfGWSiVMcgEkzH',
+                'mapEmbedUrl' => 'https://www.google.com/maps?q=Universal%20Eden%20Holidays%2C%20Jalan%20Kalansanan%2C%20Batu%206%2C%20Tuaran%20By%20Pass%2C%2088450%20Kota%20Kinabalu%2C%20Sabah%2C%20Malaysia&z=17&output=embed',
+            ],
+        ]);
+    }
+
+    public function showSabahTravelInfo(): View
+    {
+        return view('sabah-travel-info', [
+            'quickFacts' => [
+                ['label' => 'Best base', 'value' => 'Kota Kinabalu for first-time travellers'],
+                ['label' => 'Best season', 'value' => 'Generally drier from February to September'],
+                ['label' => 'Currency', 'value' => 'Malaysian Ringgit (MYR)'],
+                ['label' => 'Language', 'value' => 'Malay and English are widely used'],
+            ],
+            'travelEssentials' => [
+                [
+                    'title' => 'Arrival and airport planning',
+                    'description' => 'Most visitors arrive through Kota Kinabalu International Airport. It is helpful to confirm hotel transfer timing, baggage needs, and whether your tour starts directly from the airport area.',
+                ],
+                [
+                    'title' => 'Weather and comfort',
+                    'description' => 'Sabah stays warm and humid through the year. Light clothing, sun protection, and a small rain layer make day trips and island transfers more comfortable.',
+                ],
+                [
+                    'title' => 'Cash and connectivity',
+                    'description' => 'Cards are common in the city, but carrying some cash is still useful for smaller shops, local snacks, jetty fees, and rural stops.',
+                ],
+                [
+                    'title' => 'Trip pacing',
+                    'description' => 'Travel times can look short on the map but feel longer because of traffic, weather, or mountain roads. Leaving a bit of buffer between activities helps a lot.',
+                ],
+            ],
+            'planningSections' => [
+                [
+                    'title' => 'Best time to visit Sabah',
+                    'points' => [
+                        'February to September is often the easiest window for general sightseeing, island hopping, and outdoor activities.',
+                        'Rain can still happen at any time, so flexible day plans are better than weather-sensitive tight schedules.',
+                        'If you are combining city, island, and inland nature experiences, a 4D3N or longer stay usually feels less rushed.',
+                    ],
+                ],
+                [
+                    'title' => 'Getting around',
+                    'points' => [
+                        'Private transport is often the easiest option for families, small groups, airport pickups, and multi-stop day plans.',
+                        'Shared timing is possible for some activities, but custom transport usually gives the smoothest Sabah experience.',
+                        'For early departures, return flights, or remote attractions, confirm pickup points and journey duration before booking.',
+                    ],
+                ],
+                [
+                    'title' => 'What to pack',
+                    'points' => [
+                        'Bring breathable clothing, sunscreen, sunglasses, and a refillable water bottle.',
+                        'For island trips, add swimwear, a dry bag, slippers, and a towel if your package does not include one.',
+                        'For highland or early-morning routes, keep a light jacket because temperatures can feel cooler than in the city.',
+                    ],
+                ],
+                [
+                    'title' => 'Useful local tips',
+                    'points' => [
+                        'Respect marine parks, wildlife zones, and guide instructions during island and nature activities.',
+                        'Keep mobile data or offline maps ready if you plan to move between several stops in one day.',
+                        'Book popular transport and holiday dates earlier during school breaks, public holidays, and peak festive travel.',
+                    ],
+                ],
+            ],
+            'destinationHighlights' => [
+                [
+                    'name' => 'Kota Kinabalu',
+                    'summary' => 'A practical base for arrivals, sunset dining, city hotels, and short-distance day trips.',
+                ],
+                [
+                    'name' => 'Islands and marine parks',
+                    'summary' => 'Great for snorkeling, beach time, and quick escapes that fit easily into a shorter Sabah itinerary.',
+                ],
+                [
+                    'name' => 'Kundasang',
+                    'summary' => 'Best known for mountain scenery, cooler weather, and relaxed countryside stops.',
+                ],
+                [
+                    'name' => 'Wildlife and river areas',
+                    'summary' => 'A strong option for travellers who want nature, river cruises, and a different side of Sabah beyond the city.',
                 ],
             ],
         ]);
@@ -393,6 +621,84 @@ class HomeController extends Controller
             (float) ($market === 'malaysia' ? $product->malaysia_adult_price_myr : $product->international_adult_price_myr),
             (float) ($market === 'malaysia' ? $product->malaysia_child_price_myr : $product->international_child_price_myr),
         );
+    }
+
+    private function resolvePricingTierForGuestCount(array $pricingTiers, int $guestCount): ?array
+    {
+        if ($pricingTiers === [] || $guestCount < 1) {
+            return null;
+        }
+
+        $normalizedTiers = collect($pricingTiers)
+            ->filter(fn ($tier) => is_array($tier))
+            ->map(function (array $tier) {
+                $bounds = $this->parsePricingTierBounds((string) ($tier['label'] ?? ''));
+
+                return [
+                    'tier' => $tier,
+                    'min' => $bounds['min'],
+                    'max' => $bounds['max'],
+                ];
+            })
+            ->values();
+
+        if ($normalizedTiers->isEmpty()) {
+            return $pricingTiers[0] ?? null;
+        }
+
+        $firstTier = $normalizedTiers->first();
+        if ($guestCount > 0 && $firstTier !== null && $firstTier['min'] !== null && $guestCount < $firstTier['min']) {
+            return $firstTier['tier'];
+        }
+
+        $matchingTier = $normalizedTiers->first(function (array $tierData) use ($guestCount) {
+            $min = $tierData['min'];
+            $max = $tierData['max'];
+
+            if ($min === null && $max === null) {
+                return false;
+            }
+
+            if ($min !== null && $guestCount < $min) {
+                return false;
+            }
+
+            if ($max !== null && $guestCount > $max) {
+                return false;
+            }
+
+            return true;
+        });
+
+        if ($matchingTier !== null) {
+            return $matchingTier['tier'];
+        }
+
+        return $normalizedTiers->last()['tier'] ?? ($pricingTiers[0] ?? null);
+    }
+
+    private function parsePricingTierBounds(string $label): array
+    {
+        preg_match_all('/\d+/', $label, $matches);
+        $numbers = array_map('intval', $matches[0] ?? []);
+
+        if ($numbers === []) {
+            return ['min' => null, 'max' => null];
+        }
+
+        $hasPlusSuffix = str_contains($label, '+');
+
+        if (count($numbers) === 1) {
+            return [
+                'min' => $numbers[0],
+                'max' => $hasPlusSuffix ? null : $numbers[0],
+            ];
+        }
+
+        return [
+            'min' => min($numbers[0], $numbers[1]),
+            'max' => max($numbers[0], $numbers[1]),
+        ];
     }
 
     private function productMatchesTourCategory(Product $product, array $tourPage): bool
@@ -797,7 +1103,7 @@ class HomeController extends Controller
         ];
 
         $bookingRules = [
-            'pickup_location' => ['required', 'in:KKIA,Universal Motor Sdn Bhd,KK Terminal'],
+            'pickup_location' => ['required', 'string', 'max:255'],
             'malaysian_adults' => ['required', 'integer', 'min:0', 'max:50'],
             'malaysian_kids' => ['required', 'integer', 'min:0', 'max:50'],
             'international_adults' => ['required', 'integer', 'min:0', 'max:50'],
@@ -895,11 +1201,22 @@ class HomeController extends Controller
             ])->withInput();
         }
 
+        $malaysiaGuestCount = (int) $validated['malaysian_adults'] + (int) $validated['malaysian_kids'];
+        $internationalGuestCount = (int) $validated['international_adults'] + (int) $validated['international_kids'];
+        $malaysiaPricingTier = $this->resolvePricingTierForGuestCount(
+            $this->resolveProductPricingTiers($product, 'malaysia'),
+            $malaysiaGuestCount
+        );
+        $internationalPricingTier = $this->resolvePricingTierForGuestCount(
+            $this->resolveProductPricingTiers($product, 'international'),
+            $internationalGuestCount
+        );
+
         $amountMyr =
-            ((float) $product->discounted_malaysia_adult_price_myr * (int) $validated['malaysian_adults']) +
-            ((float) $product->discounted_malaysia_child_price_myr * (int) $validated['malaysian_kids']) +
-            ((float) $product->discounted_international_adult_price_myr * (int) $validated['international_adults']) +
-            ((float) $product->discounted_international_child_price_myr * (int) $validated['international_kids']);
+            ((float) ($malaysiaPricingTier['adult_price'] ?? $product->discounted_malaysia_adult_price_myr) * (int) $validated['malaysian_adults']) +
+            ((float) ($malaysiaPricingTier['child_price'] ?? $product->discounted_malaysia_child_price_myr) * (int) $validated['malaysian_kids']) +
+            ((float) ($internationalPricingTier['adult_price'] ?? $product->discounted_international_adult_price_myr) * (int) $validated['international_adults']) +
+            ((float) ($internationalPricingTier['child_price'] ?? $product->discounted_international_child_price_myr) * (int) $validated['international_kids']);
 
         $amountDisplay = $amountMyr * self::CURRENCY_RATES[$validated['currency_code']];
 

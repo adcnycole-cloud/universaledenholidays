@@ -923,7 +923,7 @@
                                                     </button>
                                                 <?php endif; ?>
 
-                                                <div class="space-y-4 px-5 pb-5 pt-1">
+                                                <div class="space-y-1 px-5 pb-5 pt-1">
                                                     <div class="flex flex-wrap gap-2">
                                                         <span class="rounded-full font-bold uppercase {{ ($promo['is_active_offer'] ?? false) ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700' }}" style="padding: 0.16rem 0.62rem; font-size: 0.52rem; letter-spacing: 0; line-height: 1;">
                                                             {{ $promo['status'] ?? (($promo['is_active_offer'] ?? false) ? 'Active offer' : 'Promotion') }}
@@ -1175,55 +1175,6 @@
             </div>
         </section>
 
-        <section id="testimonials" class="home-screen-section px-6 pb-0 pt-6 md:px-8 md:pb-0 md:pt-8" style="position: relative; margin-top: 0; margin-bottom: -4rem; margin-left: calc(50% - 50vw); margin-right: calc(50% - 50vw); background: #ffffff; top: 0;">
-            <div class="mx-auto bg-white px-4 pb-0 pt-4 md:px-4 md:pb-0 md:pt-7" style="max-width: 1920px; margin-bottom: 0; padding-bottom: 0 !important;">
-            <div class="-mt-1 flex flex-col items-center gap-1 text-center">
-                <div>
-                    <h2 class="font-['Oswald'] font-bold uppercase text-stone-900" style="font-size: 2.55rem; line-height: 1; letter-spacing: 0.16em;">Customer reviews</h2>
-                </div>
-                @if (($websiteReviewStats['reviews_count'] ?? 0) > 0 && !is_null($websiteReviewStats['average_rating'] ?? null))
-                    <div class="flex justify-center">
-                        <div class="rounded-full bg-amber-50 px-4 py-2 text-sm font-semibold text-amber-700">
-                            {{ number_format((float) $websiteReviewStats['average_rating'], 1) }}/5 from {{ $websiteReviewStats['reviews_count'] }} review{{ $websiteReviewStats['reviews_count'] === 1 ? '' : 's' }}
-                        </div>
-                    </div>
-                @endif
-            </div>
-            <section class="mt-0 border border-sky-200 bg-sky-50/50 px-4 pb-0 pt-1 shadow-sm" style="margin-top: -0.85rem; margin-bottom: -3.25rem; padding-bottom: 0 !important;">
-                <div class="text-center">
-                    <p class="text-sm uppercase tracking-[0.28em] text-sky-600">Reviews</p>
-                    <h3 class="mt-2 font-['Prata'] text-2xl text-stone-900">What travellers are saying</h3>
-                </div>
-                <div class="mt-3">
-                    @if ($websiteReviews->isNotEmpty())
-                        <div class="reviews-carousel-shell">
-                            <div class="reviews-carousel-track">
-                                @foreach ($websiteReviews as $review)
-                                    <div class="reviews-carousel-slide">
-                                        @include('partials.public-review-card', ['review' => $review])
-                                    </div>
-                                @endforeach
-                                @foreach ($websiteReviews as $review)
-                                    <div class="reviews-carousel-slide" aria-hidden="true">
-                                        @include('partials.public-review-card', ['review' => $review])
-                                    </div>
-                                @endforeach
-                            </div>
-                        </div>
-                    @else
-                        <div class="rounded-3xl border border-dashed border-sky-200 bg-white/80 p-5 text-sm text-stone-600">
-                            No website customer reviews are available yet.
-                        </div>
-                    @endif
-                </div>
-                <div class="flex justify-center pb-3 pt-2">
-                    <a href="{{ route('reviews.index') }}" class="inline-flex items-center justify-center rounded-full bg-[#315fbd] px-5 py-2 text-sm font-semibold text-white transition hover:bg-[#264a94]">
-                        View all reviews
-                    </a>
-                </div>
-            </section>
-            </div>
-        </section>
     </main>
 
     @include('partials.footer')

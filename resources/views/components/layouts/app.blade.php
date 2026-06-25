@@ -313,9 +313,10 @@
                                             <span aria-hidden="true" style="font-size: 0.72rem; line-height: 1;">&#9662;</span>
                                         </button>
                                         <div class="tours-menu-panel" style="border-radius: 0;">
-                                            <a href="{{ route('home') }}#about-us" class="tours-menu-link" style="border-radius: 0;">About Us</a>
+                                            <a href="{{ route('about-us') }}" class="tours-menu-link" style="border-radius: 0;">About Us</a>
                                             <a href="{{ route('reviews.index') }}" class="tours-menu-link" style="border-radius: 0;">Customer Reviews</a>
                                             <a href="{{ route('blog.index') }}" class="tours-menu-link" style="border-radius: 0;">Travel Blog</a>
+                                            <a href="{{ route('sabah-travel-info') }}" class="tours-menu-link" style="border-radius: 0;">Sabah Travel Info</a>
                                             <a href="{{ route('legal.terms-and-conditions') }}" class="tours-menu-link" style="border-radius: 0;">Terms and Condition</a>
                                             <a href="{{ route('payment-options') }}" class="tours-menu-link" style="border-radius: 0;">Payment Options</a>
                                         </div>
@@ -397,9 +398,10 @@
                                             <span aria-hidden="true" style="font-size: 0.72rem; line-height: 1;">&#9662;</span>
                                         </button>
                                         <div class="tours-menu-panel" style="border-radius: 0;">
-                                            <a href="{{ route('home') }}#about-us" class="tours-menu-link" style="border-radius: 0;">About Us</a>
+                                            <a href="{{ route('about-us') }}" class="tours-menu-link" style="border-radius: 0;">About Us</a>
                                             <a href="{{ route('reviews.index') }}" class="tours-menu-link" style="border-radius: 0;">Customer Reviews</a>
                                             <a href="{{ route('blog.index') }}" class="tours-menu-link" style="border-radius: 0;">Travel Blog</a>
+                                            <a href="{{ route('sabah-travel-info') }}" class="tours-menu-link" style="border-radius: 0;">Sabah Travel Info</a>
                                             <a href="{{ route('legal.terms-and-conditions') }}" class="tours-menu-link" style="border-radius: 0;">Terms and Condition</a>
                                             <a href="{{ route('payment-options') }}" class="tours-menu-link" style="border-radius: 0;">Payment Options</a>
                                         </div>

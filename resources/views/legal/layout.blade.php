@@ -17,14 +17,14 @@
                 --panel: #ffffff;
                 --line: #e7e5e4;
                 --brand: #d97706;
-                --brand-soft: #fef3c7;
+                --brand-soft: #030b27;
                 --brand-dark: #92400e;
             }
 
             body.legal-portal {
                 background:
                     radial-gradient(circle at 8% 5%, #fff7ed 0%, transparent 38%),
-                    radial-gradient(circle at 92% 12%, #fef3c7 0%, transparent 36%),
+                    radial-gradient(circle at 92% 12%, #030b27 0%, transparent 36%),
                     linear-gradient(180deg, #fafaf9 0%, #f8fafc 40%, #f8fafc 100%);
                 color: var(--ink-strong);
                 font-family: 'Figtree', sans-serif;

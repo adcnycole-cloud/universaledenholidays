@@ -36,7 +36,7 @@
                 </div>
                 <div>
                     <p class="font-medium text-stone-900">Payment Gateway</p>
-                    <p>{{ strtoupper($booking->payment_gateway ?: 'billplz') }}</p>
+                    <p>{{ strtoupper($booking->payment_gateway ?: 'hitpay') }}</p>
                 </div>
                 <div>
                     <p class="font-medium text-stone-900">Amount Paid</p>

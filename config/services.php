@@ -35,6 +35,19 @@ return [
         ],
     ],
 
+    'hitpay' => [
+        'api_key' => env('HITPAY_API_KEY'),
+        'salt' => env('HITPAY_SALT'),
+        'sandbox' => env('HITPAY_SANDBOX', true),
+        'base_url' => env(
+            'HITPAY_BASE_URL',
+            env('HITPAY_SANDBOX', true)
+                ? 'https://api.sandbox.hit-pay.com'
+                : 'https://api.hit-pay.com'
+        ),
+        'verify_ssl' => env('HITPAY_VERIFY_SSL', true),
+    ],
+
     'billplz' => [
         'api_key' => env('BILLPLZ_API_KEY'),
         'collection_id' => env('BILLPLZ_COLLECTION_ID'),

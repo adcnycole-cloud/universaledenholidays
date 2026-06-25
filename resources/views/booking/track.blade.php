@@ -4,7 +4,7 @@
             <p class="text-sm uppercase tracking-[0.3em] text-amber-600">Booking Tracker</p>
             <h1 class="mt-3 text-3xl font-semibold text-stone-900">Track your booking by Booking ID</h1>
             <p class="mt-4 text-sm leading-7 text-stone-600">
-                Enter your Booking ID to continue directly to the Billplz sandbox payment gateway.
+                Enter your Booking ID to continue directly to the HitPay payment gateway.
             </p>
 
             <form method="POST" action="{{ route('bookings.track.find') }}" class="mt-6 space-y-4">

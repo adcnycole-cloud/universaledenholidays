@@ -76,7 +76,7 @@ class BookingAccessController extends Controller
             );
         }
 
-        return $this->redirectToBillplzCheckout($booking);
+        return $this->redirectToHitPayCheckout($booking);
     }
 
     public function showTrackingDetails(string $bookingReference): View
@@ -128,7 +128,7 @@ class BookingAccessController extends Controller
                     : 'Booking confirmed. This booking does not require payment, but we could not send the confirmation email right now.');
         }
 
-        return $this->redirectToBillplzCheckout($booking);
+        return $this->redirectToHitPayCheckout($booking);
     }
 
     public function showSandboxPaymentPage(string $bookingReference): View
@@ -145,16 +145,14 @@ class BookingAccessController extends Controller
         ]);
     }
 
-    public function handleBillplzRedirect(Request $request, string $bookingReference): RedirectResponse
+    public function handleHitPayRedirect(Request $request, string $bookingReference): RedirectResponse
     {
         $booking = $this->resolveBookingFromReference($bookingReference);
 
-        $payload = $this->extractBillplzPayload($request);
-        $paidFlag = strtolower((string) ($payload['paid'] ?? 'false'));
-        $isPaid = in_array($paidFlag, ['true', '1'], true);
+        $status = $request->query('status', '');
 
-        if ($isPaid) {
-            $this->markBookingAsPaid($booking, $payload, 'redirect');
+        if ($status === 'completed') {
+            $this->markBookingAsPaid($booking, ['status' => 'completed'], 'redirect');
 
             return redirect()
                 ->route('bookings.track.show', $booking->booking_reference)
@@ -162,8 +160,8 @@ class BookingAccessController extends Controller
         }
 
         $booking->update([
-            'payment_gateway_status' => $payload['state'] ?? 'redirect_unpaid',
-            'payment_gateway_payload' => $payload,
+            'payment_gateway_status' => $status ?: 'redirect_unpaid',
+            'payment_gateway_payload' => $request->query(),
         ]);
 
         return redirect()
@@ -171,37 +169,36 @@ class BookingAccessController extends Controller
             ->withErrors(['booking_reference' => 'Payment was not completed. Please try again with your Booking ID.']);
     }
 
-    public function handleBillplzCallback(Request $request): Response
+    public function handleHitPayCallback(Request $request): Response
     {
-        $payload = $this->extractBillplzPayload($request);
-        $billId = (string) ($payload['id'] ?? '');
+        $payload = $request->all();
+        $paymentId = (string) ($payload['payment_id'] ?? '');
 
-        if ($billId === '') {
-            return response('missing bill id', 422);
+        if ($paymentId === '') {
+            return response('missing payment id', 422);
         }
 
-        $booking = Booking::where('payment_gateway_bill_id', $billId)->first();
+        $booking = Booking::where('payment_gateway_bill_id', $paymentId)->first();
 
         if (! $booking) {
-            Log::warning('Billplz callback received with unknown bill id.', ['bill_id' => $billId]);
+            Log::warning('HitPay callback received with unknown payment id.', ['payment_id' => $paymentId]);
 
             return response('ok', 200);
         }
 
-        if (! $this->isBillplzSignatureValid($request, $payload)) {
-            Log::warning('Billplz callback signature invalid.', ['booking_id' => $booking->id, 'bill_id' => $billId]);
+        if (! $this->isHitPaySignatureValid($request)) {
+            Log::warning('HitPay callback signature invalid.', ['booking_id' => $booking->id, 'payment_id' => $paymentId]);
 
             return response('invalid signature', 422);
         }
 
-        $paidFlag = strtolower((string) ($payload['paid'] ?? 'false'));
-        $isPaid = in_array($paidFlag, ['true', '1'], true);
+        $status = strtolower((string) ($payload['status'] ?? ''));
 
-        if ($isPaid) {
+        if ($status === 'completed') {
             $this->markBookingAsPaid($booking, $payload, 'callback');
         } else {
             $booking->update([
-                'payment_gateway_status' => $payload['state'] ?? 'callback_unpaid',
+                'payment_gateway_status' => $payload['status'] ?? 'callback_unpaid',
                 'payment_gateway_payload' => $payload,
             ]);
         }
@@ -467,57 +464,63 @@ class BookingAccessController extends Controller
         ]);
     }
 
-    private function redirectToBillplzCheckout(Booking $booking): RedirectResponse
+    private function redirectToHitPayCheckout(Booking $booking): RedirectResponse
     {
         if ($booking->payment_status === 'paid') {
             return redirect()->route('bookings.track.receipt.show', $booking->booking_reference);
         }
 
-        $apiKey = (string) config('services.billplz.api_key');
-        $collectionId = (string) config('services.billplz.collection_id');
-        $baseUrl = rtrim((string) config('services.billplz.base_url', 'https://www.billplz-sandbox.com'), '/');
-        $verifySsl = (bool) config('services.billplz.verify_ssl', true);
+        $apiKey = (string) config('services.hitpay.api_key');
+        $salt = (string) config('services.hitpay.salt');
+        $baseUrl = rtrim((string) config('services.hitpay.base_url', 'https://api.sandbox.hitpay.com'), '/');
 
-        if ($apiKey === '' || $collectionId === '') {
+        if ($apiKey === '' || $salt === '') {
             return redirect()
                 ->route('bookings.track.payment.show', $booking->booking_reference)
-                ->withErrors(['booking_reference' => 'Billplz sandbox is not configured yet. Please set BILLPLZ_API_KEY and BILLPLZ_COLLECTION_ID.']);
+                ->withErrors(['booking_reference' => 'HitPay is not configured yet. Please set HITPAY_API_KEY and HITPAY_SALT.']);
+        }
+
+        $webhookUrl = route('bookings.hitpay.callback');
+        $redirectUrl = route('bookings.hitpay.redirect', $booking->booking_reference);
+
+        // HitPay rejects localhost — use a placeholder webhook for local dev.
+        // Payments still work: the redirect_url handles the success flow.
+        if (str_contains($webhookUrl, 'localhost') || str_contains($webhookUrl, '127.0.0.1')) {
+            $webhookUrl = 'https://example.com/hitpay-webhook';
         }
 
         try {
             $response = Http::asForm()
-                ->withBasicAuth($apiKey, '')
-                ->withOptions(['verify' => $verifySsl])
+                ->withToken($apiKey)
+                ->withOptions(['verify' => (bool) config('services.hitpay.verify_ssl', true)])
+                ->withHeaders([
+                    'X-Requested-With' => 'XMLHttpRequest',
+                ])
                 ->timeout(20)
-                ->post($baseUrl.'/api/v3/bills', [
-                    'collection_id' => $collectionId,
+                ->post($baseUrl.'/v1/payment-requests', [
+                    'amount' => number_format((float) $booking->amount_myr, 2, '.', ''),
+                    'currency' => strtoupper($booking->currency_code ?: 'MYR'),
                     'email' => $booking->email,
                     'name' => $booking->full_name,
-                    'amount' => (int) round((float) $booking->amount_myr * 100),
-                    'description' => 'Universal Eden Booking '.$booking->booking_reference,
-                    'reference_1_label' => 'Booking ID',
-                    'reference_1' => $booking->booking_reference,
-                    'callback_url' => route('bookings.billplz.callback'),
-                    'redirect_url' => route('bookings.billplz.redirect', $booking->booking_reference),
+                    'purpose' => 'Universal Eden Booking '.$booking->booking_reference,
+                    'reference_number' => $booking->booking_reference,
+                    'redirect_url' => $redirectUrl,
+                    'webhook' => $webhookUrl,
+                    'send_email' => false,
                 ]);
         } catch (ConnectionException $exception) {
-            Log::error('Billplz connection failed.', [
+            Log::error('HitPay connection failed.', [
                 'booking_id' => $booking->id,
-                'verify_ssl' => $verifySsl,
                 'message' => $exception->getMessage(),
             ]);
 
-            $hint = $verifySsl
-                ? 'SSL verification failed while connecting to Billplz sandbox. For local testing, set BILLPLZ_VERIFY_SSL=false in your .env and clear config cache.'
-                : 'Unable to connect to Billplz sandbox right now. Please try again shortly.';
-
             return redirect()
                 ->route('bookings.track.form')
-                ->withErrors(['booking_reference' => $hint]);
+                ->withErrors(['booking_reference' => 'Unable to connect to HitPay right now. Please try again shortly.']);
         }
 
         if (! $response->successful()) {
-            Log::error('Billplz bill creation failed.', [
+            Log::error('HitPay payment request creation failed.', [
                 'booking_id' => $booking->id,
                 'status' => $response->status(),
                 'body' => $response->json() ?: $response->body(),
@@ -525,34 +528,34 @@ class BookingAccessController extends Controller
 
             return redirect()
                 ->route('bookings.track.payment.show', $booking->booking_reference)
-                ->withErrors(['booking_reference' => 'Unable to start Billplz payment right now. Please try again.']);
+                ->withErrors(['booking_reference' => 'Unable to start HitPay payment right now. Please try again.']);
         }
 
-        $billData = $response->json();
-        $billUrl = (string) ($billData['url'] ?? '');
-        $billId = (string) ($billData['id'] ?? '');
+        $paymentData = $response->json();
+        $paymentUrl = (string) ($paymentData['url'] ?? '');
+        $paymentId = (string) ($paymentData['id'] ?? '');
 
-        if ($billUrl === '' || $billId === '') {
-            Log::error('Billplz response missing required bill fields.', [
+        if ($paymentUrl === '' || $paymentId === '') {
+            Log::error('HitPay response missing required payment fields.', [
                 'booking_id' => $booking->id,
-                'response' => $billData,
+                'response' => $paymentData,
             ]);
 
             return redirect()
                 ->route('bookings.track.payment.show', $booking->booking_reference)
-                ->withErrors(['booking_reference' => 'Billplz returned an invalid payment link. Please try again.']);
+                ->withErrors(['booking_reference' => 'HitPay returned an invalid payment link. Please try again.']);
         }
 
         $booking->update([
-            'payment_gateway' => 'billplz',
-            'payment_gateway_bill_id' => $billId,
-            'payment_gateway_url' => $billUrl,
-            'payment_gateway_status' => 'bill_created',
-            'payment_gateway_payload' => $billData,
+            'payment_gateway' => 'hitpay',
+            'payment_gateway_bill_id' => $paymentId,
+            'payment_gateway_url' => $paymentUrl,
+            'payment_gateway_status' => 'payment_request_created',
+            'payment_gateway_payload' => $paymentData,
             'payment_status' => 'awaiting_payment',
         ]);
 
-        return redirect()->away($billUrl);
+        return redirect()->away($paymentUrl);
     }
 
     private function markBookingAsPaid(Booking $booking, array $payload, string $source): void
@@ -565,8 +568,8 @@ class BookingAccessController extends Controller
                 'confirmed_at' => in_array($booking->status, ['confirmed', 'completed'], true)
                     ? $booking->confirmed_at
                     : ($booking->confirmed_at ?: now()),
-                'payment_gateway' => 'billplz',
-                'payment_gateway_status' => $payload['state'] ?? 'paid',
+                'payment_gateway' => 'hitpay',
+                'payment_gateway_status' => $payload['status'] ?? 'paid',
                 'payment_gateway_paid_at' => $payload['paid_at'] ?? null,
                 'payment_gateway_payload' => $payload,
             ]);
@@ -600,39 +603,24 @@ class BookingAccessController extends Controller
         ]);
     }
 
-    private function extractBillplzPayload(Request $request): array
+    private function isHitPaySignatureValid(Request $request): bool
     {
-        $billplz = $request->input('billplz', []);
+        $salt = (string) config('services.hitpay.salt');
 
-        return [
-            'id' => $request->input('id') ?? $request->input('billplz.id') ?? ($billplz['id'] ?? null),
-            'paid' => $request->input('paid') ?? $request->input('billplz.paid') ?? ($billplz['paid'] ?? null),
-            'paid_at' => $request->input('paid_at') ?? $request->input('billplz.paid_at') ?? ($billplz['paid_at'] ?? null),
-            'state' => $request->input('state') ?? $request->input('billplz.state') ?? ($billplz['state'] ?? null),
-            'x_signature' => $request->input('x_signature') ?? $request->input('billplz.x_signature') ?? ($billplz['x_signature'] ?? null),
-            'raw' => $request->all(),
-        ];
-    }
+        if ($salt === '') {
+            Log::warning('HitPay salt not configured — skipping webhook signature verification.');
 
-    private function isBillplzSignatureValid(Request $request, array $payload): bool
-    {
-        $xSignatureKey = (string) config('services.billplz.x_signature');
-
-        if ($xSignatureKey === '') {
             return true;
         }
 
-        $id = (string) ($payload['id'] ?? '');
-        $paid = (string) ($payload['paid'] ?? '');
-        $paidAt = (string) ($payload['paid_at'] ?? '');
-        $receivedSignature = (string) ($payload['x_signature'] ?? '');
+        $receivedSignature = $request->header('X-HitPay-Signature', '');
 
-        if ($id === '' || $receivedSignature === '') {
+        if ($receivedSignature === '') {
             return false;
         }
 
-        $signingString = 'billplzid'.$id.'|billplzpaid_at'.$paidAt.'|billplzpaid'.$paid;
-        $expectedSignature = hash_hmac('sha256', $signingString, $xSignatureKey);
+        $body = $request->getContent();
+        $expectedSignature = hash_hmac('sha256', $body, $salt);
 
         return hash_equals($expectedSignature, $receivedSignature);
     }

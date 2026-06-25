@@ -145,30 +145,35 @@
                             }
 
                             $normalizePackageDetailRows = function ($rows, $fallbackRows, $defaultSymbol, $allowedSymbols) {
+                                $stripPackageDetailLeadingMarker = function ($text) {
+                                    return trim((string) preg_replace('/^\s*(?:[•●○◦▪▫✓✔✕✖✗❌⚠!]+|\d+[.)])\s*/u', '', (string) $text));
+                                };
+
                                 $normalizedRows = collect(is_array($rows) ? $rows : [])
-                                    ->map(function ($row) use ($defaultSymbol, $allowedSymbols) {
+                                    ->map(function ($row) use ($defaultSymbol, $allowedSymbols, $stripPackageDetailLeadingMarker) {
                                         if (is_array($row)) {
-                                            $text = trim((string) ($row['text'] ?? $row['value'] ?? ''));
+                                            $text = $stripPackageDetailLeadingMarker($row['text'] ?? $row['value'] ?? '');
                                             $symbol = trim((string) ($row['symbol'] ?? $defaultSymbol));
 
                                             if ($text === '') {
                                                 return null;
                                             }
 
-                                            return [
-                                                'symbol' => in_array($symbol, $allowedSymbols, true) ? $symbol : $defaultSymbol,
-                                                'text' => $text,
-                                            ];
+                                        return [
+                                            'symbol' => in_array($symbol, $allowedSymbols, true) ? $symbol : $defaultSymbol,
+                                            'text' => $text,
+                                            'html' => trim((string) ($row['html'] ?? '')),
+                                        ];
                                         }
 
-                                        $text = trim((string) $row);
+                                        $text = $stripPackageDetailLeadingMarker($row);
 
                                         return $text === ''
                                             ? null
-                                            : ['symbol' => $defaultSymbol, 'text' => $text];
+                                            : ['symbol' => $defaultSymbol, 'text' => $text, 'html' => ''];
                                     })
-                                    ->filter()
-                                    ->values();
+                                ->filter()
+                                ->values();
 
                                 if ($normalizedRows->isNotEmpty()) {
                                     return $normalizedRows;
@@ -179,6 +184,37 @@
                                 return $fallbackCollection->isNotEmpty()
                                     ? $fallbackCollection
                                     : collect([['symbol' => $defaultSymbol, 'text' => '']]);
+                            };
+
+                            $cleanPackageDetailHtml = function ($html) {
+                                return preg_replace(
+                                    '/(<(?:p|div|li)[^>]*>\s*(?:<(?:strong|b|em|i|u)[^>]*>\s*)*)(?:[•●○◦▪▫✓✔✕✖✗❌⚠!]+|\d+[.)])\s*/u',
+                                    '$1',
+                                    (string) $html
+                                ) ?? (string) $html;
+                            };
+
+                            $buildPackageDetailSectionHtml = function ($rows) use ($cleanPackageDetailHtml) {
+                                return collect($rows)
+                                    ->map(function ($row) use ($cleanPackageDetailHtml) {
+                                        if (! is_array($row)) {
+                                            $text = trim((string) $row);
+
+                                            return $text === '' ? null : '<p>'.e($text).'</p>';
+                                        }
+
+                                        $html = trim($cleanPackageDetailHtml($row['html'] ?? ''));
+
+                                        if ($html !== '') {
+                                            return $html;
+                                        }
+
+                                        $text = trim((string) ($row['text'] ?? $row['value'] ?? ''));
+
+                                        return $text === '' ? null : '<p>'.e($text).'</p>';
+                                    })
+                                    ->filter()
+                                    ->implode('');
                             };
 
                             $packageDetails = is_array($product->package_details) ? $product->package_details : [];
@@ -205,6 +241,10 @@
                             $packageExcludeRows = $normalizePackageDetailRows($packageDetails['excludes'] ?? [], $legacyPackageDetailSections['excludes'], 'x', ['x', 'round']);
                             $packageBringRows = $normalizePackageDetailRows($packageDetails['things_to_bring'] ?? [], $legacyPackageDetailSections['things_to_bring'], 'exclamation', ['exclamation', 'round']);
                             $packageNoteRows = $normalizePackageDetailRows($packageDetails['important_notes'] ?? [], $legacyPackageDetailSections['important_notes'], 'exclamation', ['exclamation', 'round']);
+                            $packageIncludeHtml = $buildPackageDetailSectionHtml($packageIncludeRows);
+                            $packageExcludeHtml = $buildPackageDetailSectionHtml($packageExcludeRows);
+                            $packageBringHtml = $buildPackageDetailSectionHtml($packageBringRows);
+                            $packageNoteHtml = $buildPackageDetailSectionHtml($packageNoteRows);
 
                             $normalizeSimpleRows = function ($rows) {
                                 $collection = collect(is_array($rows) ? $rows : [])
@@ -766,222 +806,93 @@
                                                 <div class="flex items-center justify-between gap-3">
                                                     <div>
                                                         <h4 class="text-base font-semibold text-stone-900">Package Details</h4>
-                                                        <p class="mt-1 text-xs text-stone-500">Use ✓, ✕, or ! for the detail title line, and use • for the description line under it.</p>
+                                                        <p class="mt-1 text-xs text-stone-500">Use the symbol button for the row type, then highlight text inside the editor to format it.</p>
                                                     </div>
                                                 </div>
                                                 <div class="mt-4 grid gap-4 md:grid-cols-2 items-start">
                                                     <section class="rounded-[1rem] border border-stone-200 bg-stone-50 p-4">
                                                         <div class="flex items-center justify-between gap-3">
                                                             <h5 class="text-sm font-semibold uppercase tracking-[0.12em] text-stone-700">Includes</h5>
-                                                            <button type="button" class="rounded-full border border-emerald-300 bg-emerald-50 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-emerald-700 transition hover:bg-emerald-100" data-package-content-add-row="package-includes">Add Row</button>
                                                         </div>
-                                                        <div class="mt-3 space-y-3" data-package-content-body="package-includes">
-                                                            @foreach ($packageIncludeRows as $row)
-                                                                <div class="flex w-full items-start gap-3" data-package-content-row>
-                                                                    <div class="relative flex-none" data-symbol-picker>
-                                                                        <input type="hidden" name="package_detail_include_symbol[]" value="{{ ($row['symbol'] ?? 'tick') === 'round' ? 'round' : 'tick' }}" data-symbol-picker-input>
-                                                                        <button type="button" class="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-stone-300 bg-white text-stone-800 shadow-sm transition hover:bg-stone-50" data-symbol-picker-trigger aria-haspopup="true" aria-expanded="false">
-                                                                            <span class="text-lg leading-none" data-symbol-picker-display>{{ ($row['symbol'] ?? 'tick') === 'round' ? '•' : '✓' }}</span>
-                                                                        </button>
-                                                                        <div class="absolute left-0 top-full z-20 mt-2 hidden min-w-[7.5rem] rounded-2xl border border-stone-200 bg-white p-2 shadow-xl" data-symbol-picker-menu>
-                                                                            <button type="button" class="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm text-stone-700 transition hover:bg-stone-100" data-symbol-option="tick" data-symbol-display="✓">
-                                                                                <span class="inline-flex h-7 w-7 items-center justify-center rounded-full bg-emerald-100 text-base text-emerald-700">✓</span>
-                                                                                <span>Title</span>
-                                                                            </button>
-                                                                            <button type="button" class="mt-1 flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm text-stone-700 transition hover:bg-stone-100" data-symbol-option="round" data-symbol-display="•">
-                                                                                <span class="inline-flex h-7 w-7 items-center justify-center rounded-full bg-stone-200 text-base text-stone-700">•</span>
-                                                                                <span>Description</span>
-                                                                            </button>
-                                                                        </div>
-                                                                    </div>
-                                                                    <textarea name="package_detail_include_value[]" rows="1" class="min-w-0 flex-1 rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm leading-6 text-stone-800" placeholder="Hotel accommodation, guide, and transfers included.">{{ $row['text'] ?? '' }}</textarea>
-                                                                    <button type="button" class="inline-flex h-10 w-10 flex-none items-center justify-center self-start rounded-full border border-rose-200 bg-rose-50 text-rose-700 transition hover:bg-rose-100" data-package-content-remove-row aria-label="Remove row"><span class="text-lg leading-none">×</span></button>
-                                                                </div>
-                                                            @endforeach
+                                                        <div class="mt-3">
+                                                            <input type="hidden" name="package_detail_include_symbol[]" value="tick">
+                                                            <div class="min-w-0" data-package-rich-editor-wrapper>
+                                                                <input type="hidden" name="package_detail_include_value[]" value="{{ $packageIncludeHtml }}" data-package-rich-editor-input>
+                                                                <div
+                                                                    contenteditable="true"
+                                                                    class="min-h-[5rem] rounded-xl border border-sky-200 bg-white px-4 py-3 text-sm leading-6 text-stone-800 shadow-sm focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-100"
+                                                                    data-package-rich-editor
+                                                                    data-placeholder="Hotel accommodation, guide, and transfers included."
+                                                                >{!! $packageIncludeHtml !!}</div>
+                                                            </div>
                                                         </div>
                                                     </section>
                                                     <section class="rounded-[1rem] border border-stone-200 bg-stone-50 p-4">
                                                         <div class="flex items-center justify-between gap-3">
                                                             <h5 class="text-sm font-semibold uppercase tracking-[0.12em] text-stone-700">Excludes</h5>
-                                                            <button type="button" class="rounded-full border border-emerald-300 bg-emerald-50 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-emerald-700 transition hover:bg-emerald-100" data-package-content-add-row="package-excludes">Add Row</button>
                                                         </div>
-                                                        <div class="mt-3 space-y-3" data-package-content-body="package-excludes">
-                                                            @foreach ($packageExcludeRows as $row)
-                                                                <div class="flex w-full items-start gap-3" data-package-content-row>
-                                                                    <div class="relative flex-none" data-symbol-picker>
-                                                                        <input type="hidden" name="package_detail_exclude_symbol[]" value="{{ ($row['symbol'] ?? 'x') === 'round' ? 'round' : 'x' }}" data-symbol-picker-input>
-                                                                        <button type="button" class="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-stone-300 bg-white text-stone-800 shadow-sm transition hover:bg-stone-50" data-symbol-picker-trigger aria-haspopup="true" aria-expanded="false">
-                                                                            <span class="text-lg leading-none" data-symbol-picker-display>{{ ($row['symbol'] ?? 'x') === 'round' ? '•' : '✕' }}</span>
-                                                                        </button>
-                                                                        <div class="absolute left-0 top-full z-20 mt-2 hidden min-w-[7.5rem] rounded-2xl border border-stone-200 bg-white p-2 shadow-xl" data-symbol-picker-menu>
-                                                                            <button type="button" class="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm text-stone-700 transition hover:bg-stone-100" data-symbol-option="x" data-symbol-display="✕">
-                                                                                <span class="inline-flex h-7 w-7 items-center justify-center rounded-full bg-rose-100 text-base text-rose-700">✕</span>
-                                                                                <span>Title</span>
-                                                                            </button>
-                                                                            <button type="button" class="mt-1 flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm text-stone-700 transition hover:bg-stone-100" data-symbol-option="round" data-symbol-display="•">
-                                                                                <span class="inline-flex h-7 w-7 items-center justify-center rounded-full bg-stone-200 text-base text-stone-700">•</span>
-                                                                                <span>Description</span>
-                                                                            </button>
-                                                                        </div>
-                                                                    </div>
-                                                                    <textarea name="package_detail_exclude_value[]" rows="1" class="min-w-0 flex-1 rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm leading-6 text-stone-800" placeholder="Flights, insurance, and personal expenses.">{{ $row['text'] ?? '' }}</textarea>
-                                                                    <button type="button" class="inline-flex h-10 w-10 flex-none items-center justify-center self-start rounded-full border border-rose-200 bg-rose-50 text-rose-700 transition hover:bg-rose-100" data-package-content-remove-row aria-label="Remove row"><span class="text-lg leading-none">×</span></button>
-                                                                </div>
-                                                            @endforeach
+                                                        <div class="mt-3">
+                                                            <input type="hidden" name="package_detail_exclude_symbol[]" value="x">
+                                                            <div class="min-w-0" data-package-rich-editor-wrapper>
+                                                                <input type="hidden" name="package_detail_exclude_value[]" value="{{ $packageExcludeHtml }}" data-package-rich-editor-input>
+                                                                <div
+                                                                    contenteditable="true"
+                                                                    class="min-h-[5rem] rounded-xl border border-sky-200 bg-white px-4 py-3 text-sm leading-6 text-stone-800 shadow-sm focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-100"
+                                                                    data-package-rich-editor
+                                                                    data-placeholder="Flights, insurance, and personal expenses."
+                                                                >{!! $packageExcludeHtml !!}</div>
+                                                            </div>
                                                         </div>
                                                     </section>
                                                     <section class="rounded-[1rem] border border-stone-200 bg-stone-50 p-4">
                                                         <div class="flex items-center justify-between gap-3">
                                                             <h5 class="text-sm font-semibold uppercase tracking-[0.12em] text-stone-700">Things To Bring</h5>
-                                                            <button type="button" class="rounded-full border border-emerald-300 bg-emerald-50 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-emerald-700 transition hover:bg-emerald-100" data-package-content-add-row="package-bring">Add Row</button>
                                                         </div>
-                                                        <div class="mt-3 space-y-3" data-package-content-body="package-bring">
-                                                            @foreach ($packageBringRows as $row)
-                                                                <div class="flex w-full items-start gap-3" data-package-content-row>
-                                                                    <div class="relative flex-none" data-symbol-picker>
-                                                                        <input type="hidden" name="package_detail_bring_symbol[]" value="{{ ($row['symbol'] ?? 'exclamation') === 'round' ? 'round' : 'exclamation' }}" data-symbol-picker-input>
-                                                                        <button type="button" class="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-stone-300 bg-white text-stone-800 shadow-sm transition hover:bg-stone-50" data-symbol-picker-trigger aria-haspopup="true" aria-expanded="false">
-                                                                            <span class="text-lg leading-none" data-symbol-picker-display>{{ ($row['symbol'] ?? 'exclamation') === 'round' ? '•' : '!' }}</span>
-                                                                        </button>
-                                                                        <div class="absolute left-0 top-full z-20 mt-2 hidden min-w-[7.5rem] rounded-2xl border border-stone-200 bg-white p-2 shadow-xl" data-symbol-picker-menu>
-                                                                            <button type="button" class="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm text-stone-700 transition hover:bg-stone-100" data-symbol-option="exclamation" data-symbol-display="!">
-                                                                                <span class="inline-flex h-7 w-7 items-center justify-center rounded-full bg-amber-100 text-base font-semibold text-amber-700">!</span>
-                                                                                <span>Title</span>
-                                                                            </button>
-                                                                            <button type="button" class="mt-1 flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm text-stone-700 transition hover:bg-stone-100" data-symbol-option="round" data-symbol-display="•">
-                                                                                <span class="inline-flex h-7 w-7 items-center justify-center rounded-full bg-stone-200 text-base text-stone-700">•</span>
-                                                                                <span>Description</span>
-                                                                            </button>
-                                                                        </div>
-                                                                    </div>
-                                                                    <textarea name="package_detail_bring_value[]" rows="1" class="min-w-0 flex-1 rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm leading-6 text-stone-800" placeholder="Water bottle, sunblock, and a change of clothes.">{{ $row['text'] ?? '' }}</textarea>
-                                                                    <button type="button" class="inline-flex h-10 w-10 flex-none items-center justify-center self-start rounded-full border border-rose-200 bg-rose-50 text-rose-700 transition hover:bg-rose-100" data-package-content-remove-row aria-label="Remove row"><span class="text-lg leading-none">×</span></button>
-                                                                </div>
-                                                            @endforeach
+                                                        <div class="mt-3">
+                                                            <input type="hidden" name="package_detail_bring_symbol[]" value="exclamation">
+                                                            <div class="min-w-0" data-package-rich-editor-wrapper>
+                                                                <input type="hidden" name="package_detail_bring_value[]" value="{{ $packageBringHtml }}" data-package-rich-editor-input>
+                                                                <div
+                                                                    contenteditable="true"
+                                                                    class="min-h-[5rem] rounded-xl border border-sky-200 bg-white px-4 py-3 text-sm leading-6 text-stone-800 shadow-sm focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-100"
+                                                                    data-package-rich-editor
+                                                                    data-placeholder="Water bottle, sunblock, and a change of clothes."
+                                                                >{!! $packageBringHtml !!}</div>
+                                                            </div>
                                                         </div>
                                                     </section>
                                                     <section class="rounded-[1rem] border border-stone-200 bg-stone-50 p-4">
                                                         <div class="flex items-center justify-between gap-3">
                                                             <h5 class="text-sm font-semibold uppercase tracking-[0.12em] text-stone-700">Important Notes</h5>
-                                                            <button type="button" class="rounded-full border border-emerald-300 bg-emerald-50 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-emerald-700 transition hover:bg-emerald-100" data-package-content-add-row="package-notes">Add Row</button>
                                                         </div>
-                                                        <div class="mt-3 space-y-3" data-package-content-body="package-notes">
-                                                            @foreach ($packageNoteRows as $row)
-                                                                <div class="flex w-full items-start gap-3" data-package-content-row>
-                                                                    <div class="relative flex-none" data-symbol-picker>
-                                                                        <input type="hidden" name="package_detail_note_symbol[]" value="{{ ($row['symbol'] ?? 'exclamation') === 'round' ? 'round' : 'exclamation' }}" data-symbol-picker-input>
-                                                                        <button type="button" class="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-stone-300 bg-white text-stone-800 shadow-sm transition hover:bg-stone-50" data-symbol-picker-trigger aria-haspopup="true" aria-expanded="false">
-                                                                            <span class="text-lg leading-none" data-symbol-picker-display>{{ ($row['symbol'] ?? 'exclamation') === 'round' ? '•' : '!' }}</span>
-                                                                        </button>
-                                                                        <div class="absolute left-0 top-full z-20 mt-2 hidden min-w-[7.5rem] rounded-2xl border border-stone-200 bg-white p-2 shadow-xl" data-symbol-picker-menu>
-                                                                            <button type="button" class="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm text-stone-700 transition hover:bg-stone-100" data-symbol-option="exclamation" data-symbol-display="!">
-                                                                                <span class="inline-flex h-7 w-7 items-center justify-center rounded-full bg-amber-100 text-base font-semibold text-amber-700">!</span>
-                                                                                <span>Title</span>
-                                                                            </button>
-                                                                            <button type="button" class="mt-1 flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm text-stone-700 transition hover:bg-stone-100" data-symbol-option="round" data-symbol-display="•">
-                                                                                <span class="inline-flex h-7 w-7 items-center justify-center rounded-full bg-stone-200 text-base text-stone-700">•</span>
-                                                                                <span>Description</span>
-                                                                            </button>
-                                                                        </div>
-                                                                    </div>
-                                                                    <textarea name="package_detail_note_value[]" rows="1" class="min-w-0 flex-1 rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm leading-6 text-stone-800" placeholder="Timing may change due to weather or traffic conditions.">{{ $row['text'] ?? '' }}</textarea>
-                                                                    <button type="button" class="inline-flex h-10 w-10 flex-none items-center justify-center self-start rounded-full border border-rose-200 bg-rose-50 text-rose-700 transition hover:bg-rose-100" data-package-content-remove-row aria-label="Remove row"><span class="text-lg leading-none">×</span></button>
-                                                                </div>
-                                                            @endforeach
+                                                        <div class="mt-3">
+                                                            <input type="hidden" name="package_detail_note_symbol[]" value="exclamation">
+                                                            <div class="min-w-0" data-package-rich-editor-wrapper>
+                                                                <input type="hidden" name="package_detail_note_value[]" value="{{ $packageNoteHtml }}" data-package-rich-editor-input>
+                                                                <div
+                                                                    contenteditable="true"
+                                                                    class="min-h-[5rem] rounded-xl border border-sky-200 bg-white px-4 py-3 text-sm leading-6 text-stone-800 shadow-sm focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-100"
+                                                                    data-package-rich-editor
+                                                                    data-placeholder="Timing may change due to weather or traffic conditions."
+                                                                >{!! $packageNoteHtml !!}</div>
+                                                            </div>
                                                         </div>
                                                     </section>
                                                 </div>
                                             </section>
                                         </div>
                                         </div>
-                                        <template data-package-content-template="package-includes">
-                                            <div class="flex w-full items-start gap-3" data-package-content-row>
-                                                <div class="relative flex-none" data-symbol-picker>
-                                                    <input type="hidden" name="package_detail_include_symbol[]" value="tick" data-symbol-picker-input>
-                                                    <button type="button" class="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-stone-300 bg-white text-stone-800 shadow-sm transition hover:bg-stone-50" data-symbol-picker-trigger aria-haspopup="true" aria-expanded="false">
-                                                        <span class="text-lg leading-none" data-symbol-picker-display>✓</span>
-                                                    </button>
-                                                    <div class="absolute left-0 top-full z-20 mt-2 hidden min-w-[7.5rem] rounded-2xl border border-stone-200 bg-white p-2 shadow-xl" data-symbol-picker-menu>
-                                                        <button type="button" class="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm text-stone-700 transition hover:bg-stone-100" data-symbol-option="tick" data-symbol-display="✓">
-                                                            <span class="inline-flex h-7 w-7 items-center justify-center rounded-full bg-emerald-100 text-base text-emerald-700">✓</span>
-                                                            <span>Title</span>
-                                                        </button>
-                                                        <button type="button" class="mt-1 flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm text-stone-700 transition hover:bg-stone-100" data-symbol-option="round" data-symbol-display="•">
-                                                            <span class="inline-flex h-7 w-7 items-center justify-center rounded-full bg-stone-200 text-base text-stone-700">•</span>
-                                                            <span>Description</span>
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                                <textarea name="package_detail_include_value[]" rows="1" class="min-w-0 flex-1 rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm leading-6 text-stone-800" placeholder="Hotel accommodation, guide, and transfers included."></textarea>
-                                                <button type="button" class="inline-flex h-10 w-10 flex-none items-center justify-center self-start rounded-full border border-rose-200 bg-rose-50 text-rose-700 transition hover:bg-rose-100" data-package-content-remove-row aria-label="Remove row"><span class="text-lg leading-none">×</span></button>
+                                        <div class="fixed z-[460] hidden rounded-2xl border border-stone-200 bg-white p-2 shadow-[0_18px_45px_rgba(15,23,42,0.18)]" data-package-rich-toolbar>
+                                            <div class="flex flex-wrap items-center gap-1">
+                                                <button type="button" class="inline-flex h-9 min-w-[2.25rem] items-center justify-center rounded-xl border border-stone-200 px-2 text-sm font-semibold text-stone-700 transition hover:bg-stone-100" data-package-rich-action="bold">B</button>
+                                                <button type="button" class="inline-flex h-9 min-w-[2.25rem] items-center justify-center rounded-xl border border-stone-200 px-2 text-sm italic text-stone-700 transition hover:bg-stone-100" data-package-rich-action="italic">I</button>
+                                                <button type="button" class="inline-flex h-9 min-w-[2.25rem] items-center justify-center rounded-xl border border-stone-200 px-2 text-sm underline text-stone-700 transition hover:bg-stone-100" data-package-rich-action="underline">U</button>
+                                                <button type="button" class="inline-flex h-9 min-w-[2.25rem] items-center justify-center rounded-xl border border-stone-200 px-2 text-sm text-stone-700 transition hover:bg-stone-100" data-package-rich-action="tick">&#10003;</button>
+                                                <button type="button" class="inline-flex h-9 min-w-[2.25rem] items-center justify-center rounded-xl border border-stone-200 px-2 text-sm text-stone-700 transition hover:bg-stone-100" data-package-rich-action="round">&#9679;</button>
+                                                <button type="button" class="inline-flex h-9 min-w-[2.25rem] items-center justify-center rounded-xl border border-stone-200 px-2 text-sm text-stone-700 transition hover:bg-stone-100" data-package-rich-action="x">&#10006;</button>
+                                                <button type="button" class="inline-flex h-9 min-w-[2.25rem] items-center justify-center rounded-xl border border-stone-200 px-2 text-sm text-stone-700 transition hover:bg-stone-100" data-package-rich-action="warning">&#9888;</button>
                                             </div>
-                                        </template>
-                                        <template data-package-content-template="package-excludes">
-                                            <div class="flex w-full items-start gap-3" data-package-content-row>
-                                                <div class="relative flex-none" data-symbol-picker>
-                                                    <input type="hidden" name="package_detail_exclude_symbol[]" value="x" data-symbol-picker-input>
-                                                    <button type="button" class="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-stone-300 bg-white text-stone-800 shadow-sm transition hover:bg-stone-50" data-symbol-picker-trigger aria-haspopup="true" aria-expanded="false">
-                                                        <span class="text-lg leading-none" data-symbol-picker-display>✕</span>
-                                                    </button>
-                                                    <div class="absolute left-0 top-full z-20 mt-2 hidden min-w-[7.5rem] rounded-2xl border border-stone-200 bg-white p-2 shadow-xl" data-symbol-picker-menu>
-                                                        <button type="button" class="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm text-stone-700 transition hover:bg-stone-100" data-symbol-option="x" data-symbol-display="✕">
-                                                            <span class="inline-flex h-7 w-7 items-center justify-center rounded-full bg-rose-100 text-base text-rose-700">✕</span>
-                                                            <span>Title</span>
-                                                        </button>
-                                                        <button type="button" class="mt-1 flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm text-stone-700 transition hover:bg-stone-100" data-symbol-option="round" data-symbol-display="•">
-                                                            <span class="inline-flex h-7 w-7 items-center justify-center rounded-full bg-stone-200 text-base text-stone-700">•</span>
-                                                            <span>Description</span>
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                                <textarea name="package_detail_exclude_value[]" rows="1" class="min-w-0 flex-1 rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm leading-6 text-stone-800" placeholder="Flights, insurance, and personal expenses."></textarea>
-                                                <button type="button" class="inline-flex h-10 w-10 flex-none items-center justify-center self-start rounded-full border border-rose-200 bg-rose-50 text-rose-700 transition hover:bg-rose-100" data-package-content-remove-row aria-label="Remove row"><span class="text-lg leading-none">×</span></button>
-                                            </div>
-                                        </template>
-                                        <template data-package-content-template="package-bring">
-                                            <div class="flex w-full items-start gap-3" data-package-content-row>
-                                                <div class="relative flex-none" data-symbol-picker>
-                                                    <input type="hidden" name="package_detail_bring_symbol[]" value="exclamation" data-symbol-picker-input>
-                                                    <button type="button" class="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-stone-300 bg-white text-stone-800 shadow-sm transition hover:bg-stone-50" data-symbol-picker-trigger aria-haspopup="true" aria-expanded="false">
-                                                        <span class="text-lg leading-none" data-symbol-picker-display>!</span>
-                                                    </button>
-                                                    <div class="absolute left-0 top-full z-20 mt-2 hidden min-w-[7.5rem] rounded-2xl border border-stone-200 bg-white p-2 shadow-xl" data-symbol-picker-menu>
-                                                        <button type="button" class="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm text-stone-700 transition hover:bg-stone-100" data-symbol-option="exclamation" data-symbol-display="!">
-                                                            <span class="inline-flex h-7 w-7 items-center justify-center rounded-full bg-amber-100 text-base font-semibold text-amber-700">!</span>
-                                                            <span>Title</span>
-                                                        </button>
-                                                        <button type="button" class="mt-1 flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm text-stone-700 transition hover:bg-stone-100" data-symbol-option="round" data-symbol-display="•">
-                                                            <span class="inline-flex h-7 w-7 items-center justify-center rounded-full bg-stone-200 text-base text-stone-700">•</span>
-                                                            <span>Description</span>
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                                <textarea name="package_detail_bring_value[]" rows="1" class="min-w-0 flex-1 rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm leading-6 text-stone-800" placeholder="Water bottle, sunblock, and a change of clothes."></textarea>
-                                                <button type="button" class="inline-flex h-10 w-10 flex-none items-center justify-center self-start rounded-full border border-rose-200 bg-rose-50 text-rose-700 transition hover:bg-rose-100" data-package-content-remove-row aria-label="Remove row"><span class="text-lg leading-none">×</span></button>
-                                            </div>
-                                        </template>
-                                        <template data-package-content-template="package-notes">
-                                            <div class="flex w-full items-start gap-3" data-package-content-row>
-                                                <div class="relative flex-none" data-symbol-picker>
-                                                    <input type="hidden" name="package_detail_note_symbol[]" value="exclamation" data-symbol-picker-input>
-                                                    <button type="button" class="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-stone-300 bg-white text-stone-800 shadow-sm transition hover:bg-stone-50" data-symbol-picker-trigger aria-haspopup="true" aria-expanded="false">
-                                                        <span class="text-lg leading-none" data-symbol-picker-display>!</span>
-                                                    </button>
-                                                    <div class="absolute left-0 top-full z-20 mt-2 hidden min-w-[7.5rem] rounded-2xl border border-stone-200 bg-white p-2 shadow-xl" data-symbol-picker-menu>
-                                                        <button type="button" class="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm text-stone-700 transition hover:bg-stone-100" data-symbol-option="exclamation" data-symbol-display="!">
-                                                            <span class="inline-flex h-7 w-7 items-center justify-center rounded-full bg-amber-100 text-base font-semibold text-amber-700">!</span>
-                                                            <span>Title</span>
-                                                        </button>
-                                                        <button type="button" class="mt-1 flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm text-stone-700 transition hover:bg-stone-100" data-symbol-option="round" data-symbol-display="•">
-                                                            <span class="inline-flex h-7 w-7 items-center justify-center rounded-full bg-stone-200 text-base text-stone-700">•</span>
-                                                            <span>Description</span>
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                                <textarea name="package_detail_note_value[]" rows="1" class="min-w-0 flex-1 rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm leading-6 text-stone-800" placeholder="Timing may change due to weather or traffic conditions."></textarea>
-                                                <button type="button" class="inline-flex h-10 w-10 flex-none items-center justify-center self-start rounded-full border border-rose-200 bg-rose-50 text-rose-700 transition hover:bg-rose-100" data-package-content-remove-row aria-label="Remove row"><span class="text-lg leading-none">×</span></button>
-                                            </div>
-                                        </template>
+                                        </div>
                                         <div class="flex flex-wrap justify-end gap-3 border-t border-stone-200 bg-stone-100 pt-4">
                                             <button type="button" class="rounded-full border border-stone-300 bg-white px-4 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-stone-700 transition hover:bg-stone-100" data-package-service-inclusion-close>
                                                 Cancel
@@ -1340,6 +1251,79 @@
     @endforelse
 </div>
 
+<style>
+    [data-package-rich-editor] {
+        white-space: normal;
+        word-break: break-word;
+    }
+
+    [data-package-rich-editor]:empty::before {
+        content: attr(data-placeholder);
+        color: rgb(168 162 158);
+    }
+
+    [data-package-rich-editor] p {
+        margin: 0 0 0.45rem;
+    }
+
+    [data-package-rich-editor] p:last-child {
+        margin-bottom: 0;
+    }
+
+    [data-package-rich-editor] ul,
+    [data-package-rich-editor] ol {
+        margin: 0.45rem 0;
+        padding-left: 1.4rem;
+        list-style: none;
+    }
+
+    [data-package-rich-editor] ul[data-point-style="tick"],
+    [data-package-rich-editor] ul[data-point-style="round"],
+    [data-package-rich-editor] ul[data-point-style="x"],
+    [data-package-rich-editor] ul[data-point-style="warning"] {
+        list-style: none;
+        padding-left: 0;
+    }
+
+    [data-package-rich-editor] ul[data-point-style="tick"] li,
+    [data-package-rich-editor] ul[data-point-style="round"] li,
+    [data-package-rich-editor] ul[data-point-style="x"] li,
+    [data-package-rich-editor] ul[data-point-style="warning"] li {
+        position: relative;
+        padding-left: 1.6rem;
+    }
+
+    [data-package-rich-editor] ul[data-point-style="tick"] li::before,
+    [data-package-rich-editor] ul[data-point-style="round"] li::before,
+    [data-package-rich-editor] ul[data-point-style="x"] li::before,
+    [data-package-rich-editor] ul[data-point-style="warning"] li::before {
+        position: absolute;
+        left: 0;
+        top: 0;
+        font-weight: 700;
+    }
+
+    [data-package-rich-editor] ul[data-point-style="tick"] li::before {
+        content: "\2713";
+        color: rgb(21 128 61);
+    }
+
+    [data-package-rich-editor] ul[data-point-style="round"] li::before {
+        content: "\2022";
+        color: rgb(87 83 78);
+    }
+
+    [data-package-rich-editor] ul[data-point-style="x"] li::before {
+        content: "\2716";
+        color: rgb(185 28 28);
+    }
+
+    [data-package-rich-editor] ul[data-point-style="warning"] li::before {
+        content: "\26A0";
+        color: rgb(180 83 9);
+    }
+</style>
+
 <script>
     document.addEventListener('DOMContentLoaded', () => {
         document.querySelectorAll('[data-package-inline-row]').forEach((row) => {
@@ -1368,14 +1352,401 @@
             const itineraryAddDayButton = row.querySelector('[data-package-itinerary-add-day]');
             const serviceInclusionModal = row.querySelector('[data-package-service-inclusion-modal]');
             const serviceInclusionCloseButtons = row.querySelectorAll('[data-package-service-inclusion-close]');
+            const packageDetailsForm = serviceInclusionModal?.querySelector('form');
             const packageContentModal = row.querySelector('[data-package-content-modal]');
             const packageContentCloseButtons = row.querySelectorAll('[data-package-content-close]');
             const packageDetailsSections = row.querySelector('[data-package-content-sections]');
             const packageOtherContentSections = row.querySelector('[data-package-other-content-sections]');
+            const packageRichToolbar = row.querySelector('[data-package-rich-toolbar]');
+            let activeRichEditor = null;
+            let savedRichSelection = null;
 
             if (!form || !viewSection || !editSection || !editButton || !cancelButton || !saveButton) {
                 return;
             }
+
+            const findClosestParent = (node, tagName) => {
+                let currentNode = node instanceof Node ? node : null;
+
+                while (currentNode) {
+                    if (currentNode.nodeType === Node.ELEMENT_NODE && currentNode.nodeName === tagName) {
+                        return currentNode;
+                    }
+
+                    currentNode = currentNode.parentNode;
+                }
+
+                return null;
+            };
+
+            const isRichEditorEmpty = (editor) => {
+                if (!editor) {
+                    return true;
+                }
+
+                const content = (editor.textContent || '').replace(/\u00A0/g, ' ').trim();
+
+                return content === '' && !editor.querySelector('li');
+            };
+
+            const normalizeRichEditorHtml = (editor) => {
+                if (!editor) {
+                    return '';
+                }
+
+                if (isRichEditorEmpty(editor)) {
+                    return '';
+                }
+
+                return editor.innerHTML.trim();
+            };
+
+            const syncRichEditorInput = (editor) => {
+                const wrapper = editor?.closest('[data-package-rich-editor-wrapper]');
+                const input = wrapper?.querySelector('[data-package-rich-editor-input]');
+
+                if (!input) {
+                    return;
+                }
+
+                input.value = normalizeRichEditorHtml(editor);
+            };
+
+            const hideRichToolbar = (clearActiveEditor = false) => {
+                packageRichToolbar?.classList.add('hidden');
+
+                if (clearActiveEditor) {
+                    activeRichEditor = null;
+                }
+            };
+
+            const selectionBelongsToEditor = (selection, editor) => {
+                if (!selection || !editor || selection.rangeCount === 0) {
+                    return false;
+                }
+
+                const range = selection.getRangeAt(0);
+
+                return editor.contains(range.commonAncestorContainer);
+            };
+
+            const saveRichSelection = () => {
+                const selection = window.getSelection();
+
+                if (!selection || selection.rangeCount === 0 || !activeRichEditor || !selectionBelongsToEditor(selection, activeRichEditor)) {
+                    savedRichSelection = null;
+
+                    return;
+                }
+
+                savedRichSelection = selection.getRangeAt(0).cloneRange();
+            };
+
+            const restoreRichSelection = () => {
+                if (!savedRichSelection) {
+                    return false;
+                }
+
+                const selection = window.getSelection();
+
+                if (!selection) {
+                    return false;
+                }
+
+                selection.removeAllRanges();
+                selection.addRange(savedRichSelection);
+
+                return true;
+            };
+
+            const updateRichToolbarPosition = () => {
+                const selection = window.getSelection();
+
+                if (!packageRichToolbar || !selection || selection.rangeCount === 0 || !activeRichEditor || selection.isCollapsed || !selectionBelongsToEditor(selection, activeRichEditor)) {
+                    hideRichToolbar();
+
+                    return;
+                }
+
+                const rect = selection.getRangeAt(0).getBoundingClientRect();
+
+                if (!rect || (!rect.width && !rect.height)) {
+                    hideRichToolbar();
+
+                    return;
+                }
+
+                packageRichToolbar.classList.remove('hidden');
+                const toolbarHeight = packageRichToolbar.offsetHeight || 48;
+                const toolbarWidth = packageRichToolbar.offsetWidth || 280;
+                const left = Math.min(Math.max(rect.left + (rect.width / 2) - (toolbarWidth / 2), 16), window.innerWidth - toolbarWidth - 16);
+                const top = Math.max(rect.top - toolbarHeight - 12, 16);
+
+                packageRichToolbar.style.left = `${left}px`;
+                packageRichToolbar.style.top = `${top}px`;
+            };
+
+            const focusRichEditor = (editor) => {
+                if (!editor) {
+                    return;
+                }
+
+                activeRichEditor = editor;
+                editor.focus();
+            };
+
+            const setSelectionToNodeContents = (node) => {
+                const selection = window.getSelection();
+
+                if (!selection || !node) {
+                    return;
+                }
+
+                const range = document.createRange();
+                range.selectNodeContents(node);
+                selection.removeAllRanges();
+                selection.addRange(range);
+                savedRichSelection = range.cloneRange();
+            };
+
+            const normalizeListItemText = (value) => {
+                return String(value || '')
+                    .replace(/^\s*(?:[•●○◦▪▫✓✔✕✖✗❌⚠!]+|\d+[.)])\s*/u, '')
+                    .trim();
+            };
+
+            const buildListItemsFromSelection = (range) => {
+                const container = document.createElement('div');
+                container.appendChild(range.cloneContents());
+
+                return (container.innerText || container.textContent || '')
+                    .split(/\r?\n+/)
+                    .map((line) => normalizeListItemText(line))
+                    .filter((line) => line !== '');
+            };
+
+            const wrapSelectionWithTag = (tagName) => {
+                const selection = window.getSelection();
+
+                if (!selection || selection.rangeCount === 0) {
+                    return;
+                }
+
+                const range = selection.getRangeAt(0);
+
+                if (range.collapsed) {
+                    return;
+                }
+
+                const wrapper = document.createElement(tagName);
+                const fragment = range.extractContents();
+
+                wrapper.appendChild(fragment);
+                range.insertNode(wrapper);
+                setSelectionToNodeContents(wrapper);
+                syncRichEditorInput(activeRichEditor);
+                updateRichToolbarPosition();
+            };
+
+            const unwrapListElement = (list) => {
+                if (!list || !list.parentNode) {
+                    return;
+                }
+
+                const fragment = document.createDocumentFragment();
+
+                Array.from(list.children).forEach((listItem) => {
+                    const paragraph = document.createElement('p');
+                    paragraph.textContent = normalizeListItemText(listItem.textContent || '');
+                    fragment.appendChild(paragraph);
+                });
+
+                const parent = list.parentNode;
+                parent.insertBefore(fragment, list);
+                parent.removeChild(list);
+            };
+
+            const applyListStyleToSelection = (style) => {
+                if (!activeRichEditor) {
+                    return;
+                }
+
+                focusRichEditor(activeRichEditor);
+                restoreRichSelection();
+                const selection = window.getSelection();
+
+                if (!selection || selection.rangeCount === 0) {
+                    return;
+                }
+
+                const range = selection.getRangeAt(0);
+                const existingList = findClosestParent(range.commonAncestorContainer, 'UL')
+                    ?? findClosestParent(range.commonAncestorContainer, 'OL');
+
+                if (existingList instanceof HTMLElement) {
+                    const existingStyle = existingList.getAttribute('data-point-style') || (existingList.tagName === 'OL' ? 'ordered' : 'unordered');
+
+                    Array.from(existingList.querySelectorAll('li')).forEach((listItem) => {
+                        listItem.textContent = normalizeListItemText(listItem.textContent || '');
+                    });
+
+                    if (existingStyle === style) {
+                        unwrapListElement(existingList);
+                        syncRichEditorInput(activeRichEditor);
+                        hideRichToolbar();
+
+                        return;
+                    }
+
+                    if (style === 'ordered') {
+                        if (existingList.tagName !== 'OL') {
+                            const orderedList = document.createElement('ol');
+
+                            while (existingList.firstChild) {
+                                orderedList.appendChild(existingList.firstChild);
+                            }
+
+                            existingList.parentNode?.replaceChild(orderedList, existingList);
+                            setSelectionToNodeContents(orderedList);
+                            syncRichEditorInput(activeRichEditor);
+                            updateRichToolbarPosition();
+
+                            return;
+                        }
+
+                        existingList.removeAttribute('data-point-style');
+                        setSelectionToNodeContents(existingList);
+                        syncRichEditorInput(activeRichEditor);
+                        updateRichToolbarPosition();
+
+                        return;
+                    }
+
+                    if (existingList.tagName === 'OL') {
+                        const unorderedList = document.createElement('ul');
+
+                        while (existingList.firstChild) {
+                            unorderedList.appendChild(existingList.firstChild);
+                        }
+
+                        existingList.parentNode?.replaceChild(unorderedList, existingList);
+                        unorderedList.setAttribute('data-point-style', style === 'unordered' ? '' : style);
+
+                        if (style === 'unordered') {
+                            unorderedList.removeAttribute('data-point-style');
+                        }
+
+                        setSelectionToNodeContents(unorderedList);
+                        syncRichEditorInput(activeRichEditor);
+                        updateRichToolbarPosition();
+
+                        return;
+                    }
+
+                    if (style === 'unordered') {
+                        existingList.removeAttribute('data-point-style');
+                    } else {
+                        existingList.setAttribute('data-point-style', style);
+                    }
+
+                    setSelectionToNodeContents(existingList);
+                    syncRichEditorInput(activeRichEditor);
+                    updateRichToolbarPosition();
+
+                    return;
+                }
+
+                const items = buildListItemsFromSelection(range);
+
+                if (items.length === 0) {
+                    return;
+                }
+
+                const list = document.createElement(style === 'ordered' ? 'ol' : 'ul');
+
+                if (!['unordered', 'ordered'].includes(style)) {
+                    list.setAttribute('data-point-style', style);
+                }
+
+                items.forEach((item) => {
+                    const listItem = document.createElement('li');
+                    listItem.textContent = item;
+                    list.appendChild(listItem);
+                });
+
+                range.deleteContents();
+                range.insertNode(list);
+                setSelectionToNodeContents(list);
+                syncRichEditorInput(activeRichEditor);
+                updateRichToolbarPosition();
+            };
+
+            const initializeRichEditor = (editor) => {
+                if (!editor || editor.dataset.richReady === 'true') {
+                    return;
+                }
+
+                editor.dataset.richReady = 'true';
+                editor.setAttribute('spellcheck', 'true');
+
+                if (isRichEditorEmpty(editor)) {
+                    editor.innerHTML = '';
+                }
+
+                editor.addEventListener('focus', () => {
+                    activeRichEditor = editor;
+                });
+
+                editor.addEventListener('input', () => {
+                    syncRichEditorInput(editor);
+                });
+
+                editor.addEventListener('mouseup', () => {
+                    activeRichEditor = editor;
+                    window.setTimeout(() => {
+                        saveRichSelection();
+                        updateRichToolbarPosition();
+                    }, 0);
+                });
+
+                editor.addEventListener('keyup', () => {
+                    activeRichEditor = editor;
+                    window.setTimeout(() => {
+                        saveRichSelection();
+                        updateRichToolbarPosition();
+                    }, 0);
+                });
+
+                editor.addEventListener('blur', () => {
+                    syncRichEditorInput(editor);
+
+                    window.setTimeout(() => {
+                        const selection = window.getSelection();
+
+                        if (!selectionBelongsToEditor(selection, editor)) {
+                            hideRichToolbar(true);
+                        }
+                    }, 120);
+                });
+
+                editor.addEventListener('keydown', (event) => {
+                    if (event.key !== 'Enter' || event.shiftKey) {
+                        return;
+                    }
+
+                    if (findClosestParent(window.getSelection()?.anchorNode, 'LI')) {
+                        return;
+                    }
+
+                    event.preventDefault();
+                    document.execCommand('insertParagraph');
+                    syncRichEditorInput(editor);
+                });
+
+                syncRichEditorInput(editor);
+            };
+
+            row.querySelectorAll('[data-package-rich-editor]').forEach(initializeRichEditor);
 
             const normalizeTourCodeValue = (value, isDayTrip) => {
                 const desiredPrefix = isDayTrip ? 'DT-UEH' : 'OT-UEH';
@@ -1545,6 +1916,7 @@
                 button.addEventListener('click', () => {
                     serviceInclusionModal?.classList.add('hidden');
                     serviceInclusionModal?.classList.remove('flex');
+                    hideRichToolbar(true);
                     syncRowOverlayState();
                 });
             });
@@ -1556,6 +1928,7 @@
 
                 serviceInclusionModal.classList.add('hidden');
                 serviceInclusionModal.classList.remove('flex');
+                hideRichToolbar(true);
                 syncRowOverlayState();
             });
 
@@ -1635,7 +2008,9 @@
                     }
 
                     targetBody.appendChild(templateContent);
-                    targetBody.querySelector('[data-package-content-row]:last-child textarea, [data-package-content-row]:last-child input, [data-package-content-row]:last-child [data-symbol-picker-trigger]')?.focus();
+                    const latestRow = targetBody.querySelector('[data-package-content-row]:last-child');
+                    latestRow?.querySelectorAll('[data-package-rich-editor]').forEach(initializeRichEditor);
+                    latestRow?.querySelector('[data-package-rich-editor], textarea, input, [data-symbol-picker-trigger]')?.focus();
                     return;
                 }
 
@@ -1651,7 +2026,7 @@
                 }
 
                 if (targetBody.querySelectorAll('[data-package-content-row]').length <= 1) {
-                    currentRow.querySelectorAll('input, textarea, select').forEach((field) => {
+                    currentRow.querySelectorAll('input, textarea, select, [data-package-rich-editor]').forEach((field) => {
                         if (field.matches('[data-symbol-picker-input]')) {
                             const picker = field.closest('[data-symbol-picker]');
                             const defaultOption = picker?.querySelector('[data-symbol-option]');
@@ -1663,6 +2038,12 @@
                                 display.textContent = defaultOption?.getAttribute('data-symbol-display') ?? '';
                             }
 
+                            return;
+                        }
+
+                        if (field.matches('[data-package-rich-editor]')) {
+                            field.innerHTML = '';
+                            syncRichEditorInput(field);
                             return;
                         }
 
@@ -1691,6 +2072,58 @@
                 }
 
                 closeSymbolPickers(row);
+            });
+
+            const handleRichToolbarAction = (event) => {
+                const actionButton = event.target.closest('[data-package-rich-action]');
+                const action = actionButton?.getAttribute('data-package-rich-action');
+
+                event.preventDefault();
+                event.stopPropagation();
+
+                if (!action || !activeRichEditor) {
+                    return;
+                }
+
+                focusRichEditor(activeRichEditor);
+                if (!restoreRichSelection()) {
+                    return;
+                }
+
+                if (['bold', 'italic', 'underline'].includes(action)) {
+                    wrapSelectionWithTag(action === 'bold' ? 'strong' : (action === 'italic' ? 'em' : 'u'));
+
+                    return;
+                }
+
+                if (action === 'unordered' || action === 'ordered' || action === 'tick' || action === 'round' || action === 'x' || action === 'warning') {
+                    applyListStyleToSelection(action);
+                }
+            };
+
+            packageRichToolbar?.addEventListener('mousedown', handleRichToolbarAction);
+
+            document.addEventListener('selectionchange', () => {
+                if (!activeRichEditor || !document.contains(activeRichEditor)) {
+                    hideRichToolbar(true);
+
+                    return;
+                }
+
+                const selection = window.getSelection();
+
+                if (!selectionBelongsToEditor(selection, activeRichEditor) || selection?.isCollapsed) {
+                    hideRichToolbar();
+
+                    return;
+                }
+
+                saveRichSelection();
+                updateRichToolbarPosition();
+            });
+
+            packageDetailsForm?.addEventListener('submit', () => {
+                row.querySelectorAll('[data-package-rich-editor]').forEach(syncRichEditorInput);
             });
 
             const syncItineraryDayValues = (slotRow) => {

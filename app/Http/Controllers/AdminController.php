@@ -6,9 +6,11 @@ use App\Mail\BookingInvoiceMail;
 use Barryvdh\DomPDF\Facade\Pdf;
 use App\Models\BlogPost;
 use App\Models\Booking;
+use App\Models\CompanyCertification;
 use App\Models\HomeHeroSlide;
 use App\Models\NewsFeature;
 use App\Models\Product;
+use App\Models\Staff;
 use App\Models\Testimonial;
 use App\Models\User;
 use Carbon\Carbon;
@@ -31,6 +33,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 class AdminController extends Controller
 {
     private const HOME_HERO_SLIDE_MAX_KB = 20480;
+    private const STAFF_PHOTO_MAX_KB = 5120;
 
     private const PACKAGE_DURATION_OPTIONS = ['Day Trip', '2D1N', '3D2N', '4D3N'];
 
@@ -135,6 +138,21 @@ class AdminController extends Controller
     public function testimonials(): View
     {
         return view('admin.testimonials', $this->sharedAdminData());
+    }
+
+    public function aboutUs(): View
+    {
+        return view('admin.about-us', $this->sharedAdminData());
+    }
+
+    public function staffs(): View
+    {
+        return view('admin.staff', $this->sharedAdminData());
+    }
+
+    public function certifications(): View
+    {
+        return view('admin.certifications', $this->sharedAdminData());
     }
 
     public function bookings(): View
@@ -254,6 +272,151 @@ class AdminController extends Controller
         $user->delete();
 
         return back()->with('success', 'Admin account removed successfully.');
+    }
+
+    public function storeStaff(Request $request): RedirectResponse
+    {
+        $validated = $this->validateStaff($request);
+
+        Staff::create([
+            'name' => $validated['name'],
+            'contact' => $validated['contact'] ?? null,
+            'email' => $validated['email'] ?? null,
+            'designation' => $validated['designation'],
+            'sort_order' => (int) ($validated['sort_order'] ?? 0),
+            'photo_path' => $request->hasFile('photo')
+                ? $request->file('photo')->store('staff-photos', 'public')
+                : null,
+        ]);
+
+        return back()->with('success', 'Staff profile added successfully.');
+    }
+
+    public function updateStaff(Request $request, Staff $staff): RedirectResponse
+    {
+        $validated = $this->validateStaff($request, $staff);
+
+        $updates = [
+            'name' => $validated['name'],
+            'contact' => $validated['contact'] ?? null,
+            'email' => $validated['email'] ?? null,
+            'designation' => $validated['designation'],
+            'sort_order' => (int) ($validated['sort_order'] ?? 0),
+        ];
+
+        if ($request->hasFile('photo')) {
+            if ($staff->photo_path) {
+                Storage::disk('public')->delete($staff->photo_path);
+            }
+
+            $updates['photo_path'] = $request->file('photo')->store('staff-photos', 'public');
+        }
+
+        $staff->update($updates);
+
+        return back()->with('success', 'Staff profile updated successfully.');
+    }
+
+    public function destroyStaff(Staff $staff): RedirectResponse
+    {
+        if ($staff->photo_path) {
+            Storage::disk('public')->delete($staff->photo_path);
+        }
+
+        $staff->delete();
+
+        return back()->with('success', 'Staff profile deleted successfully.');
+    }
+
+    public function storeCompanyCertification(Request $request): RedirectResponse
+    {
+        $validated = $this->validateCompanyCertification($request);
+
+        $logoPath = $request->hasFile('logo')
+            ? $request->file('logo')->store('company-certifications/logos', 'public')
+            : null;
+
+        $certificateSource = $validated['certificate_source'];
+        $certificatePath = null;
+        $certificateLink = null;
+
+        if ($certificateSource === 'file' && $request->hasFile('certificate')) {
+            $certificatePath = $request->file('certificate')->store('company-certifications/files', 'public');
+        }
+
+        if ($certificateSource === 'link') {
+            $certificateLink = $validated['certificate_link'];
+        }
+
+        CompanyCertification::create([
+            'title' => $validated['title'],
+            'value' => $validated['value'] ?? '',
+            'description' => $validated['description'] ?? null,
+            'logo_path' => $logoPath,
+            'certificate_path' => $certificatePath,
+            'certificate_link' => $certificateLink,
+            'sort_order' => (int) ($validated['sort_order'] ?? 0),
+        ]);
+
+        return back()->with('success', 'Company certification added successfully.');
+    }
+
+    public function updateCompanyCertification(Request $request, CompanyCertification $companyCertification): RedirectResponse
+    {
+        $validated = $this->validateCompanyCertification($request, $companyCertification);
+        $certificateSource = $validated['certificate_source'];
+
+        $updates = [
+            'title' => $validated['title'],
+            'value' => $validated['value'] ?? $companyCertification->value ?? '',
+            'description' => $validated['description'] ?? $companyCertification->description,
+            'sort_order' => (int) ($validated['sort_order'] ?? 0),
+        ];
+
+        if ($request->hasFile('logo')) {
+            if ($companyCertification->logo_path) {
+                Storage::disk('public')->delete($companyCertification->logo_path);
+            }
+
+            $updates['logo_path'] = $request->file('logo')->store('company-certifications/logos', 'public');
+        }
+
+        if ($certificateSource === 'file' && $request->hasFile('certificate')) {
+            if ($companyCertification->certificate_path) {
+                Storage::disk('public')->delete($companyCertification->certificate_path);
+            }
+
+            $updates['certificate_path'] = $request->file('certificate')->store('company-certifications/files', 'public');
+            $updates['certificate_link'] = null;
+        }
+
+        if ($certificateSource === 'link') {
+            if ($companyCertification->certificate_path) {
+                Storage::disk('public')->delete($companyCertification->certificate_path);
+            }
+
+            $updates['certificate_path'] = null;
+            $updates['certificate_link'] = $validated['certificate_link'];
+        }
+
+        $companyCertification->update($updates);
+
+        return back()->with('success', 'Company certification updated successfully.');
+    }
+
+    public function destroyCompanyCertification(CompanyCertification $companyCertification): RedirectResponse
+    {
+        if ($companyCertification->logo_path) {
+            Storage::disk('public')->delete($companyCertification->logo_path);
+        }
+
+        if ($companyCertification->certificate_path) {
+            Storage::disk('public')->delete($companyCertification->certificate_path);
+        }
+
+        $companyCertification->delete();
+
+        return back()->with('success', 'Company certification deleted successfully.');
     }
 
     public function exportMonthlyBookings(Request $request): StreamedResponse
@@ -886,19 +1049,19 @@ class AdminController extends Controller
             'package_detail_include_symbol' => ['nullable', 'array', 'max:30'],
             'package_detail_include_symbol.*' => ['nullable', 'string', 'in:tick,round'],
             'package_detail_include_value' => ['nullable', 'array', 'max:30'],
-            'package_detail_include_value.*' => ['nullable', 'string', 'max:1000'],
+            'package_detail_include_value.*' => ['nullable', 'string', 'max:5000'],
             'package_detail_exclude_symbol' => ['nullable', 'array', 'max:30'],
             'package_detail_exclude_symbol.*' => ['nullable', 'string', 'in:x,round'],
             'package_detail_exclude_value' => ['nullable', 'array', 'max:30'],
-            'package_detail_exclude_value.*' => ['nullable', 'string', 'max:1000'],
+            'package_detail_exclude_value.*' => ['nullable', 'string', 'max:5000'],
             'package_detail_bring_symbol' => ['nullable', 'array', 'max:30'],
             'package_detail_bring_symbol.*' => ['nullable', 'string', 'in:exclamation,round'],
             'package_detail_bring_value' => ['nullable', 'array', 'max:30'],
-            'package_detail_bring_value.*' => ['nullable', 'string', 'max:1000'],
+            'package_detail_bring_value.*' => ['nullable', 'string', 'max:5000'],
             'package_detail_note_symbol' => ['nullable', 'array', 'max:30'],
             'package_detail_note_symbol.*' => ['nullable', 'string', 'in:exclamation,round'],
             'package_detail_note_value' => ['nullable', 'array', 'max:30'],
-            'package_detail_note_value.*' => ['nullable', 'string', 'max:1000'],
+            'package_detail_note_value.*' => ['nullable', 'string', 'max:5000'],
         ]);
 
         $packageDetails = [
@@ -1107,9 +1270,11 @@ class AdminController extends Controller
         return collect(range(0, max(0, $rowCount - 1)))
             ->map(function (int $index) use ($symbols, $values, $allowedSymbols, $defaultSymbol) {
                 $symbol = trim((string) ($symbols[$index] ?? $defaultSymbol));
-                $value = trim((string) ($values[$index] ?? ''));
+                $value = (string) ($values[$index] ?? '');
+                $sanitizedHtml = $this->sanitizePackageDetailHtml($value);
+                $plainText = $this->extractPlainTextFromHtml($sanitizedHtml);
 
-                if ($value === '') {
+                if ($plainText === '') {
                     return null;
                 }
 
@@ -1119,7 +1284,8 @@ class AdminController extends Controller
 
                 return [
                     'symbol' => $symbol,
-                    'text' => $value,
+                    'text' => $plainText,
+                    'html' => $sanitizedHtml,
                 ];
             })
             ->filter()
@@ -1156,6 +1322,119 @@ class AdminController extends Controller
             })
             ->values()
             ->all();
+    }
+
+    private function sanitizePackageDetailHtml(string $html): string
+    {
+        $trimmed = trim($html);
+
+        if ($trimmed === '') {
+            return '';
+        }
+
+        $document = new \DOMDocument('1.0', 'UTF-8');
+        $previousUseInternalErrors = libxml_use_internal_errors(true);
+        $wrappedHtml = '<div data-package-detail-root="1">'.$trimmed.'</div>';
+
+        $document->loadHTML(
+            mb_convert_encoding($wrappedHtml, 'HTML-ENTITIES', 'UTF-8'),
+            LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD
+        );
+
+        libxml_clear_errors();
+        libxml_use_internal_errors($previousUseInternalErrors);
+
+        $allowedTags = ['div', 'p', 'br', 'strong', 'b', 'em', 'i', 'u', 'ul', 'ol', 'li'];
+        $allowedPointStyles = ['tick', 'round', 'x', 'warning'];
+
+        $sanitizeNode = function (\DOMNode $node) use (&$sanitizeNode, $allowedTags, $allowedPointStyles): void {
+            if ($node instanceof \DOMText) {
+                return;
+            }
+
+            if (! $node instanceof \DOMElement) {
+                $node->parentNode?->removeChild($node);
+
+                return;
+            }
+
+            $tagName = Str::lower($node->tagName);
+
+            if (! in_array($tagName, $allowedTags, true)) {
+                $parent = $node->parentNode;
+
+                if (! $parent) {
+                    return;
+                }
+
+                while ($node->firstChild) {
+                    $parent->insertBefore($node->firstChild, $node);
+                }
+
+                $parent->removeChild($node);
+
+                return;
+            }
+
+            foreach (iterator_to_array($node->attributes ?? []) as $attribute) {
+                $attributeName = Str::lower($attribute->nodeName);
+
+                if ($attributeName === 'data-point-style' && in_array($tagName, ['ul', 'ol'], true)) {
+                    $attributeValue = trim((string) $attribute->nodeValue);
+
+                    if (in_array($attributeValue, $allowedPointStyles, true)) {
+                        continue;
+                    }
+                }
+
+                $node->removeAttribute($attribute->nodeName);
+            }
+
+            foreach (iterator_to_array($node->childNodes) as $childNode) {
+                $sanitizeNode($childNode);
+            }
+
+            if ($tagName === 'li') {
+                $node->nodeValue = $this->stripPackageDetailLeadingMarker($node->textContent ?? '');
+            }
+        };
+
+        $root = $document->documentElement;
+        $sanitizeNode($root);
+
+        $html = '';
+
+        foreach (iterator_to_array($root->childNodes) as $childNode) {
+            $html .= $document->saveHTML($childNode);
+        }
+
+        return $this->stripPackageDetailLeadingMarkersFromHtml(trim($html));
+    }
+
+    private function extractPlainTextFromHtml(string $html): string
+    {
+        $text = html_entity_decode(strip_tags($html), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        $text = preg_replace('/\s+/u', ' ', str_replace("\xc2\xa0", ' ', $text)) ?? '';
+
+        return $this->stripPackageDetailLeadingMarker(trim($text));
+    }
+
+    private function stripPackageDetailLeadingMarker(string $text): string
+    {
+        $normalized = preg_replace('/^\s*(?:[•●○◦▪▫✓✔✕✖✗❌⚠!]+|\d+[.)])\s*/u', '', $text) ?? $text;
+
+        return trim($normalized);
+    }
+
+    private function stripPackageDetailLeadingMarkersFromHtml(string $html): string
+    {
+        $cleaned = preg_replace(
+            '/(<(?:p|div|li)[^>]*>\s*(?:<(?:strong|b|em|i|u)[^>]*>\s*)*)(?:[•●○◦▪▫✓✔✕✖✗❌⚠!]+|\d+[.)])\s*/u',
+            '$1',
+            $html
+        );
+
+        return trim((string) ($cleaned ?? $html));
     }
 
     private function normalizeOptionalUrl(mixed $value): ?string
@@ -1651,6 +1930,12 @@ class AdminController extends Controller
                 ? BlogPost::latest('published_at')->latest()->get()
                 : collect(),
             'testimonials' => Testimonial::with('product')->latest()->get(),
+            'staffMembers' => Schema::hasTable('staff')
+                ? Staff::query()->orderBy('sort_order')->orderBy('name')->get()
+                : collect(),
+            'companyCertifications' => Schema::hasTable('company_certifications')
+                ? CompanyCertification::query()->orderBy('sort_order')->orderBy('title')->get()
+                : collect(),
             'bookings' => Booking::activeBookings()->with(['user', 'product'])->latest()->get(),
             'enquiries' => Booking::enquiries()->with(['user', 'product'])->latest()->get(),
             'adminUser' => auth()->user(),
@@ -1664,8 +1949,66 @@ class AdminController extends Controller
                 'promos' => NewsFeature::count(),
                 'blogPosts' => Schema::hasTable('blog_posts') ? BlogPost::count() : 0,
                 'testimonials' => Testimonial::count(),
+                'staff' => Schema::hasTable('staff') ? Staff::count() : 0,
             ],
         ];
+    }
+
+    private function validateStaff(Request $request, ?Staff $staff = null): array
+    {
+        return $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'contact' => ['nullable', 'string', 'max:255'],
+            'email' => ['nullable', 'email:rfc,dns', 'max:255'],
+            'designation' => ['required', 'string', 'max:255'],
+            'sort_order' => ['nullable', 'integer', 'min:0', 'max:9999'],
+            'photo' => [
+                $staff ? 'nullable' : 'required',
+                'image',
+                'mimes:jpg,jpeg,png,webp',
+                'max:'.self::STAFF_PHOTO_MAX_KB,
+            ],
+        ]);
+    }
+
+    private function validateCompanyCertification(Request $request, ?CompanyCertification $companyCertification = null): array
+    {
+        $validated = $request->validate([
+            'title' => ['required', 'string', 'max:255'],
+            'sort_order' => ['nullable', 'integer', 'min:0', 'max:9999'],
+            'certificate_source' => ['required', 'in:file,link'],
+            'logo' => [
+                $companyCertification?->logo_path ? 'nullable' : 'required',
+                'image',
+                'mimes:jpg,jpeg,png,webp',
+                'max:5120',
+            ],
+            'certificate' => [
+                'nullable',
+                'file',
+                'mimes:jpg,jpeg,png,webp,pdf',
+                'max:20480',
+            ],
+            'certificate_link' => ['nullable', 'url:http,https', 'max:2000'],
+        ]);
+
+        $needsFile = $validated['certificate_source'] === 'file'
+            && ! $request->hasFile('certificate')
+            && ! $companyCertification?->certificate_path;
+
+        $needsLink = $validated['certificate_source'] === 'link'
+            && blank($validated['certificate_link'] ?? null)
+            && ! $companyCertification?->certificate_link;
+
+        if ($needsFile || $needsLink) {
+            throw ValidationException::withMessages([
+                $needsFile ? 'certificate' : 'certificate_link' => $needsFile
+                    ? 'Please upload a certificate file.'
+                    : 'Please provide a certificate link.',
+            ]);
+        }
+
+        return $validated;
     }
 
     private function resequenceHomeHeroSlides(?HomeHeroSlide $targetSlide = null, ?int $requestedPosition = null): void

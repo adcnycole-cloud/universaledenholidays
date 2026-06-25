@@ -42,6 +42,72 @@
         .price-info-tooltip:focus-within .price-info-tooltip-bubble {
             opacity: 1;
         }
+
+        [data-package-detail-html] {
+            color: inherit;
+            word-break: break-word;
+        }
+
+        [data-package-detail-html] p {
+            margin: 0 0 0.5rem;
+        }
+
+        [data-package-detail-html] p:last-child {
+            margin-bottom: 0;
+        }
+
+        [data-package-detail-html] ul,
+        [data-package-detail-html] ol {
+            margin: 0.5rem 0;
+            padding-left: 1.35rem;
+            list-style: none;
+        }
+
+        [data-package-detail-html] ul[data-point-style="tick"],
+        [data-package-detail-html] ul[data-point-style="round"],
+        [data-package-detail-html] ul[data-point-style="x"],
+        [data-package-detail-html] ul[data-point-style="warning"] {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        [data-package-detail-html] ul[data-point-style="tick"] li,
+        [data-package-detail-html] ul[data-point-style="round"] li,
+        [data-package-detail-html] ul[data-point-style="x"] li,
+        [data-package-detail-html] ul[data-point-style="warning"] li {
+            position: relative;
+            padding-left: 1.6rem;
+        }
+
+        [data-package-detail-html] ul[data-point-style="tick"] li::before,
+        [data-package-detail-html] ul[data-point-style="round"] li::before,
+        [data-package-detail-html] ul[data-point-style="x"] li::before,
+        [data-package-detail-html] ul[data-point-style="warning"] li::before {
+            position: absolute;
+            left: 0;
+            top: 0;
+            font-weight: 700;
+        }
+
+        [data-package-detail-html] ul[data-point-style="tick"] li::before {
+            content: "\2713";
+            color: rgb(21 128 61);
+        }
+
+        [data-package-detail-html] ul[data-point-style="round"] li::before {
+            content: "\2022";
+            color: rgb(87 83 78);
+        }
+
+        [data-package-detail-html] ul[data-point-style="x"] li::before {
+            content: "\2716";
+            color: rgb(185 28 28);
+        }
+
+        [data-package-detail-html] ul[data-point-style="warning"] li::before {
+            content: "\26A0";
+            color: rgb(180 83 9);
+        }
     </style>
         <div class="flex min-h-[calc(100vh-var(--app-header-offset,0px))] flex-col" style="background-color: #ffffff;">
     <main class="mx-auto w-full px-6 py-10 lg:px-10" style="max-width: {{ $product->category === 'package' ? '92rem' : '120rem' }}; background-color: #ffffff;">
@@ -55,12 +121,19 @@
 
         @php
             $isTransport = $product->category === 'transport';
+            $startingPriceTier = collect($malaysiaPricingTiers ?? [])
+                ->filter(fn ($tier) => is_array($tier) && isset($tier['adult_price']))
+                ->sortBy('adult_price')
+                ->first();
             $galleryImages = $product->gallery_urls;
             $primaryImage = $galleryImages[0] ?? null;
             $thumbnailImages = collect($galleryImages)->slice(1, 4)->values();
             $remainingGalleryCount = max(count($galleryImages) - 5, 0);
-            $startingPrice = (float) $product->discounted_malaysia_adult_price_myr;
-            $originalStartingPrice = (float) $product->malaysia_adult_price_myr;
+            $startingPrice = (float) ($startingPriceTier['adult_price'] ?? $product->discounted_malaysia_adult_price_myr);
+            $originalStartingPrice = (float) ($startingPriceTier['original_adult_price'] ?? $product->malaysia_adult_price_myr);
+            $startingPriceTooltip = $startingPriceTier
+                ? 'Based on 1 adult at the lowest Malaysian market price under the '.$startingPriceTier['label'].' group size.'
+                : 'Based on 1 adult from the Malaysian market pricing.';
             $previewImages = collect($galleryImages)
                 ->map(fn ($image, $index) => [
                     'src' => $image,
@@ -147,7 +220,12 @@
                 'things_to_bring' => ['title' => 'Things to Bring', 'items' => []],
                 'important_notes' => ['title' => 'Important Notes', 'items' => []],
             ]);
-            $pushServiceSectionItem = function (string $key, string $value, ?string $symbol = null) use (&$serviceInfoSections) {
+            $cleanPackageDetailHtml = fn ($html) => preg_replace(
+                '/(<(?:p|div|li)[^>]*>\s*(?:<(?:strong|b|em|i|u)[^>]*>\s*)*)(?:[•●○◦▪▫✓✔✕✖✗❌⚠!]+|\d+[.)])\s*/u',
+                '$1',
+                (string) $html
+            ) ?? (string) $html;
+            $pushServiceSectionItem = function (string $key, string $value, ?string $symbol = null, ?string $html = null) use (&$serviceInfoSections) {
                 $trimmedValue = trim($value);
 
                 if ($trimmedValue === '') {
@@ -163,6 +241,7 @@
                 $section['items'][] = [
                     'symbol' => $symbol ?: $defaultSymbol,
                     'text' => $trimmedValue,
+                    'html' => $html,
                 ];
                 $serviceInfoSections->put($key, $section);
             };
@@ -179,6 +258,7 @@
                         return [
                             'symbol' => ($item['symbol'] ?? 'tick') === 'round' ? 'round' : 'tick',
                             'text' => $text,
+                            'html' => filled($item['html'] ?? null) ? $cleanPackageDetailHtml((string) $item['html']) : null,
                         ];
                     })
                     ->filter()
@@ -194,6 +274,7 @@
                         return [
                             'symbol' => ($item['symbol'] ?? 'x') === 'round' ? 'round' : 'x',
                             'text' => $text,
+                            'html' => filled($item['html'] ?? null) ? $cleanPackageDetailHtml((string) $item['html']) : null,
                         ];
                     })
                     ->filter()
@@ -209,6 +290,7 @@
                         return [
                             'symbol' => ($item['symbol'] ?? 'exclamation') === 'round' ? 'round' : 'exclamation',
                             'text' => $text,
+                            'html' => filled($item['html'] ?? null) ? $cleanPackageDetailHtml((string) $item['html']) : null,
                         ];
                     })
                     ->filter()
@@ -224,6 +306,7 @@
                         return [
                             'symbol' => ($item['symbol'] ?? 'exclamation') === 'round' ? 'round' : 'exclamation',
                             'text' => $text,
+                            'html' => filled($item['html'] ?? null) ? $cleanPackageDetailHtml((string) $item['html']) : null,
                         ];
                     })
                     ->filter()
@@ -231,11 +314,11 @@
             ];
 
             if (collect($packageDetailsSections)->flatten()->isNotEmpty()) {
-                foreach ($packageDetailsSections as $sectionKey => $items) {
-                    foreach ($items as $item) {
-                        $pushServiceSectionItem($sectionKey, $item['text'] ?? '', $item['symbol'] ?? null);
+                    foreach ($packageDetailsSections as $sectionKey => $items) {
+                        foreach ($items as $item) {
+                            $pushServiceSectionItem($sectionKey, $item['text'] ?? '', $item['symbol'] ?? null, $item['html'] ?? null);
+                        }
                     }
-                }
             } elseif ($structuredServiceInclusions->isNotEmpty()) {
                 foreach ($structuredServiceInclusions as $item) {
                     $label = trim((string) ($item['label'] ?? ''));
@@ -499,7 +582,7 @@
                                     <span class="inline-flex h-5 w-5 items-center justify-center">
                                         <svg viewBox="0 0 24 24" class="h-5 w-5 shrink-0" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm1 15h-2v-6h2zm0-8h-2V7h2z"/></svg>
                                     </span>
-                                    <span class="price-info-tooltip-bubble">The initial price based on 1 adult with the lowest price in low season</span>
+                                    <span class="price-info-tooltip-bubble">{{ $startingPriceTooltip }}</span>
                                 </span>
                                 <span>Price Value Guarantee</span>
                             </div>
@@ -793,24 +876,33 @@
                             @foreach ($serviceInfoSections as $key => $section)
                                 <div @class(['hidden' => !$loop->first]) data-package-detail-panel="{{ $key }}">
                                     @if (!empty($section['items']))
-                                        <ul class="space-y-3 text-sm leading-8 text-stone-600">
-                                            @foreach ($section['items'] as $entry)
-                                                @php
-                                                    $entrySymbol = $entry['symbol'] ?? ($key === 'exclusion' ? 'x' : ($key === 'inclusion' ? 'tick' : 'exclamation'));
-                                                    $entryText = $entry['text'] ?? '';
-                                                    $entryDisplaySymbol = match ($entrySymbol) {
-                                                        'round' => '•',
-                                                        'x' => '✕',
-                                                        'exclamation' => '!',
-                                                        default => '✓',
-                                                    };
-                                                @endphp
-                                                <li class="flex items-start gap-3 {{ $entrySymbol === 'round' ? 'pl-8 text-stone-500' : 'font-semibold text-stone-700' }}">
-                                                    <span class="mt-1 text-base font-bold leading-none {{ $entrySymbol === 'round' ? 'text-stone-400' : 'text-stone-600' }}">{{ $entryDisplaySymbol }}</span>
-                                                    <span>{{ $entryText }}</span>
-                                                </li>
-                                            @endforeach
-                                        </ul>
+                                        @php
+                                            $singleRichEntry = count($section['items']) === 1
+                                                && filled($section['items'][0]['html'] ?? null);
+                                        @endphp
+                                        @if ($singleRichEntry)
+                                            <div class="text-sm leading-8 text-stone-700" data-package-detail-html>{!! $section['items'][0]['html'] !!}</div>
+                                        @else
+                                            <ul class="space-y-3 text-sm leading-8 text-stone-600">
+                                                @foreach ($section['items'] as $entry)
+                                                    @php
+                                                        $entrySymbol = $entry['symbol'] ?? ($key === 'exclusion' ? 'x' : ($key === 'inclusion' ? 'tick' : 'exclamation'));
+                                                        $entryText = $entry['text'] ?? '';
+                                                        $entryHtml = $entry['html'] ?? null;
+                                                        $entryDisplaySymbol = match ($entrySymbol) {
+                                                            'round' => '•',
+                                                            'x' => '✕',
+                                                            'exclamation' => '!',
+                                                            default => '✓',
+                                                        };
+                                                    @endphp
+                                                    <li class="flex items-start gap-3 {{ $entrySymbol === 'round' ? 'pl-8 text-stone-500' : 'font-semibold text-stone-700' }}">
+                                                        <span class="mt-1 text-base font-bold leading-none {{ $entrySymbol === 'round' ? 'text-stone-400' : 'text-stone-600' }}">{{ $entryDisplaySymbol }}</span>
+                                                        <div class="min-w-0 flex-1" data-package-detail-html>{!! filled($entryHtml) ? $entryHtml : e($entryText) !!}</div>
+                                                    </li>
+                                                @endforeach
+                                            </ul>
+                                        @endif
                                     @else
                                         <p class="text-sm leading-7 text-stone-500">Details will be confirmed with this package.</p>
                                     @endif
@@ -1026,7 +1118,8 @@
 
     </main>
 
-@include('/partials.footer')
+    @include('partials.footer')
+</div>
 
 
     <script>

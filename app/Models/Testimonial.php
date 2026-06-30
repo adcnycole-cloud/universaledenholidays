@@ -17,6 +17,7 @@ class Testimonial extends Model
         'is_featured',
         'display_location',
         'product_id',
+        'package_id',
     ];
 
     protected function casts(): array
@@ -29,6 +30,11 @@ class Testimonial extends Model
     public function product()
     {
         return $this->belongsTo(Product::class);
+    }
+
+    public function package()
+    {
+        return $this->belongsTo(Package::class);
     }
 
     public function getProfilePhotoUrlAttribute(): string

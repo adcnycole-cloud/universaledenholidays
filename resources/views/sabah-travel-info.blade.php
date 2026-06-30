@@ -1,3 +1,5 @@
+<x-layouts.app title="Sabah Travel Info | Universal Eden Holidays">
+<main class="min-h-[calc(100vh-var(--app-header-offset,0px))] bg-white">
 <section class="sabah-map-section" id="sabah-map-section">
     <style>
         .sabah-map-section {
@@ -32,7 +34,7 @@
 
         .sabah-map-layout {
             display: grid;
-            grid-template-columns: minmax(0, 1.1fr) minmax(340px, 0.9fr);
+            grid-template-columns: minmax(0, 1.28fr) minmax(320px, 0.72fr);
             gap: clamp(1rem, 2vw, 1.5rem);
             padding: clamp(1.1rem, 2vw, 1.75rem);
         }
@@ -45,7 +47,10 @@
         }
 
         .sabah-map-stage-card {
-            padding: clamp(1rem, 2vw, 1.25rem);
+            padding: clamp(1.1rem, 2vw, 1.5rem);
+            border: 0;
+            border-radius: 0;
+            background: transparent;
         }
 
         .sabah-map-kicker {
@@ -76,13 +81,12 @@
         .sabah-map-visual {
             position: relative;
             margin-top: 1.4rem;
-            aspect-ratio: 1 / 1;
-            border-radius: 24px;
-            background:
-                radial-gradient(circle at center, rgba(232, 211, 175, 0.32), transparent 55%),
-                linear-gradient(180deg, #fcfaf5 0%, #f7f3eb 100%);
+            aspect-ratio: 1.12 / 1;
+            min-height: clamp(22rem, 36vw, 30rem);
+            border-radius: 0;
+            background: transparent;
             overflow: hidden;
-            border: 1px solid rgba(40, 84, 58, 0.08);
+            border: 0;
         }
 
         .sabah-map-base {
@@ -105,7 +109,24 @@
             border: 0;
             background: transparent;
             cursor: pointer;
+            transform-origin: top left;
             transition: opacity 0.35s ease, transform 0.35s ease, z-index 0.2s ease;
+        }
+
+        .sabah-map-image-button {
+            display: inline-block;
+            padding: 0;
+            margin: 0;
+            border: 0;
+            background: transparent;
+            box-shadow: none;
+            appearance: none;
+            -webkit-appearance: none;
+        }
+
+        .sabah-map-image-button img {
+            display: block;
+            background: transparent;
         }
 
         .sabah-map-hotspot img {
@@ -132,13 +153,13 @@
         }
 
         .sabah-map-hotspot.is-dimmed img {
-            opacity: 0.72;
+            opacity: 1;
             filter: none;
         }
 
         .sabah-map-hotspot.is-active img {
             opacity: 1;
-            filter: drop-shadow(0 18px 28px rgba(40, 84, 58, 0.18));
+            filter: brightness(0.72) drop-shadow(0 18px 28px rgba(40, 84, 58, 0.2));
             transform: none;
         }
 
@@ -287,6 +308,10 @@
             .sabah-map-info-card {
                 order: 2;
             }
+
+            .sabah-map-visual {
+                min-height: clamp(20rem, 58vw, 26rem);
+            }
         }
 
         @media (max-width: 640px) {
@@ -311,14 +336,17 @@
             .sabah-map-cta {
                 width: 100%;
             }
+
+            .sabah-map-visual {
+                aspect-ratio: 1 / 1;
+                min-height: auto;
+            }
         }
     </style>
 
-    <div class="sabah-map-shell">
         <div class="sabah-map-layout">
             <div class="sabah-map-stage-card">
                 <div class="sabah-map-visual" aria-label="Interactive Sabah map">
-                    <img class="sabah-map-base" src="{{ asset('images/sabah.png') }}" style="left: -0.5%;" alt="Sabah base map">
 
                     <button
                         class="sabah-map-hotspot is-dimmed"
@@ -326,7 +354,7 @@
                         data-division-key="kudat"
                         aria-pressed="false"
                         aria-label="Select Kudat Division"
-                        style="top: 8.1%; left: 30.8%; z-index: 5;"
+                        style="top: 4.3%; left: 37.5%; transform: scale(0.72); z-index: 5;"
                     >
                         <img src="{{ asset('images/b_kudat.png') }}" alt="Kudat Division map">
                     </button>
@@ -337,7 +365,7 @@
                         data-division-key="west-coast"
                         aria-pressed="true"
                         aria-label="Select West Coast Division"
-                        style="top: 22.4%; left: 12.6%; z-index: 5;"
+                        style="top: 17%; left: 23%; transform: scale(0.72); z-index: 5;"
                     >
                         <img src="{{ asset('images/b_pantai barat.png') }}" alt="West Coast Division map">
                     </button>
@@ -348,7 +376,7 @@
                         data-division-key="interior"
                         aria-pressed="false"
                         aria-label="Select Interior Division"
-                        style="top: 39.5%; left: 1%; z-index: 5;"
+                        style="top: 32.8%; left: 14.2%; transform: scale(0.73); z-index: 5;"
                     >
                         <img src="{{ asset('images/b_pendalaman.png') }}" alt="Interior Division map">
                     </button>
@@ -359,7 +387,7 @@
                         data-division-key="sandakan"
                         aria-pressed="false"
                         aria-label="Select Sandakan Division"
-                        style="top: 20%; left: 30%; z-index: 5;"
+                        style="top: 16.1%; left: 35%; transform: scale(0.815); z-index: 5;"
                     >
                         <img src="{{ asset('images/b_sandakan.png') }}" alt="Sandakan Division map">
                     </button>
@@ -370,25 +398,19 @@
                         data-division-key="tawau"
                         aria-pressed="false"
                         aria-label="Select Tawau Division"
-                        style="top: 56%; left: 44%; z-index: 5;"
+                        style="top: 46.3%; left: 45.2%; transform: scale(0.80); z-index: 5;"
                     >
                         <img src="{{ asset('images/b_tawau.png') }}" alt="Tawau Division map">
                     </button>
-                </div>
 
-                <div class="sabah-map-note">
-                    <span class="sabah-map-note-dot"></span>
-                    Tap or click a division on the map to update the travel panel.
                 </div>
             </div>
 
             <div class="sabah-map-info-card">
                 <div>
                     <div class="sabah-map-pill">Selected Division</div>
-                    <h3 class="sabah-map-info-title" data-division-name>West Coast Division</h3>
-                    <p class="sabah-map-info-text" data-division-description>
-                        Gateway to Sabah, home to Kota Kinabalu, Kundasang, Mount Kinabalu, islands and beaches.
-                    </p>
+                    <h3 class="sabah-map-info-title" data-division-name></h3>
+                    <p class="sabah-map-info-text" data-division-description></p>
 
                     <div class="sabah-map-grid">
                         <div class="sabah-map-detail">
@@ -408,12 +430,12 @@
                     </div>
                 </div>
 
-                <a class="sabah-map-cta" data-division-link href="{{ route('home') }}#packages-showcase">
+                <a class="sabah-map-cta" data-division-link href="#">
                     View Tours
                 </a>
             </div>
         </div>
-    </div>
+
 
     <script>
         (function () {
@@ -521,5 +543,8 @@
 
             setActiveDivision('west-coast');
         }());
-    </script>
+</script>
 </section>
+@include('partials.footer')
+</main>
+</x-layouts.app>

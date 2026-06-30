@@ -121,6 +121,7 @@
 
         @php
             $isTransport = $product->category === 'transport';
+            $bookingRouteParameter = $product->category === 'package' ? 'package_id' : 'product_id';
             $startingPriceTier = collect($malaysiaPricingTiers ?? [])
                 ->filter(fn ($tier) => is_array($tier) && isset($tier['adult_price']))
                 ->sortBy('adult_price')
@@ -147,25 +148,6 @@
             $structuredServiceInclusions = collect($serviceInclusions)
                 ->filter(fn ($item) => is_array($item) && array_key_exists('value', $item))
                 ->values();
-            $tourHighlights = collect(is_array($product->tour_highlights) ? $product->tour_highlights : [])
-                ->map(fn ($item) => trim((string) $item))
-                ->filter(fn ($sentence) => $sentence !== '')
-                ->unique()
-                ->take(6)
-                ->values();
-
-            if ($tourHighlights->isEmpty()) {
-                $tourHighlights = collect([$product->summary, $product->description])
-                    ->filter(fn ($text) => filled($text))
-                    ->flatMap(function ($text) {
-                        return preg_split('/(?<=[.!?])\s+/', trim((string) $text)) ?: [];
-                    })
-                    ->map(fn ($sentence) => trim((string) $sentence))
-                    ->filter(fn ($sentence) => $sentence !== '')
-                    ->unique()
-                    ->take(4)
-                    ->values();
-            }
             $minimumAgeLabel = filled($product->minimum_age) ? $product->minimum_age : 'No Limit';
             $detailCards = [
                 [
@@ -225,6 +207,29 @@
                 '$1',
                 (string) $html
             ) ?? (string) $html;
+            $buildPackageContentHtml = function ($rows) use ($cleanPackageDetailHtml) {
+                return collect(is_array($rows) ? $rows : [])
+                    ->map(function ($row) use ($cleanPackageDetailHtml) {
+                        if (is_array($row)) {
+                            $html = trim($cleanPackageDetailHtml((string) ($row['html'] ?? '')));
+
+                            if ($html !== '') {
+                                return $html;
+                            }
+
+                            $text = trim((string) ($row['text'] ?? $row['value'] ?? ''));
+
+                            return $text === '' ? null : '<p>'.e($text).'</p>';
+                        }
+
+                        $text = trim((string) $row);
+
+                        return $text === '' ? null : '<p>'.e($text).'</p>';
+                    })
+                    ->filter()
+                    ->implode('');
+            };
+            $tourHighlightsHtml = $buildPackageContentHtml($product->tour_highlights ?? []);
             $pushServiceSectionItem = function (string $key, string $value, ?string $symbol = null, ?string $html = null) use (&$serviceInfoSections) {
                 $trimmedValue = trim($value);
 
@@ -248,7 +253,7 @@
 
             $packageDetailsSections = [
                 'inclusion' => collect($packageDetails['includes'] ?? [])
-                    ->map(function ($item) {
+                    ->map(function ($item) use ($cleanPackageDetailHtml) {
                         $text = trim((string) ($item['text'] ?? $item['value'] ?? ''));
 
                         if ($text === '') {
@@ -264,7 +269,7 @@
                     ->filter()
                     ->values(),
                 'exclusion' => collect($packageDetails['excludes'] ?? [])
-                    ->map(function ($item) {
+                    ->map(function ($item) use ($cleanPackageDetailHtml) {
                         $text = trim((string) ($item['text'] ?? $item['value'] ?? ''));
 
                         if ($text === '') {
@@ -280,7 +285,7 @@
                     ->filter()
                     ->values(),
                 'things_to_bring' => collect($packageDetails['things_to_bring'] ?? [])
-                    ->map(function ($item) {
+                    ->map(function ($item) use ($cleanPackageDetailHtml) {
                         $text = trim((string) ($item['text'] ?? $item['value'] ?? ''));
 
                         if ($text === '') {
@@ -296,7 +301,7 @@
                     ->filter()
                     ->values(),
                 'important_notes' => collect($packageDetails['important_notes'] ?? [])
-                    ->map(function ($item) {
+                    ->map(function ($item) use ($cleanPackageDetailHtml) {
                         $text = trim((string) ($item['text'] ?? $item['value'] ?? ''));
 
                         if ($text === '') {
@@ -347,69 +352,51 @@
                 $pushServiceSectionItem('things_to_bring', 'Personal identification, comfortable clothing, and any trip-specific essentials confirmed after booking.');
                 $pushServiceSectionItem('important_notes', 'Timing, weather, and supplier arrangements may vary depending on the selected package and travel date.');
             }
-            $recommendedAttireItems = collect(is_array($product->recommended_attire) ? $product->recommended_attire : [])
-                ->map(fn ($item) => trim((string) $item))
-                ->filter(fn ($item) => $item !== '')
+            $recommendedAttireHtml = $buildPackageContentHtml($product->recommended_attire ?? []);
+            $thingsYouShouldKnowHtml = $buildPackageContentHtml($product->things_to_know ?? []);
+            $usefulTravelTipsHtml = $buildPackageContentHtml($product->travel_tips ?? []);
+            $optionalActivitiesData = is_array($product->optional_activities) ? $product->optional_activities : [];
+            $optionalActivitiesDescription = trim((string) ($optionalActivitiesData['description'] ?? ''));
+            $optionalActivitiesRows = collect(is_array($optionalActivitiesData['rows'] ?? null) ? $optionalActivitiesData['rows'] : [])
+                ->map(function ($row) {
+                    if (! is_array($row)) {
+                        return null;
+                    }
+
+                    $name = trim((string) ($row['name'] ?? ''));
+                    $rate = trim((string) ($row['rate'] ?? ($row['details'] ?? '')));
+
+                    if ($name === '' && $rate === '') {
+                        return null;
+                    }
+
+                    return [
+                        'name' => $name,
+                        'rate' => $rate,
+                    ];
+                })
+                ->filter()
                 ->values();
 
-            if ($recommendedAttireItems->isEmpty()) {
-                $recommendedAttireItems = collect($serviceInfoSections->get('things_to_bring')['items'] ?? [])
-                    ->map(fn ($item) => trim((string) ($item['text'] ?? '')))
-                    ->filter(function (string $item) {
-                        $normalizedItem = Str::lower($item);
+            if ($optionalActivitiesRows->isEmpty()) {
+                $optionalActivitiesRows = collect(is_array($optionalActivitiesData['items'] ?? null) ? $optionalActivitiesData['items'] : [])
+                    ->map(function ($item) {
+                        $name = trim((string) $item);
 
-                        foreach (['wear', 'clothing', 'cloth', 'shirt', 'pants', 'shoe', 'sandals', 'sneaker', 'jacket', 'hat', 'cap', 'attire', 'comfortable'] as $keyword) {
-                            if (str_contains($normalizedItem, $keyword)) {
-                                return true;
-                            }
+                        if ($name === '') {
+                            return null;
                         }
 
-                        return false;
+                        return [
+                            'name' => $name,
+                            'rate' => '',
+                        ];
                     })
+                    ->filter()
                     ->values();
             }
 
-            if ($recommendedAttireItems->isEmpty()) {
-                $recommendedAttireItems = collect([
-                    'Comfortable casual clothing suitable for the weather.',
-                    'Walking shoes or sandals with good grip.',
-                    'A cap or hat for sun protection during outdoor activities.',
-                    'A light jacket or spare change of clothes if conditions change.',
-                ]);
-            }
-            $thingsYouShouldKnowItems = collect(is_array($product->things_to_know) ? $product->things_to_know : [])
-                ->map(fn ($item) => trim((string) $item))
-                ->filter(fn ($item) => $item !== '')
-                ->values();
-
-            if ($thingsYouShouldKnowItems->isEmpty()) {
-                $thingsYouShouldKnowItems = collect($serviceInfoSections->get('important_notes')['items'] ?? [])
-                    ->map(fn ($item) => trim((string) ($item['text'] ?? '')))
-                    ->filter(fn (string $item) => trim($item) !== '')
-                    ->values();
-            }
-
-            if ($thingsYouShouldKnowItems->isEmpty()) {
-                $thingsYouShouldKnowItems = collect([
-                    'Schedules and visit timing may change depending on weather, traffic, or local operator arrangements.',
-                    'Please keep your phone reachable for last-minute coordination before departure.',
-                    'Some activities may involve light walking, waiting time, or shared timing with other guests.',
-                ]);
-            }
-
-            $usefulTravelTipsItems = collect(is_array($product->travel_tips) ? $product->travel_tips : [])
-                ->map(fn ($item) => trim((string) $item))
-                ->filter(fn ($item) => $item !== '')
-                ->values();
-
-            if ($usefulTravelTipsItems->isEmpty()) {
-                $usefulTravelTipsItems = collect([
-                    'Keep drinking water, sunscreen, and personal essentials ready before departure.',
-                    'Bring a power bank or fully charged phone for photos, contact, and navigation support.',
-                    'Carry some cash for snacks, entrance add-ons, or personal spending during the trip.',
-                    'Arrive a little earlier than the stated pickup time to avoid delays.',
-                ]);
-            }
+            $showOptionalActivities = filled($optionalActivitiesDescription) || $optionalActivitiesRows->isNotEmpty();
             $itineraryItems = collect($product->itinerary_items ?? [])->filter()->values();
             $structuredItineraryItems = $itineraryItems
                 ->filter(fn ($item) => is_array($item) && array_key_exists('activity', $item))
@@ -499,7 +486,7 @@
                         <div class="rounded-[1.25rem] border border-stone-200 bg-stone-50 px-4 py-3 text-sm leading-6 text-stone-600">
                             Transport listings are information-only here. Please review the vehicle details and contact the team directly for arrangement support.
                         </div>
-                        <a href="{{ route('booking.create', ['product_id' => $product->id, 'mode' => 'enquiry']) }}" class="rounded-full border border-amber-400 px-5 py-3 text-sm font-semibold text-amber-600 transition hover:bg-amber-50">Send Enquiry</a>
+                        <a href="{{ route('booking.create', [$bookingRouteParameter => $product->id, 'mode' => 'enquiry']) }}" class="rounded-full border border-amber-400 px-5 py-3 text-sm font-semibold text-amber-600 transition hover:bg-amber-50">Send Enquiry</a>
                     </div>
                 </section>
             </aside>
@@ -629,9 +616,9 @@
                     </div>
 
                     <div class="mt-6 flex flex-wrap gap-3">
-                        <a href="{{ route('booking.create', ['product_id' => $product->id, 'mode' => 'enquiry']) }}" class="rounded-full border border-amber-400 px-5 py-3 text-sm font-semibold text-amber-600 transition hover:bg-amber-50">Send Enquiry</a>
-                        <a href="{{ route('booking.create', ['product_id' => $product->id, 'action' => 'reserve']) }}" class="rounded-full border border-emerald-600 px-5 py-3 text-sm font-semibold text-emerald-600 transition hover:bg-emerald-50">Reserve Now</a>
-                        <a href="{{ route('booking.create', ['product_id' => $product->id, 'action' => 'instant_book']) }}" class="rounded-full bg-rose-500 px-5 py-3 text-sm font-semibold text-white transition hover:bg-rose-600">Instant Book</a>
+                        <a href="{{ route('booking.create', [$bookingRouteParameter => $product->id, 'mode' => 'enquiry']) }}" class="rounded-full border border-amber-400 px-5 py-3 text-sm font-semibold text-amber-600 transition hover:bg-amber-50">Send Enquiry</a>
+                        <a href="{{ route('booking.create', [$bookingRouteParameter => $product->id, 'action' => 'reserve']) }}" class="rounded-full border border-emerald-600 px-5 py-3 text-sm font-semibold text-emerald-600 transition hover:bg-emerald-50">Reserve Now</a>
+                        <a href="{{ route('booking.create', [$bookingRouteParameter => $product->id, 'action' => 'instant_book']) }}" class="rounded-full bg-rose-500 px-5 py-3 text-sm font-semibold text-white transition hover:bg-rose-600">Instant Book</a>
                     </div>
                 </section>
             </aside>
@@ -913,42 +900,79 @@
                 </div>
             </section>
 
-            <section class="mt-4 w-full min-w-0 overflow-hidden" data-recommended-attire-section>
-                <button
-                    type="button"
-                    class="flex w-full items-center justify-between gap-4 rounded-[1rem] border border-stone-300 bg-stone-50/80 px-5 py-5 text-left"
-                    data-recommended-attire-toggle
-                    aria-expanded="false"
-                >
-                    <span class="flex items-center gap-4">
-                        <span class="inline-flex h-8 w-8 items-center justify-center rounded-full text-white" style="background: #455499;">
-                            <svg viewBox="0 0 24 24" class="h-4 w-4" fill="currentColor" aria-hidden="true"><path d="M12 3a2 2 0 0 1 2 2v1h1.25a2.75 2.75 0 0 1 2.75 2.75V10H6V8.75A2.75 2.75 0 0 1 8.75 6H10V5a2 2 0 0 1 2-2Zm-6 8h12v6.75A2.25 2.25 0 0 1 15.75 20h-7.5A2.25 2.25 0 0 1 6 17.75Z"/></svg>
+            @if ($showOptionalActivities)
+                <section class="mt-4 w-full min-w-0 overflow-hidden" data-optional-activities-section>
+                    <button
+                        type="button"
+                        class="flex w-full items-center justify-between gap-4 rounded-[1rem] border border-stone-300 bg-stone-50/80 px-5 py-5 text-left"
+                        data-optional-activities-toggle
+                        aria-expanded="false"
+                    >
+                        <span class="flex items-center gap-4">
+                            <span class="inline-flex h-8 w-8 items-center justify-center rounded-full text-white" style="background: #455499;">
+                                <svg viewBox="0 0 24 24" class="h-4 w-4" fill="currentColor" aria-hidden="true"><path d="M9.55 16.6 4.8 11.85l1.4-1.4 3.35 3.35 8.25-8.25 1.4 1.4z"/></svg>
+                            </span>
+                            <span class="text-sm font-semibold uppercase tracking-[0.18em] text-slate-800">Optional Activities</span>
                         </span>
-                        <span class="text-sm font-semibold uppercase tracking-[0.18em] text-slate-800">Recommended Attire</span>
-                    </span>
-                    <span class="inline-flex text-stone-400 transition-[transform,color] duration-200" data-recommended-attire-icon>
-                        <svg viewBox="0 0 20 20" class="h-5 w-5" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 11.18l3.71-3.95a.75.75 0 1 1 1.1 1.02l-4.25 4.52a.75.75 0 0 1-1.1 0L5.21 8.27a.75.75 0 0 1 .02-1.06Z" clip-rule="evenodd"/></svg>
-                    </span>
-                </button>
-                <div class="mt-4 hidden" data-recommended-attire-panel>
-                    <div class="w-full min-w-0">
-                        <div class="grid gap-4">
-                            @foreach ($recommendedAttireItems as $attire)
-                                <article class="rounded-[1.5rem] border border-stone-200 bg-white px-5 py-4">
-                                    <div class="flex items-start gap-3">
-                                        <span class="mt-1 inline-flex h-7 w-7 items-center justify-center rounded-full bg-stone-100 text-stone-700">
-                                            <svg viewBox="0 0 24 24" class="h-4 w-4" fill="currentColor" aria-hidden="true"><path d="M12 3a2 2 0 0 1 2 2v1h1.25a2.75 2.75 0 0 1 2.75 2.75V10H6V8.75A2.75 2.75 0 0 1 8.75 6H10V5a2 2 0 0 1 2-2Zm-6 8h12v6.75A2.25 2.25 0 0 1 15.75 20h-7.5A2.25 2.25 0 0 1 6 17.75Z"/></svg>
-                                        </span>
-                                        <p class="text-sm leading-7 text-stone-700">{{ $attire }}</p>
-                                    </div>
-                                </article>
-                            @endforeach
+                        <span class="inline-flex text-stone-400 transition-[transform,color] duration-200" data-optional-activities-icon>
+                            <svg viewBox="0 0 20 20" class="h-5 w-5" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 11.18l3.71-3.95a.75.75 0 1 1 1.1 1.02l-4.25 4.52a.75.75 0 0 1-1.1 0L5.21 8.27a.75.75 0 0 1 .02-1.06Z" clip-rule="evenodd"/></svg>
+                        </span>
+                    </button>
+                    <div class="mt-4 hidden" data-optional-activities-panel>
+                        <div class="rounded-[1.5rem] border border-stone-200 bg-white p-5">
+                            @if (filled($optionalActivitiesDescription))
+                                <p class="text-sm leading-7 text-stone-600">{{ $optionalActivitiesDescription }}</p>
+                            @endif
+                            @if ($optionalActivitiesRows->isNotEmpty())
+                                <div class="{{ filled($optionalActivitiesDescription) ? 'mt-4' : '' }} mx-auto max-w-4xl overflow-x-auto rounded-[1rem] border border-stone-200">
+                                    <table class="min-w-full text-sm">
+                                        <thead class="bg-stone-100 text-stone-700">
+                                            <tr>
+                                                <th class="px-4 py-3 text-center font-semibold">Activity</th>
+                                                <th class="px-4 py-3 text-center font-semibold">Rate / Price</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="divide-y divide-stone-200 bg-white text-stone-600">
+                                            @foreach ($optionalActivitiesRows as $activity)
+                                                <tr>
+                                                    <td class="px-4 py-3 text-center align-top font-medium text-stone-700">{{ $activity['name'] ?: '-' }}</td>
+                                                    <td class="px-4 py-3 text-center align-top">{{ $activity['rate'] ?: '-' }}</td>
+                                                </tr>
+                                            @endforeach
+                                        </tbody>
+                                    </table>
+                                </div>
+                            @endif
                         </div>
                     </div>
-                </div>
-            </section>
+                </section>
+            @endif
 
-            @if ($tourHighlights->isNotEmpty())
+            @if (filled($recommendedAttireHtml))
+                <section class="mt-4 w-full min-w-0 overflow-hidden" data-recommended-attire-section>
+                    <button
+                        type="button"
+                        class="flex w-full items-center justify-between gap-4 rounded-[1rem] border border-stone-300 bg-stone-50/80 px-5 py-5 text-left"
+                        data-recommended-attire-toggle
+                        aria-expanded="false"
+                    >
+                        <span class="flex items-center gap-4">
+                            <span class="inline-flex h-8 w-8 items-center justify-center rounded-full text-white" style="background: #455499;">
+                                <svg viewBox="0 0 24 24" class="h-4 w-4" fill="currentColor" aria-hidden="true"><path d="M12 3a2 2 0 0 1 2 2v1h1.25a2.75 2.75 0 0 1 2.75 2.75V10H6V8.75A2.75 2.75 0 0 1 8.75 6H10V5a2 2 0 0 1 2-2Zm-6 8h12v6.75A2.25 2.25 0 0 1 15.75 20h-7.5A2.25 2.25 0 0 1 6 17.75Z"/></svg>
+                            </span>
+                            <span class="text-sm font-semibold uppercase tracking-[0.18em] text-slate-800">Recommended Attire</span>
+                        </span>
+                        <span class="inline-flex text-stone-400 transition-[transform,color] duration-200" data-recommended-attire-icon>
+                            <svg viewBox="0 0 20 20" class="h-5 w-5" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 11.18l3.71-3.95a.75.75 0 1 1 1.1 1.02l-4.25 4.52a.75.75 0 0 1-1.1 0L5.21 8.27a.75.75 0 0 1 .02-1.06Z" clip-rule="evenodd"/></svg>
+                        </span>
+                    </button>
+                    <div class="mt-4 hidden" data-recommended-attire-panel>
+                        <div class="rounded-[1.5rem] border border-stone-200 bg-white p-5 text-sm leading-7 text-stone-700" data-package-detail-html>{!! $recommendedAttireHtml !!}</div>
+                        </div>
+                </section>
+            @endif
+
+            @if (filled($tourHighlightsHtml))
                 <section class="mt-4 w-full min-w-0 overflow-hidden" data-tour-highlight-section>
                     <button
                         type="button"
@@ -967,24 +991,12 @@
                         </span>
                     </button>
                     <div class="mt-4 hidden" data-tour-highlight-panel>
-                        <div class="w-full min-w-0">
-                            <div class="grid gap-4">
-                            @foreach ($tourHighlights as $highlight)
-                                <article class="rounded-[1.5rem] border border-stone-200 bg-white px-5 py-4">
-                                    <div class="flex items-start gap-3">
-                                        <span class="mt-1 inline-flex h-7 w-7 items-center justify-center rounded-full bg-amber-100 text-amber-700">
-                                            <svg viewBox="0 0 24 24" class="h-4 w-4" fill="currentColor" aria-hidden="true"><path d="M12 2 9.5 8.5 3 9.3l5 4.5L6.6 21 12 17.7 17.4 21 16 13.8l5-4.5-6.5-.8z"/></svg>
-                                        </span>
-                                        <p class="text-sm leading-7 text-stone-700">{{ $highlight }}</p>
-                                    </div>
-                                </article>
-                            @endforeach
-                            </div>
-                        </div>
+                        <div class="rounded-[1.5rem] border border-stone-200 bg-white p-5 text-sm leading-7 text-stone-700" data-package-detail-html>{!! $tourHighlightsHtml !!}</div>
                     </div>
                 </section>
             @endif
 
+            @if (filled($thingsYouShouldKnowHtml))
             <section class="mt-4 w-full min-w-0 overflow-hidden" data-things-you-should-know-section>
                 <button
                     type="button"
@@ -1003,23 +1015,12 @@
                     </span>
                 </button>
                 <div class="mt-4 hidden" data-things-you-should-know-panel>
-                    <div class="w-full min-w-0">
-                        <div class="grid gap-4">
-                            @foreach ($thingsYouShouldKnowItems as $note)
-                                <article class="rounded-[1.5rem] border border-stone-200 bg-white px-5 py-4">
-                                    <div class="flex items-start gap-3">
-                                        <span class="mt-1 inline-flex h-7 w-7 items-center justify-center rounded-full bg-blue-50 text-[#455499]">
-                                            <svg viewBox="0 0 24 24" class="h-4 w-4" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm1 15h-2v-6h2zm0-8h-2V7h2z"/></svg>
-                                        </span>
-                                        <p class="text-sm leading-7 text-stone-700">{{ $note }}</p>
-                                    </div>
-                                </article>
-                            @endforeach
-                        </div>
-                    </div>
+                    <div class="rounded-[1.5rem] border border-stone-200 bg-white p-5 text-sm leading-7 text-stone-700" data-package-detail-html>{!! $thingsYouShouldKnowHtml !!}</div>
                 </div>
             </section>
+            @endif
 
+            @if (filled($usefulTravelTipsHtml))
             <section class="mt-4 w-full min-w-0 overflow-hidden" data-useful-travel-tips-section>
                 <button
                     type="button"
@@ -1038,22 +1039,10 @@
                     </span>
                 </button>
                 <div class="mt-4 hidden" data-useful-travel-tips-panel>
-                    <div class="w-full min-w-0">
-                        <div class="grid gap-4">
-                            @foreach ($usefulTravelTipsItems as $tip)
-                                <article class="rounded-[1.5rem] border border-stone-200 bg-white px-5 py-4">
-                                    <div class="flex items-start gap-3">
-                                        <span class="mt-1 inline-flex h-7 w-7 items-center justify-center rounded-full bg-amber-100 text-amber-700">
-                                            <svg viewBox="0 0 24 24" class="h-4 w-4" fill="currentColor" aria-hidden="true"><path d="M12 2 9.5 8.5 3 9.3l5 4.5L6.6 21 12 17.7 17.4 21 16 13.8l5-4.5-6.5-.8z"/></svg>
-                                        </span>
-                                        <p class="text-sm leading-7 text-stone-700">{{ $tip }}</p>
-                                    </div>
-                                </article>
-                            @endforeach
-                        </div>
-                    </div>
+                    <div class="rounded-[1.5rem] border border-stone-200 bg-white p-5 text-sm leading-7 text-stone-700" data-package-detail-html>{!! $usefulTravelTipsHtml !!}</div>
                 </div>
             </section>
+            @endif
 
             <section class="relative mt-8 overflow-hidden rounded-[1.75rem] border border-stone-200/80 shadow-sm">
                 <!-- WHY CHOOSE US BOX -->
@@ -1126,6 +1115,7 @@
         document.addEventListener('DOMContentLoaded', () => {
             const packageDetailsSection = document.querySelector('[data-package-details-section]');
             const tourHighlightSection = document.querySelector('[data-tour-highlight-section]');
+            const optionalActivitiesSection = document.querySelector('[data-optional-activities-section]');
             const recommendedAttireSection = document.querySelector('[data-recommended-attire-section]');
 
             if (packageDetailsSection?.parentNode) {
@@ -1133,8 +1123,12 @@
                     packageDetailsSection.parentNode.insertBefore(tourHighlightSection, packageDetailsSection);
                 }
 
+                if (optionalActivitiesSection) {
+                    packageDetailsSection.parentNode.insertBefore(optionalActivitiesSection, packageDetailsSection.nextSibling);
+                }
+
                 if (recommendedAttireSection) {
-                    packageDetailsSection.parentNode.insertBefore(recommendedAttireSection, packageDetailsSection.nextSibling);
+                    packageDetailsSection.parentNode.insertBefore(recommendedAttireSection, optionalActivitiesSection ? optionalActivitiesSection.nextSibling : packageDetailsSection.nextSibling);
                 }
             }
 
@@ -1223,6 +1217,30 @@
                 const toggle = section.querySelector('[data-recommended-attire-toggle]');
                 const panel = section.querySelector('[data-recommended-attire-panel]');
                 const icon = section.querySelector('[data-recommended-attire-icon]');
+
+                if (!toggle || !panel || !icon) {
+                    return;
+                }
+
+                const setExpanded = (expanded) => {
+                    toggle.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+                    panel.classList.toggle('hidden', !expanded);
+                    icon.classList.toggle('rotate-180', expanded);
+                    icon.classList.toggle('text-stone-400', !expanded);
+                    icon.classList.toggle('text-slate-700', expanded);
+                };
+
+                toggle.addEventListener('click', () => {
+                    setExpanded(toggle.getAttribute('aria-expanded') !== 'true');
+                });
+
+                setExpanded(false);
+            });
+
+            document.querySelectorAll('[data-optional-activities-section]').forEach((section) => {
+                const toggle = section.querySelector('[data-optional-activities-toggle]');
+                const panel = section.querySelector('[data-optional-activities-panel]');
+                const icon = section.querySelector('[data-optional-activities-icon]');
 
                 if (!toggle || !panel || !icon) {
                     return;

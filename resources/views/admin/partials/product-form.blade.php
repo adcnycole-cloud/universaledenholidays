@@ -1,4 +1,4 @@
-<form method="POST" action="{{ route('admin.products.store') }}" enctype="multipart/form-data" class="mt-6 space-y-4" data-form-persist="admin-products-create-{{ $category }}">
+<form method="POST" action="{{ $category === 'package' ? route('admin.packages.store') : route('admin.products.store') }}" enctype="multipart/form-data" class="mt-6 space-y-4" data-form-persist="admin-products-create-{{ $category }}">
     @csrf
     <input type="hidden" name="category" value="{{ $category }}">
     @if ($category === 'package')

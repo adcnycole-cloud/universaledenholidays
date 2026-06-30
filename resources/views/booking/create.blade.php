@@ -33,7 +33,7 @@
         $phoneLocalNumber = is_string($phoneLocalNumber) ? $phoneLocalNumber : '';
         $selectedBookingPurpose = old('booking_purpose', '');
         $selectedProductPricingTiers = $selectedProduct
-            ? ($productPricingTiers[(string) $selectedProduct->id] ?? ['malaysia' => [], 'international' => []])
+            ? ($productPricingTiers[$selectedProduct->category.':'.$selectedProduct->id] ?? ['malaysia' => [], 'international' => []])
             : ['malaysia' => [], 'international' => []];
     @endphp
     <main class="mx-auto max-w-[144rem] px-4 py-8 sm:px-5 lg:px-6">
@@ -108,7 +108,7 @@
                                         data-malaysia-child="{{ $product->discounted_malaysia_child_price_myr }}"
                                         data-international-adult="{{ $product->discounted_international_adult_price_myr }}"
                                         data-international-child="{{ $product->discounted_international_child_price_myr }}"
-                                        @selected(old('product_id') == $product->id || ($selectedProduct && $selectedProduct->id == $product->id))
+                                        @selected(old('service_type', $selectedProduct->category ?? '') === 'transport' && (string) old('product_id', $selectedProduct?->id) === (string) $product->id)
                                     >{{ $product->name }} - Transport</option>
                                 @endforeach
                                 @foreach ($travelPackages as $product)
@@ -121,7 +121,7 @@
                                         data-malaysia-child="{{ $product->discounted_malaysia_child_price_myr }}"
                                         data-international-adult="{{ $product->discounted_international_adult_price_myr }}"
                                         data-international-child="{{ $product->discounted_international_child_price_myr }}"
-                                        @selected(old('product_id') == $product->id || ($selectedProduct && $selectedProduct->id == $product->id))
+                                        @selected(old('service_type', $selectedProduct->category ?? '') === 'package' && (string) old('product_id', $selectedProduct?->id) === (string) $product->id)
                                     >{{ $product->name }} - Package</option>
                                 @endforeach
                             </select>
@@ -886,8 +886,9 @@
             const getSelectedProductPricing = () => {
                 const selectedOption = getSelectedOption();
                 const productId = selectedOption?.value || '';
+                const productCategory = selectedOption?.dataset.category || '';
 
-                return productPricingTiers[productId] || { malaysia: [], international: [] };
+                return productPricingTiers[`${productCategory}:${productId}`] || { malaysia: [], international: [] };
             };
 
             const getActiveCurrency = () => navbarCurrencySelector?.value || currencySelector?.value || 'MYR';

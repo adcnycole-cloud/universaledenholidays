@@ -13,6 +13,13 @@
             'stackLayout' => true,
             'gridColumns' => 2,
             'collapsibleCreatePanel' => true,
+            'createPanelClosedLabel' => 'Add New Packages Manually',
+            'createPanelOpenLabel' => 'Hide Manual Form',
+            'showImportTools' => true,
+            'importPanelAction' => route('admin.packages.import'),
+            'templateDownloads' => [
+                ['label' => 'Excel Template', 'url' => route('admin.packages.template', ['format' => 'xlsx'])],
+            ],
             'listingFilters' => [
                 ['label' => 'All Tours / Packages', 'value' => 'all'],
                 ['label' => 'Day Trip', 'value' => 'day-trip'],
@@ -36,34 +43,70 @@
     ])
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            const toggleButton = document.querySelector('[data-create-panel-toggle]');
-            const panelBody = document.querySelector('[data-create-panel-body]');
+            const bindPanelToggle = ({ toggleSelector, panelSelector, onOpen }) => {
+                const toggleButton = document.querySelector(toggleSelector);
+                const panelBody = document.querySelector(panelSelector);
 
-            if (!toggleButton || !panelBody) {
-                return;
-            }
+                if (!toggleButton || !panelBody) {
+                    return { open: () => {} };
+                }
 
-            const syncLabel = () => {
-                const isOpen = !panelBody.classList.contains('hidden');
-                toggleButton.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
-                toggleButton.textContent = isOpen ? 'Hide Form' : 'New Package';
+                const syncLabel = () => {
+                    const isOpen = !panelBody.classList.contains('hidden');
+                    toggleButton.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+                    toggleButton.textContent = isOpen
+                        ? (toggleButton.dataset.openLabel || 'Hide Form')
+                        : (toggleButton.dataset.closedLabel || 'Show Form');
+                };
+
+                toggleButton.addEventListener('click', () => {
+                    const willOpen = panelBody.classList.contains('hidden');
+                    panelBody.classList.toggle('hidden');
+                    syncLabel();
+
+                    if (willOpen && typeof onOpen === 'function') {
+                        onOpen();
+                    }
+                });
+
+                syncLabel();
+
+                return {
+                    open: () => {
+                        panelBody.classList.remove('hidden');
+                        syncLabel();
+                    },
+                };
             };
 
-            toggleButton.addEventListener('click', () => {
-                panelBody.classList.toggle('hidden');
-                syncLabel();
+            const importPanel = document.querySelector('[data-import-panel-body]');
+            const importToggle = bindPanelToggle({
+                toggleSelector: '[data-import-panel-toggle]',
+                panelSelector: '[data-import-panel-body]',
+                onOpen: () => {
+                    const fileInput = importPanel?.querySelector('input[type="file"]');
+                    fileInput?.focus();
+                },
+            });
+
+            const createToggle = bindPanelToggle({
+                toggleSelector: '[data-create-panel-toggle]',
+                panelSelector: '[data-create-panel-body]',
             });
 
             document.addEventListener('codex:form-draft-restored', () => {
-                if (!panelBody.querySelector('form[data-draft-restored="true"]')) {
+                const panelBody = document.querySelector('[data-create-panel-body]');
+
+                if (!panelBody?.querySelector('form[data-draft-restored="true"]')) {
                     return;
                 }
 
-                panelBody.classList.remove('hidden');
-                syncLabel();
+                createToggle.open();
             });
 
-            syncLabel();
+            if (importPanel && !importPanel.classList.contains('hidden')) {
+                importToggle.open();
+            }
         });
     </script>
 </x-layouts.app>

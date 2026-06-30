@@ -59,7 +59,7 @@
                                 $originalPrice = (float) $package->malaysia_adult_price_myr;
                             @endphp
                             <article class="tour-package-card" style="display: flex; flex-direction: column; overflow: hidden; border: 1px solid rgba(120,113,108,0.18); background: rgba(255,255,255,0.96); box-shadow: 0 18px 32px rgba(15,23,42,0.14);">
-                                <a href="{{ route('products.show', $package) }}" style="display: block; color: inherit; text-decoration: none;">
+                                <a href="{{ route('packages.show', $package) }}" style="display: block; color: inherit; text-decoration: none;">
                                     <div class="tour-package-image-frame" style="position: relative;">
                                         @if ($package->image_url)
                                             <img src="{{ $package->image_url }}" alt="{{ $package->name }}" class="tour-package-image" style="display: block; height: 16rem; width: 100%; object-fit: cover;">
@@ -101,10 +101,10 @@
                                             </p>
                                         </div>
                                         <div class="flex flex-col gap-2">
-                                            <a href="{{ route('products.show', $package) }}" style="display: inline-flex; align-items: center; justify-content: center; border: 1px solid #1d4ed8; padding: 0.7rem 1rem; font-size: 0.74rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: #1d4ed8; text-decoration: none;">
+                                            <a href="{{ route('packages.show', $package) }}" style="display: inline-flex; align-items: center; justify-content: center; border: 1px solid #1d4ed8; padding: 0.7rem 1rem; font-size: 0.74rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: #1d4ed8; text-decoration: none;">
                                                 View Details
                                             </a>
-                                            <a href="{{ route('booking.create', ['product_id' => $package->id]) }}" style="display: inline-flex; align-items: center; justify-content: center; background: #ff1d0d; padding: 0.7rem 1rem; font-size: 0.74rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: #ffffff; text-decoration: none;">
+                                            <a href="{{ route('booking.create', ['package_id' => $package->id]) }}" style="display: inline-flex; align-items: center; justify-content: center; background: #ff1d0d; padding: 0.7rem 1rem; font-size: 0.74rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: #ffffff; text-decoration: none;">
                                                 Book Now
                                             </a>
                                         </div>

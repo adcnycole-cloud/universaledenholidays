@@ -23,6 +23,8 @@ Route::get('/blog/{blogPost}', [HomeController::class, 'showBlogPost'])->name('b
 Route::post('/testimonials', [HomeController::class, 'storeLandingTestimonial'])->name('testimonials.store');
 Route::get('/products/{product}', [HomeController::class, 'showProduct'])->name('products.show');
 Route::post('/products/{product}/testimonials', [HomeController::class, 'storeProductTestimonial'])->name('products.testimonials.store');
+Route::get('/packages/{package}', [HomeController::class, 'showPackage'])->name('packages.show');
+Route::post('/packages/{package}/testimonials', [HomeController::class, 'storePackageTestimonial'])->name('packages.testimonials.store');
 Route::get('/payment-options', [HomeController::class, 'showPaymentOptions'])->name('payment-options');
 Route::get('/about-us', [HomeController::class, 'showAboutUs'])->name('about-us');
 Route::get('/sabah-travel-info', [HomeController::class, 'showSabahTravelInfo'])->name('sabah-travel-info');
@@ -86,6 +88,8 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     Route::get('/blogs', [AdminController::class, 'blogs'])->name('admin.blogs');
     Route::get('/transport', [AdminController::class, 'transport'])->name('admin.transport');
     Route::get('/packages', [AdminController::class, 'packages'])->name('admin.packages');
+    Route::post('/packages/import', [AdminController::class, 'importPackages'])->name('admin.packages.import');
+    Route::get('/packages/template', [AdminController::class, 'downloadPackageTemplate'])->name('admin.packages.template');
     Route::get('/testimonials', [AdminController::class, 'testimonials'])->name('admin.testimonials');
     Route::get('/bookings', [AdminController::class, 'bookings'])->name('admin.bookings');
     Route::get('/enquiries', [AdminController::class, 'enquiries'])->name('admin.enquiries');
@@ -99,8 +103,17 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     Route::patch('/products/{product}/itinerary', [AdminController::class, 'updateProductItinerary'])->name('admin.products.itinerary');
     Route::patch('/products/{product}/package-details', [AdminController::class, 'updateProductPackageDetails'])->name('admin.products.package-details');
     Route::patch('/products/{product}/package-content', [AdminController::class, 'updateProductPackageContent'])->name('admin.products.package-content');
+    Route::patch('/products/{product}/optional-activities', [AdminController::class, 'updateProductOptionalActivities'])->name('admin.products.optional-activities');
     Route::patch('/products/{product}/active', [AdminController::class, 'updateProductActive'])->name('admin.products.active');
     Route::delete('/products/{product}', [AdminController::class, 'destroyProduct'])->name('admin.products.destroy');
+    Route::post('/packages', [AdminController::class, 'storePackage'])->name('admin.packages.store');
+    Route::patch('/packages/{package}', [AdminController::class, 'updatePackage'])->name('admin.packages.update');
+    Route::patch('/packages/{package}/itinerary', [AdminController::class, 'updatePackageItinerary'])->name('admin.packages.itinerary');
+    Route::patch('/packages/{package}/package-details', [AdminController::class, 'updatePackageDetails'])->name('admin.packages.package-details');
+    Route::patch('/packages/{package}/package-content', [AdminController::class, 'updatePackageContent'])->name('admin.packages.package-content');
+    Route::patch('/packages/{package}/optional-activities', [AdminController::class, 'updatePackageOptionalActivities'])->name('admin.packages.optional-activities');
+    Route::patch('/packages/{package}/active', [AdminController::class, 'updatePackageActive'])->name('admin.packages.active');
+    Route::delete('/packages/{package}', [AdminController::class, 'destroyPackage'])->name('admin.packages.destroy');
     Route::post('/news-features', [AdminController::class, 'storeNewsFeature'])->name('admin.news-features.store');
     Route::patch('/news-features/{newsFeature}', [AdminController::class, 'updateNewsFeature'])->name('admin.news-features.update');
     Route::delete('/news-features/{newsFeature}', [AdminController::class, 'destroyNewsFeature'])->name('admin.news-features.destroy');

@@ -9,6 +9,7 @@ use App\Models\Booking;
 use App\Models\CompanyCertification;
 use App\Models\HomeHeroSlide;
 use App\Models\NewsFeature;
+use App\Models\Package;
 use App\Models\Product;
 use App\Models\Staff;
 use App\Models\Testimonial;
@@ -16,16 +17,20 @@ use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
+use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -34,8 +39,38 @@ class AdminController extends Controller
 {
     private const HOME_HERO_SLIDE_MAX_KB = 20480;
     private const STAFF_PHOTO_MAX_KB = 5120;
+    private const PACKAGE_ADMIN_TEMPLATE_PATH = 'resources/admin-templates/universal_eden_easy_package_upload.xlsx';
 
     private const PACKAGE_DURATION_OPTIONS = ['Day Trip', '2D1N', '3D2N', '4D3N'];
+    private const PACKAGE_IMPORT_TEMPLATE_COLUMNS = [
+        ['header' => 'name', 'required' => 'Yes', 'description' => 'Package name', 'sample' => 'Kundasang Day Trip'],
+        ['header' => 'location', 'required' => 'Yes', 'description' => 'Main destination or area', 'sample' => 'Kundasang, Sabah'],
+        ['header' => 'summary', 'required' => 'Yes', 'description' => 'Short package summary', 'sample' => 'Day trip with scenic stops and local attractions.'],
+        ['header' => 'description', 'required' => 'No', 'description' => 'Short admin description', 'sample' => 'Includes nature stops and flexible free time.'],
+        ['header' => 'package_type', 'required' => 'Yes', 'description' => 'Allowed values: Day Trip, 2D1N, 3D2N, 4D3N', 'sample' => 'Day Trip'],
+        ['header' => 'duration_detail', 'required' => 'Day Trip only', 'description' => 'Detailed duration shown for day trips', 'sample' => '10 hours'],
+        ['header' => 'departure_time', 'required' => 'Yes', 'description' => 'Main departure time text', 'sample' => '7:30 AM'],
+        ['header' => 'pickup_location', 'required' => 'No', 'description' => 'Optional pickup location', 'sample' => 'Kota Kinabalu hotel lobby'],
+        ['header' => 'dropoff_location', 'required' => 'No', 'description' => 'Optional drop-off location', 'sample' => 'Kota Kinabalu hotel lobby'],
+        ['header' => 'minimum_age_mode', 'required' => 'Yes', 'description' => 'Use no_limit or above_age', 'sample' => 'no_limit'],
+        ['header' => 'minimum_age_years', 'required' => 'If above_age', 'description' => 'Whole number age when minimum_age_mode is above_age', 'sample' => '7'],
+        ['header' => 'capacity', 'required' => 'No', 'description' => 'Optional capacity value. Numbers only.', 'sample' => '20'],
+        ['header' => 'pricing_group_size_label', 'required' => 'Yes', 'description' => 'Use | between multiple pricing rows', 'sample' => '1-2 pax|3-5 pax'],
+        ['header' => 'pricing_malaysia_adult_price_myr', 'required' => 'Optional per tier', 'description' => 'Use | between multiple pricing rows. Leave blank or use 0 when not needed.', 'sample' => '180|150'],
+        ['header' => 'pricing_malaysia_child_price_myr', 'required' => 'Optional per tier', 'description' => 'Use | between multiple pricing rows. Leave blank or use 0 when not needed.', 'sample' => '150|'],
+        ['header' => 'pricing_international_adult_price_myr', 'required' => 'Optional per tier', 'description' => 'Use | between multiple pricing rows. Leave blank or use 0 when not needed.', 'sample' => '220|190'],
+        ['header' => 'pricing_international_child_price_myr', 'required' => 'Optional per tier', 'description' => 'Use | between multiple pricing rows. Leave blank or use 0 when not needed.', 'sample' => '190|'],
+        ['header' => 'image_url', 'required' => 'No', 'description' => 'Optional image URL. Put the full https:// link here, not in capacity.', 'sample' => 'https://example.com/kundasang.jpg'],
+        ['header' => 'itinerary_day_number', 'required' => 'No', 'description' => 'Use | between itinerary rows. Example: Day 1|Day 1|Day 2', 'sample' => 'Day 1|Day 1|Day 2'],
+        ['header' => 'itinerary_time', 'required' => 'No', 'description' => 'Use | between itinerary rows. Keep time separate from day.', 'sample' => '13:00|18:30|07:30'],
+        ['header' => 'itinerary_activity', 'required' => 'No', 'description' => 'Use | between itinerary rows for the main activity text.', 'sample' => 'Pickup from hotel|Sunset viewing|Breakfast'],
+        ['header' => 'itinerary_notes', 'required' => 'No', 'description' => 'Optional notes for each itinerary row. Use | between rows.', 'sample' => 'Proceed to Kudat|Free and easy|American breakfast'],
+        ['header' => 'is_featured', 'required' => 'No', 'description' => 'Use yes/no, true/false, or 1/0', 'sample' => 'yes'],
+        ['header' => 'is_top_choice', 'required' => 'No', 'description' => 'Use yes/no, true/false, or 1/0', 'sample' => 'no'],
+        ['header' => 'is_discounted', 'required' => 'No', 'description' => 'Use yes/no, true/false, or 1/0', 'sample' => 'no'],
+        ['header' => 'discount_percentage', 'required' => 'If discounted', 'description' => 'Discount percentage from 0 to 100. Leave blank when is_discounted is no.', 'sample' => '10'],
+        ['header' => 'is_active', 'required' => 'No', 'description' => 'Use yes/no, true/false, or 1/0', 'sample' => 'yes'],
+    ];
 
     private const FIXED_TRANSPORT_PRODUCTS = [
         [
@@ -133,6 +168,205 @@ class AdminController extends Controller
     public function packages(): View
     {
         return view('admin.packages', $this->sharedAdminData());
+    }
+
+    public function importPackages(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'package_import_file' => ['required', 'file', 'mimes:xlsx,xls,csv', 'max:10240'],
+        ]);
+
+        try {
+            $spreadsheet = IOFactory::load($validated['package_import_file']->getRealPath());
+            $rows = $spreadsheet->getActiveSheet()->toArray('', true, true, false);
+        } catch (\Throwable $exception) {
+            throw ValidationException::withMessages([
+                'package_import_file' => 'The uploaded file could not be read. Please use the package Excel template or a standard CSV file.',
+            ]);
+        }
+
+        if ($spreadsheet->sheetNameExists('01 Package Entry')) {
+            $importCount = $this->importPackagesFromAdminWorkbook($spreadsheet);
+
+            return back()->with('success', $importCount.' package'.($importCount === 1 ? '' : 's').' imported successfully.');
+        }
+
+        if ($spreadsheet->sheetNameExists('Package Upload')) {
+            $importCount = $this->importPackagesFromEasyWorkbook($spreadsheet);
+
+            return back()->with('success', $importCount.' package'.($importCount === 1 ? '' : 's').' imported successfully.');
+        }
+
+        if ($rows === [] || count($rows) < 2) {
+            throw ValidationException::withMessages([
+                'package_import_file' => 'The import file is empty. Add the header row and at least one package row.',
+            ]);
+        }
+
+        $headerRow = array_shift($rows);
+        $headers = collect($headerRow)
+            ->map(fn ($value) => $this->normalizePackageImportHeader((string) $value))
+            ->values()
+            ->all();
+
+        $missingHeaders = collect(self::PACKAGE_IMPORT_TEMPLATE_COLUMNS)
+            ->pluck('header')
+            ->intersect([
+                'name',
+                'location',
+                'summary',
+                'package_type',
+                'departure_time',
+                'minimum_age_mode',
+                'pricing_group_size_label',
+                'pricing_malaysia_adult_price_myr',
+                'pricing_malaysia_child_price_myr',
+                'pricing_international_adult_price_myr',
+                'pricing_international_child_price_myr',
+            ])
+            ->reject(fn ($header) => in_array($header, $headers, true))
+            ->values()
+            ->all();
+
+        if ($missingHeaders !== []) {
+            throw ValidationException::withMessages([
+                'package_import_file' => 'Missing required columns: '.implode(', ', $missingHeaders).'. Download the latest package template and try again.',
+            ]);
+        }
+
+        $seenCodes = [];
+        $importCount = 0;
+
+        DB::transaction(function () use ($rows, $headers, &$seenCodes, &$importCount) {
+            foreach ($rows as $index => $rowValues) {
+                $rowNumber = $index + 2;
+                $row = $this->combinePackageImportRow($headers, $rowValues);
+
+                if ($this->packageImportRowIsEmpty($row)) {
+                    continue;
+                }
+
+                $normalizedRow = $this->normalizePackageImportRow($row);
+                $validator = Validator::make(
+                    $normalizedRow,
+                    $this->packageImportValidationRules(),
+                    $this->packageImportValidationMessages($rowNumber)
+                );
+
+                if ($validator->fails()) {
+                    throw ValidationException::withMessages($validator->errors()->toArray());
+                }
+
+                $importData = $validator->validated();
+                $importData['tour_code'] = $this->resolveTourCode(
+                    (string) ($importData['tour_code'] ?? ''),
+                    $this->isDayTripPackage((string) $importData['package_type'], null),
+                    'packages',
+                    null,
+                    $seenCodes
+                );
+
+                if (in_array($importData['tour_code'], $seenCodes, true)) {
+                    throw ValidationException::withMessages([
+                        'package_import_file' => 'Row '.$rowNumber.': duplicate tour code '.$importData['tour_code'].' was found in the same import file.',
+                    ]);
+                }
+
+                $seenCodes[] = $importData['tour_code'];
+
+                if (Package::query()->where('tour_code', $importData['tour_code'])->exists()) {
+                    throw ValidationException::withMessages([
+                        'package_import_file' => 'Row '.$rowNumber.': the tour code '.$importData['tour_code'].' already exists.',
+                    ]);
+                }
+
+                $packagePayload = $this->buildImportedPackagePayload($importData, $rowNumber);
+                Package::create($packagePayload);
+                $importCount++;
+            }
+        });
+
+        if ($importCount === 0) {
+            throw ValidationException::withMessages([
+                'package_import_file' => 'No package rows were found to import.',
+            ]);
+        }
+
+        return back()->with('success', $importCount.' package'.($importCount === 1 ? '' : 's').' imported successfully.');
+    }
+
+    public function downloadPackageTemplate(Request $request)
+    {
+        $format = strtolower((string) $request->query('format', 'xlsx'));
+
+        abort_unless($format === 'xlsx', 404);
+
+        $spreadsheet = new Spreadsheet();
+        $headers = $this->easyPackageUploadTemplateHeaders();
+        $fillSheet = $spreadsheet->getActiveSheet();
+        $fillSheet->setTitle('Package Upload');
+        $fillSheet->fromArray([
+            $headers,
+            $this->easyPackageUploadTemplateSampleRow(),
+        ], null, 'A1');
+
+        foreach (range(1, count($headers)) as $columnIndex) {
+            $fillSheet->getColumnDimensionByColumn($columnIndex)->setAutoSize(true);
+        }
+
+        $exampleSheet = $spreadsheet->createSheet();
+        $exampleSheet->setTitle('Example Row');
+        $exampleSheet->fromArray([
+            ['Packages Import Example'],
+            ['Use this as a sample only. Copy the structure, not necessarily the exact values.'],
+            $headers,
+            $this->easyPackageUploadTemplateSampleRow(),
+        ], null, 'A1');
+
+        foreach (range(1, count($headers)) as $columnIndex) {
+            $exampleSheet->getColumnDimensionByColumn($columnIndex)->setAutoSize(true);
+        }
+
+        $notesSheet = $spreadsheet->createSheet();
+        $notesSheet->setTitle('Notes');
+        $notesSheet->fromArray([
+            ['Packages Import Notes'],
+        ], null, 'A1');
+
+        foreach ($this->easyPackageUploadTemplateNotes() as $noteIndex => $note) {
+            $notesSheet->setCellValue('A'.($noteIndex + 2), '- '.$note);
+        }
+
+        $notesSheet->getColumnDimension('A')->setWidth(120);
+
+        $metaSheet = $spreadsheet->createSheet();
+        $metaSheet->setTitle('Column Guide');
+        $metaSheet->fromArray([
+            ['No.', 'Header', 'Required', 'Description', 'Sample'],
+        ], null, 'A1');
+
+        foreach ($this->easyPackageUploadTemplateColumns() as $rowIndex => $column) {
+            $metaSheet->fromArray([[
+                $rowIndex + 1,
+                $column['header'],
+                $column['required'],
+                $column['description'],
+                $column['sample'],
+            ]], null, 'A'.($rowIndex + 2));
+        }
+
+        foreach (range('A', 'E') as $columnLetter) {
+            $metaSheet->getColumnDimension($columnLetter)->setAutoSize(true);
+        }
+
+        $spreadsheet->setActiveSheetIndex(0);
+
+        return response()->streamDownload(function () use ($spreadsheet) {
+            $writer = new Xlsx($spreadsheet);
+            $writer->save('php://output');
+        }, 'packages-import-template.xlsx', [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        ]);
     }
 
     public function testimonials(): View
@@ -555,7 +789,11 @@ class AdminController extends Controller
         $request->merge([
             'image_url' => $this->normalizeOptionalUrl($request->input('image_url')),
             'tour_code' => $request->input('category') === 'package'
-                ? $this->normalizeTourCode((string) $request->input('tour_code', ''), $request->input('package_type') === 'Day Trip')
+                ? $this->resolveTourCode(
+                    (string) $request->input('tour_code', ''),
+                    $request->input('package_type') === 'Day Trip',
+                    'products'
+                )
                 : null,
         ]);
 
@@ -565,13 +803,21 @@ class AdminController extends Controller
             'location' => ['required', 'string', 'max:255'],
             'pickup_location' => ['nullable', 'string', 'max:255'],
             'dropoff_location' => ['nullable', 'string', 'max:255'],
-            'summary' => ['required', 'string', 'max:255'],
+            'summary' => ['required', 'string', 'max:2000'],
             'image_url' => $this->productImageUrlRules(),
             'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
             'gallery_images' => ['nullable', 'string', 'max:5000'],
             'gallery_image_files' => ['nullable', 'array', 'max:20'],
             'gallery_image_files.*' => ['image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
             'itinerary_items_text' => ['nullable', 'string', 'max:5000'],
+            'itinerary_day_number' => ['nullable', 'array', 'max:31'],
+            'itinerary_day_number.*' => ['nullable', 'string', 'max:50'],
+            'itinerary_time' => ['nullable', 'array', 'max:31'],
+            'itinerary_time.*' => ['nullable', 'string', 'max:100'],
+            'itinerary_activity' => ['nullable', 'array', 'max:31'],
+            'itinerary_activity.*' => ['nullable', 'string', 'max:1000'],
+            'itinerary_notes' => ['nullable', 'array', 'max:31'],
+            'itinerary_notes.*' => ['nullable', 'string', 'max:1000'],
             'description' => ['nullable', 'string', 'max:1000'],
             'package_type' => [
                 Rule::requiredIf($request->input('category') === 'package'),
@@ -649,7 +895,7 @@ class AdminController extends Controller
             'malaysia_child_price_myr' => [Rule::requiredIf($request->input('category') !== 'package'), 'nullable', 'numeric', 'min:0'],
             'international_adult_price_myr' => [Rule::requiredIf($request->input('category') !== 'package'), 'nullable', 'numeric', 'min:0'],
             'international_child_price_myr' => [Rule::requiredIf($request->input('category') !== 'package'), 'nullable', 'numeric', 'min:0'],
-            'capacity' => ['nullable', 'integer', 'min:1', 'max:500'],
+            'capacity' => ['nullable', 'integer', 'min:0', 'max:500'],
             'is_featured' => ['nullable', 'boolean'],
             'is_top_choice' => ['nullable', 'boolean'],
             'is_discounted' => ['nullable', 'boolean'],
@@ -702,9 +948,16 @@ class AdminController extends Controller
         );
 
         $legacyItineraryText = trim((string) ($validated['itinerary_items_text'] ?? ''));
-        unset($validated['itinerary_items_text']);
+        $structuredItinerary = $this->buildStructuredItinerary($validated);
+        unset(
+            $validated['itinerary_items_text'],
+            $validated['itinerary_day_number'],
+            $validated['itinerary_time'],
+            $validated['itinerary_activity'],
+            $validated['itinerary_notes'],
+        );
 
-        $productPayload = $validated + [
+        $productPayload = array_merge($validated, [
             'price_myr' => $validated['price_myr'] ?? $validated['malaysia_adult_price_myr'],
             'gallery_images' => $galleryImages,
             'capacity' => $validated['capacity'] ?? null,
@@ -715,7 +968,7 @@ class AdminController extends Controller
                 ? ($validated['discount_percentage'] ?? 0)
                 : null,
             'is_active' => true,
-        ];
+        ]);
         $productPayload['description'] = (string) ($validated['description'] ?? '');
 
         if ($validated['category'] === 'package' && $legacyItineraryText !== '') {
@@ -732,7 +985,14 @@ class AdminController extends Controller
         $request->merge([
             'image_url' => $this->normalizeOptionalUrl($request->input('image_url')),
             'tour_code' => $product->category === 'package'
-                ? $this->normalizeTourCode((string) $request->input('tour_code', ''), $this->isDayTripPackage((string) $request->input('duration', $product->duration), (string) $product->tour_code))
+                ? $this->resolveTourCode(
+                    (string) $request->input('tour_code', ''),
+                    $this->isDayTripPackage((string) $request->input('duration', $product->duration), (string) $product->tour_code),
+                    'products',
+                    $product->id,
+                    [],
+                    (string) $product->tour_code
+                )
                 : null,
         ]);
 
@@ -741,7 +1001,7 @@ class AdminController extends Controller
             'location' => ['required', 'string', 'max:255'],
             'pickup_location' => ['nullable', 'string', 'max:255'],
             'dropoff_location' => ['nullable', 'string', 'max:255'],
-            'summary' => ['required', 'string', 'max:255'],
+            'summary' => ['required', 'string', 'max:2000'],
             'image_url' => $this->productImageUrlRules(),
             'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
             'existing_gallery_images' => ['nullable', 'array', 'max:20'],
@@ -826,7 +1086,7 @@ class AdminController extends Controller
             'malaysia_child_price_myr' => [Rule::requiredIf($product->category !== 'package'), 'nullable', 'numeric', 'min:0'],
             'international_adult_price_myr' => [Rule::requiredIf($product->category !== 'package'), 'nullable', 'numeric', 'min:0'],
             'international_child_price_myr' => [Rule::requiredIf($product->category !== 'package'), 'nullable', 'numeric', 'min:0'],
-            'capacity' => ['nullable', 'integer', 'min:1', 'max:500'],
+            'capacity' => ['nullable', 'integer', 'min:0', 'max:500'],
             'is_featured' => ['nullable', 'boolean'],
             'is_top_choice' => ['nullable', 'boolean'],
             'is_discounted' => ['nullable', 'boolean'],
@@ -887,9 +1147,16 @@ class AdminController extends Controller
         );
 
         $legacyItineraryText = trim((string) ($validated['itinerary_items_text'] ?? ''));
-        unset($validated['itinerary_items_text']);
+        $structuredItinerary = $this->buildStructuredItinerary($validated);
+        unset(
+            $validated['itinerary_items_text'],
+            $validated['itinerary_day_number'],
+            $validated['itinerary_time'],
+            $validated['itinerary_activity'],
+            $validated['itinerary_notes'],
+        );
 
-        $productPayload = $validated + [
+        $productPayload = array_merge($validated, [
             'price_myr' => $validated['price_myr'] ?? $validated['malaysia_adult_price_myr'],
             'gallery_images' => $galleryImages,
             'capacity' => $validated['capacity'] ?? null,
@@ -900,7 +1167,7 @@ class AdminController extends Controller
                 ? ($validated['discount_percentage'] ?? 0)
                 : null,
             'is_active' => $request->boolean('is_active', true),
-        ];
+        ]);
         $productPayload['description'] = (string) ($validated['description'] ?? $product->description ?? '');
 
         if ($product->category === 'package' && $legacyItineraryText !== '') {
@@ -924,6 +1191,67 @@ class AdminController extends Controller
         return ($isDayTrip ? 'DT-UEH' : 'OT-UEH').$suffix;
     }
 
+    private function resolveTourCode(
+        string $tourCode,
+        bool $isDayTrip,
+        string $table,
+        ?int $ignoreId = null,
+        array $reservedCodes = [],
+        ?string $existingTourCode = null
+    ): string {
+        $normalizedCode = $this->normalizeTourCode($tourCode, $isDayTrip);
+        $prefix = $isDayTrip ? 'DT-UEH' : 'OT-UEH';
+
+        if ($normalizedCode !== $prefix) {
+            return $normalizedCode;
+        }
+
+        if (filled($existingTourCode)) {
+            $existingNormalizedCode = $this->normalizeTourCode((string) $existingTourCode, $isDayTrip);
+
+            if ($existingNormalizedCode !== $prefix) {
+                return $existingNormalizedCode;
+            }
+        }
+
+        return $this->generateNextTourCode($isDayTrip, $table, $ignoreId, $reservedCodes);
+    }
+
+    private function generateNextTourCode(bool $isDayTrip, string $table, ?int $ignoreId = null, array $reservedCodes = []): string
+    {
+        $prefix = $isDayTrip ? 'DT-UEH' : 'OT-UEH';
+        $query = DB::table($table)->select('tour_code')->where('tour_code', 'like', $prefix.'%');
+
+        if ($ignoreId !== null) {
+            $query->where('id', '!=', $ignoreId);
+        }
+
+        $usedCodes = collect($reservedCodes)
+            ->merge($query->pluck('tour_code')->all())
+            ->filter(fn ($code) => filled($code))
+            ->map(fn ($code) => $this->normalizeTourCode((string) $code, $isDayTrip))
+            ->unique()
+            ->values();
+
+        $nextNumber = $usedCodes
+            ->map(function ($code) use ($prefix) {
+                $suffix = substr((string) $code, strlen($prefix));
+
+                return ctype_digit($suffix) ? (int) $suffix : null;
+            })
+            ->filter(fn ($value) => $value !== null)
+            ->max();
+
+        $counter = max(1, ((int) $nextNumber) + 1);
+
+        do {
+            $candidate = $prefix.str_pad((string) $counter, 3, '0', STR_PAD_LEFT);
+            $counter++;
+        } while ($usedCodes->contains($candidate));
+
+        return $candidate;
+    }
+
     private function isDayTripPackage(string $label, ?string $tourCode = null): bool
     {
         $normalizedLabel = strtolower(trim($label));
@@ -935,6 +1263,915 @@ class AdminController extends Controller
 
         return str_contains($normalizedLabel, 'day trip')
             || str_contains($compactLabel, '1day');
+    }
+
+    private function importPackagesFromAdminWorkbook(\PhpOffice\PhpSpreadsheet\Spreadsheet $spreadsheet): int
+    {
+        $entryRows = $this->readAdminTemplateSheetRows($spreadsheet, '01 Package Entry');
+
+        if ($entryRows === []) {
+            throw ValidationException::withMessages([
+                'package_import_file' => 'The package entry sheet is empty. Fill in at least one package row.',
+            ]);
+        }
+
+        $pricingRows = collect($this->readAdminTemplateSheetRows($spreadsheet, '02 Group Pricing'))->groupBy('package_id_ref');
+        $itineraryRows = collect($this->readAdminTemplateSheetRows($spreadsheet, '03 Itinerary'))->groupBy('package_id_ref');
+        $detailsRows = collect($this->readAdminTemplateSheetRows($spreadsheet, '04 Package Details'))->keyBy('package_id_ref');
+        $contentRows = collect($this->readAdminTemplateSheetRows($spreadsheet, '05 Other Content'))->keyBy('package_id_ref');
+        $optionalRows = collect($this->readAdminTemplateSheetRows($spreadsheet, '06 Optional Activities'))->groupBy('package_id_ref');
+        $imageRows = collect($this->readAdminTemplateSheetRows($spreadsheet, '07 Images'))->groupBy('package_id_ref');
+
+        $seenCodes = [];
+        $importCount = 0;
+
+        DB::transaction(function () use (
+            $entryRows,
+            $pricingRows,
+            $itineraryRows,
+            $detailsRows,
+            $contentRows,
+            $optionalRows,
+            $imageRows,
+            &$seenCodes,
+            &$importCount
+        ) {
+            foreach ($entryRows as $entryRow) {
+                $rowLabel = '01 Package Entry row '.($entryRow['_row'] ?? '?');
+                $importData = $this->buildAdminWorkbookImportData(
+                    $entryRow,
+                    $pricingRows->get($entryRow['package_id_ref'] ?? '', collect())->all(),
+                    $itineraryRows->get($entryRow['package_id_ref'] ?? '', collect())->all(),
+                    $detailsRows->get($entryRow['package_id_ref'] ?? ''),
+                    $contentRows->get($entryRow['package_id_ref'] ?? ''),
+                    $optionalRows->get($entryRow['package_id_ref'] ?? '', collect())->all(),
+                    $imageRows->get($entryRow['package_id_ref'] ?? '', collect())->all(),
+                );
+
+                $validator = Validator::make(
+                    $importData,
+                    $this->packageImportValidationRules(),
+                    $this->packageImportValidationMessages($rowLabel)
+                );
+
+                if ($validator->fails()) {
+                    throw ValidationException::withMessages($validator->errors()->toArray());
+                }
+
+                $validatedImportData = array_merge(
+                    $validator->validated(),
+                    Arr::only($importData, [
+                        'itinerary_day_number',
+                        'itinerary_time',
+                        'itinerary_activity',
+                        'itinerary_notes',
+                        'package_details',
+                        'service_inclusions',
+                        'tour_highlights',
+                        'recommended_attire',
+                        'things_to_know',
+                        'travel_tips',
+                        'optional_activities',
+                        'gallery_images',
+                    ])
+                );
+
+                $validatedImportData['tour_code'] = $this->resolveTourCode(
+                    (string) ($validatedImportData['tour_code'] ?? ''),
+                    $this->isDayTripPackage((string) $validatedImportData['package_type'], null),
+                    'packages',
+                    null,
+                    $seenCodes
+                );
+
+                if (in_array($validatedImportData['tour_code'], $seenCodes, true)) {
+                    throw ValidationException::withMessages([
+                        'package_import_file' => $rowLabel.': duplicate tour code '.$validatedImportData['tour_code'].' was found in the same import file.',
+                    ]);
+                }
+
+                $seenCodes[] = $validatedImportData['tour_code'];
+
+                if (Package::query()->where('tour_code', $validatedImportData['tour_code'])->exists()) {
+                    throw ValidationException::withMessages([
+                        'package_import_file' => $rowLabel.': the tour code '.$validatedImportData['tour_code'].' already exists.',
+                    ]);
+                }
+
+                $packagePayload = $this->buildImportedPackagePayload($validatedImportData, $rowLabel);
+                Package::create($packagePayload);
+                $importCount++;
+            }
+        });
+
+        if ($importCount === 0) {
+            throw ValidationException::withMessages([
+                'package_import_file' => 'No package rows were found to import from the admin workbook.',
+            ]);
+        }
+
+        return $importCount;
+    }
+
+    private function importPackagesFromEasyWorkbook(\PhpOffice\PhpSpreadsheet\Spreadsheet $spreadsheet): int
+    {
+        $rows = $this->readSimpleImportSheetRows($spreadsheet, 'Package Upload');
+
+        if ($rows === []) {
+            throw ValidationException::withMessages([
+                'package_import_file' => 'The Package Upload sheet is empty. Fill in at least one package row.',
+            ]);
+        }
+
+        $seenCodes = [];
+        $importCount = 0;
+
+        DB::transaction(function () use ($rows, &$seenCodes, &$importCount) {
+            foreach ($rows as $row) {
+                $rowLabel = 'Package Upload row '.($row['_row'] ?? '?');
+                $importData = $this->buildEasyWorkbookImportData($row);
+
+                $validator = Validator::make(
+                    $importData,
+                    $this->packageImportValidationRules(),
+                    $this->packageImportValidationMessages($rowLabel)
+                );
+
+                if ($validator->fails()) {
+                    throw ValidationException::withMessages($validator->errors()->toArray());
+                }
+
+                $validatedImportData = array_merge(
+                    $validator->validated(),
+                    Arr::only($importData, [
+                        'itinerary_day_number',
+                        'itinerary_time',
+                        'itinerary_activity',
+                        'itinerary_notes',
+                        'package_details',
+                        'service_inclusions',
+                    ])
+                );
+
+                $validatedImportData['tour_code'] = $this->resolveTourCode(
+                    (string) ($validatedImportData['tour_code'] ?? ''),
+                    $this->isDayTripPackage((string) $validatedImportData['package_type'], null),
+                    'packages',
+                    null,
+                    $seenCodes
+                );
+
+                if (in_array($validatedImportData['tour_code'], $seenCodes, true)) {
+                    throw ValidationException::withMessages([
+                        'package_import_file' => $rowLabel.': duplicate tour code '.$validatedImportData['tour_code'].' was found in the same import file.',
+                    ]);
+                }
+
+                $seenCodes[] = $validatedImportData['tour_code'];
+
+                if (Package::query()->where('tour_code', $validatedImportData['tour_code'])->exists()) {
+                    throw ValidationException::withMessages([
+                        'package_import_file' => $rowLabel.': the tour code '.$validatedImportData['tour_code'].' already exists.',
+                    ]);
+                }
+
+                $packagePayload = $this->buildImportedPackagePayload($validatedImportData, $rowLabel);
+                Package::create($packagePayload);
+                $importCount++;
+            }
+        });
+
+        if ($importCount === 0) {
+            throw ValidationException::withMessages([
+                'package_import_file' => 'No package rows were found to import from the easy workbook.',
+            ]);
+        }
+
+        return $importCount;
+    }
+
+    private function readSimpleImportSheetRows(\PhpOffice\PhpSpreadsheet\Spreadsheet $spreadsheet, string $sheetName): array
+    {
+        $sheet = $spreadsheet->getSheetByName($sheetName);
+
+        if (! $sheet) {
+            return [];
+        }
+
+        $rows = $sheet->toArray('', true, true, false);
+
+        if ($rows === []) {
+            return [];
+        }
+
+        $headers = collect(array_shift($rows))
+            ->map(fn ($value) => $this->normalizePackageImportHeader((string) $value))
+            ->values()
+            ->all();
+
+        $mappedRows = [];
+
+        foreach ($rows as $index => $rowValues) {
+            $row = $this->combinePackageImportRow($headers, $rowValues);
+
+            if ($this->packageImportRowIsEmpty($row)) {
+                continue;
+            }
+
+            $row['_row'] = $index + 2;
+            $mappedRows[] = $row;
+        }
+
+        return $mappedRows;
+    }
+
+    private function readAdminTemplateSheetRows(\PhpOffice\PhpSpreadsheet\Spreadsheet $spreadsheet, string $sheetName): array
+    {
+        $sheet = $spreadsheet->getSheetByName($sheetName);
+
+        if (! $sheet) {
+            return [];
+        }
+
+        $rows = $sheet->toArray('', true, true, false);
+        $headerIndex = null;
+        $headers = [];
+
+        foreach ($rows as $rowIndex => $row) {
+            $normalized = collect($row)
+                ->map(fn ($value) => $this->normalizePackageImportHeader((string) $value))
+                ->values()
+                ->all();
+
+            if (in_array('package_id_ref', $normalized, true)) {
+                $headerIndex = $rowIndex;
+                $headers = $normalized;
+                break;
+            }
+        }
+
+        if ($headerIndex === null) {
+            return [];
+        }
+
+        $mappedRows = [];
+
+        foreach (array_slice($rows, $headerIndex + 1) as $offset => $rowValues) {
+            $row = $this->combinePackageImportRow($headers, $rowValues);
+
+            if ($this->packageImportRowIsEmpty($row)) {
+                continue;
+            }
+
+            $row['_row'] = $headerIndex + $offset + 2;
+            $mappedRows[] = $row;
+        }
+
+        return $mappedRows;
+    }
+
+    private function buildAdminWorkbookImportData(
+        array $entryRow,
+        array $pricingRows,
+        array $itineraryRows,
+        mixed $detailsRow,
+        mixed $contentRow,
+        array $optionalRows,
+        array $imageRows
+    ): array {
+        $mainImage = $this->normalizeImportedImageReference($entryRow['main_image_filename_or_url'] ?? null)
+            ?? $this->normalizeImportedImageReference(collect($imageRows)->pluck('main_image_file')->first());
+
+        $galleryImages = collect($imageRows)
+            ->flatMap(function ($row) {
+                return collect(range(1, 6))
+                    ->map(fn ($index) => $row['gallery_image_'.$index] ?? null);
+            })
+            ->map(fn ($image) => $this->normalizeImportedImageReference($image))
+            ->filter()
+            ->values()
+            ->all();
+
+        $pricingRows = collect($pricingRows)->filter(function ($row) {
+            return filled($row['group_size_no_pax'] ?? null)
+                || filled($row['malaysia_adult_price_myr'] ?? null)
+                || filled($row['malaysia_child_price_myr'] ?? null)
+                || filled($row['international_adult_price_myr'] ?? null)
+                || filled($row['international_child_price_myr'] ?? null);
+        })->values();
+
+        $itineraryRows = collect($itineraryRows)->filter(function ($row) {
+            return filled($row['day_number'] ?? null)
+                || filled($row['time'] ?? null)
+                || filled($row['activity'] ?? null);
+        })->values();
+
+        $optionalRowsCollection = collect($optionalRows)->filter(function ($row) {
+            return filled($row['activity'] ?? null)
+                || filled($row['rate_price'] ?? null)
+                || filled($row['optional_section_description'] ?? null);
+        })->values();
+
+        $showOptionalSection = $optionalRowsCollection->isNotEmpty()
+            && ! $optionalRowsCollection->every(fn ($row) => strtolower(trim((string) ($row['show_optional_section'] ?? ''))) === 'no');
+
+        $detailsRow = is_array($detailsRow) ? $detailsRow : [];
+        $contentRow = is_array($contentRow) ? $contentRow : [];
+
+        $packageDetails = [
+            'includes' => $this->buildStructuredPackageDetailItemsFromPipeValue($detailsRow['includes'] ?? null, 'tick'),
+            'excludes' => $this->buildStructuredPackageDetailItemsFromPipeValue($detailsRow['excludes'] ?? null, 'x'),
+            'things_to_bring' => $this->buildStructuredPackageDetailItemsFromPipeValue($detailsRow['things_to_bring'] ?? null, 'exclamation'),
+            'important_notes' => $this->buildStructuredPackageDetailItemsFromPipeValue($detailsRow['important_notes'] ?? null, 'exclamation'),
+        ];
+
+        return [
+            'name' => $entryRow['name'] ?? '',
+            'tour_code' => $entryRow['tour_code'] ?? '',
+            'location' => $entryRow['location'] ?? '',
+            'summary' => $entryRow['summary'] ?? '',
+            'description' => $entryRow['description'] ?? '',
+            'package_type' => $entryRow['package_type'] ?? '',
+            'duration_detail' => $entryRow['duration_detail'] ?? '',
+            'departure_time' => $entryRow['departure_time'] ?? '',
+            'pickup_location' => $entryRow['pickup_location'] ?? '',
+            'dropoff_location' => $entryRow['dropoff_location'] ?? '',
+            'minimum_age_mode' => $entryRow['minimum_age_mode'] ?? 'no_limit',
+            'minimum_age_years' => $entryRow['minimum_age_years'] ?? null,
+            'capacity' => $entryRow['capacity'] ?? null,
+            'pricing_group_size_label' => $pricingRows->pluck('group_size_no_pax')->map(fn ($value) => trim((string) $value))->all(),
+            'pricing_malaysia_adult_price_myr' => $pricingRows->pluck('malaysia_adult_price_myr')->map(fn ($value) => $value === '' ? null : $value)->all(),
+            'pricing_malaysia_child_price_myr' => $pricingRows->pluck('malaysia_child_price_myr')->map(fn ($value) => $value === '' ? null : $value)->all(),
+            'pricing_international_adult_price_myr' => $pricingRows->pluck('international_adult_price_myr')->map(fn ($value) => $value === '' ? null : $value)->all(),
+            'pricing_international_child_price_myr' => $pricingRows->pluck('international_child_price_myr')->map(fn ($value) => $value === '' ? null : $value)->all(),
+            'image_url' => $mainImage,
+            'itinerary_day_number' => $itineraryRows->pluck('day_number')->map(fn ($value) => trim((string) $value))->all(),
+            'itinerary_time' => $itineraryRows->pluck('time')->map(fn ($value) => trim((string) $value))->all(),
+            'itinerary_activity' => $itineraryRows->pluck('activity')->map(fn ($value) => trim((string) $value))->all(),
+            'itinerary_notes' => array_fill(0, $itineraryRows->count(), ''),
+            'is_featured' => false,
+            'is_top_choice' => false,
+            'is_discounted' => false,
+            'discount_percentage' => null,
+            'is_active' => true,
+            'gallery_images' => $galleryImages,
+            'package_details' => $packageDetails,
+            'service_inclusions' => $this->buildLegacyServiceInclusionsFromPackageDetails($packageDetails),
+            'tour_highlights' => $this->buildStructuredRichTextContentFromPipeValue($contentRow['tour_highlights'] ?? null),
+            'recommended_attire' => $this->buildStructuredRichTextContentFromPipeValue($contentRow['recommended_attire'] ?? null),
+            'things_to_know' => $this->buildStructuredRichTextContentFromPipeValue($contentRow['things_you_should_know'] ?? null),
+            'travel_tips' => $this->buildStructuredRichTextContentFromPipeValue($contentRow['useful_travel_tips'] ?? null),
+            'optional_activities' => $showOptionalSection
+                ? [
+                    'description' => trim((string) ($optionalRowsCollection->pluck('optional_section_description')->first(fn ($value) => filled($value)) ?? '')),
+                    'rows' => $this->buildStructuredOptionalActivityRows(
+                        $optionalRowsCollection->pluck('activity')->map(fn ($value) => trim((string) $value))->all(),
+                        $optionalRowsCollection->pluck('rate_price')->map(fn ($value) => trim((string) $value))->all(),
+                    ),
+                ]
+                : [],
+        ];
+    }
+
+    private function buildEasyWorkbookImportData(array $row): array
+    {
+        $minimumAge = trim((string) ($row['minimum_age'] ?? ''));
+        $minimumAgeMode = str_starts_with(strtolower($minimumAge), 'above ') ? 'above_age' : 'no_limit';
+        preg_match('/(\d+)/', $minimumAge, $minimumAgeMatches);
+
+        $itineraryDayNumbers = $this->parsePackageImportList($row['itinerary_day_number'] ?? '');
+        $itineraryTimes = $this->parsePackageImportList($row['itinerary_time'] ?? '');
+        $itineraryActivities = $this->parsePackageImportList($row['itinerary_activity'] ?? '');
+        $itinerarySegments = collect();
+
+        if ($itineraryDayNumbers !== [] || $itineraryTimes !== [] || $itineraryActivities !== []) {
+            $rowCount = max(count($itineraryDayNumbers), count($itineraryTimes), count($itineraryActivities));
+            $itinerarySegments = collect(range(0, max(0, $rowCount - 1)))
+                ->map(function (int $index) use ($itineraryDayNumbers, $itineraryTimes, $itineraryActivities) {
+                    $dayNumber = trim((string) ($itineraryDayNumbers[$index] ?? ''));
+                    $time = trim((string) ($itineraryTimes[$index] ?? ''));
+                    $activity = trim((string) ($itineraryActivities[$index] ?? ''));
+
+                    if ($dayNumber === '' && $time === '' && $activity === '') {
+                        return null;
+                    }
+
+                    return [
+                        'day_number' => $dayNumber,
+                        'time' => $time,
+                        'activity' => $activity,
+                    ];
+                })
+                ->filter()
+                ->values();
+        } else {
+            $itinerarySegments = collect($this->parsePackageImportList($row['itinerary'] ?? ''))
+                ->map(function (string $segment) {
+                    $segment = trim($segment);
+
+                    if ($segment === '') {
+                        return null;
+                    }
+
+                    $parts = preg_split('/\s+-\s+/', $segment, 2);
+
+                    return [
+                        'time' => trim((string) ($parts[0] ?? '')),
+                        'activity' => trim((string) ($parts[1] ?? $segment)),
+                    ];
+                })
+                ->filter()
+                ->values();
+        }
+
+        $packageDetails = [
+            'includes' => $this->buildStructuredPackageDetailItemsFromPipeValue($row['includes'] ?? null, 'tick'),
+            'excludes' => $this->buildStructuredPackageDetailItemsFromPipeValue($row['excludes'] ?? null, 'x'),
+            'things_to_bring' => $this->buildStructuredPackageDetailItemsFromPipeValue(
+                $row['things_to_bring'] ?? $row['recommended_attire'] ?? null,
+                'exclamation'
+            ),
+            'important_notes' => $this->buildStructuredPackageDetailItemsFromPipeValue($row['important_notes'] ?? null, 'exclamation'),
+        ];
+
+        return [
+            'name' => $row['package_name'] ?? '',
+            'tour_code' => $row['tour_code'] ?? '',
+            'location' => $row['location'] ?? '',
+            'summary' => $row['summary'] ?? '',
+            'description' => $row['description'] ?? '',
+            'package_type' => $row['package_type'] ?? '',
+            'duration_detail' => $this->isDayTripPackage((string) ($row['package_type'] ?? ''), (string) ($row['tour_code'] ?? ''))
+                ? ($row['duration'] ?? '')
+                : '',
+            'departure_time' => $row['departure_time'] ?? '',
+            'pickup_location' => $row['pickup_location'] ?? '',
+            'dropoff_location' => $row['dropoff_location'] ?? '',
+            'minimum_age_mode' => $minimumAgeMode,
+            'minimum_age_years' => $minimumAgeMode === 'above_age' ? ($minimumAgeMatches[1] ?? null) : null,
+            'capacity' => $this->normalizeOptionalImportInteger($row['capacity'] ?? null),
+            'pricing_group_size_label' => $this->parsePackageImportList($row['group_sizes'] ?? ''),
+            'pricing_malaysia_adult_price_myr' => $this->parsePackageImportNumericList($row['malaysia_adult_prices'] ?? ''),
+            'pricing_malaysia_child_price_myr' => $this->parsePackageImportNumericList($row['malaysia_child_prices'] ?? ''),
+            'pricing_international_adult_price_myr' => $this->parsePackageImportNumericList($row['international_adult_prices'] ?? ''),
+            'pricing_international_child_price_myr' => $this->parsePackageImportNumericList($row['international_child_prices'] ?? ''),
+            'image_url' => null,
+            'itinerary_day_number' => $itinerarySegments->pluck('day_number')->filter(fn ($value) => trim((string) $value) !== '')->isNotEmpty()
+                ? $itinerarySegments->pluck('day_number')->map(fn ($value) => trim((string) $value))->all()
+                : $this->buildEasyWorkbookDayNumbers($itinerarySegments->count(), (string) ($row['package_type'] ?? ''), (string) ($row['duration'] ?? '')),
+            'itinerary_time' => $itinerarySegments->pluck('time')->all(),
+            'itinerary_activity' => $itinerarySegments->pluck('activity')->all(),
+            'itinerary_notes' => array_fill(0, $itinerarySegments->count(), ''),
+            'is_featured' => false,
+            'is_top_choice' => false,
+            'is_discounted' => false,
+            'discount_percentage' => null,
+            'is_active' => true,
+            'package_details' => $packageDetails,
+            'service_inclusions' => $this->buildLegacyServiceInclusionsFromPackageDetails($packageDetails),
+            'tour_highlights' => $this->buildStructuredRichTextContentFromPipeValue($row['tour_highlights'] ?? null),
+            'recommended_attire' => $this->buildStructuredRichTextContentFromPipeValue($row['recommended_attire'] ?? null),
+            'things_to_know' => $this->buildStructuredRichTextContentFromPipeValue($row['things_you_should_know'] ?? null),
+        ];
+    }
+
+    private function buildEasyWorkbookDayNumbers(int $rowCount, string $packageType, string $duration): array
+    {
+        if ($rowCount < 1) {
+            return [];
+        }
+
+        $normalizedPackageType = strtolower(trim($packageType));
+        $normalizedDuration = strtolower(trim($duration));
+        $dayCount = 1;
+
+        if (preg_match('/(\d+)\s*d/i', $packageType, $matches) || preg_match('/(\d+)\s*d/i', $duration, $matches)) {
+            $dayCount = max(1, (int) $matches[1]);
+        } elseif (str_contains($normalizedPackageType, 'day trip') || str_contains($normalizedDuration, 'hour')) {
+            $dayCount = 1;
+        }
+
+        if ($dayCount === 1) {
+            return array_fill(0, $rowCount, 'Day 1');
+        }
+
+        $rowsPerDay = (int) ceil($rowCount / $dayCount);
+
+        return collect(range(0, $rowCount - 1))
+            ->map(fn (int $index) => 'Day '.min($dayCount, (int) floor($index / max(1, $rowsPerDay)) + 1))
+            ->all();
+    }
+
+    private function normalizeImportedImageReference(mixed $value): ?string
+    {
+        $value = trim((string) ($value ?? ''));
+
+        if ($value === '') {
+            return null;
+        }
+
+        if (filter_var($value, FILTER_VALIDATE_URL) || str_starts_with($value, '/storage/')) {
+            return $value;
+        }
+
+        return null;
+    }
+
+    private function buildStructuredPackageDetailItemsFromPipeValue(?string $value, string $defaultSymbol): array
+    {
+        $items = $this->parsePackageImportTextList($value ?? '');
+        $items = array_values(array_filter($items, fn ($item) => $item !== ''));
+
+        if ($items === []) {
+            return [];
+        }
+
+        $allowedSymbols = match ($defaultSymbol) {
+            'x' => ['x', 'round'],
+            'exclamation' => ['exclamation', 'round'],
+            default => ['tick', 'round'],
+        };
+
+        return $this->buildStructuredPackageDetailItems(
+            array_fill(0, count($items), $defaultSymbol),
+            $items,
+            $allowedSymbols,
+            $defaultSymbol
+        );
+    }
+
+    private function buildStructuredRichTextContentFromPipeValue(?string $value): array
+    {
+        $items = $this->parsePackageImportTextList($value ?? '');
+        $items = array_values(array_filter($items, fn ($item) => $item !== ''));
+
+        if ($items === []) {
+            return [];
+        }
+
+        if (count($items) === 1) {
+            return $this->buildStructuredRichTextContent($items[0]);
+        }
+
+        $html = '<ul>'.collect($items)->map(fn ($item) => '<li>'.e($item).'</li>')->implode('').'</ul>';
+
+        return $this->buildStructuredRichTextContent($html);
+    }
+
+    private function normalizePackageImportHeader(string $value): string
+    {
+        $normalized = Str::of($value)
+            ->lower()
+            ->replace(['/', '-', ' '], '_')
+            ->replaceMatches('/[^a-z0-9_]/', '')
+            ->trim('_')
+            ->value();
+
+        return $normalized;
+    }
+
+    private function combinePackageImportRow(array $headers, array $rowValues): array
+    {
+        $row = [];
+
+        foreach ($headers as $index => $header) {
+            if ($header === '') {
+                continue;
+            }
+
+            $row[$header] = is_string($rowValues[$index] ?? null)
+                ? trim((string) $rowValues[$index])
+                : $rowValues[$index];
+        }
+
+        return $row;
+    }
+
+    private function packageImportRowIsEmpty(array $row): bool
+    {
+        return collect($row)->every(function ($value) {
+            if (is_bool($value) || is_numeric($value)) {
+                return false;
+            }
+
+            return trim((string) $value) === '';
+        });
+    }
+
+    private function normalizePackageImportRow(array $row): array
+    {
+        $normalized = [];
+
+        foreach ($row as $key => $value) {
+            $normalized[$key] = is_string($value) ? trim($value) : $value;
+        }
+
+        foreach ([
+            'pricing_group_size_label',
+            'pricing_malaysia_adult_price_myr',
+            'pricing_malaysia_child_price_myr',
+            'pricing_international_adult_price_myr',
+            'pricing_international_child_price_myr',
+        ] as $field) {
+            $normalized[$field] = $this->parsePackageImportList($normalized[$field] ?? '');
+        }
+
+        foreach ([
+            'itinerary_day_number',
+            'itinerary_time',
+            'itinerary_activity',
+            'itinerary_notes',
+        ] as $field) {
+            $normalized[$field] = $this->parsePackageImportList($normalized[$field] ?? '');
+        }
+
+        $normalized['capacity'] = $this->normalizeOptionalImportInteger($normalized['capacity'] ?? null);
+
+        if (
+            $normalized['capacity'] === null
+            && blank($normalized['image_url'] ?? null)
+            && filled($row['capacity'] ?? null)
+            && filter_var((string) $row['capacity'], FILTER_VALIDATE_URL)
+        ) {
+            $normalized['image_url'] = trim((string) $row['capacity']);
+        }
+
+        if (! empty($normalized['itinerary_items_text'])) {
+            $normalized['itinerary_items_text'] = collect(explode('|', (string) $normalized['itinerary_items_text']))
+                ->map(fn ($item) => trim($item))
+                ->filter()
+                ->implode(PHP_EOL);
+        }
+
+        foreach (['is_featured', 'is_top_choice', 'is_discounted', 'is_active'] as $field) {
+            $normalized[$field] = $this->normalizePackageImportBoolean($normalized[$field] ?? null);
+        }
+
+        return $normalized;
+    }
+
+    private function normalizeOptionalImportInteger(mixed $value): ?int
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+
+        if (is_int($value)) {
+            return $value;
+        }
+
+        if (is_numeric($value) && (string) (int) $value === trim((string) $value)) {
+            return (int) $value;
+        }
+
+        return null;
+    }
+
+    private function parsePackageImportList(mixed $value): array
+    {
+        return collect(explode('|', (string) $value))
+            ->map(fn ($item) => trim($item))
+            ->values()
+            ->all();
+    }
+
+    private function parsePackageImportTextList(mixed $value): array
+    {
+        $normalized = str_replace(["\r\n", "\r"], "\n", (string) $value);
+
+        return collect(preg_split('/\||\n/u', $normalized) ?: [])
+            ->map(fn ($item) => trim((string) $item))
+            ->values()
+            ->all();
+    }
+
+    private function parsePackageImportNumericList(mixed $value): array
+    {
+        return collect($this->parsePackageImportList($value))
+            ->map(function ($item) {
+                $item = trim((string) $item);
+
+                return $item === '' ? null : $item;
+            })
+            ->all();
+    }
+
+    private function normalizePackageImportBoolean(mixed $value): bool
+    {
+        if (is_bool($value)) {
+            return $value;
+        }
+
+        return in_array(strtolower(trim((string) $value)), ['1', 'true', 'yes', 'y'], true);
+    }
+
+    private function packageImportValidationRules(): array
+    {
+        return [
+            'name' => ['required', 'string', 'max:255'],
+            'tour_code' => ['nullable', 'string', 'max:50'],
+            'location' => ['required', 'string', 'max:255'],
+            'summary' => ['required', 'string', 'max:2000'],
+            'description' => ['nullable', 'string', 'max:1000'],
+            'package_type' => ['required', 'string', 'in:'.implode(',', self::PACKAGE_DURATION_OPTIONS)],
+            'duration_detail' => ['nullable', 'string', 'max:100'],
+            'departure_time' => ['required', 'string', 'max:100'],
+            'pickup_location' => ['nullable', 'string', 'max:255'],
+            'dropoff_location' => ['nullable', 'string', 'max:255'],
+            'minimum_age_mode' => ['required', 'string', 'in:no_limit,above_age'],
+            'minimum_age_years' => ['nullable', 'integer', 'min:1', 'max:120'],
+            'capacity' => ['nullable', 'integer', 'min:0', 'max:500'],
+            'pricing_group_size_label' => ['required', 'array', 'min:1', 'max:20'],
+            'pricing_group_size_label.*' => ['required', 'string', 'max:100'],
+            'pricing_malaysia_adult_price_myr' => ['required', 'array', 'min:1', 'max:20'],
+            'pricing_malaysia_adult_price_myr.*' => ['nullable', 'numeric', 'min:0'],
+            'pricing_malaysia_child_price_myr' => ['required', 'array', 'min:1', 'max:20'],
+            'pricing_malaysia_child_price_myr.*' => ['nullable', 'numeric', 'min:0'],
+            'pricing_international_adult_price_myr' => ['required', 'array', 'min:1', 'max:20'],
+            'pricing_international_adult_price_myr.*' => ['nullable', 'numeric', 'min:0'],
+            'pricing_international_child_price_myr' => ['required', 'array', 'min:1', 'max:20'],
+            'pricing_international_child_price_myr.*' => ['nullable', 'numeric', 'min:0'],
+            'image_url' => ['nullable', 'url', 'max:2048'],
+            'itinerary_items_text' => ['nullable', 'string', 'max:5000'],
+            'itinerary_day_number' => ['nullable', 'array', 'max:31'],
+            'itinerary_day_number.*' => ['nullable', 'string', 'max:50'],
+            'itinerary_time' => ['nullable', 'array', 'max:31'],
+            'itinerary_time.*' => ['nullable', 'string', 'max:100'],
+            'itinerary_activity' => ['nullable', 'array', 'max:31'],
+            'itinerary_activity.*' => ['nullable', 'string', 'max:1000'],
+            'itinerary_notes' => ['nullable', 'array', 'max:31'],
+            'itinerary_notes.*' => ['nullable', 'string', 'max:1000'],
+            'is_featured' => ['nullable', 'boolean'],
+            'is_top_choice' => ['nullable', 'boolean'],
+            'is_discounted' => ['nullable', 'boolean'],
+            'discount_percentage' => ['nullable', 'numeric', 'min:0', 'max:100'],
+            'is_active' => ['nullable', 'boolean'],
+        ];
+    }
+
+    private function packageImportValidationMessages(string|int $rowNumber): array
+    {
+        return [
+            'name.required' => 'Row '.$rowNumber.': name is required.',
+            'location.required' => 'Row '.$rowNumber.': location is required.',
+            'summary.required' => 'Row '.$rowNumber.': summary is required.',
+            'package_type.required' => 'Row '.$rowNumber.': package_type is required.',
+            'package_type.in' => 'Row '.$rowNumber.': package_type must be Day Trip, 2D1N, 3D2N, or 4D3N.',
+            'departure_time.required' => 'Row '.$rowNumber.': departure_time is required.',
+            'minimum_age_mode.required' => 'Row '.$rowNumber.': minimum_age_mode is required.',
+            'minimum_age_mode.in' => 'Row '.$rowNumber.': minimum_age_mode must be no_limit or above_age.',
+            'pricing_group_size_label.required' => 'Row '.$rowNumber.': pricing_group_size_label is required.',
+            'image_url.url' => 'Row '.$rowNumber.': image_url must be a valid URL.',
+        ];
+    }
+
+    private function buildImportedPackagePayload(array $importData, string|int $rowNumber): array
+    {
+        if (
+            ($importData['package_type'] ?? null) === 'Day Trip'
+            && blank($importData['duration_detail'] ?? null)
+        ) {
+            throw ValidationException::withMessages([
+                'package_import_file' => 'Row '.$rowNumber.': Day Trip rows must include duration_detail.',
+            ]);
+        }
+
+        if (
+            ($importData['minimum_age_mode'] ?? 'no_limit') === 'above_age'
+            && blank($importData['minimum_age_years'] ?? null)
+        ) {
+            throw ValidationException::withMessages([
+                'package_import_file' => 'Row '.$rowNumber.': rows using minimum_age_mode above_age must include minimum_age_years.',
+            ]);
+        }
+
+        $pricingCounts = [
+            count($importData['pricing_group_size_label'] ?? []),
+            count($importData['pricing_malaysia_adult_price_myr'] ?? []),
+            count($importData['pricing_malaysia_child_price_myr'] ?? []),
+            count($importData['pricing_international_adult_price_myr'] ?? []),
+            count($importData['pricing_international_child_price_myr'] ?? []),
+        ];
+
+        if (count(array_unique($pricingCounts)) !== 1) {
+            throw ValidationException::withMessages([
+                'package_import_file' => 'Row '.$rowNumber.': pricing columns must all have the same number of values.',
+            ]);
+        }
+
+        $request = new Request([
+            'is_featured' => $importData['is_featured'] ?? false,
+            'is_top_choice' => $importData['is_top_choice'] ?? false,
+            'is_discounted' => $importData['is_discounted'] ?? false,
+            'is_active' => array_key_exists('is_active', $importData) ? $importData['is_active'] : true,
+        ]);
+
+        return $this->buildPackagePayload($importData, $request, []);
+    }
+
+    private function packageTemplateNotes(): array
+    {
+        return [
+            'Use one row per package.',
+            'Keep the header row exactly as downloaded.',
+            'Do not move values into the wrong column. capacity is numeric only, and image_url must be the full URL column.',
+            'For pricing columns, separate multiple pricing tiers with the | character.',
+            'For itinerary columns, keep day and time in separate columns and use the | character to separate rows.',
+            'Allowed package_type values are Day Trip, 2D1N, 3D2N, and 4D3N.',
+            'Use minimum_age_mode as no_limit or above_age.',
+            'Use yes/no, true/false, or 1/0 for boolean columns.',
+            'Leave discount_percentage blank when is_discounted is no.',
+            'Blank adult or child price cells are allowed, but each pricing row must still have at least one price.',
+            'Older files using itinerary_items_text can still import, but the new template uses itinerary_day_number, itinerary_time, itinerary_activity, and itinerary_notes.',
+        ];
+    }
+
+    private function easyPackageUploadTemplateColumns(): array
+    {
+        return [
+            ['header' => 'package_name', 'required' => 'Yes', 'description' => 'Package name.', 'sample' => 'Package Name Here'],
+            ['header' => 'location', 'required' => 'Yes', 'description' => 'Main destination or area.', 'sample' => 'Semporna, Sabah'],
+            ['header' => 'summary', 'required' => 'Yes', 'description' => 'Short package summary.', 'sample' => 'Short package summary here'],
+            ['header' => 'description', 'required' => 'No', 'description' => 'Full package description.', 'sample' => 'Full package description here'],
+            ['header' => 'package_type', 'required' => 'Yes', 'description' => 'Allowed values: Day Trip, 2D1N, 3D2N, 4D3N.', 'sample' => 'Day Trip'],
+            ['header' => 'duration', 'required' => 'Day Trip only', 'description' => 'Detailed duration for day trips.', 'sample' => '8 Hours'],
+            ['header' => 'departure_time', 'required' => 'Yes', 'description' => 'Main departure time text.', 'sample' => '8:00 AM'],
+            ['header' => 'pickup_location', 'required' => 'No', 'description' => 'Optional pickup location.', 'sample' => 'Hotel pickup / Jetty'],
+            ['header' => 'dropoff_location', 'required' => 'No', 'description' => 'Optional drop-off location.', 'sample' => 'Hotel drop-off / Jetty'],
+            ['header' => 'capacity', 'required' => 'No', 'description' => 'Can be blank or 0.', 'sample' => '20'],
+            ['header' => 'minimum_age', 'required' => 'Yes', 'description' => 'Use values like No Limit or Above 7.', 'sample' => 'No Limit'],
+            ['header' => 'group_sizes', 'required' => 'Yes', 'description' => 'Use | between multiple pricing rows.', 'sample' => '1-2 Pax|3-5 Pax|6-10 Pax'],
+            ['header' => 'malaysia_adult_prices', 'required' => 'Optional per tier', 'description' => 'Use | between pricing rows. Blank or 0 allowed.', 'sample' => '250|220|200'],
+            ['header' => 'malaysia_child_prices', 'required' => 'Optional per tier', 'description' => 'Use | between pricing rows. Blank or 0 allowed.', 'sample' => '200|180|160'],
+            ['header' => 'international_adult_prices', 'required' => 'Optional per tier', 'description' => 'Use | between pricing rows. Blank or 0 allowed.', 'sample' => '300|270|250'],
+            ['header' => 'international_child_prices', 'required' => 'Optional per tier', 'description' => 'Use | between pricing rows. Blank or 0 allowed.', 'sample' => '250|230|210'],
+            ['header' => 'itinerary_day_number', 'required' => 'No', 'description' => 'Use | between itinerary rows.', 'sample' => 'Day 1|Day 1|Day 1|Day 1|Day 1'],
+            ['header' => 'itinerary_time', 'required' => 'No', 'description' => 'Keep time separate from day. Use | between rows.', 'sample' => '08:00 AM|09:00 AM|10:00 AM|12:00 PM|04:00 PM'],
+            ['header' => 'itinerary_activity', 'required' => 'No', 'description' => 'Main activity text for each itinerary row.', 'sample' => 'Pickup|Depart jetty|Activity 1|Lunch|Return'],
+            ['header' => 'includes', 'required' => 'No', 'description' => 'Use | to create separate bullet items automatically.', 'sample' => 'Hotel pickup|Boat transfer|Lunch|Guide'],
+            ['header' => 'excludes', 'required' => 'No', 'description' => 'Use | to create separate bullet items automatically.', 'sample' => 'Personal expenses|Travel insurance'],
+            ['header' => 'important_notes', 'required' => 'No', 'description' => 'Use | to create separate bullet items automatically.', 'sample' => 'Subject to weather|Minimum 2 pax required'],
+            ['header' => 'tour_highlights', 'required' => 'No', 'description' => 'Use | to create separate bullet items automatically.', 'sample' => 'Island hopping|Snorkelling|Beautiful beach'],
+            ['header' => 'recommended_attire', 'required' => 'No', 'description' => 'Use | to create separate bullet items automatically.', 'sample' => 'Comfortable clothes|Swimwear|Slippers/Sandals'],
+            ['header' => 'things_you_should_know', 'required' => 'No', 'description' => 'Use | to create separate bullet items automatically.', 'sample' => 'Bring passport/IC|Arrive 15 minutes early'],
+        ];
+    }
+
+    private function easyPackageUploadTemplateHeaders(): array
+    {
+        return array_column($this->easyPackageUploadTemplateColumns(), 'header');
+    }
+
+    private function easyPackageUploadTemplateSampleRow(): array
+    {
+        return array_column($this->easyPackageUploadTemplateColumns(), 'sample');
+    }
+
+    private function easyPackageUploadTemplateNotes(): array
+    {
+        return [
+            'tour_code is not needed because the system assigns it automatically.',
+            'Keep the header row exactly as downloaded.',
+            'Use | to separate multiple pricing rows or multiple bullet items inside a cell.',
+            'Adult or child prices may be blank or 0, but each pricing row should still have at least one price.',
+            'Capacity can be blank or 0.',
+            'Put itinerary day values in itinerary_day_number, time values in itinerary_time, and matching text in itinerary_activity.',
+            'Allowed package_type values are Day Trip, 2D1N, 3D2N, and 4D3N.',
+            'minimum_age accepts values like No Limit or Above 7.',
+        ];
+    }
+
+    private function packageTemplateExampleRow(): array
+    {
+        return [
+            'Kudat Tommy Place 2D1N',
+            'Kudat / Tip Of Borneo, Sabah',
+            '2D1N private Kudat getaway with stay, sunset and snorkeling.',
+            'Includes return land transfer, accommodation, meals, boat snorkeling and activities.',
+            '2D1N',
+            '',
+            '13:00',
+            'Kota Kinabalu hotel/hostel/lodge lobby',
+            'Kota Kinabalu hotel/hostel/lodge lobby',
+            'no_limit',
+            '',
+            '',
+            '1 pax',
+            '620',
+            '',
+            '620',
+            '',
+            'https://sabahbooking.com/holiday-59',
+            'Day 1|Day 1|Day 2|Day 2',
+            '13:00|18:30|07:30|12:00',
+            'Pickup from hotel|Sunset viewing and check in|Breakfast and snorkeling|Return to Kota Kinabalu',
+            'Proceed to Kudat|Free and easy|American breakfast|Hotel drop-off',
+            'no',
+            'no',
+            'no',
+            '',
+            'yes',
+        ];
     }
 
     private function buildPackagePricingTiers(array $validated): array
@@ -970,24 +2207,25 @@ class AdminController extends Controller
                     return null;
                 }
 
-                if (
-                    $groupSizeLabel === ''
-                    || $malaysiaAdultPrice === null || $malaysiaAdultPrice === ''
-                    || $malaysiaChildPrice === null || $malaysiaChildPrice === ''
-                    || $internationalAdultPrice === null || $internationalAdultPrice === ''
-                    || $internationalChildPrice === null || $internationalChildPrice === ''
-                ) {
+                $hasAnyPrice = collect([
+                    $this->normalizeOptionalPackagePrice($malaysiaAdultPrice),
+                    $this->normalizeOptionalPackagePrice($malaysiaChildPrice),
+                    $this->normalizeOptionalPackagePrice($internationalAdultPrice),
+                    $this->normalizeOptionalPackagePrice($internationalChildPrice),
+                ])->contains(fn ($price) => $price !== null);
+
+                if ($groupSizeLabel === '' || ! $hasAnyPrice) {
                     throw ValidationException::withMessages([
-                        'pricing_group_size_label' => 'Each group size row must include the pax label and all four prices.',
+                        'pricing_group_size_label' => 'Each group size row must include the pax label and at least one price.',
                     ]);
                 }
 
                 return [
                     'group_size_label' => $groupSizeLabel,
-                    'malaysia_adult_price_myr' => round((float) $malaysiaAdultPrice, 2),
-                    'malaysia_child_price_myr' => round((float) $malaysiaChildPrice, 2),
-                    'international_adult_price_myr' => round((float) $internationalAdultPrice, 2),
-                    'international_child_price_myr' => round((float) $internationalChildPrice, 2),
+                    'malaysia_adult_price_myr' => $this->normalizeOptionalPackagePrice($malaysiaAdultPrice),
+                    'malaysia_child_price_myr' => $this->normalizeOptionalPackagePrice($malaysiaChildPrice),
+                    'international_adult_price_myr' => $this->normalizeOptionalPackagePrice($internationalAdultPrice),
+                    'international_child_price_myr' => $this->normalizeOptionalPackagePrice($internationalChildPrice),
                 ];
             })
             ->filter()
@@ -1006,17 +2244,156 @@ class AdminController extends Controller
     private function summarizePackagePricingTiers(array $pricingTiers): array
     {
         $startingTier = collect($pricingTiers)
-            ->sortBy('malaysia_adult_price_myr')
+            ->sortBy(fn (array $tier) => $this->lowestPackageTierPrice($tier) ?? INF)
             ->first();
 
         return [
             'group_size_label' => (string) ($startingTier['group_size_label'] ?? ''),
-            'price_myr' => round((float) ($startingTier['malaysia_adult_price_myr'] ?? 0), 2),
-            'malaysia_adult_price_myr' => round((float) ($startingTier['malaysia_adult_price_myr'] ?? 0), 2),
-            'malaysia_child_price_myr' => round((float) ($startingTier['malaysia_child_price_myr'] ?? 0), 2),
-            'international_adult_price_myr' => round((float) ($startingTier['international_adult_price_myr'] ?? 0), 2),
-            'international_child_price_myr' => round((float) ($startingTier['international_child_price_myr'] ?? 0), 2),
+            'price_myr' => $this->lowestPackageTierPrice($startingTier) ?? 0,
+            'malaysia_adult_price_myr' => $this->normalizeOptionalPackagePrice($startingTier['malaysia_adult_price_myr'] ?? null),
+            'malaysia_child_price_myr' => $this->normalizeOptionalPackagePrice($startingTier['malaysia_child_price_myr'] ?? null),
+            'international_adult_price_myr' => $this->normalizeOptionalPackagePrice($startingTier['international_adult_price_myr'] ?? null),
+            'international_child_price_myr' => $this->normalizeOptionalPackagePrice($startingTier['international_child_price_myr'] ?? null),
         ];
+    }
+
+    private function normalizeOptionalPackagePrice(mixed $value): ?float
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+
+        return round((float) $value, 2);
+    }
+
+    private function lowestPackageTierPrice(array $tier): ?float
+    {
+        return collect([
+            $this->normalizeOptionalPackagePrice($tier['malaysia_adult_price_myr'] ?? null),
+            $this->normalizeOptionalPackagePrice($tier['malaysia_child_price_myr'] ?? null),
+            $this->normalizeOptionalPackagePrice($tier['international_adult_price_myr'] ?? null),
+            $this->normalizeOptionalPackagePrice($tier['international_child_price_myr'] ?? null),
+        ])->filter(fn ($price) => $price !== null)->min();
+    }
+
+    private function packageValidationRules(?Package $package = null, bool $isUpdate = false): array
+    {
+        return [
+            'name' => ['required', 'string', 'max:255'],
+            'location' => ['required', 'string', 'max:255'],
+            'pickup_location' => ['nullable', 'string', 'max:255'],
+            'dropoff_location' => ['nullable', 'string', 'max:255'],
+            'summary' => ['required', 'string', 'max:2000'],
+            'image_url' => $this->productImageUrlRules(),
+            'image' => [$isUpdate ? 'nullable' : 'nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
+            'existing_gallery_images' => ['nullable', 'array', 'max:20'],
+            'existing_gallery_images.*' => ['string', 'max:2048'],
+            'gallery_image_files' => ['nullable', 'array', 'max:20'],
+            'gallery_image_files.*' => ['image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
+            'itinerary_items_text' => ['nullable', 'string', 'max:5000'],
+            'description' => ['nullable', 'string', 'max:1000'],
+            'package_type' => ['required', 'string', 'in:'.implode(',', self::PACKAGE_DURATION_OPTIONS)],
+            'duration_detail' => [
+                Rule::requiredIf($isUpdate ? request('package_type') === 'Day Trip' : request('package_type') === 'Day Trip'),
+                'nullable',
+                'string',
+                'max:100',
+            ],
+            'minimum_age_mode' => ['required', 'string', 'in:no_limit,above_age'],
+            'minimum_age_years' => [
+                Rule::requiredIf(request('minimum_age_mode') === 'above_age'),
+                'nullable',
+                'integer',
+                'min:1',
+                'max:120',
+            ],
+            'departure_time' => ['required', 'string', 'max:100'],
+            'group_size_label' => ['nullable', 'string', 'max:100'],
+            'pricing_group_size_label' => ['required', 'array', 'min:1', 'max:20'],
+            'pricing_group_size_label.*' => ['nullable', 'string', 'max:100'],
+            'pricing_malaysia_adult_price_myr' => ['nullable', 'array', 'max:20'],
+            'pricing_malaysia_adult_price_myr.*' => ['nullable', 'numeric', 'min:0'],
+            'pricing_malaysia_child_price_myr' => ['nullable', 'array', 'max:20'],
+            'pricing_malaysia_child_price_myr.*' => ['nullable', 'numeric', 'min:0'],
+            'pricing_international_adult_price_myr' => ['nullable', 'array', 'max:20'],
+            'pricing_international_adult_price_myr.*' => ['nullable', 'numeric', 'min:0'],
+            'pricing_international_child_price_myr' => ['nullable', 'array', 'max:20'],
+            'pricing_international_child_price_myr.*' => ['nullable', 'numeric', 'min:0'],
+            'tour_code' => [
+                'required',
+                'string',
+                'max:50',
+                'regex:/^(DT|OT)-UEH[A-Z0-9]+$/',
+                Rule::unique('packages', 'tour_code')->ignore($package?->id),
+            ],
+            'capacity' => ['nullable', 'integer', 'min:0', 'max:500'],
+            'is_featured' => ['nullable', 'boolean'],
+            'is_top_choice' => ['nullable', 'boolean'],
+            'is_discounted' => ['nullable', 'boolean'],
+            'discount_percentage' => ['nullable', 'numeric', 'min:0', 'max:100'],
+        ];
+    }
+
+    private function buildPackagePayload(array $validated, Request $request, array $galleryImages, ?Package $package = null): array
+    {
+        $pricingTiers = $this->buildPackagePricingTiers($validated);
+        $pricingSummary = $this->summarizePackagePricingTiers($pricingTiers);
+        $validated['duration'] = ($validated['package_type'] ?? null) === 'Day Trip'
+            ? ($validated['duration_detail'] ?? ($package?->duration ?? 'Day Trip'))
+            : (string) ($validated['package_type'] ?? ($package?->duration ?? ''));
+        $validated['minimum_age'] = ($validated['minimum_age_mode'] ?? 'no_limit') === 'above_age'
+            ? 'Above '.(int) ($validated['minimum_age_years'] ?? 0).' years old'
+            : 'No limit';
+        $validated['pricing_tiers'] = $pricingTiers;
+        $validated['group_size_label'] = $pricingSummary['group_size_label'];
+        $validated['price_myr'] = $pricingSummary['price_myr'];
+        $validated['malaysia_adult_price_myr'] = $pricingSummary['malaysia_adult_price_myr'];
+        $validated['malaysia_child_price_myr'] = $pricingSummary['malaysia_child_price_myr'];
+        $validated['international_adult_price_myr'] = $pricingSummary['international_adult_price_myr'];
+        $validated['international_child_price_myr'] = $pricingSummary['international_child_price_myr'];
+
+        unset(
+            $validated['package_type'],
+            $validated['duration_detail'],
+            $validated['minimum_age_mode'],
+            $validated['minimum_age_years'],
+            $validated['pricing_group_size_label'],
+            $validated['pricing_malaysia_adult_price_myr'],
+            $validated['pricing_malaysia_child_price_myr'],
+            $validated['pricing_international_adult_price_myr'],
+            $validated['pricing_international_child_price_myr'],
+            $validated['existing_gallery_images']
+        );
+
+        $legacyItineraryText = trim((string) ($validated['itinerary_items_text'] ?? ''));
+        $structuredItinerary = $this->buildStructuredItinerary($validated);
+        unset(
+            $validated['itinerary_items_text'],
+            $validated['itinerary_day_number'],
+            $validated['itinerary_time'],
+            $validated['itinerary_activity'],
+            $validated['itinerary_notes'],
+        );
+
+        $payload = array_merge($validated, [
+            'price_myr' => $validated['price_myr'] ?? $validated['malaysia_adult_price_myr'],
+            'gallery_images' => $galleryImages,
+            'capacity' => $validated['capacity'] ?? null,
+            'is_featured' => $request->boolean('is_featured'),
+            'is_top_choice' => $request->boolean('is_top_choice'),
+            'is_discounted' => $request->boolean('is_discounted'),
+            'discount_percentage' => $request->boolean('is_discounted') ? ($validated['discount_percentage'] ?? 0) : null,
+            'is_active' => $package ? $request->boolean('is_active', $package->is_active) : true,
+        ]);
+        $payload['description'] = (string) ($validated['description'] ?? ($package?->description ?? ''));
+
+        if ($structuredItinerary !== []) {
+            $payload['itinerary_items'] = $structuredItinerary;
+        } elseif ($legacyItineraryText !== '') {
+            $payload['itinerary_items'] = $this->normalizeMultilineEntries($legacyItineraryText);
+        }
+
+        return $payload;
     }
 
     public function updateProductItinerary(Request $request, Product $product): RedirectResponse
@@ -1104,24 +2481,45 @@ class AdminController extends Controller
         abort_unless($product->category === 'package', 404);
 
         $validated = $request->validate([
-            'tour_highlights' => ['nullable', 'array', 'max:20'],
-            'tour_highlights.*' => ['nullable', 'string', 'max:500'],
-            'recommended_attire' => ['nullable', 'array', 'max:20'],
-            'recommended_attire.*' => ['nullable', 'string', 'max:500'],
-            'things_to_know' => ['nullable', 'array', 'max:20'],
-            'things_to_know.*' => ['nullable', 'string', 'max:1000'],
-            'travel_tips' => ['nullable', 'array', 'max:20'],
-            'travel_tips.*' => ['nullable', 'string', 'max:1000'],
+            'tour_highlights' => ['nullable', 'string', 'max:5000'],
+            'recommended_attire' => ['nullable', 'string', 'max:5000'],
+            'things_to_know' => ['nullable', 'string', 'max:5000'],
+            'travel_tips' => ['nullable', 'string', 'max:5000'],
         ]);
 
         $product->update([
-            'tour_highlights' => $this->buildStructuredTextList($validated['tour_highlights'] ?? []),
-            'recommended_attire' => $this->buildStructuredTextList($validated['recommended_attire'] ?? []),
-            'things_to_know' => $this->buildStructuredTextList($validated['things_to_know'] ?? []),
-            'travel_tips' => $this->buildStructuredTextList($validated['travel_tips'] ?? []),
+            'tour_highlights' => $this->buildStructuredRichTextContent($validated['tour_highlights'] ?? null),
+            'recommended_attire' => $this->buildStructuredRichTextContent($validated['recommended_attire'] ?? null),
+            'things_to_know' => $this->buildStructuredRichTextContent($validated['things_to_know'] ?? null),
+            'travel_tips' => $this->buildStructuredRichTextContent($validated['travel_tips'] ?? null),
         ]);
 
         return back()->with('success', 'Other package content updated successfully.');
+    }
+
+    public function updateProductOptionalActivities(Request $request, Product $product): RedirectResponse
+    {
+        abort_unless($product->category === 'package', 404);
+
+        $validated = $request->validate([
+            'optional_activities_description' => ['nullable', 'string', 'max:3000'],
+            'optional_activity_name' => ['nullable', 'array', 'max:20'],
+            'optional_activity_name.*' => ['nullable', 'string', 'max:255'],
+            'optional_activity_rate' => ['nullable', 'array', 'max:20'],
+            'optional_activity_rate.*' => ['nullable', 'string', 'max:255'],
+        ]);
+
+        $product->update([
+            'optional_activities' => [
+                'description' => trim((string) ($validated['optional_activities_description'] ?? '')),
+                'rows' => $this->buildStructuredOptionalActivityRows(
+                    $validated['optional_activity_name'] ?? [],
+                    $validated['optional_activity_rate'] ?? [],
+                ),
+            ],
+        ]);
+
+        return back()->with('success', 'Optional activities updated successfully.');
     }
 
     public function updateProductActive(Request $request, Product $product)
@@ -1134,7 +2532,7 @@ class AdminController extends Controller
             'is_active' => (bool) $validated['is_active'],
         ]);
 
-        if ($request->expectsJson()) {
+        if ($request->expectsJson() || $request->ajax()) {
             return response()->json([
                 'success' => true,
                 'is_active' => (bool) $product->is_active,
@@ -1145,13 +2543,222 @@ class AdminController extends Controller
         return back()->with('success', 'Product visibility updated successfully.');
     }
 
-    public function destroyProduct(Product $product): RedirectResponse
+    public function destroyProduct(Request $request, Product $product)
     {
         $this->deleteManagedProductImage($product->image_url);
         $this->deleteManagedProductImages($product->gallery_images ?? []);
         $product->delete();
 
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Product deleted successfully.',
+                'product_id' => $product->id,
+            ]);
+        }
+
         return back()->with('success', 'Product deleted successfully.');
+    }
+
+    public function storePackage(Request $request): RedirectResponse
+    {
+        $request->merge([
+            'tour_code' => $this->resolveTourCode(
+                (string) $request->input('tour_code', ''),
+                $this->isDayTripPackage((string) $request->input('package_type', ''), null),
+                'packages'
+            ),
+        ]);
+
+        $validated = $request->validate($this->packageValidationRules(), [
+            'tour_code.unique' => 'This tour code is already being used by another package. Please use a different code.',
+        ]);
+
+        if ($request->hasFile('image')) {
+            $validated['image_url'] = $this->storeProductImage($request->file('image'));
+        }
+
+        $galleryImages = [];
+        if ($request->hasFile('gallery_image_files')) {
+            $galleryImages = $this->storeProductGalleryImages($request->file('gallery_image_files'));
+        }
+
+        $packagePayload = $this->buildPackagePayload($validated, $request, $galleryImages);
+        Package::create($packagePayload);
+
+        return back()->with('success', 'Package saved successfully.');
+    }
+
+    public function updatePackage(Request $request, Package $package): RedirectResponse
+    {
+        $request->merge([
+            'image_url' => $this->normalizeOptionalUrl($request->input('image_url')),
+            'tour_code' => $this->resolveTourCode(
+                (string) $request->input('tour_code', ''),
+                $this->isDayTripPackage((string) $request->input('duration', $package->duration), (string) $package->tour_code),
+                'packages',
+                $package->id,
+                [],
+                (string) $package->tour_code
+            ),
+        ]);
+
+        $validated = $request->validate(
+            $this->packageValidationRules($package, true),
+            ['tour_code.unique' => 'This tour code is already being used by another package. Please use a different code.']
+        );
+
+        if ($request->hasFile('image')) {
+            $this->deleteManagedProductImage($package->image_url);
+            $validated['image_url'] = $this->storeProductImage($request->file('image'));
+        }
+
+        $existingGalleryImages = collect($validated['existing_gallery_images'] ?? [])
+            ->filter(fn ($imageUrl) => is_string($imageUrl) && filled($imageUrl))
+            ->values()
+            ->all();
+
+        $removedGalleryImages = array_values(array_diff($package->gallery_images ?? [], $existingGalleryImages));
+        $this->deleteManagedProductImages($removedGalleryImages);
+
+        $galleryImages = $existingGalleryImages;
+        if ($request->hasFile('gallery_image_files')) {
+            $galleryImages = array_merge($galleryImages, $this->storeProductGalleryImages($request->file('gallery_image_files')));
+        }
+
+        $packagePayload = $this->buildPackagePayload($validated, $request, $galleryImages, $package);
+        $package->update($packagePayload);
+
+        return back()->with('success', 'Package updated successfully.');
+    }
+
+    public function updatePackageItinerary(Request $request, Package $package): RedirectResponse
+    {
+        $validated = $request->validate([
+            'itinerary_day_number' => ['nullable', 'array', 'max:31'],
+            'itinerary_day_number.*' => ['nullable', 'string', 'max:50'],
+            'itinerary_time' => ['nullable', 'array', 'max:31'],
+            'itinerary_time.*' => ['nullable', 'string', 'max:100'],
+            'itinerary_activity' => ['nullable', 'array', 'max:31'],
+            'itinerary_activity.*' => ['nullable', 'string', 'max:1000'],
+            'itinerary_notes' => ['nullable', 'array', 'max:31'],
+            'itinerary_notes.*' => ['nullable', 'string', 'max:1000'],
+        ]);
+
+        $package->update(['itinerary_items' => $this->buildStructuredItinerary($validated)]);
+
+        return back()->with('success', 'Package itinerary updated successfully.');
+    }
+
+    public function updatePackageDetails(Request $request, Package $package): RedirectResponse
+    {
+        $validated = $request->validate([
+            'package_detail_include_symbol' => ['nullable', 'array', 'max:30'],
+            'package_detail_include_symbol.*' => ['nullable', 'string', 'in:tick,round'],
+            'package_detail_include_value' => ['nullable', 'array', 'max:30'],
+            'package_detail_include_value.*' => ['nullable', 'string', 'max:5000'],
+            'package_detail_exclude_symbol' => ['nullable', 'array', 'max:30'],
+            'package_detail_exclude_symbol.*' => ['nullable', 'string', 'in:x,round'],
+            'package_detail_exclude_value' => ['nullable', 'array', 'max:30'],
+            'package_detail_exclude_value.*' => ['nullable', 'string', 'max:5000'],
+            'package_detail_bring_symbol' => ['nullable', 'array', 'max:30'],
+            'package_detail_bring_symbol.*' => ['nullable', 'string', 'in:exclamation,round'],
+            'package_detail_bring_value' => ['nullable', 'array', 'max:30'],
+            'package_detail_bring_value.*' => ['nullable', 'string', 'max:5000'],
+            'package_detail_note_symbol' => ['nullable', 'array', 'max:30'],
+            'package_detail_note_symbol.*' => ['nullable', 'string', 'in:exclamation,round'],
+            'package_detail_note_value' => ['nullable', 'array', 'max:30'],
+            'package_detail_note_value.*' => ['nullable', 'string', 'max:5000'],
+        ]);
+
+        $packageDetails = [
+            'includes' => $this->buildStructuredPackageDetailItems($validated['package_detail_include_symbol'] ?? [], $validated['package_detail_include_value'] ?? [], ['tick', 'round'], 'tick'),
+            'excludes' => $this->buildStructuredPackageDetailItems($validated['package_detail_exclude_symbol'] ?? [], $validated['package_detail_exclude_value'] ?? [], ['x', 'round'], 'x'),
+            'things_to_bring' => $this->buildStructuredPackageDetailItems($validated['package_detail_bring_symbol'] ?? [], $validated['package_detail_bring_value'] ?? [], ['exclamation', 'round'], 'exclamation'),
+            'important_notes' => $this->buildStructuredPackageDetailItems($validated['package_detail_note_symbol'] ?? [], $validated['package_detail_note_value'] ?? [], ['exclamation', 'round'], 'exclamation'),
+        ];
+
+        $package->update([
+            'package_details' => $packageDetails,
+            'service_inclusions' => $this->buildLegacyServiceInclusionsFromPackageDetails($packageDetails),
+        ]);
+
+        return back()->with('success', 'Package details updated successfully.');
+    }
+
+    public function updatePackageContent(Request $request, Package $package): RedirectResponse
+    {
+        $validated = $request->validate([
+            'tour_highlights' => ['nullable', 'string', 'max:5000'],
+            'recommended_attire' => ['nullable', 'string', 'max:5000'],
+            'things_to_know' => ['nullable', 'string', 'max:5000'],
+            'travel_tips' => ['nullable', 'string', 'max:5000'],
+        ]);
+
+        $package->update([
+            'tour_highlights' => $this->buildStructuredRichTextContent($validated['tour_highlights'] ?? null),
+            'recommended_attire' => $this->buildStructuredRichTextContent($validated['recommended_attire'] ?? null),
+            'things_to_know' => $this->buildStructuredRichTextContent($validated['things_to_know'] ?? null),
+            'travel_tips' => $this->buildStructuredRichTextContent($validated['travel_tips'] ?? null),
+        ]);
+
+        return back()->with('success', 'Other package content updated successfully.');
+    }
+
+    public function updatePackageOptionalActivities(Request $request, Package $package): RedirectResponse
+    {
+        $validated = $request->validate([
+            'optional_activities_description' => ['nullable', 'string', 'max:3000'],
+            'optional_activity_name' => ['nullable', 'array', 'max:20'],
+            'optional_activity_name.*' => ['nullable', 'string', 'max:255'],
+            'optional_activity_rate' => ['nullable', 'array', 'max:20'],
+            'optional_activity_rate.*' => ['nullable', 'string', 'max:255'],
+        ]);
+
+        $package->update([
+            'optional_activities' => [
+                'description' => trim((string) ($validated['optional_activities_description'] ?? '')),
+                'rows' => $this->buildStructuredOptionalActivityRows(
+                    $validated['optional_activity_name'] ?? [],
+                    $validated['optional_activity_rate'] ?? [],
+                ),
+            ],
+        ]);
+
+        return back()->with('success', 'Optional activities updated successfully.');
+    }
+
+    public function updatePackageActive(Request $request, Package $package)
+    {
+        $validated = $request->validate(['is_active' => ['required', 'boolean']]);
+        $package->update(['is_active' => (bool) $validated['is_active']]);
+
+        if ($request->expectsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'is_active' => (bool) $package->is_active,
+                'message' => 'Package visibility updated successfully.',
+            ]);
+        }
+
+        return back()->with('success', 'Package visibility updated successfully.');
+    }
+
+    public function destroyPackage(Request $request, Package $package)
+    {
+        $this->deleteManagedProductImage($package->image_url);
+        $this->deleteManagedProductImages($package->gallery_images ?? []);
+        $package->delete();
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Package deleted successfully.',
+                'product_id' => $package->id,
+            ]);
+        }
+
+        return back()->with('success', 'Package deleted successfully.');
     }
 
     private function storeProductImage($image): string
@@ -1302,6 +2909,44 @@ class AdminController extends Controller
             ->all();
     }
 
+    private function buildStructuredRichTextContent(?string $value): array
+    {
+        $sanitizedHtml = $this->sanitizePackageDetailHtml((string) ($value ?? ''));
+        $plainText = $this->extractPlainTextFromHtml($sanitizedHtml);
+
+        if ($plainText === '') {
+            return [];
+        }
+
+        return [[
+            'text' => $plainText,
+            'html' => $sanitizedHtml,
+        ]];
+    }
+
+    private function buildStructuredOptionalActivityRows(array $names, array $rates): array
+    {
+        $rowCount = max(count($names), count($rates));
+
+        return collect(range(0, max(0, $rowCount - 1)))
+            ->map(function (int $index) use ($names, $rates) {
+                $name = trim((string) ($names[$index] ?? ''));
+                $rate = trim((string) ($rates[$index] ?? ''));
+
+                if ($name === '' && $rate === '') {
+                    return null;
+                }
+
+                return [
+                    'name' => $name,
+                    'rate' => $rate,
+                ];
+            })
+            ->filter()
+            ->values()
+            ->all();
+    }
+
     private function buildLegacyServiceInclusionsFromPackageDetails(array $packageDetails): array
     {
         $labelMap = [
@@ -1395,7 +3040,23 @@ class AdminController extends Controller
             }
 
             if ($tagName === 'li') {
-                $node->nodeValue = $this->stripPackageDetailLeadingMarker($node->textContent ?? '');
+                $normalizedText = $this->stripPackageDetailLeadingMarker($node->textContent ?? '');
+
+                if ($normalizedText === '') {
+                    $node->parentNode?->removeChild($node);
+
+                    return;
+                }
+
+                while ($node->firstChild) {
+                    $node->removeChild($node->firstChild);
+                }
+
+                $node->appendChild($node->ownerDocument->createTextNode($normalizedText));
+            }
+
+            if (in_array($tagName, ['ul', 'ol'], true) && ! $node->getElementsByTagName('li')->length) {
+                $node->parentNode?->removeChild($node);
             }
         };
 
@@ -1765,18 +3426,16 @@ class AdminController extends Controller
             'rating' => ['required', 'integer', 'min:1', 'max:5'],
             'profile_photo' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
             'display_location' => ['required', 'in:landing,package'],
-            'product_id' => ['nullable', 'exists:products,id'],
+            'package_id' => ['nullable', 'exists:packages,id'],
             'is_featured' => ['nullable', 'boolean'],
         ]);
 
         if (($validated['display_location'] ?? null) === 'package') {
-            $package = Product::where('id', $validated['product_id'] ?? null)
-                ->where('category', 'package')
-                ->first();
+            $package = Package::find($validated['package_id'] ?? null);
 
             if (! $package) {
                 return back()->withErrors([
-                    'product_id' => 'Please choose a valid package for this testimonial.',
+                    'package_id' => 'Please choose a valid package for this testimonial.',
                 ])->withInput();
             }
         }
@@ -1793,8 +3452,9 @@ class AdminController extends Controller
             ...$validated,
             'profile_photo_path' => $profilePhotoPath,
             'is_featured' => $request->boolean('is_featured'),
-            'product_id' => ($validated['display_location'] ?? 'landing') === 'package'
-                ? $validated['product_id']
+            'product_id' => null,
+            'package_id' => ($validated['display_location'] ?? 'landing') === 'package'
+                ? $validated['package_id']
                 : null,
         ]);
 
@@ -1812,18 +3472,16 @@ class AdminController extends Controller
             'rating' => ['required', 'integer', 'min:1', 'max:5'],
             'profile_photo' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
             'display_location' => ['required', 'in:landing,package'],
-            'product_id' => ['nullable', 'exists:products,id'],
+            'package_id' => ['nullable', 'exists:packages,id'],
             'is_featured' => ['nullable', 'boolean'],
         ]);
 
         if (($validated['display_location'] ?? null) === 'package') {
-            $package = Product::where('id', $validated['product_id'] ?? null)
-                ->where('category', 'package')
-                ->first();
+            $package = Package::find($validated['package_id'] ?? null);
 
             if (! $package) {
                 return back()->withErrors([
-                    'product_id' => 'Please choose a valid package for this testimonial.',
+                    'package_id' => 'Please choose a valid package for this testimonial.',
                 ])->withInput();
             }
         }
@@ -1836,8 +3494,9 @@ class AdminController extends Controller
             'quote' => $validated['quote'],
             'rating' => $validated['rating'],
             'display_location' => $validated['display_location'],
-            'product_id' => $validated['display_location'] === 'package'
-                ? $validated['product_id']
+            'product_id' => null,
+            'package_id' => $validated['display_location'] === 'package'
+                ? $validated['package_id']
                 : null,
             'is_featured' => $request->boolean('is_featured'),
         ];
@@ -1913,6 +3572,7 @@ class AdminController extends Controller
     {
         $this->ensureFixedTransportProducts();
         $products = Product::latest()->get();
+        $packageProducts = Package::latest()->get();
         $fixedTransportNames = collect(self::FIXED_TRANSPORT_PRODUCTS)->pluck('name');
 
         return [
@@ -1921,7 +3581,7 @@ class AdminController extends Controller
                 ->where('category', 'transport')
                 ->sortBy(fn ($product) => ($fixedTransportNames->search($product->name) !== false ? $fixedTransportNames->search($product->name) : 9999))
                 ->values(),
-            'packageProducts' => $products->where('category', 'package')->values(),
+            'packageProducts' => $packageProducts->values(),
             'newsFeatures' => NewsFeature::latest()->get(),
             'homeHeroSlides' => Schema::hasTable('home_hero_slides')
                 ? HomeHeroSlide::query()->orderBy('display_order')->orderBy('id')->get()
@@ -1929,7 +3589,7 @@ class AdminController extends Controller
             'blogPosts' => Schema::hasTable('blog_posts')
                 ? BlogPost::latest('published_at')->latest()->get()
                 : collect(),
-            'testimonials' => Testimonial::with('product')->latest()->get(),
+            'testimonials' => Testimonial::with(['product', 'package'])->latest()->get(),
             'staffMembers' => Schema::hasTable('staff')
                 ? Staff::query()->orderBy('sort_order')->orderBy('name')->get()
                 : collect(),

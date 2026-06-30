@@ -27,25 +27,28 @@
                 str_contains($packageDurationToken, '4d3n'), str_contains($packageDurationToken, '4days3night'), str_contains($packageDurationToken, '4days3nights') => '4d3n',
                 default => 'other',
             };
+            $packageCardCopy = $isPackage
+                ? \Illuminate\Support\Str::limit(trim((string) ($product->summary ?: $product->description ?: '')), 210)
+                : '';
         @endphp
 
-        <article @if($itemAttribute) {{ $itemAttribute }}="true" @endif class="relative rounded-3xl border border-stone-200 bg-stone-50 p-5" @if($isPackage) data-package-inline-row data-list-filter-value="{{ $packageDurationFilter }}" @endif>
+        <article @if($itemAttribute) {{ $itemAttribute }}="true" @endif class="relative rounded-3xl border border-stone-200 bg-stone-50 {{ $isPackage ? 'p-4' : 'p-5' }}" @if($isPackage) data-package-inline-row data-list-filter-value="{{ $packageDurationFilter }}" @endif>
             <div
                 class="grid gap-4 items-start {{ $isPackage ? '' : 'xl:grid-cols-[110px_minmax(0,1fr)_auto]' }}"
-                @if ($isPackage) style="grid-template-columns: 180px minmax(0, 1fr);" @endif
+                @if ($isPackage) style="grid-template-columns: 132px minmax(0, 1fr);" @endif
             >
-                <div class="overflow-hidden border border-stone-200 bg-white {{ $isPackage ? 'rounded-md' : 'rounded-[1rem]' }}" @if ($isPackage) style="width: 180px; height: 180px;" @else style="width: 72px; height: 72px;" @endif>
+                <div class="overflow-hidden border border-stone-200 bg-white {{ $isPackage ? 'rounded-md' : 'rounded-[1rem]' }}" @if ($isPackage) style="width: 132px; height: 132px;" @else style="width: 72px; height: 72px;" @endif>
                     @if ($cardImage)
                         <img
                             src="{{ $cardImage }}"
                             alt="{{ $product->name }}"
                             class="w-full object-cover {{ $isPackage ? '' : 'h-24' }}"
-                            @if ($isPackage) style="width: 180px; height: 180px;" @else style="width: 72px; height: 72px;" @endif
+                            @if ($isPackage) style="width: 132px; height: 132px;" @else style="width: 72px; height: 72px;" @endif
                         >
                     @else
                         <div
                             class="flex items-center justify-center bg-stone-100 text-center font-semibold uppercase text-stone-400 {{ $isPackage ? 'px-1 text-[8px] tracking-[0.15em]' : 'h-24 px-2 text-[10px] tracking-[0.2em]' }}"
-                            @if ($isPackage) style="width: 180px; height: 180px;" @else style="width: 72px; height: 72px;" @endif
+                            @if ($isPackage) style="width: 132px; height: 132px;" @else style="width: 72px; height: 72px;" @endif
                         >
                             No image
                         </div>
@@ -59,6 +62,7 @@
                             $itineraryFormId = 'package-itinerary-form-'.$product->id;
                             $packageDetailsFormId = 'package-details-form-'.$product->id;
                             $packageContentFormId = 'package-content-form-'.$product->id;
+                            $optionalActivitiesFormId = 'package-optional-activities-form-'.$product->id;
                             $normalizedPackageDuration = strtolower(trim((string) $product->duration));
                             $compactPackageDuration = str_replace(' ', '', $normalizedPackageDuration);
                             $currentPackageType = match (true) {
@@ -146,7 +150,7 @@
 
                             $normalizePackageDetailRows = function ($rows, $fallbackRows, $defaultSymbol, $allowedSymbols) {
                                 $stripPackageDetailLeadingMarker = function ($text) {
-                                    return trim((string) preg_replace('/^\s*(?:[•●○◦▪▫✓✔✕✖✗❌⚠!]+|\d+[.)])\s*/u', '', (string) $text));
+                                    return trim((string) preg_replace('/^\s*(?:[â€¢â—â—‹â—¦â–ªâ–«âœ“âœ”âœ•âœ–âœ—âŒâš !]+|\d+[.)])\s*/u', '', (string) $text));
                                 };
 
                                 $normalizedRows = collect(is_array($rows) ? $rows : [])
@@ -187,55 +191,77 @@
                             };
 
                             $cleanPackageDetailHtml = function ($html) {
-                                return preg_replace(
-                                    '/(<(?:p|div|li)[^>]*>\s*(?:<(?:strong|b|em|i|u)[^>]*>\s*)*)(?:[•●○◦▪▫✓✔✕✖✗❌⚠!]+|\d+[.)])\s*/u',
+                                $cleaned = preg_replace(
+                                    '/(<(?:p|div|li)[^>]*>\s*(?:<(?:strong|b|em|i|u)[^>]*>\s*)*)(?:[â€¢â—â—‹â—¦â–ªâ–«âœ“âœ”âœ•âœ–âœ—âŒâš !]+|\d+[.)])\s*/u',
                                     '$1',
                                     (string) $html
                                 ) ?? (string) $html;
+
+                                $cleaned = preg_replace('/<li[^>]*>\s*(?:&nbsp;|\s|<br\s*\/?>)*<\/li>/iu', '', $cleaned) ?? $cleaned;
+                                $cleaned = preg_replace('/<(ul|ol)([^>]*)>\s*<\/\1>/iu', '', $cleaned) ?? $cleaned;
+
+                                return $cleaned;
                             };
 
                             $buildPackageDetailSectionHtml = function ($rows) use ($cleanPackageDetailHtml) {
-                                return collect($rows)
-                                    ->map(function ($row) use ($cleanPackageDetailHtml) {
-                                        if (! is_array($row)) {
-                                            $text = trim((string) $row);
+                                $segments = [];
+                                $pendingLists = [];
+                                $pointStyleMap = [
+                                    'tick' => 'tick',
+                                    'round' => 'round',
+                                    'x' => 'x',
+                                    'exclamation' => 'warning',
+                                ];
 
-                                            return $text === '' ? null : '<p>'.e($text).'</p>';
+                                $flushPendingLists = function () use (&$segments, &$pendingLists) {
+                                    foreach ($pendingLists as $style => $items) {
+                                        if ($items === []) {
+                                            continue;
                                         }
 
-                                        $html = trim($cleanPackageDetailHtml($row['html'] ?? ''));
+                                        $segments[] = '<ul data-point-style="'.e($style).'">'.collect($items)
+                                            ->map(fn ($item) => '<li>'.e($item).'</li>')
+                                            ->implode('').'</ul>';
+                                    }
 
-                                        if ($html !== '') {
-                                            return $html;
+                                    $pendingLists = [];
+                                };
+
+                                foreach (collect($rows) as $row) {
+                                    if (! is_array($row)) {
+                                        $text = trim((string) $row);
+
+                                        if ($text !== '') {
+                                            $pendingLists['round'][] = $text;
                                         }
 
-                                        $text = trim((string) ($row['text'] ?? $row['value'] ?? ''));
+                                        continue;
+                                    }
 
-                                        return $text === '' ? null : '<p>'.e($text).'</p>';
-                                    })
-                                    ->filter()
-                                    ->implode('');
+                                    $html = trim($cleanPackageDetailHtml($row['html'] ?? ''));
+                                    $text = trim((string) ($row['text'] ?? $row['value'] ?? ''));
+                                    $symbol = trim((string) ($row['symbol'] ?? 'round'));
+                                    $pointStyle = $pointStyleMap[$symbol] ?? 'round';
+                                    $hasStructuredHtml = $html !== '' && preg_match('/<(?:ul|ol|li|p|div|br)\b/i', $html);
+
+                                    if ($hasStructuredHtml) {
+                                        $flushPendingLists();
+                                        $segments[] = $html;
+
+                                        continue;
+                                    }
+
+                                    if ($text !== '') {
+                                        $pendingLists[$pointStyle][] = $text;
+                                    }
+                                }
+
+                                $flushPendingLists();
+
+                                return implode('', array_filter($segments));
                             };
 
                             $packageDetails = is_array($product->package_details) ? $product->package_details : [];
-                            $packageTourHighlightRows = collect(is_array($product->tour_highlights) ? $product->tour_highlights : [])
-                                ->map(fn ($item) => trim((string) $item))
-                                ->filter()
-                                ->values();
-
-                            if ($packageTourHighlightRows->isEmpty()) {
-                                $packageTourHighlightRows = collect([$product->summary, $product->description])
-                                    ->filter(fn ($text) => filled($text))
-                                    ->flatMap(fn ($text) => preg_split('/(?<=[.!?])\s+/', trim((string) $text)) ?: [])
-                                    ->map(fn ($item) => trim((string) $item))
-                                    ->filter()
-                                    ->take(4)
-                                    ->values();
-                            }
-
-                            if ($packageTourHighlightRows->isEmpty()) {
-                                $packageTourHighlightRows = collect(['']);
-                            }
 
                             $packageIncludeRows = $normalizePackageDetailRows($packageDetails['includes'] ?? [], $legacyPackageDetailSections['includes'], 'tick', ['tick', 'round']);
                             $packageExcludeRows = $normalizePackageDetailRows($packageDetails['excludes'] ?? [], $legacyPackageDetailSections['excludes'], 'x', ['x', 'round']);
@@ -255,11 +281,113 @@
                                 return $collection->isNotEmpty() ? $collection : collect(['']);
                             };
 
-                            $packageRecommendedAttireRows = $normalizeSimpleRows($product->recommended_attire ?? []);
-                            $packageThingsToKnowRows = $normalizeSimpleRows($product->things_to_know ?? []);
-                            $packageTravelTipsRows = $normalizeSimpleRows($product->travel_tips ?? []);
+                            $buildPackageContentHtml = function ($rows) use ($cleanPackageDetailHtml) {
+                                $segments = [];
+                                $plainItems = [];
+
+                                $flushPlainItems = function () use (&$segments, &$plainItems) {
+                                    if ($plainItems === []) {
+                                        return;
+                                    }
+
+                                    $segments[] = '<ul data-point-style="round">'.collect($plainItems)
+                                        ->map(fn ($item) => '<li>'.e($item).'</li>')
+                                        ->implode('').'</ul>';
+                                    $plainItems = [];
+                                };
+
+                                foreach (collect(is_array($rows) ? $rows : []) as $row) {
+                                    if (is_array($row)) {
+                                        $html = trim($cleanPackageDetailHtml((string) ($row['html'] ?? '')));
+                                        $text = trim((string) ($row['text'] ?? $row['value'] ?? ''));
+                                        $hasStructuredHtml = $html !== '' && preg_match('/<(?:ul|ol|li|p|div|br)\b/i', $html);
+
+                                        if ($hasStructuredHtml) {
+                                            $flushPlainItems();
+                                            $segments[] = $html;
+
+                                            continue;
+                                        }
+
+                                        if ($text !== '') {
+                                            $plainItems[] = $text;
+                                        }
+
+                                        continue;
+                                    }
+
+                                    $text = trim((string) $row);
+
+                                    if ($text !== '') {
+                                        $plainItems[] = $text;
+                                    }
+                                }
+
+                                $flushPlainItems();
+
+                                return implode('', array_filter($segments));
+                            };
+
+                            $packageTourHighlightsHtml = $buildPackageContentHtml($product->tour_highlights ?? []);
+                            $packageRecommendedAttireHtml = $buildPackageContentHtml($product->recommended_attire ?? []);
+                            $packageThingsToKnowHtml = $buildPackageContentHtml($product->things_to_know ?? []);
+                            $packageTravelTipsHtml = $buildPackageContentHtml($product->travel_tips ?? []);
+                            $packageOptionalActivitiesData = is_array($product->optional_activities) ? $product->optional_activities : [];
+                            $packageOptionalActivitiesDescription = trim((string) ($packageOptionalActivitiesData['description'] ?? ''));
+                            $packageOptionalActivitiesRows = collect(is_array($packageOptionalActivitiesData['rows'] ?? null) ? $packageOptionalActivitiesData['rows'] : [])
+                                ->map(function ($row) {
+                                    if (! is_array($row)) {
+                                        return null;
+                                    }
+
+                                    $name = trim((string) ($row['name'] ?? ''));
+                                    $rate = trim((string) ($row['rate'] ?? ($row['details'] ?? '')));
+
+                                    if ($name === '' && $rate === '') {
+                                        return null;
+                                    }
+
+                                    return [
+                                        'name' => $name,
+                                        'rate' => $rate,
+                                    ];
+                                })
+                                ->filter()
+                                ->values();
+
+                            if ($packageOptionalActivitiesRows->isEmpty()) {
+                                $packageOptionalActivitiesRows = collect(is_array($packageOptionalActivitiesData['items'] ?? null) ? $packageOptionalActivitiesData['items'] : [])
+                                    ->map(function ($item) {
+                                        $name = trim((string) $item);
+
+                                        if ($name === '') {
+                                            return null;
+                                        }
+
+                                        return [
+                                            'name' => $name,
+                                            'rate' => '',
+                                        ];
+                                    })
+                                    ->filter()
+                                    ->values();
+                            }
+
+                            if ($packageOptionalActivitiesRows->isEmpty()) {
+                                $packageOptionalActivitiesRows = collect([[
+                                    'name' => '',
+                                    'rate' => '',
+                                ]]);
+                            }
+
+                            $packageOptionalActivitiesEnabled = array_key_exists('enabled', $packageOptionalActivitiesData)
+                                ? (bool) $packageOptionalActivitiesData['enabled']
+                                : (
+                                    filled($packageOptionalActivitiesDescription)
+                                    || $packageOptionalActivitiesRows->contains(fn ($row) => filled($row['name'] ?? null) || filled($row['details'] ?? null))
+                                );
                         @endphp
-                        <form id="{{ $inlineFormId }}" method="POST" action="{{ route('admin.products.update', $product) }}" enctype="multipart/form-data" class="space-y-3" data-package-inline-form data-form-persist="admin-products-update-{{ $product->id }}">
+                        <form id="{{ $inlineFormId }}" method="POST" action="{{ route('admin.packages.update', $product) }}" enctype="multipart/form-data" class="space-y-3" data-package-inline-form data-form-persist="admin-products-update-{{ $product->id }}">
                             @csrf
                             @method('PATCH')
                             <input type="hidden" name="image_url" value="{{ $product->image_url }}">
@@ -268,10 +396,10 @@
                                 <input type="hidden" name="existing_gallery_images[]" value="{{ $galleryImage }}">
                             @endforeach
 
-                            <div class="package-inline-view space-y-3">
+                            <div class="package-inline-view space-y-2">
                                 <div class="flex flex-wrap items-center gap-2">
                                     <h4 class="text-xl font-semibold text-stone-900">{{ $product->name }}</h4>
-                                    <span class="rounded-full bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] {{ $product->is_active ? 'text-emerald-700' : 'text-stone-500' }}">
+                                    <span class="rounded-full bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] {{ $product->is_active ? 'text-emerald-700' : 'text-stone-500' }}" data-package-status-badge>
                                         {{ $product->is_active ? 'Active' : 'Hidden' }}
                                     </span>
                                     @if ($product->tour_code)
@@ -279,18 +407,15 @@
                                     @endif
                                 </div>
                                 <p class="text-sm text-stone-500">{{ $product->location }} | {{ $product->duration }}</p>
-                                <div class="space-y-2">
-                                    <p class="text-sm leading-6 text-stone-600">{{ $product->summary }}</p>
-                                    @if (filled($product->description))
-                                        <p class="text-sm leading-6 text-stone-500">{{ $product->description }}</p>
-                                    @endif
-                                </div>
+                                @if (filled($packageCardCopy))
+                                    <p class="text-sm leading-6 text-stone-600">{{ $packageCardCopy }}</p>
+                                @endif
                                 <div class="flex flex-wrap gap-2 text-xs font-semibold uppercase tracking-[0.2em]">
                                     <span class="rounded-full bg-white px-3 py-1 text-stone-600">RM {{ number_format((float) $product->malaysia_adult_price_myr, 2) }}</span>
                                     @if ($product->group_size_label)
                                         <span class="rounded-full bg-white px-3 py-1 text-stone-600">{{ $product->group_size_label }}</span>
                                     @endif
-                                    @if ($product->capacity)
+                                    @if ($product->capacity !== null)
                                         <span class="rounded-full bg-white px-3 py-1 text-stone-600">Capacity {{ $product->capacity }}</span>
                                     @endif
                                     <span class="rounded-full bg-white px-3 py-1 text-stone-600">{{ $product->is_top_choice ? 'Top choice' : ($product->is_featured ? 'Featured' : 'Standard') }}</span>
@@ -332,10 +457,6 @@
                                                     <span class="mb-1 block text-[11px] font-semibold uppercase tracking-[0.14em] text-stone-500">Upload main image</span>
                                                     <input name="image" type="file" accept=".jpg,.jpeg,.png,.webp" class="w-full rounded-2xl border border-dashed border-stone-300 bg-white px-3 py-2 text-xs text-stone-700">
                                                 </label>
-                                                <div class="mt-4">
-                                                    <label class="mb-1 block text-sm font-medium uppercase tracking-[0.02em] text-stone-500">Description</label>
-                                                    <textarea name="description" rows="5" class="w-full rounded-lg border border-stone-300 bg-white px-4 py-3 text-sm text-stone-800">{{ $product->description }}</textarea>
-                                                </div>
                                             </div>
 
                                             <div class="min-w-0">
@@ -543,7 +664,11 @@
                                             </template>
                                         </div>
                                     </div>
-                                    <div style="grid-column: span 2 / span 2;">
+                                    <div style="grid-column: 1 / -1;">
+                                        <label class="mb-1 block text-sm font-medium uppercase tracking-[0.02em] text-stone-500">Description</label>
+                                        <textarea name="description" rows="6" class="w-full rounded-lg border border-stone-300 bg-white px-4 py-3 text-sm text-stone-800">{{ $product->description }}</textarea>
+                                    </div>
+                                    <div style="grid-column: 1 / -1;">
                                         <label class="mb-1 block text-sm font-medium uppercase tracking-[0.02em] text-stone-500">Summary</label>
                                         <textarea name="summary" rows="6" class="w-full rounded-lg border border-stone-300 bg-white px-4 py-3 text-sm text-stone-800">{{ $product->summary }}</textarea>
                                     </div>
@@ -587,20 +712,17 @@
                         @if ($isPackage)
                             <div class="flex flex-wrap items-center gap-2">
                                 <h4 class="text-xl font-semibold text-stone-900">{{ $product->name }}</h4>
-                                <span class="rounded-full bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] {{ $product->is_active ? 'text-emerald-700' : 'text-stone-500' }}">
+                                <span class="rounded-full bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] {{ $product->is_active ? 'text-emerald-700' : 'text-stone-500' }}" data-package-status-badge>
                                     {{ $product->is_active ? 'Active' : 'Hidden' }}
                                 </span>
                             </div>
                             <p class="mt-2 text-sm text-stone-500">{{ $product->location }} | {{ $product->duration }}</p>
-                            <div class="mt-3 space-y-2">
-                                <p class="text-sm leading-6 text-stone-600">{{ $product->summary }}</p>
-                                @if (filled($product->description))
-                                    <p class="text-sm leading-6 text-stone-500">{{ $product->description }}</p>
-                                @endif
-                            </div>
-                            <div class="mt-4 flex flex-wrap gap-2 text-xs font-semibold uppercase tracking-[0.2em]">
+                            @if (filled($packageCardCopy))
+                                <p class="mt-3 text-sm leading-6 text-stone-600">{{ $packageCardCopy }}</p>
+                            @endif
+                            <div class="mt-3 flex flex-wrap gap-2 text-xs font-semibold uppercase tracking-[0.2em]">
                                 <span class="rounded-full bg-white px-3 py-1 text-stone-600">RM {{ number_format((float) $product->malaysia_adult_price_myr, 2) }}</span>
-                                @if ($product->capacity)
+                                @if ($product->capacity !== null)
                                     <span class="rounded-full bg-white px-3 py-1 text-stone-600">Capacity {{ $product->capacity }}</span>
                                 @endif
                                 <span class="rounded-full bg-white px-3 py-1 text-stone-600">{{ $product->is_top_choice ? 'Top choice' : ($product->is_featured ? 'Featured' : 'Standard') }}</span>
@@ -615,7 +737,7 @@
                                     {{ $product->is_active ? 'Active' : 'Inactive' }}
                                 </span>
                             </div>
-                            @if ($product->capacity)
+                            @if ($product->capacity !== null)
                                 <p class="mt-2 text-sm font-medium text-stone-500">Capacity: {{ $product->capacity }}</p>
                             @endif
                             <div class="mt-3 space-y-2">
@@ -631,6 +753,17 @@
                 @if ($editable)
                     <div class="flex flex-wrap items-center gap-2" @if ($isPackage) style="grid-column: 1 / -1;" @endif>
                         @if ($isPackage)
+                            <button
+                                type="button"
+                                class="min-w-[8.75rem] rounded-full border px-4 py-2 text-center text-xs font-semibold uppercase tracking-[0.2em] transition {{ $product->is_active ? 'border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100' : 'border-stone-300 bg-white text-stone-700 hover:bg-stone-100' }}"
+                                aria-label="{{ $product->is_active ? 'Hide package listing' : 'Show package listing' }}"
+                                data-package-active-button
+                                data-package-active-url="{{ route('admin.packages.active', $product) }}"
+                                data-package-active-value="{{ $product->is_active ? 0 : 1 }}"
+                                data-package-active-token="{{ csrf_token() }}"
+                            >
+                                <span data-package-active-label>{{ $product->is_active ? 'Active' : 'Hidden' }}</span>
+                            </button>
                             <button type="button" class="min-w-[8.75rem] rounded-full border border-stone-300 bg-white px-4 py-2 text-center text-xs font-semibold uppercase tracking-[0.2em] text-stone-700 transition hover:bg-stone-100 package-inline-edit-trigger" data-package-inline-edit>
                                 Edit
                             </button>
@@ -643,6 +776,9 @@
                             <button type="button" class="min-w-[8.75rem] rounded-full border border-amber-300 bg-amber-50 px-4 py-2 text-center text-xs font-semibold uppercase tracking-[0.2em] text-amber-700 transition hover:bg-amber-100" data-package-inline-open="package-content">
                                 Other Content
                             </button>
+                            <button type="button" class="min-w-[8.75rem] rounded-full border border-violet-300 bg-violet-50 px-4 py-2 text-center text-xs font-semibold uppercase tracking-[0.2em] text-violet-700 transition hover:bg-violet-100" data-package-inline-open="optional-activities">
+                                Optional Activities
+                            </button>
                             <button type="submit" form="{{ $inlineFormId }}" class="hidden min-w-[8.75rem] rounded-full bg-sky-600 px-4 py-2 text-center text-xs font-semibold uppercase tracking-[0.2em] text-white transition hover:bg-sky-700 package-inline-save">
                                 Save
                             </button>
@@ -651,7 +787,7 @@
                             </button>
                             <div class="package-itinerary-modal hidden fixed inset-0 z-[1200] items-start justify-center overflow-y-auto bg-stone-950/55 px-6 py-6 md:px-8" data-package-itinerary-modal>
                                 <div class="flex max-h-[calc(100vh-3rem)] w-full max-w-6xl flex-col overflow-hidden rounded-[2rem] border border-stone-200 bg-stone-100 p-5 shadow-[0_24px_60px_rgba(15,23,42,0.24)]">
-                                    <form id="{{ $itineraryFormId }}" method="POST" action="{{ route('admin.products.itinerary', $product) }}" class="flex min-h-0 flex-1 flex-col gap-4" data-form-persist="admin-products-itinerary-{{ $product->id }}">
+                                    <form id="{{ $itineraryFormId }}" method="POST" action="{{ route('admin.packages.itinerary', $product) }}" class="flex min-h-0 flex-1 flex-col gap-4" data-form-persist="admin-products-itinerary-{{ $product->id }}">
                                         @csrf
                                         @method('PATCH')
                                         <datalist id="{{ $itineraryTimeOptionsId }}">
@@ -787,7 +923,7 @@
                             </div>
                             <div class="package-service-inclusion-modal hidden fixed inset-0 z-[410] items-start justify-center overflow-y-auto bg-stone-950/55 px-6 py-6 md:px-8" data-package-service-inclusion-modal>
                                 <div class="flex max-h-[calc(100vh-3rem)] w-full max-w-[96rem] flex-col overflow-hidden rounded-[2rem] border border-stone-200 bg-stone-100 p-5 shadow-[0_24px_60px_rgba(15,23,42,0.24)]">
-                                    <form id="{{ $packageDetailsFormId }}" method="POST" action="{{ route('admin.products.package-details', $product) }}" class="flex min-h-0 flex-1 flex-col gap-5" data-form-persist="admin-products-package-details-{{ $product->id }}">
+                                    <form id="{{ $packageDetailsFormId }}" method="POST" action="{{ route('admin.packages.package-details', $product) }}" class="flex min-h-0 flex-1 flex-col gap-5" data-form-persist="admin-products-package-details-{{ $product->id }}">
                                         @csrf
                                         @method('PATCH')
                                         <div class="flex items-start justify-between gap-4">
@@ -882,7 +1018,7 @@
                                             </section>
                                         </div>
                                         </div>
-                                        <div class="fixed z-[460] hidden rounded-2xl border border-stone-200 bg-white p-2 shadow-[0_18px_45px_rgba(15,23,42,0.18)]" data-package-rich-toolbar>
+                                        <div class="fixed z-[460] hidden rounded-2xl border border-stone-200 bg-white p-2 shadow-[0_18px_45px_rgba(15,23,42,0.18)]" data-package-rich-toolbar data-package-rich-toolbar-mode="floating">
                                             <div class="flex flex-wrap items-center gap-1">
                                                 <button type="button" class="inline-flex h-9 min-w-[2.25rem] items-center justify-center rounded-xl border border-stone-200 px-2 text-sm font-semibold text-stone-700 transition hover:bg-stone-100" data-package-rich-action="bold">B</button>
                                                 <button type="button" class="inline-flex h-9 min-w-[2.25rem] items-center justify-center rounded-xl border border-stone-200 px-2 text-sm italic text-stone-700 transition hover:bg-stone-100" data-package-rich-action="italic">I</button>
@@ -906,7 +1042,7 @@
                             </div>
                             <div class="package-content-modal hidden fixed inset-0 z-[411] items-start justify-center overflow-y-auto bg-stone-950/55 px-6 py-6 md:px-8" data-package-content-modal>
                                 <div class="flex max-h-[calc(100vh-3rem)] w-full max-w-[96rem] flex-col overflow-hidden rounded-[2rem] border border-stone-200 bg-stone-100 p-5 shadow-[0_24px_60px_rgba(15,23,42,0.24)]">
-                                    <form id="{{ $packageContentFormId }}" method="POST" action="{{ route('admin.products.package-content', $product) }}" class="flex min-h-0 flex-1 flex-col gap-5" data-form-persist="admin-products-package-content-{{ $product->id }}">
+                                    <form id="{{ $packageContentFormId }}" method="POST" action="{{ route('admin.packages.package-content', $product) }}" class="flex min-h-0 flex-1 flex-col gap-5" data-form-persist="admin-products-package-content-{{ $product->id }}">
                                         @csrf
                                         @method('PATCH')
                                         <div class="flex items-start justify-between gap-4">
@@ -922,99 +1058,47 @@
                                         <div class="min-h-0 flex-1 overflow-y-auto pr-2" data-package-other-content-scroll>
                                         <div class="grid gap-4 md:grid-cols-2 items-start" data-package-other-content-sections>
                                             <section class="rounded-[1.25rem] border border-stone-200 bg-white p-4">
-                                                <div class="flex items-center justify-between gap-3">
-                                                    <div>
-                                                        <h4 class="text-base font-semibold text-stone-900">Tour Highlights</h4>
-                                                        <p class="mt-1 text-xs text-stone-500">Short standout points for this package.</p>
-                                                    </div>
-                                                    <button type="button" class="rounded-full border border-emerald-300 bg-emerald-50 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-emerald-700 transition hover:bg-emerald-100" data-package-content-add-row="tour-highlights">Add Row</button>
+                                                <div>
+                                                    <h4 class="text-base font-semibold text-stone-900">Tour Highlights</h4>
+                                                    <p class="mt-1 text-xs text-stone-500">One description box. Use the toolbar for points and symbols.</p>
                                                 </div>
-                                                <div class="mt-4 space-y-3" data-package-content-body="tour-highlights">
-                                                    @foreach ($packageTourHighlightRows as $highlight)
-                                                        <div class="grid gap-3 md:grid-cols-[1fr_auto]" data-package-content-row>
-                                                            <textarea name="tour_highlights[]" rows="2" class="w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm text-stone-800" placeholder="Scenic coastal drive with guided photo stops.">{{ $highlight }}</textarea>
-                                                            <button type="button" class="inline-flex h-10 w-10 items-center justify-center self-start rounded-full border border-rose-200 bg-rose-50 text-rose-700 transition hover:bg-rose-100" data-package-content-remove-row aria-label="Remove row"><span class="text-lg leading-none">×</span></button>
-                                                        </div>
-                                                    @endforeach
+                                                <div class="mt-4 min-w-0" data-package-rich-editor-wrapper>
+                                                    <input type="hidden" name="tour_highlights" value="{{ $packageTourHighlightsHtml }}" data-package-rich-editor-input>
+                                                    <div contenteditable="true" class="min-h-[8rem] rounded-xl border border-sky-200 bg-white px-4 py-3 text-sm leading-6 text-stone-800 shadow-sm focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-100" data-package-rich-editor data-placeholder="Scenic coastal drive, snorkelling spots, and sunset beach moments.">{!! $packageTourHighlightsHtml !!}</div>
                                                 </div>
                                             </section>
                                             <section class="rounded-[1.25rem] border border-stone-200 bg-white p-4">
-                                                <div class="flex items-center justify-between gap-3">
-                                                    <div>
-                                                        <h4 class="text-base font-semibold text-stone-900">Recommended Attire</h4>
-                                                        <p class="mt-1 text-xs text-stone-500">What guests should wear or prepare clothing-wise.</p>
-                                                    </div>
-                                                    <button type="button" class="rounded-full border border-emerald-300 bg-emerald-50 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-emerald-700 transition hover:bg-emerald-100" data-package-content-add-row="recommended-attire">Add Row</button>
+                                                <div>
+                                                    <h4 class="text-base font-semibold text-stone-900">Recommended Attire</h4>
+                                                    <p class="mt-1 text-xs text-stone-500">One description box. Use the toolbar for points and symbols.</p>
                                                 </div>
-                                                <div class="mt-4 space-y-3" data-package-content-body="recommended-attire">
-                                                    @foreach ($packageRecommendedAttireRows as $attire)
-                                                        <div class="grid gap-3 md:grid-cols-[1fr_auto]" data-package-content-row>
-                                                            <textarea name="recommended_attire[]" rows="2" class="w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm text-stone-800" placeholder="Comfortable clothing, hat, and non-slip shoes.">{{ $attire }}</textarea>
-                                                            <button type="button" class="inline-flex h-10 w-10 items-center justify-center self-start rounded-full border border-rose-200 bg-rose-50 text-rose-700 transition hover:bg-rose-100" data-package-content-remove-row aria-label="Remove row"><span class="text-lg leading-none">×</span></button>
-                                                        </div>
-                                                    @endforeach
+                                                <div class="mt-4 min-w-0" data-package-rich-editor-wrapper>
+                                                    <input type="hidden" name="recommended_attire" value="{{ $packageRecommendedAttireHtml }}" data-package-rich-editor-input>
+                                                    <div contenteditable="true" class="min-h-[8rem] rounded-xl border border-sky-200 bg-white px-4 py-3 text-sm leading-6 text-stone-800 shadow-sm focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-100" data-package-rich-editor data-placeholder="Wear light clothing, comfortable footwear, and bring sun protection.">{!! $packageRecommendedAttireHtml !!}</div>
                                                 </div>
                                             </section>
                                             <section class="rounded-[1.25rem] border border-stone-200 bg-white p-4">
-                                                <div class="flex items-center justify-between gap-3">
-                                                    <div>
-                                                        <h4 class="text-base font-semibold text-stone-900">Things You Should Know</h4>
-                                                        <p class="mt-1 text-xs text-stone-500">Useful operational notes for guests before departure.</p>
-                                                    </div>
-                                                    <button type="button" class="rounded-full border border-emerald-300 bg-emerald-50 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-emerald-700 transition hover:bg-emerald-100" data-package-content-add-row="things-to-know">Add Row</button>
+                                                <div>
+                                                    <h4 class="text-base font-semibold text-stone-900">Things You Should Know</h4>
+                                                    <p class="mt-1 text-xs text-stone-500">One description box. Use the toolbar for points and symbols.</p>
                                                 </div>
-                                                <div class="mt-4 space-y-3" data-package-content-body="things-to-know">
-                                                    @foreach ($packageThingsToKnowRows as $note)
-                                                        <div class="grid gap-3 md:grid-cols-[1fr_auto]" data-package-content-row>
-                                                            <textarea name="things_to_know[]" rows="2" class="w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm text-stone-800" placeholder="Pickup timing may shift slightly based on traffic and hotel location.">{{ $note }}</textarea>
-                                                            <button type="button" class="inline-flex h-10 w-10 items-center justify-center self-start rounded-full border border-rose-200 bg-rose-50 text-rose-700 transition hover:bg-rose-100" data-package-content-remove-row aria-label="Remove row"><span class="text-lg leading-none">×</span></button>
-                                                        </div>
-                                                    @endforeach
+                                                <div class="mt-4 min-w-0" data-package-rich-editor-wrapper>
+                                                    <input type="hidden" name="things_to_know" value="{{ $packageThingsToKnowHtml }}" data-package-rich-editor-input>
+                                                    <div contenteditable="true" class="min-h-[8rem] rounded-xl border border-sky-200 bg-white px-4 py-3 text-sm leading-6 text-stone-800 shadow-sm focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-100" data-package-rich-editor data-placeholder="Weather, timing, and operator arrangements may affect the final flow.">{!! $packageThingsToKnowHtml !!}</div>
                                                 </div>
                                             </section>
                                             <section class="rounded-[1.25rem] border border-stone-200 bg-white p-4">
-                                                <div class="flex items-center justify-between gap-3">
-                                                    <div>
-                                                        <h4 class="text-base font-semibold text-stone-900">Useful Travel Tips</h4>
-                                                        <p class="mt-1 text-xs text-stone-500">Helpful reminders that make the trip smoother.</p>
-                                                    </div>
-                                                    <button type="button" class="rounded-full border border-emerald-300 bg-emerald-50 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-emerald-700 transition hover:bg-emerald-100" data-package-content-add-row="travel-tips">Add Row</button>
+                                                <div>
+                                                    <h4 class="text-base font-semibold text-stone-900">Useful Travel Tips</h4>
+                                                    <p class="mt-1 text-xs text-stone-500">One description box. Use the toolbar for points and symbols.</p>
                                                 </div>
-                                                <div class="mt-4 space-y-3" data-package-content-body="travel-tips">
-                                                    @foreach ($packageTravelTipsRows as $tip)
-                                                        <div class="grid gap-3 md:grid-cols-[1fr_auto]" data-package-content-row>
-                                                            <textarea name="travel_tips[]" rows="2" class="w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm text-stone-800" placeholder="Carry small cash, water, and a charged phone.">{{ $tip }}</textarea>
-                                                            <button type="button" class="inline-flex h-10 w-10 items-center justify-center self-start rounded-full border border-rose-200 bg-rose-50 text-rose-700 transition hover:bg-rose-100" data-package-content-remove-row aria-label="Remove row"><span class="text-lg leading-none">×</span></button>
-                                                        </div>
-                                                    @endforeach
+                                                <div class="mt-4 min-w-0" data-package-rich-editor-wrapper>
+                                                    <input type="hidden" name="travel_tips" value="{{ $packageTravelTipsHtml }}" data-package-rich-editor-input>
+                                                    <div contenteditable="true" class="min-h-[8rem] rounded-xl border border-sky-200 bg-white px-4 py-3 text-sm leading-6 text-stone-800 shadow-sm focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-100" data-package-rich-editor data-placeholder="Bring water, a charged phone, and any personal essentials.">{!! $packageTravelTipsHtml !!}</div>
                                                 </div>
                                             </section>
                                         </div>
                                         </div>
-                                        <template data-package-content-template="tour-highlights">
-                                            <div class="grid gap-3 md:grid-cols-[1fr_auto]" data-package-content-row>
-                                                <textarea name="tour_highlights[]" rows="2" class="w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm text-stone-800" placeholder="Scenic coastal drive with guided photo stops."></textarea>
-                                                <button type="button" class="inline-flex h-10 w-10 items-center justify-center self-start rounded-full border border-rose-200 bg-rose-50 text-rose-700 transition hover:bg-rose-100" data-package-content-remove-row aria-label="Remove row"><span class="text-lg leading-none">×</span></button>
-                                            </div>
-                                        </template>
-                                        <template data-package-content-template="recommended-attire">
-                                            <div class="grid gap-3 md:grid-cols-[1fr_auto]" data-package-content-row>
-                                                <textarea name="recommended_attire[]" rows="2" class="w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm text-stone-800" placeholder="Comfortable clothing, hat, and non-slip shoes."></textarea>
-                                                <button type="button" class="inline-flex h-10 w-10 items-center justify-center self-start rounded-full border border-rose-200 bg-rose-50 text-rose-700 transition hover:bg-rose-100" data-package-content-remove-row aria-label="Remove row"><span class="text-lg leading-none">×</span></button>
-                                            </div>
-                                        </template>
-                                        <template data-package-content-template="things-to-know">
-                                            <div class="grid gap-3 md:grid-cols-[1fr_auto]" data-package-content-row>
-                                                <textarea name="things_to_know[]" rows="2" class="w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm text-stone-800" placeholder="Pickup timing may shift slightly based on traffic and hotel location."></textarea>
-                                                <button type="button" class="inline-flex h-10 w-10 items-center justify-center self-start rounded-full border border-rose-200 bg-rose-50 text-rose-700 transition hover:bg-rose-100" data-package-content-remove-row aria-label="Remove row"><span class="text-lg leading-none">×</span></button>
-                                            </div>
-                                        </template>
-                                        <template data-package-content-template="travel-tips">
-                                            <div class="grid gap-3 md:grid-cols-[1fr_auto]" data-package-content-row>
-                                                <textarea name="travel_tips[]" rows="2" class="w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm text-stone-800" placeholder="Carry small cash, water, and a charged phone."></textarea>
-                                                <button type="button" class="inline-flex h-10 w-10 items-center justify-center self-start rounded-full border border-rose-200 bg-rose-50 text-rose-700 transition hover:bg-rose-100" data-package-content-remove-row aria-label="Remove row"><span class="text-lg leading-none">×</span></button>
-                                            </div>
-                                        </template>
                                         <div class="flex flex-wrap justify-between gap-3 border-t border-stone-200 bg-stone-100 pt-4">
                                             <div></div>
                                             <div class="flex gap-3">
@@ -1025,6 +1109,100 @@
                                                     Save Content
                                                 </button>
                                             </div>
+                                        </div>
+                                    </form>
+                                    <div class="fixed z-[460] hidden rounded-2xl border border-stone-200 bg-white p-2 shadow-[0_18px_45px_rgba(15,23,42,0.18)]" data-package-rich-toolbar data-package-rich-toolbar-mode="floating">
+                                        <div class="flex flex-wrap items-center gap-1">
+                                            <button type="button" class="inline-flex h-9 min-w-[2.25rem] items-center justify-center rounded-xl border border-stone-200 px-2 text-sm font-semibold text-stone-700 transition hover:bg-stone-100" data-package-rich-action="bold">B</button>
+                                            <button type="button" class="inline-flex h-9 min-w-[2.25rem] items-center justify-center rounded-xl border border-stone-200 px-2 text-sm italic text-stone-700 transition hover:bg-stone-100" data-package-rich-action="italic">I</button>
+                                            <button type="button" class="inline-flex h-9 min-w-[2.25rem] items-center justify-center rounded-xl border border-stone-200 px-2 text-sm underline text-stone-700 transition hover:bg-stone-100" data-package-rich-action="underline">U</button>
+                                            <button type="button" class="inline-flex h-9 min-w-[2.25rem] items-center justify-center rounded-xl border border-stone-200 px-2 text-sm text-stone-700 transition hover:bg-stone-100" data-package-rich-action="tick">&#10003;</button>
+                                            <button type="button" class="inline-flex h-9 min-w-[2.25rem] items-center justify-center rounded-xl border border-stone-200 px-2 text-sm text-stone-700 transition hover:bg-stone-100" data-package-rich-action="round">&#9679;</button>
+                                            <button type="button" class="inline-flex h-9 min-w-[2.25rem] items-center justify-center rounded-xl border border-stone-200 px-2 text-sm text-stone-700 transition hover:bg-stone-100" data-package-rich-action="x">&#10006;</button>
+                                            <button type="button" class="inline-flex h-9 min-w-[2.25rem] items-center justify-center rounded-xl border border-stone-200 px-2 text-sm text-stone-700 transition hover:bg-stone-100" data-package-rich-action="warning">&#9888;</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="package-optional-activities-modal hidden fixed inset-0 z-[412] items-start justify-center overflow-y-auto bg-stone-950/55 px-6 py-6 md:px-8" data-package-optional-activities-modal>
+                                <div class="flex max-h-[calc(100vh-3rem)] w-full max-w-4xl flex-col overflow-hidden rounded-[2rem] border border-stone-200 bg-stone-100 p-5 shadow-[0_24px_60px_rgba(15,23,42,0.24)]">
+                                    <form id="{{ $optionalActivitiesFormId }}" method="POST" action="{{ route('admin.packages.optional-activities', $product) }}" class="flex min-h-0 flex-1 flex-col gap-5" data-form-persist="admin-products-optional-activities-{{ $product->id }}">
+                                        @csrf
+                                        @method('PATCH')
+                                        <div class="flex items-start justify-between gap-4">
+                                            <div>
+                                                <p class="text-sm font-medium uppercase tracking-[0.02em] text-stone-500">Optional Activities</p>
+                                                <h3 class="mt-1 text-2xl font-semibold text-stone-900">{{ $product->name }}</h3>
+                                                <p class="mt-2 text-sm text-stone-500">Choose whether this section appears on the user package page, then list any add-on activities.</p>
+                                            </div>
+                                            <button type="button" class="rounded-full border border-stone-300 bg-white px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-stone-700 transition hover:bg-stone-100" data-package-optional-activities-close>
+                                                Close
+                                            </button>
+                                        </div>
+                                        <div class="min-h-0 flex-1 overflow-y-auto pr-2" data-package-optional-activities-sections>
+                                            <section class="rounded-[1.25rem] border border-stone-200 bg-white p-5">
+                                                <div>
+                                                    <h4 class="text-base font-semibold text-stone-900">Section Description</h4>
+                                                    <p class="mt-1 text-xs text-stone-500">Add a short intro above the extra activities table on the user package page.</p>
+                                                </div>
+                                                <textarea name="optional_activities_description" rows="4" class="mt-4 w-full rounded-lg border border-stone-300 bg-white px-4 py-3 text-sm text-stone-800" placeholder="Optional activities below can be arranged with extra charges depending on availability and weather conditions.">{{ $packageOptionalActivitiesDescription }}</textarea>
+                                            </section>
+                                            <section class="mt-4 rounded-[1.25rem] border border-stone-200 bg-white p-5">
+                                                <div class="flex items-center justify-between gap-3">
+                                                    <div>
+                                                        <h4 class="text-base font-semibold text-stone-900">Extra Activities Table</h4>
+                                                        <p class="mt-1 text-xs text-stone-500">Keep at least 2 columns. I used Activity and Rate / Price so each add-on shows its charge clearly.</p>
+                                                    </div>
+                                                    <button type="button" class="rounded-full border border-violet-300 bg-violet-50 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-violet-700 transition hover:bg-violet-100" data-package-content-add-row="optional-activities">Add Row</button>
+                                                </div>
+                                                <div class="mt-4 overflow-x-auto rounded-[1rem] border border-stone-200">
+                                                    <table class="min-w-full text-left text-sm">
+                                                        <thead class="bg-stone-100 text-stone-700">
+                                                            <tr>
+                                                                <th class="px-4 py-3 font-semibold">Activity</th>
+                                                                <th class="px-4 py-3 font-semibold">Rate / Price</th>
+                                                                <th class="w-20 px-4 py-3 font-semibold text-center">Remove</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody class="divide-y divide-stone-200 bg-white" data-package-content-body="optional-activities">
+                                                            @foreach ($packageOptionalActivitiesRows as $activity)
+                                                                <tr data-package-content-row>
+                                                                    <td class="px-4 py-3 align-top">
+                                                                        <input name="optional_activity_name[]" type="text" value="{{ $activity['name'] }}" class="w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm text-stone-800" placeholder="ATV Ride">
+                                                                    </td>
+                                                                    <td class="px-4 py-3 align-top">
+                                                                        <input name="optional_activity_rate[]" type="text" value="{{ $activity['rate'] }}" class="w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm text-stone-800" placeholder="RM 120 per person">
+                                                                    </td>
+                                                                    <td class="px-4 py-3 text-center align-top">
+                                                                        <button type="button" class="inline-flex h-10 w-10 items-center justify-center rounded-full border border-rose-200 bg-rose-50 text-rose-700 transition hover:bg-rose-100" data-package-content-remove-row aria-label="Remove row"><span class="text-lg leading-none">&times;</span></button>
+                                                                    </td>
+                                                                </tr>
+                                                            @endforeach
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </section>
+                                        </div>
+                                        <template data-package-content-template="optional-activities">
+                                            <tr data-package-content-row>
+                                                <td class="px-4 py-3 align-top">
+                                                    <input name="optional_activity_name[]" type="text" class="w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm text-stone-800" placeholder="ATV Ride">
+                                                </td>
+                                                <td class="px-4 py-3 align-top">
+                                                    <input name="optional_activity_rate[]" type="text" class="w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm text-stone-800" placeholder="RM 120 per person">
+                                                </td>
+                                                <td class="px-4 py-3 text-center align-top">
+                                                    <button type="button" class="inline-flex h-10 w-10 items-center justify-center rounded-full border border-rose-200 bg-rose-50 text-rose-700 transition hover:bg-rose-100" data-package-content-remove-row aria-label="Remove row"><span class="text-lg leading-none">&times;</span></button>
+                                                </td>
+                                            </tr>
+                                        </template>
+                                        <div class="flex flex-wrap justify-end gap-3 border-t border-stone-200 bg-stone-100 pt-4">
+                                            <button type="button" class="rounded-full border border-stone-300 bg-white px-4 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-stone-700 transition hover:bg-stone-100" data-package-optional-activities-close>
+                                                Cancel
+                                            </button>
+                                            <button type="submit" class="rounded-full bg-sky-600 px-4 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-white transition hover:bg-sky-700">
+                                                Save Optional Activities
+                                            </button>
                                         </div>
                                     </form>
                                 </div>
@@ -1233,10 +1411,10 @@
                             </div>
                         @endif
 
-                        <form method="POST" action="{{ route('admin.products.destroy', $product) }}" onsubmit="return confirm('Delete this product?');" class="{{ $isPackage ? '' : 'w-full' }}">
+                        <form method="POST" action="{{ $isPackage ? route('admin.packages.destroy', $product) : route('admin.products.destroy', $product) }}" @if (! $isPackage) onsubmit="return confirm('Delete this product?');" @endif class="{{ $isPackage ? '' : 'w-full' }}" @if ($isPackage) data-package-delete-form @endif>
                             @csrf
                             @method('DELETE')
-                            <button type="submit" class="min-w-[8.75rem] rounded-full border border-rose-300 bg-white px-4 py-2 text-center text-xs font-semibold uppercase tracking-[0.2em] text-rose-700 transition hover:bg-rose-50 {{ $isPackage ? '' : 'w-full' }}">
+                            <button type="submit" class="min-w-[8.75rem] rounded-full border border-rose-300 bg-white px-4 py-2 text-center text-xs font-semibold uppercase tracking-[0.2em] text-rose-700 transition hover:bg-rose-50 {{ $isPackage ? '' : 'w-full' }}" @if ($isPackage) data-package-delete-button @endif>
                                 Delete
                             </button>
                         </form>
@@ -1343,6 +1521,7 @@
             const itineraryButton = row.querySelector('[data-package-inline-open="itinerary"]');
             const packageDetailsButton = row.querySelector('[data-package-inline-open="package-details"]');
             const packageContentButton = row.querySelector('[data-package-inline-open="package-content"]');
+            const optionalActivitiesButton = row.querySelector('[data-package-inline-open="optional-activities"]');
             const cancelButton = row.querySelector('[data-package-inline-cancel]');
             const saveButton = row.querySelector('.package-inline-save');
             const itineraryModal = row.querySelector('[data-package-itinerary-modal]');
@@ -1354,10 +1533,13 @@
             const serviceInclusionCloseButtons = row.querySelectorAll('[data-package-service-inclusion-close]');
             const packageDetailsForm = serviceInclusionModal?.querySelector('form');
             const packageContentModal = row.querySelector('[data-package-content-modal]');
+            const packageContentForm = packageContentModal?.querySelector('form');
             const packageContentCloseButtons = row.querySelectorAll('[data-package-content-close]');
-            const packageDetailsSections = row.querySelector('[data-package-content-sections]');
-            const packageOtherContentSections = row.querySelector('[data-package-other-content-sections]');
-            const packageRichToolbar = row.querySelector('[data-package-rich-toolbar]');
+            const optionalActivitiesModal = row.querySelector('[data-package-optional-activities-modal]');
+            const optionalActivitiesCloseButtons = row.querySelectorAll('[data-package-optional-activities-close]');
+            const packageRichToolbars = Array.from(row.querySelectorAll('[data-package-rich-toolbar]'));
+            const packageDeleteForm = row.querySelector('[data-package-delete-form]');
+            const packageDeleteButton = row.querySelector('[data-package-delete-button]');
             let activeRichEditor = null;
             let savedRichSelection = null;
 
@@ -1412,8 +1594,22 @@
                 input.value = normalizeRichEditorHtml(editor);
             };
 
+            const getFloatingRichToolbars = () => {
+                return packageRichToolbars.filter((toolbar) => toolbar.dataset.packageRichToolbarMode === 'floating');
+            };
+
+            const getRichToolbarForEditor = (editor) => {
+                const editorModal = editor?.closest('[data-package-content-modal], [data-package-service-inclusion-modal]');
+
+                return editorModal?.querySelector('[data-package-rich-toolbar][data-package-rich-toolbar-mode="floating"]')
+                    ?? getFloatingRichToolbars()[0]
+                    ?? null;
+            };
+
             const hideRichToolbar = (clearActiveEditor = false) => {
-                packageRichToolbar?.classList.add('hidden');
+                getFloatingRichToolbars().forEach((toolbar) => {
+                    toolbar.classList.add('hidden');
+                });
 
                 if (clearActiveEditor) {
                     activeRichEditor = null;
@@ -1461,10 +1657,15 @@
 
             const updateRichToolbarPosition = () => {
                 const selection = window.getSelection();
+                const packageRichToolbar = getRichToolbarForEditor(activeRichEditor);
 
                 if (!packageRichToolbar || !selection || selection.rangeCount === 0 || !activeRichEditor || selection.isCollapsed || !selectionBelongsToEditor(selection, activeRichEditor)) {
                     hideRichToolbar();
 
+                    return;
+                }
+
+                if (packageRichToolbar.dataset.packageRichToolbarMode !== 'floating') {
                     return;
                 }
 
@@ -1511,7 +1712,7 @@
 
             const normalizeListItemText = (value) => {
                 return String(value || '')
-                    .replace(/^\s*(?:[•●○◦▪▫✓✔✕✖✗❌⚠!]+|\d+[.)])\s*/u, '')
+                    .replace(/^\s*(?:[â€¢â—â—‹â—¦â–ªâ–«âœ“âœ”âœ•âœ–âœ—âŒâš !]+|\d+[.)])\s*/u, '')
                     .trim();
             };
 
@@ -1912,6 +2113,12 @@
                 packageContentModal?.classList.add('flex');
             });
 
+            optionalActivitiesButton?.addEventListener('click', () => {
+                setRowOverlayState(true);
+                optionalActivitiesModal?.classList.remove('hidden');
+                optionalActivitiesModal?.classList.add('flex');
+            });
+
             serviceInclusionCloseButtons.forEach((button) => {
                 button.addEventListener('click', () => {
                     serviceInclusionModal?.classList.add('hidden');
@@ -1947,6 +2154,24 @@
 
                 packageContentModal.classList.add('hidden');
                 packageContentModal.classList.remove('flex');
+                syncRowOverlayState();
+            });
+
+            optionalActivitiesCloseButtons.forEach((button) => {
+                button.addEventListener('click', () => {
+                    optionalActivitiesModal?.classList.add('hidden');
+                    optionalActivitiesModal?.classList.remove('flex');
+                    syncRowOverlayState();
+                });
+            });
+
+            optionalActivitiesModal?.addEventListener('click', (event) => {
+                if (event.target !== optionalActivitiesModal) {
+                    return;
+                }
+
+                optionalActivitiesModal.classList.add('hidden');
+                optionalActivitiesModal.classList.remove('flex');
                 syncRowOverlayState();
             });
 
@@ -2064,14 +2289,15 @@
                 currentRow.remove();
             };
 
-            packageDetailsSections?.addEventListener('click', handlePackageContentSectionClick);
-            packageOtherContentSections?.addEventListener('click', handlePackageContentSectionClick);
-            packageDetailsSections?.addEventListener('focusout', (event) => {
-                if (event.currentTarget?.contains(event.relatedTarget)) {
-                    return;
-                }
+            row.querySelectorAll('[data-package-content-sections], [data-package-other-content-sections], [data-package-optional-activities-sections]').forEach((section) => {
+                section.addEventListener('click', handlePackageContentSectionClick);
+                section.addEventListener('focusout', (event) => {
+                    if (event.currentTarget?.contains(event.relatedTarget)) {
+                        return;
+                    }
 
-                closeSymbolPickers(row);
+                    closeSymbolPickers(row);
+                });
             });
 
             const handleRichToolbarAction = (event) => {
@@ -2101,7 +2327,9 @@
                 }
             };
 
-            packageRichToolbar?.addEventListener('mousedown', handleRichToolbarAction);
+            packageRichToolbars.forEach((toolbar) => {
+                toolbar.addEventListener('mousedown', handleRichToolbarAction);
+            });
 
             document.addEventListener('selectionchange', () => {
                 if (!activeRichEditor || !document.contains(activeRichEditor)) {
@@ -2123,6 +2351,10 @@
             });
 
             packageDetailsForm?.addEventListener('submit', () => {
+                row.querySelectorAll('[data-package-rich-editor]').forEach(syncRichEditorInput);
+            });
+
+            packageContentForm?.addEventListener('submit', () => {
                 row.querySelectorAll('[data-package-rich-editor]').forEach(syncRichEditorInput);
             });
 
@@ -2318,6 +2550,67 @@
                     updateEditPosition();
                 }
             }, { passive: true });
+
+            packageDeleteForm?.addEventListener('submit', async (event) => {
+                event.preventDefault();
+
+                if (!window.confirm('Delete this product?')) {
+                    return;
+                }
+
+                if (!packageDeleteButton) {
+                    packageDeleteForm.submit();
+
+                    return;
+                }
+
+                const originalLabel = packageDeleteButton.textContent;
+                packageDeleteButton.disabled = true;
+                packageDeleteButton.textContent = 'Deleting...';
+                packageDeleteButton.classList.add('opacity-70', 'cursor-not-allowed');
+
+                try {
+                    const response = await fetch(packageDeleteForm.action, {
+                        method: 'POST',
+                        headers: {
+                            'Accept': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest',
+                        },
+                        body: new FormData(packageDeleteForm),
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('Delete request failed.');
+                    }
+
+                    row.style.transition = 'opacity 0.2s ease, transform 0.2s ease, max-height 0.25s ease, margin 0.25s ease';
+                    row.style.opacity = '0';
+                    row.style.transform = 'translateY(-8px)';
+                    row.style.overflow = 'hidden';
+                    row.style.maxHeight = `${row.offsetHeight}px`;
+
+                    window.setTimeout(() => {
+                        row.style.maxHeight = '0';
+                        row.style.marginTop = '0';
+                        row.style.marginBottom = '0';
+                        row.style.paddingTop = '0';
+                        row.style.paddingBottom = '0';
+                    }, 10);
+
+                    window.setTimeout(() => {
+                        row.remove();
+                    }, 260);
+
+                    return;
+                } catch (error) {
+                    console.error(error);
+                    window.alert('Unable to delete this product right now. Please try again.');
+                }
+
+                packageDeleteButton.disabled = false;
+                packageDeleteButton.textContent = originalLabel;
+                packageDeleteButton.classList.remove('opacity-70', 'cursor-not-allowed');
+            });
         });
 
         document.addEventListener('codex:form-draft-restored', (event) => {
@@ -2583,6 +2876,7 @@
                 event.preventDefault();
 
                 const nextValue = input.value === '1';
+                const currentValue = !nextValue;
                 const formData = new FormData(form);
                 button.disabled = true;
                 button.classList.add('opacity-70');
@@ -2604,8 +2898,87 @@
                     const data = await response.json();
                     applyState(Boolean(data.is_active ?? nextValue));
                 } catch (error) {
-                    form.submit();
-                    return;
+                    applyState(currentValue);
+                    console.error(error);
+                    alert('Unable to update package visibility right now. Please try again.');
+                } finally {
+                    button.disabled = false;
+                    button.classList.remove('opacity-70');
+                }
+            });
+        });
+
+        document.querySelectorAll('[data-package-active-button]').forEach((button) => {
+            const label = button.querySelector('[data-package-active-label]');
+            const row = button.closest('[data-package-inline-row]');
+            const statusBadges = Array.from(row?.querySelectorAll('[data-package-status-badge]') ?? []);
+            const editCheckboxes = Array.from(row?.querySelectorAll('input[type="checkbox"][name="is_active"]') ?? []);
+
+            if (!label || !row) {
+                return;
+            }
+
+            const applyState = (isActive) => {
+                button.dataset.packageActiveValue = isActive ? '0' : '1';
+                label.textContent = isActive ? 'Active' : 'Hidden';
+                button.setAttribute('aria-label', isActive ? 'Hide package listing' : 'Show package listing');
+                button.classList.toggle('border-emerald-300', isActive);
+                button.classList.toggle('bg-emerald-50', isActive);
+                button.classList.toggle('text-emerald-700', isActive);
+                button.classList.toggle('hover:bg-emerald-100', isActive);
+                button.classList.toggle('border-stone-300', !isActive);
+                button.classList.toggle('bg-white', !isActive);
+                button.classList.toggle('text-stone-700', !isActive);
+                button.classList.toggle('hover:bg-stone-100', !isActive);
+
+                statusBadges.forEach((statusBadge) => {
+                    statusBadge.textContent = isActive ? 'Active' : 'Hidden';
+                    statusBadge.classList.toggle('text-emerald-700', isActive);
+                    statusBadge.classList.toggle('text-stone-500', !isActive);
+                });
+
+                editCheckboxes.forEach((checkbox) => {
+                    checkbox.checked = isActive;
+                });
+            };
+
+            button.addEventListener('click', async () => {
+                const nextValue = button.dataset.packageActiveValue === '1';
+                const currentValue = !nextValue;
+                const formData = new FormData();
+                formData.append('_token', button.dataset.packageActiveToken ?? '');
+                formData.append('_method', 'PATCH');
+                formData.append('is_active', nextValue ? '1' : '0');
+                button.disabled = true;
+                button.classList.add('opacity-70');
+                applyState(nextValue);
+
+                try {
+                    const response = await fetch(button.dataset.packageActiveUrl ?? '', {
+                        method: 'POST',
+                        headers: {
+                            'Accept': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest',
+                        },
+                        body: formData,
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('Toggle request failed.');
+                    }
+
+                    const responseType = response.headers.get('content-type') ?? '';
+
+                    if (!responseType.includes('application/json')) {
+                        throw new Error('Toggle request did not return JSON.');
+                    }
+
+                    const data = await response.json();
+                    applyState(Boolean(data.is_active ?? nextValue));
+                } catch (error) {
+                    applyState(currentValue);
+                    console.error(error);
+                    alert('Unable to update package visibility right now. Please try again.');
                 } finally {
                     button.disabled = false;
                     button.classList.remove('opacity-70');

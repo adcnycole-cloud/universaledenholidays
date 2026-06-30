@@ -8,6 +8,7 @@ use App\Models\Booking;
 use App\Models\CompanyCertification;
 use App\Models\HomeHeroSlide;
 use App\Models\NewsFeature;
+use App\Models\Package;
 use App\Models\Product;
 use App\Models\Staff;
 use App\Models\Testimonial;
@@ -132,24 +133,33 @@ class HomeController extends Controller
     public function showBookingForm(Request $request): View
     {
         $selectedProductId = $request->query('product_id');
+        $selectedPackageId = $request->query('package_id');
         $formMode = $request->query('mode') === 'enquiry' ? 'enquiry' : 'booking';
         $actionType = $request->query('action');
         $products = Product::where('is_active', true)->orderBy('category')->orderBy('price_myr')->get();
+        $packages = Package::where('is_active', true)->orderBy('price_myr')->get();
         $productPricingTiers = $products->mapWithKeys(fn (Product $product) => [
-            (string) $product->id => [
+            'transport:'.$product->id => [
                 'malaysia' => $this->resolveProductPricingTiers($product, 'malaysia'),
                 'international' => $this->resolveProductPricingTiers($product, 'international'),
             ],
-        ])->all();
+        ])->merge($packages->mapWithKeys(fn (Package $package) => [
+            'package:'.$package->id => [
+                'malaysia' => $this->resolveProductPricingTiers($package, 'malaysia'),
+                'international' => $this->resolveProductPricingTiers($package, 'international'),
+            ],
+        ]))->all();
 
         $selectedProduct = null;
-        if ($selectedProductId) {
+        if ($selectedPackageId) {
+            $selectedProduct = Package::findOrFail($selectedPackageId);
+        } elseif ($selectedProductId) {
             $selectedProduct = Product::findOrFail($selectedProductId);
         }
 
         return view('booking.create', [
             'transportServices' => $products->where('category', 'transport')->values(),
-            'travelPackages' => $products->where('category', 'package')->values(),
+            'travelPackages' => $packages->values(),
             'selectedProduct' => $selectedProduct,
             'isProductLocked' => $selectedProduct !== null,
             'formMode' => $formMode,
@@ -477,6 +487,51 @@ class HomeController extends Controller
         ]);
     }
 
+    public function showPackage(Package $package): View
+    {
+        $packageTestimonials = Testimonial::where('display_location', 'package')
+            ->where('package_id', $package->id)
+            ->where('is_featured', true)
+            ->orderByDesc('rating')
+            ->take(3)
+            ->get();
+        $googleReviewData = $this->googlePlaceReviewService->getPlaceReviews();
+        $relatedProducts = Package::where('is_active', true)
+            ->where('id', '!=', $package->id)
+            ->take(3)
+            ->get();
+        $recommendedProducts = Package::where('is_active', true)
+            ->where('id', '!=', $package->id)
+            ->where('is_featured', true)
+            ->take(4)
+            ->get();
+
+        if ($recommendedProducts->count() < 4) {
+            $recommendedProducts = $recommendedProducts
+                ->concat(
+                    Package::where('is_active', true)
+                        ->where('id', '!=', $package->id)
+                        ->whereNotIn('id', $recommendedProducts->pluck('id'))
+                        ->take(4 - $recommendedProducts->count())
+                        ->get()
+                )
+                ->values();
+        }
+
+        return view('products.show', [
+            'product' => $package,
+            'relatedProducts' => $relatedProducts,
+            'recommendedProducts' => $recommendedProducts,
+            'reviews' => $this->mergePublicReviews($packageTestimonials, $googleReviewData),
+            'googleReviewData' => $googleReviewData,
+            'transportFeatures' => $this->transportFeatures(),
+            'currencyRates' => self::CURRENCY_RATES,
+            'currencySymbols' => self::CURRENCY_SYMBOLS,
+            'malaysiaPricingTiers' => $this->resolveProductPricingTiers($package, 'malaysia'),
+            'internationalPricingTiers' => $this->resolveProductPricingTiers($package, 'international'),
+        ]);
+    }
+
     public function showBlogIndex(): View
     {
         abort_unless(Schema::hasTable('blog_posts'), 404);
@@ -526,12 +581,11 @@ class HomeController extends Controller
 
         abort_unless($tourPage !== null, 404);
 
-        $tourPackages = Product::query()
+        $tourPackages = Package::query()
             ->where('is_active', true)
-            ->where('category', 'package')
             ->orderBy('price_myr')
             ->get()
-            ->filter(fn (Product $product) => $this->productMatchesTourCategory($product, $tourPage))
+            ->filter(fn (Package $product) => $this->productMatchesTourCategory($product, $tourPage))
             ->values();
 
         return view('tours.show', [
@@ -565,6 +619,16 @@ class HomeController extends Controller
         );
     }
 
+    public function storePackageTestimonial(Request $request, Package $package): RedirectResponse
+    {
+        $this->storePublicTestimonial($request, null, $package);
+
+        return redirect()->to(route('packages.show', $package).'#reviews')->with(
+            'success',
+            'Thanks for sharing your package review. Our team will check it before publishing it on this page.',
+        );
+    }
+
     private function buildPricingTiers(
         string $groupSizeLabel,
         float $adultPrice,
@@ -585,7 +649,7 @@ class HomeController extends Controller
         ];
     }
 
-    private function resolveProductPricingTiers(Product $product, string $market): array
+    private function resolveProductPricingTiers($product, string $market): array
     {
         $pricingTiers = collect($product->pricing_tiers ?? [])
             ->filter(fn ($tier) => is_array($tier) && filled($tier['group_size_label'] ?? null))
@@ -701,7 +765,7 @@ class HomeController extends Controller
         ];
     }
 
-    private function productMatchesTourCategory(Product $product, array $tourPage): bool
+    private function productMatchesTourCategory($product, array $tourPage): bool
     {
         $tourCode = strtoupper(trim((string) ($product->tour_code ?? '')));
 
@@ -766,28 +830,29 @@ class HomeController extends Controller
     private function sharedPageData(): array
     {
         $products = Product::where('is_active', true)->orderBy('category')->orderBy('price_myr')->get();
+        $packages = Package::where('is_active', true)->orderBy('price_myr')->get();
         $landingTestimonials = $this->landingTestimonials();
         $packageReviewStats = Testimonial::query()
-            ->selectRaw('product_id, AVG(rating) as average_rating, COUNT(*) as reviews_count')
+            ->selectRaw('package_id, AVG(rating) as average_rating, COUNT(*) as reviews_count')
             ->where('display_location', 'package')
             ->where('is_featured', true)
-            ->whereNotNull('product_id')
-            ->groupBy('product_id')
+            ->whereNotNull('package_id')
+            ->groupBy('package_id')
             ->get()
-            ->keyBy('product_id');
+            ->keyBy('package_id');
 
-        $products->each(function (Product $product) use ($packageReviewStats) {
+        $packages->each(function (Package $product) use ($packageReviewStats) {
             $stats = $packageReviewStats->get($product->id);
 
             $product->setAttribute('package_review_average', $stats ? round((float) $stats->average_rating, 1) : null);
             $product->setAttribute('package_review_count', $stats ? (int) $stats->reviews_count : 0);
         });
 
-        $travelPackages = $products->where('category', 'package')->values();
+        $travelPackages = $packages->values();
         $transportServices = $products->where('category', 'transport')->values();
         $popularPackages = $travelPackages
-            ->filter(fn (Product $package) => $package->is_top_choice || $package->is_featured)
-            ->sortByDesc(fn (Product $package) => (int) $package->is_top_choice)
+            ->filter(fn (Package $package) => $package->is_top_choice || $package->is_featured)
+            ->sortByDesc(fn (Package $package) => (int) $package->is_top_choice)
             ->values();
         $transportImageMap = [
             '41/44 Seaters Bus' => asset('images/44pax.png'),
@@ -1087,11 +1152,11 @@ class HomeController extends Controller
         $formMode = $request->input('form_mode') === 'enquiry' ? 'enquiry' : 'booking';
 
         $baseRules = [
-            'product_id' => ['required', 'exists:products,id'],
+            'product_id' => ['required', 'integer', 'min:1'],
             'service_type' => ['required', 'in:transport,package'],
             'booking_purpose' => ['nullable', 'in:leisure,business'],
             'action_type' => ['nullable', 'in:reserve,instant_book,book_now'],
-            'locked_product_id' => ['nullable', 'exists:products,id'],
+            'locked_product_id' => ['nullable', 'integer', 'min:1'],
             'full_name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'max:255', 'email:rfc,dns'],
             'identity_document_number' => ['nullable', 'string', 'max:100'],
@@ -1134,15 +1199,17 @@ class HomeController extends Controller
             ])->withInput();
         }
 
-        $product = Product::findOrFail($validated['product_id']);
+        $bookable = ($validated['service_type'] ?? null) === 'package'
+            ? Package::findOrFail($validated['product_id'])
+            : Product::findOrFail($validated['product_id']);
 
-        if (!empty($validated['locked_product_id']) && (int) $validated['locked_product_id'] !== $product->id) {
+        if (!empty($validated['locked_product_id']) && (int) $validated['locked_product_id'] !== $bookable->id) {
             return back()->withErrors([
                 'product_id' => 'Please book the product you originally selected.',
             ])->withInput();
         }
 
-        if (($validated['service_type'] ?? null) !== $product->category) {
+        if (($validated['service_type'] ?? null) !== $bookable->category) {
             return back()->withErrors([
                 'service_type' => 'The selected booking type does not match this product.',
             ])->withInput();
@@ -1159,7 +1226,8 @@ class HomeController extends Controller
 
             $booking = Booking::create([
                 'user_id' => $request->user()?->id,
-                'product_id' => $product->id,
+                'product_id' => $bookable instanceof Product ? $bookable->id : null,
+                'package_id' => $bookable instanceof Package ? $bookable->id : null,
                 'booking_reference' => $this->generateUniqueBookingReference(),
                 'service_type' => $validated['service_type'],
                 'booking_purpose' => $bookingPurpose,
@@ -1169,8 +1237,8 @@ class HomeController extends Controller
                 'company_number' => null,
                 'phone' => $validated['phone'],
                 'pickup_location' => null,
-                'destination' => $product->location,
-                'package_name' => $product->name,
+                'destination' => $bookable->location,
+                'package_name' => $bookable->name,
                 'malaysian_adults' => 0,
                 'malaysian_kids' => 0,
                 'international_adults' => 0,
@@ -1204,25 +1272,26 @@ class HomeController extends Controller
         $malaysiaGuestCount = (int) $validated['malaysian_adults'] + (int) $validated['malaysian_kids'];
         $internationalGuestCount = (int) $validated['international_adults'] + (int) $validated['international_kids'];
         $malaysiaPricingTier = $this->resolvePricingTierForGuestCount(
-            $this->resolveProductPricingTiers($product, 'malaysia'),
+            $this->resolveProductPricingTiers($bookable, 'malaysia'),
             $malaysiaGuestCount
         );
         $internationalPricingTier = $this->resolvePricingTierForGuestCount(
-            $this->resolveProductPricingTiers($product, 'international'),
+            $this->resolveProductPricingTiers($bookable, 'international'),
             $internationalGuestCount
         );
 
         $amountMyr =
-            ((float) ($malaysiaPricingTier['adult_price'] ?? $product->discounted_malaysia_adult_price_myr) * (int) $validated['malaysian_adults']) +
-            ((float) ($malaysiaPricingTier['child_price'] ?? $product->discounted_malaysia_child_price_myr) * (int) $validated['malaysian_kids']) +
-            ((float) ($internationalPricingTier['adult_price'] ?? $product->discounted_international_adult_price_myr) * (int) $validated['international_adults']) +
-            ((float) ($internationalPricingTier['child_price'] ?? $product->discounted_international_child_price_myr) * (int) $validated['international_kids']);
+            ((float) ($malaysiaPricingTier['adult_price'] ?? $bookable->discounted_malaysia_adult_price_myr) * (int) $validated['malaysian_adults']) +
+            ((float) ($malaysiaPricingTier['child_price'] ?? $bookable->discounted_malaysia_child_price_myr) * (int) $validated['malaysian_kids']) +
+            ((float) ($internationalPricingTier['adult_price'] ?? $bookable->discounted_international_adult_price_myr) * (int) $validated['international_adults']) +
+            ((float) ($internationalPricingTier['child_price'] ?? $bookable->discounted_international_child_price_myr) * (int) $validated['international_kids']);
 
         $amountDisplay = $amountMyr * self::CURRENCY_RATES[$validated['currency_code']];
 
         $booking = Booking::create([
             'user_id' => $request->user()?->id,
-            'product_id' => $product->id,
+            'product_id' => $bookable instanceof Product ? $bookable->id : null,
+            'package_id' => $bookable instanceof Package ? $bookable->id : null,
             'booking_reference' => $this->generateUniqueBookingReference(),
             'service_type' => $validated['service_type'],
             'booking_purpose' => $bookingPurpose,
@@ -1236,8 +1305,8 @@ class HomeController extends Controller
                 : null,
             'phone' => $validated['phone'],
             'pickup_location' => $validated['pickup_location'],
-            'destination' => $product->location,
-            'package_name' => $product->name,
+            'destination' => $bookable->location,
+            'package_name' => $bookable->name,
             'malaysian_adults' => $validated['malaysian_adults'],
             'malaysian_kids' => $validated['malaysian_kids'],
             'international_adults' => $validated['international_adults'],
@@ -1295,7 +1364,7 @@ class HomeController extends Controller
         }
     }
 
-    private function storePublicTestimonial(Request $request, ?Product $product): void
+    private function storePublicTestimonial(Request $request, ?Product $product = null, ?Package $package = null): void
     {
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
@@ -1315,9 +1384,10 @@ class HomeController extends Controller
 
         Testimonial::create([
             ...$validated,
-            'display_location' => $product ? 'package' : 'landing',
+            'display_location' => ($product || $package) ? 'package' : 'landing',
             'product_id' => $product?->id,
-            'is_featured' => $product === null,
+            'package_id' => $package?->id,
+            'is_featured' => $product === null && $package === null,
             'profile_photo_path' => $profilePhotoPath,
         ]);
     }

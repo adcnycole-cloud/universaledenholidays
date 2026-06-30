@@ -49,7 +49,7 @@
                             <tr
                                 data-admin-testimonial-item="true"
                                 data-rating="{{ $testimonial->rating }}"
-                                data-search="{{ strtolower(trim($testimonial->name.' '.$testimonial->location.' '.$testimonial->trip_name.' '.$testimonial->quote.' '.($testimonial->product?->name ?? '').' '.$testimonial->display_location)) }}"
+                                data-search="{{ strtolower(trim($testimonial->name.' '.$testimonial->location.' '.$testimonial->trip_name.' '.$testimonial->quote.' '.($testimonial->package?->name ?? $testimonial->product?->name ?? '').' '.$testimonial->display_location)) }}"
                             >
                                 <td class="px-5 py-4 align-top">
                                     <div class="flex items-start gap-3">
@@ -66,8 +66,8 @@
                                 </td>
                                 <td class="px-5 py-4 align-top">
                                     <div class="font-semibold text-stone-900">{{ $testimonial->trip_name }}</div>
-                                    @if ($testimonial->product)
-                                        <div class="mt-1 text-xs uppercase tracking-[0.16em] text-stone-500">{{ $testimonial->product->name }}</div>
+                                    @if ($testimonial->package || $testimonial->product)
+                                        <div class="mt-1 text-xs uppercase tracking-[0.16em] text-stone-500">{{ $testimonial->package?->name ?? $testimonial->product?->name }}</div>
                                     @endif
                                 </td>
                                 <td class="px-5 py-4 align-top">
@@ -78,8 +78,8 @@
                                     <span class="rounded-full bg-stone-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] {{ $testimonial->display_location === 'landing' ? 'text-emerald-700' : 'text-sky-700' }}">
                                         {{ $testimonial->display_location === 'landing' ? 'Landing page' : 'Package page' }}
                                     </span>
-                                    @if ($testimonial->display_location === 'package' && $testimonial->product)
-                                        <div class="mt-2 text-sm text-stone-600">{{ $testimonial->product->name }}</div>
+                                    @if ($testimonial->display_location === 'package' && ($testimonial->package || $testimonial->product))
+                                        <div class="mt-2 text-sm text-stone-600">{{ $testimonial->package?->name ?? $testimonial->product?->name }}</div>
                                     @endif
                                 </td>
                                 <td class="px-5 py-4 align-top">
@@ -141,10 +141,10 @@
                                                     </div>
                                                     <div data-testimonial-package-field class="{{ $testimonial->display_location === 'package' ? '' : 'hidden' }}">
                                                         <label class="mb-1 block text-xs font-medium uppercase tracking-[0.18em] text-stone-500">Package</label>
-                                                        <select name="product_id" class="w-full rounded-2xl border border-stone-300 px-4 py-3 text-sm text-stone-800">
+                                                        <select name="package_id" class="w-full rounded-2xl border border-stone-300 px-4 py-3 text-sm text-stone-800">
                                                             <option value="">Select a package</option>
                                                             @foreach (($packageProducts ?? collect()) as $packageProduct)
-                                                                <option value="{{ $packageProduct->id }}" @selected($testimonial->product_id === $packageProduct->id)>{{ $packageProduct->name }}</option>
+                                                                <option value="{{ $packageProduct->id }}" @selected($testimonial->package_id === $packageProduct->id)>{{ $packageProduct->name }}</option>
                                                             @endforeach
                                                         </select>
                                                     </div>

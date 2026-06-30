@@ -11,6 +11,7 @@ class Booking extends Model
     protected $fillable = [
         'user_id',
         'product_id',
+        'package_id',
         'booking_reference',
         'service_type',
         'booking_purpose',
@@ -116,5 +117,10 @@ class Booking extends Model
     public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class);
+    }
+
+    public function package(): BelongsTo
+    {
+        return $this->belongsTo(Package::class);
     }
 }

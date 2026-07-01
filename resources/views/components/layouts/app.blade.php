@@ -423,6 +423,9 @@
                                 <div class="min-w-0 flex-1">
                                     <p class="text-sm font-semibold">Success</p>
                                     <p class="mt-1 text-sm leading-6">{{ session('success') }}</p>
+                                    @if (session('tour_code_notice'))
+                                        <p class="mt-1 text-sm leading-6">{{ session('tour_code_notice') }}</p>
+                                    @endif
                                 </div>
                                 <button type="button" class="js-app-toast-close inline-flex h-8 w-8 items-center justify-center rounded-full text-emerald-700/70 transition hover:bg-emerald-100 hover:text-emerald-900" aria-label="Dismiss notification">
                                     <span class="text-lg leading-none">&times;</span>

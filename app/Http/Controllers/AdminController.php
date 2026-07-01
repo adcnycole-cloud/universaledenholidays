@@ -39,7 +39,7 @@ class AdminController extends Controller
 {
     private const HOME_HERO_SLIDE_MAX_KB = 20480;
     private const STAFF_PHOTO_MAX_KB = 5120;
-    private const PACKAGE_ADMIN_TEMPLATE_PATH = 'resources/admin-templates/universal_eden_easy_package_upload.xlsx';
+    private const PACKAGE_ADMIN_TEMPLATE_PATH = 'public/images/Packages_Import_File_Template.xlsx';
 
     private const PACKAGE_DURATION_OPTIONS = ['Day Trip', '2D1N', '3D2N', '4D3N', 'Custom'];
     private const PACKAGE_IMPORT_TEMPLATE_COLUMNS = [
@@ -186,9 +186,9 @@ class AdminController extends Controller
         }
 
         if ($spreadsheet->sheetNameExists('01 Package Entry')) {
-            $importCount = $this->importPackagesFromAdminWorkbook($spreadsheet);
+            $importResult = $this->importPackagesFromAdminWorkbook($spreadsheet);
 
-            return back()->with('success', $importCount.' package'.($importCount === 1 ? '' : 's').' imported successfully.');
+            return $this->redirectAfterPackageImport($importResult);
         }
 
         if (
@@ -196,15 +196,15 @@ class AdminController extends Controller
             && $spreadsheet->sheetNameExists('Pricing Table')
             && $spreadsheet->sheetNameExists('Itinerary Table')
         ) {
-            $importCount = $this->importPackagesFromFixedTemplateWorkbook($spreadsheet);
+            $importResult = $this->importPackagesFromFixedTemplateWorkbook($spreadsheet);
 
-            return back()->with('success', $importCount.' package'.($importCount === 1 ? '' : 's').' imported successfully.');
+            return $this->redirectAfterPackageImport($importResult);
         }
 
         if ($spreadsheet->sheetNameExists('Package Upload')) {
-            $importCount = $this->importPackagesFromEasyWorkbook($spreadsheet);
+            $importResult = $this->importPackagesFromEasyWorkbook($spreadsheet);
 
-            return back()->with('success', $importCount.' package'.($importCount === 1 ? '' : 's').' imported successfully.');
+            return $this->redirectAfterPackageImport($importResult);
         }
 
         if ($rows === [] || count($rows) < 2) {
@@ -302,7 +302,10 @@ class AdminController extends Controller
             ]);
         }
 
-        return back()->with('success', $importCount.' package'.($importCount === 1 ? '' : 's').' imported successfully.');
+        return $this->redirectAfterPackageImport([
+            'count' => $importCount,
+            'tour_code_changes' => [],
+        ]);
     }
 
     public function downloadPackageTemplate(Request $request)
@@ -310,73 +313,15 @@ class AdminController extends Controller
         $format = strtolower((string) $request->query('format', 'xlsx'));
 
         abort_unless($format === 'xlsx', 404);
+        $templatePath = base_path(self::PACKAGE_ADMIN_TEMPLATE_PATH);
 
-        $spreadsheet = new Spreadsheet();
-        $headers = $this->easyPackageUploadTemplateHeaders();
-        $fillSheet = $spreadsheet->getActiveSheet();
-        $fillSheet->setTitle('Package Upload');
-        $fillSheet->fromArray([
-            $headers,
-            $this->easyPackageUploadTemplateSampleRow(),
-        ], null, 'A1');
+        abort_unless(is_file($templatePath), 404);
 
-        foreach (range(1, count($headers)) as $columnIndex) {
-            $fillSheet->getColumnDimensionByColumn($columnIndex)->setAutoSize(true);
-        }
-
-        $exampleSheet = $spreadsheet->createSheet();
-        $exampleSheet->setTitle('Example Row');
-        $exampleSheet->fromArray([
-            ['Packages Import Example'],
-            ['Use this as a sample only. Copy the structure, not necessarily the exact values.'],
-            $headers,
-            $this->easyPackageUploadTemplateSampleRow(),
-        ], null, 'A1');
-
-        foreach (range(1, count($headers)) as $columnIndex) {
-            $exampleSheet->getColumnDimensionByColumn($columnIndex)->setAutoSize(true);
-        }
-
-        $notesSheet = $spreadsheet->createSheet();
-        $notesSheet->setTitle('Notes');
-        $notesSheet->fromArray([
-            ['Packages Import Notes'],
-        ], null, 'A1');
-
-        foreach ($this->easyPackageUploadTemplateNotes() as $noteIndex => $note) {
-            $notesSheet->setCellValue('A'.($noteIndex + 2), '- '.$note);
-        }
-
-        $notesSheet->getColumnDimension('A')->setWidth(120);
-
-        $metaSheet = $spreadsheet->createSheet();
-        $metaSheet->setTitle('Column Guide');
-        $metaSheet->fromArray([
-            ['No.', 'Header', 'Required', 'Description', 'Sample'],
-        ], null, 'A1');
-
-        foreach ($this->easyPackageUploadTemplateColumns() as $rowIndex => $column) {
-            $metaSheet->fromArray([[
-                $rowIndex + 1,
-                $column['header'],
-                $column['required'],
-                $column['description'],
-                $column['sample'],
-            ]], null, 'A'.($rowIndex + 2));
-        }
-
-        foreach (range('A', 'E') as $columnLetter) {
-            $metaSheet->getColumnDimension($columnLetter)->setAutoSize(true);
-        }
-
-        $spreadsheet->setActiveSheetIndex(0);
-
-        return response()->streamDownload(function () use ($spreadsheet) {
-            $writer = new Xlsx($spreadsheet);
-            $writer->save('php://output');
-        }, 'packages-import-template.xlsx', [
-            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        ]);
+        return response()->download(
+            $templatePath,
+            'packages-import-template.xlsx',
+            ['Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet']
+        );
     }
 
     public function testimonials(): View
@@ -1227,6 +1172,62 @@ class AdminController extends Controller
         return $this->generateNextTourCode($isDayTrip, $table, $ignoreId, $reservedCodes);
     }
 
+    private function resolveImportedTourCode(
+        string $tourCode,
+        bool $isDayTrip,
+        string $table,
+        array $reservedCodes,
+        string $rowLabel
+    ): array {
+        $normalizedCode = $this->normalizeTourCode($tourCode, $isDayTrip);
+        $prefix = $isDayTrip ? 'DT-UEH' : 'OT-UEH';
+
+        if ($normalizedCode === $prefix) {
+            return [
+                'tour_code' => $this->generateNextTourCode($isDayTrip, $table, null, $reservedCodes),
+                'messages' => [],
+            ];
+        }
+
+        $normalizedReservedCodes = collect($reservedCodes)
+            ->map(fn ($code) => $this->normalizeTourCode((string) $code, $isDayTrip))
+            ->all();
+
+        $existsInImport = in_array($normalizedCode, $normalizedReservedCodes, true);
+        $existsInDatabase = DB::table($table)
+            ->where('tour_code', $normalizedCode)
+            ->exists();
+
+        if (! $existsInImport && ! $existsInDatabase) {
+            return [
+                'tour_code' => $normalizedCode,
+                'messages' => [],
+            ];
+        }
+
+        $replacementCode = $this->generateNextTourCode($isDayTrip, $table, null, [...$reservedCodes, $normalizedCode]);
+
+        return [
+            'tour_code' => $replacementCode,
+            'messages' => [
+                $rowLabel.': tour code '.$normalizedCode.' was changed to '.$replacementCode.' because the tour code already exists.',
+            ],
+        ];
+    }
+
+    private function redirectAfterPackageImport(array $importResult): RedirectResponse
+    {
+        $count = (int) ($importResult['count'] ?? 0);
+        $tourCodeChanges = collect($importResult['tour_code_changes'] ?? [])
+            ->filter(fn ($message) => filled($message))
+            ->values()
+            ->all();
+
+        return back()
+            ->with('success', $count.' package'.($count === 1 ? '' : 's').' imported successfully.')
+            ->with('tour_code_notice', $tourCodeChanges === [] ? null : implode(' ', $tourCodeChanges));
+    }
+
     private function generateNextTourCode(bool $isDayTrip, string $table, ?int $ignoreId = null, array $reservedCodes = []): string
     {
         $prefix = $isDayTrip ? 'DT-UEH' : 'OT-UEH';
@@ -1275,7 +1276,7 @@ class AdminController extends Controller
             || str_contains($compactLabel, '1day');
     }
 
-    private function importPackagesFromAdminWorkbook(\PhpOffice\PhpSpreadsheet\Spreadsheet $spreadsheet): int
+    private function importPackagesFromAdminWorkbook(\PhpOffice\PhpSpreadsheet\Spreadsheet $spreadsheet): array
     {
         $entryRows = $this->readAdminTemplateSheetRows($spreadsheet, '01 Package Entry');
 
@@ -1293,6 +1294,7 @@ class AdminController extends Controller
         $imageRows = collect($this->readAdminTemplateSheetRows($spreadsheet, '07 Images'))->groupBy('package_id_ref');
 
         $seenCodes = [];
+        $tourCodeChanges = [];
         $importCount = 0;
 
         DB::transaction(function () use (
@@ -1304,6 +1306,7 @@ class AdminController extends Controller
             $optionalRows,
             $imageRows,
             &$seenCodes,
+            &$tourCodeChanges,
             &$importCount
         ) {
             foreach ($entryRows as $entryRow) {
@@ -1342,17 +1345,20 @@ class AdminController extends Controller
                         'things_to_know',
                         'travel_tips',
                         'optional_activities',
+                        'pricing_contact_only',
                         'gallery_images',
                     ])
                 );
 
-                $validatedImportData['tour_code'] = $this->resolveTourCode(
+                $tourCodeResolution = $this->resolveImportedTourCode(
                     (string) ($validatedImportData['tour_code'] ?? ''),
                     $this->isDayTripPackage((string) $validatedImportData['package_type'], null),
                     'packages',
-                    null,
-                    $seenCodes
+                    $seenCodes,
+                    $rowLabel
                 );
+                $validatedImportData['tour_code'] = $tourCodeResolution['tour_code'];
+                $tourCodeChanges = [...$tourCodeChanges, ...$tourCodeResolution['messages']];
 
                 if (in_array($validatedImportData['tour_code'], $seenCodes, true)) {
                     throw ValidationException::withMessages([
@@ -1361,12 +1367,6 @@ class AdminController extends Controller
                 }
 
                 $seenCodes[] = $validatedImportData['tour_code'];
-
-                if (Package::query()->where('tour_code', $validatedImportData['tour_code'])->exists()) {
-                    throw ValidationException::withMessages([
-                        'package_import_file' => $rowLabel.': the tour code '.$validatedImportData['tour_code'].' already exists.',
-                    ]);
-                }
 
                 $packagePayload = $this->buildImportedPackagePayload($validatedImportData, $rowLabel);
                 Package::create($packagePayload);
@@ -1380,10 +1380,13 @@ class AdminController extends Controller
             ]);
         }
 
-        return $importCount;
+        return [
+            'count' => $importCount,
+            'tour_code_changes' => $tourCodeChanges,
+        ];
     }
 
-    private function importPackagesFromEasyWorkbook(\PhpOffice\PhpSpreadsheet\Spreadsheet $spreadsheet): int
+    private function importPackagesFromEasyWorkbook(\PhpOffice\PhpSpreadsheet\Spreadsheet $spreadsheet): array
     {
         $rows = $this->readSimpleImportSheetRows($spreadsheet, 'Package Upload');
 
@@ -1394,9 +1397,10 @@ class AdminController extends Controller
         }
 
         $seenCodes = [];
+        $tourCodeChanges = [];
         $importCount = 0;
 
-        DB::transaction(function () use ($rows, &$seenCodes, &$importCount) {
+        DB::transaction(function () use ($rows, &$seenCodes, &$tourCodeChanges, &$importCount) {
             foreach ($rows as $row) {
                 $rowLabel = 'Package Upload row '.($row['_row'] ?? '?');
                 $importData = $this->buildEasyWorkbookImportData($row);
@@ -1420,16 +1424,19 @@ class AdminController extends Controller
                         'itinerary_notes',
                         'package_details',
                         'service_inclusions',
+                        'pricing_contact_only',
                     ])
                 );
 
-                $validatedImportData['tour_code'] = $this->resolveTourCode(
+                $tourCodeResolution = $this->resolveImportedTourCode(
                     (string) ($validatedImportData['tour_code'] ?? ''),
                     $this->isDayTripPackage((string) $validatedImportData['package_type'], null),
                     'packages',
-                    null,
-                    $seenCodes
+                    $seenCodes,
+                    $rowLabel
                 );
+                $validatedImportData['tour_code'] = $tourCodeResolution['tour_code'];
+                $tourCodeChanges = [...$tourCodeChanges, ...$tourCodeResolution['messages']];
 
                 if (in_array($validatedImportData['tour_code'], $seenCodes, true)) {
                     throw ValidationException::withMessages([
@@ -1438,12 +1445,6 @@ class AdminController extends Controller
                 }
 
                 $seenCodes[] = $validatedImportData['tour_code'];
-
-                if (Package::query()->where('tour_code', $validatedImportData['tour_code'])->exists()) {
-                    throw ValidationException::withMessages([
-                        'package_import_file' => $rowLabel.': the tour code '.$validatedImportData['tour_code'].' already exists.',
-                    ]);
-                }
 
                 $packagePayload = $this->buildImportedPackagePayload($validatedImportData, $rowLabel);
                 Package::create($packagePayload);
@@ -1457,19 +1458,15 @@ class AdminController extends Controller
             ]);
         }
 
-        return $importCount;
+        return [
+            'count' => $importCount,
+            'tour_code_changes' => $tourCodeChanges,
+        ];
     }
 
-    private function importPackagesFromFixedTemplateWorkbook(\PhpOffice\PhpSpreadsheet\Spreadsheet $spreadsheet): int
+    private function importPackagesFromFixedTemplateWorkbook(\PhpOffice\PhpSpreadsheet\Spreadsheet $spreadsheet): array
     {
-        $entryRows = collect($this->readSheetRowsWithDetectedHeader(
-            $spreadsheet,
-            'Package Upload',
-            ['tour_code', 'package_name', 'location', 'package_type']
-        ))
-            ->filter(fn ($row) => filled($row['package_name'] ?? null))
-            ->values()
-            ->all();
+        $entryRows = $this->readFixedTemplatePackageUploadRows($spreadsheet);
 
         if ($entryRows === []) {
             throw ValidationException::withMessages([
@@ -1502,9 +1499,10 @@ class AdminController extends Controller
         ))->groupBy(fn ($row) => trim((string) ($row['tour_code'] ?? '')));
 
         $seenCodes = [];
+        $tourCodeChanges = [];
         $importCount = 0;
 
-        DB::transaction(function () use ($entryRows, $pricingRows, $itineraryRows, $detailsRows, $optionalRows, &$seenCodes, &$importCount) {
+        DB::transaction(function () use ($entryRows, $pricingRows, $itineraryRows, $detailsRows, $optionalRows, &$seenCodes, &$tourCodeChanges, &$importCount) {
             foreach ($entryRows as $entryRow) {
                 $rowLabel = 'Package Upload row '.($entryRow['_row'] ?? '?');
                 $entryTourCode = trim((string) ($entryRow['tour_code'] ?? ''));
@@ -1540,17 +1538,19 @@ class AdminController extends Controller
                         'things_to_know',
                         'travel_tips',
                         'optional_activities',
+                        'pricing_contact_only',
                     ])
                 );
 
-                $validatedImportData['tour_code'] = $this->resolveTourCode(
-                    '',
+                $tourCodeResolution = $this->resolveImportedTourCode(
+                    $entryTourCode,
                     $this->isDayTripPackage((string) $validatedImportData['package_type'], $entryTourCode),
                     'packages',
-                    null,
                     $seenCodes,
-                    $entryTourCode
+                    $rowLabel
                 );
+                $validatedImportData['tour_code'] = $tourCodeResolution['tour_code'];
+                $tourCodeChanges = [...$tourCodeChanges, ...$tourCodeResolution['messages']];
 
                 if (in_array($validatedImportData['tour_code'], $seenCodes, true)) {
                     throw ValidationException::withMessages([
@@ -1559,12 +1559,6 @@ class AdminController extends Controller
                 }
 
                 $seenCodes[] = $validatedImportData['tour_code'];
-
-                if (Package::query()->where('tour_code', $validatedImportData['tour_code'])->exists()) {
-                    throw ValidationException::withMessages([
-                        'package_import_file' => $rowLabel.': the tour code '.$validatedImportData['tour_code'].' already exists.',
-                    ]);
-                }
 
                 $packagePayload = $this->buildImportedPackagePayload($validatedImportData, $rowLabel);
                 Package::create($packagePayload);
@@ -1578,7 +1572,10 @@ class AdminController extends Controller
             ]);
         }
 
-        return $importCount;
+        return [
+            'count' => $importCount,
+            'tour_code_changes' => $tourCodeChanges,
+        ];
     }
 
     private function readSimpleImportSheetRows(\PhpOffice\PhpSpreadsheet\Spreadsheet $spreadsheet, string $sheetName): array
@@ -1666,6 +1663,81 @@ class AdminController extends Controller
         }
 
         return $mappedRows;
+    }
+
+    private function readFixedTemplatePackageUploadRows(\PhpOffice\PhpSpreadsheet\Spreadsheet $spreadsheet): array
+    {
+        $rows = $this->readSheetRowsWithDetectedHeader(
+            $spreadsheet,
+            'Package Upload',
+            ['tour_code', 'package_name', 'location', 'package_type']
+        );
+
+        if ($rows === []) {
+            return [];
+        }
+
+        $packages = [];
+        $currentPackage = null;
+
+        foreach ($rows as $row) {
+            $startsNewPackage = filled($row['package_name'] ?? null);
+
+            if ($startsNewPackage) {
+                if ($currentPackage !== null) {
+                    $packages[] = $currentPackage;
+                }
+
+                $currentPackage = $row;
+                $currentPackage['inline_pricing_rows'] = [];
+                $currentPackage['inline_itinerary_rows'] = [];
+            }
+
+            if ($currentPackage === null) {
+                continue;
+            }
+
+            $groupSize = trim((string) ($row['group_sizes'] ?? ''));
+            $malaysiaAdultPrice = $this->normalizeImportedNumericValue($row['malaysia_adult_prices'] ?? null);
+            $malaysiaChildPrice = $this->normalizeImportedNumericValue($row['malaysia_child_prices'] ?? null);
+            $internationalAdultPrice = $this->normalizeImportedNumericValue($row['international_adult_prices'] ?? null);
+            $internationalChildPrice = $this->normalizeImportedNumericValue($row['international_child_prices'] ?? null);
+
+            if (
+                $groupSize !== ''
+                || $malaysiaAdultPrice !== null
+                || $malaysiaChildPrice !== null
+                || $internationalAdultPrice !== null
+                || $internationalChildPrice !== null
+            ) {
+                $currentPackage['inline_pricing_rows'][] = [
+                    'group_size' => $groupSize,
+                    'malaysia_adult_price' => $malaysiaAdultPrice,
+                    'malaysia_child_price' => $malaysiaChildPrice,
+                    'international_adult_price' => $internationalAdultPrice,
+                    'international_child_price' => $internationalChildPrice,
+                ];
+            }
+
+            $day = trim((string) ($row['itinerary_day_number'] ?? ''));
+            $time = trim((string) ($row['itinerary_time'] ?? ''));
+            $activity = trim((string) ($row['itinerary_activity'] ?? ''));
+
+            if ($day !== '' || $time !== '' || $activity !== '') {
+                $currentPackage['inline_itinerary_rows'][] = [
+                    'day' => $day,
+                    'time' => $time,
+                    'activity' => $activity,
+                    'description' => '',
+                ];
+            }
+        }
+
+        if ($currentPackage !== null) {
+            $packages[] = $currentPackage;
+        }
+
+        return $packages;
     }
 
     private function readAdminTemplateSheetRows(\PhpOffice\PhpSpreadsheet\Spreadsheet $spreadsheet, string $sheetName): array
@@ -1925,6 +1997,7 @@ class AdminController extends Controller
                     'rows' => $optionalActivityRows,
                 ]
                 : [],
+            'pricing_contact_only' => array_fill(0, count($this->parsePackageImportList($row['group_sizes'] ?? '')), false),
         ];
     }
 
@@ -1938,10 +2011,20 @@ class AdminController extends Controller
         $minimumAge = trim((string) ($entryRow['minimum_age'] ?? ''));
         $minimumAgeMode = str_starts_with(strtolower($minimumAge), 'above ') ? 'above_age' : 'no_limit';
         preg_match('/(\d+)/', $minimumAge, $minimumAgeMatches);
+        $pricingRows = $pricingRows !== [] ? $pricingRows : ($entryRow['inline_pricing_rows'] ?? []);
+        $itineraryRows = $itineraryRows !== [] ? $itineraryRows : ($entryRow['inline_itinerary_rows'] ?? []);
         $detailsRow = is_array($detailsRow) ? $detailsRow : [];
         $optionalRowsCollection = collect($optionalRows)->filter(function ($row) {
             return filled($row['activity'] ?? null) || filled($row['rate_price'] ?? null);
         })->values();
+        $pricingContactOnly = collect($pricingRows)->map(function ($row) {
+            return collect([
+                $row['malaysia_adult_price'] ?? null,
+                $row['malaysia_child_price'] ?? null,
+                $row['international_adult_price'] ?? null,
+                $row['international_child_price'] ?? null,
+            ])->contains(fn ($value) => $this->isImportedPriceInquiryPlaceholder($value));
+        })->all();
 
         $packageDetails = [
             'includes' => $this->buildStructuredPackageDetailItemsFromPipeValue($detailsRow['includes'] ?? null, 'tick'),
@@ -1996,6 +2079,7 @@ class AdminController extends Controller
                     ),
                 ]
                 : [],
+            'pricing_contact_only' => $pricingContactOnly,
         ];
     }
 
@@ -2232,13 +2316,55 @@ class AdminController extends Controller
             return null;
         }
 
-        $normalized = str_replace([',', 'RM', 'rm', 'MYR', 'myr', ' '], '', $normalized);
+        if ($this->isImportedPriceInquiryPlaceholder($normalized)) {
+            return null;
+        }
+
+        $isBracketNegative = str_starts_with($normalized, '(') && str_ends_with($normalized, ')');
+        $normalized = preg_replace('/[^\d,\.\-\(\)]/u', '', $normalized) ?? $normalized;
+
+        if ($normalized === '' || $normalized === '()') {
+            return null;
+        }
+
+        if ($isBracketNegative) {
+            $normalized = '-'.trim($normalized, '()');
+        }
+
+        if (str_contains($normalized, ',') && str_contains($normalized, '.')) {
+            $normalized = str_replace(',', '', $normalized);
+        } elseif (str_contains($normalized, ',')) {
+            $commaParts = explode(',', $normalized);
+            $lastPart = end($commaParts);
+            $normalized = $lastPart !== false && strlen((string) $lastPart) <= 2
+                ? str_replace(',', '.', $normalized)
+                : str_replace(',', '', $normalized);
+        }
 
         return is_numeric($normalized)
             ? ((str_contains($normalized, '.') || str_contains($normalized, 'e') || str_contains($normalized, 'E'))
                 ? (float) $normalized
                 : (int) $normalized)
             : trim((string) $value);
+    }
+
+    private function isImportedPriceInquiryPlaceholder(mixed $value): bool
+    {
+        $normalized = strtolower(trim((string) $value));
+
+        if ($normalized === '') {
+            return false;
+        }
+
+        $normalized = preg_replace('/\s+/', ' ', $normalized) ?? $normalized;
+
+        return str_contains($normalized, 'please enquire')
+            || str_contains($normalized, 'please inquire')
+            || str_contains($normalized, 'enquire')
+            || str_contains($normalized, 'inquire')
+            || str_contains($normalized, 'contact us')
+            || $normalized === 'contact'
+            || $normalized === 'poa';
     }
 
     private function normalizePackageImportBoolean(mixed $value): bool
@@ -2469,6 +2595,7 @@ class AdminController extends Controller
         $malaysiaChildren = $validated['pricing_malaysia_child_price_myr'] ?? [];
         $internationalAdults = $validated['pricing_international_adult_price_myr'] ?? [];
         $internationalChildren = $validated['pricing_international_child_price_myr'] ?? [];
+        $pricingContactOnly = $validated['pricing_contact_only'] ?? [];
         $rowCount = max(
             count($groupLabels),
             count($malaysiaAdults),
@@ -2478,12 +2605,13 @@ class AdminController extends Controller
         );
 
         $pricingTiers = collect(range(0, max(0, $rowCount - 1)))
-            ->map(function (int $index) use ($groupLabels, $malaysiaAdults, $malaysiaChildren, $internationalAdults, $internationalChildren) {
+            ->map(function (int $index) use ($groupLabels, $malaysiaAdults, $malaysiaChildren, $internationalAdults, $internationalChildren, $pricingContactOnly) {
                 $groupSizeLabel = trim((string) ($groupLabels[$index] ?? ''));
                 $malaysiaAdultPrice = $malaysiaAdults[$index] ?? null;
                 $malaysiaChildPrice = $malaysiaChildren[$index] ?? null;
                 $internationalAdultPrice = $internationalAdults[$index] ?? null;
                 $internationalChildPrice = $internationalChildren[$index] ?? null;
+                $isContactOnlyRow = (bool) ($pricingContactOnly[$index] ?? false);
 
                 $isEmptyRow = $groupSizeLabel === ''
                     && ($malaysiaAdultPrice === null || $malaysiaAdultPrice === '')
@@ -2502,7 +2630,7 @@ class AdminController extends Controller
                     $this->normalizeOptionalPackagePrice($internationalChildPrice),
                 ])->contains(fn ($price) => $price !== null);
 
-                if ($groupSizeLabel === '' || ! $hasAnyPrice) {
+                if ($groupSizeLabel === '' || (! $hasAnyPrice && ! $isContactOnlyRow)) {
                     throw ValidationException::withMessages([
                         'pricing_group_size_label' => 'Each group size row must include the pax label and at least one price.',
                     ]);

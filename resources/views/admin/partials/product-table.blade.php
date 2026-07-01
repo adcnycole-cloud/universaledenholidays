@@ -38,21 +38,20 @@
                 @if ($isPackage) style="grid-template-columns: 132px minmax(0, 1fr);" @endif
             >
                 <div class="overflow-hidden border border-stone-200 bg-white {{ $isPackage ? 'rounded-md' : 'rounded-[1rem]' }}" @if ($isPackage) style="width: 132px; height: 132px;" @else style="width: 72px; height: 72px;" @endif>
-                    @if ($cardImage)
-                        <img
-                            src="{{ $cardImage }}"
-                            alt="{{ $product->name }}"
-                            class="w-full object-cover {{ $isPackage ? '' : 'h-24' }}"
-                            @if ($isPackage) style="width: 132px; height: 132px;" @else style="width: 72px; height: 72px;" @endif
-                        >
-                    @else
-                        <div
-                            class="flex items-center justify-center bg-stone-100 text-center font-semibold uppercase text-stone-400 {{ $isPackage ? 'px-1 text-[8px] tracking-[0.15em]' : 'h-24 px-2 text-[10px] tracking-[0.2em]' }}"
-                            @if ($isPackage) style="width: 132px; height: 132px;" @else style="width: 72px; height: 72px;" @endif
-                        >
-                            No image
-                        </div>
-                    @endif
+                    <img
+                        src="{{ $cardImage }}"
+                        alt="{{ $product->name }}"
+                        class="w-full object-cover {{ $isPackage ? '' : 'h-24' }} {{ $cardImage ? 'block' : 'hidden' }}"
+                        @if ($isPackage) style="width: 132px; height: 132px;" @else style="width: 72px; height: 72px;" @endif
+                        @if ($isPackage) data-package-card-image @endif
+                    >
+                    <div
+                        class="{{ $cardImage ? 'hidden' : 'flex' }} items-center justify-center bg-stone-100 text-center font-semibold uppercase text-stone-400 {{ $isPackage ? 'px-1 text-[8px] tracking-[0.15em]' : 'h-24 px-2 text-[10px] tracking-[0.2em]' }}"
+                        @if ($isPackage) style="width: 132px; height: 132px;" @else style="width: 72px; height: 72px;" @endif
+                        @if ($isPackage) data-package-card-empty @endif
+                    >
+                        No image
+                    </div>
                 </div>
 
                 <div class="min-w-0">
@@ -87,22 +86,72 @@
                             ]]);
                             $packageItineraryItems = collect($product->itinerary_items ?? [])->filter()->values();
                             $packageDurationDays = preg_match('/(\d+)\s*day/i', $product->duration ?? '', $packageDurationMatches) ? max(1, (int) $packageDurationMatches[1]) : 1;
-                            $packageItineraryRows = $packageItineraryItems->isNotEmpty()
-                                ? $packageItineraryItems->map(function ($existingRow, $index) {
-                                    if (is_array($existingRow) && array_key_exists('activity', $existingRow)) {
-                                        return [
-                                            'day_number' => trim((string) ($existingRow['day_number'] ?? '')) ?: 'Day '.($index + 1),
-                                            'time' => $existingRow['time'] ?? '',
-                                            'activity' => $existingRow['activity'] ?? '',
-                                        ];
+                            $normalizePackageItineraryRows = function ($existingRow, $fallbackDayLabel) use (&$normalizePackageItineraryRows) {
+                                $normalizeStructuredRow = function (array $row, string $dayLabel) {
+                                    return [[
+                                        'day_number' => trim((string) ($row['day_number'] ?? '')) ?: $dayLabel,
+                                        'time' => trim((string) ($row['time'] ?? '')),
+                                        'activity' => trim((string) ($row['activity'] ?? '')),
+                                    ]];
+                                };
+
+                                if (is_array($existingRow) && array_key_exists('activity', $existingRow)) {
+                                    $activityValue = $existingRow['activity'] ?? '';
+
+                                    if (is_string($activityValue)) {
+                                        $decodedActivity = json_decode($activityValue, true);
+
+                                        if (json_last_error() === JSON_ERROR_NONE && is_array($decodedActivity)) {
+                                            $decodedRows = array_is_list($decodedActivity) ? $decodedActivity : [$decodedActivity];
+
+                                            return collect($decodedRows)
+                                                ->flatMap(fn ($decodedRow, $decodedIndex) => $normalizePackageItineraryRows($decodedRow, trim((string) ($existingRow['day_number'] ?? '')) ?: ($fallbackDayLabel ?: 'Day '.($decodedIndex + 1))))
+                                                ->values()
+                                                ->all();
+                                        }
                                     }
 
-                                    return [
-                                        'day_number' => 'Day '.($index + 1),
+                                    return $normalizeStructuredRow($existingRow, $fallbackDayLabel);
+                                }
+
+                                if (is_array($existingRow)) {
+                                    $rows = array_is_list($existingRow) ? $existingRow : [$existingRow];
+
+                                    return collect($rows)
+                                        ->flatMap(fn ($decodedRow, $decodedIndex) => $normalizePackageItineraryRows($decodedRow, $fallbackDayLabel ?: 'Day '.($decodedIndex + 1)))
+                                        ->values()
+                                        ->all();
+                                }
+
+                                if (is_string($existingRow)) {
+                                    $decodedRow = json_decode($existingRow, true);
+
+                                    if (json_last_error() === JSON_ERROR_NONE && is_array($decodedRow)) {
+                                        $decodedRows = array_is_list($decodedRow) ? $decodedRow : [$decodedRow];
+
+                                        return collect($decodedRows)
+                                            ->flatMap(fn ($nestedRow, $decodedIndex) => $normalizePackageItineraryRows($nestedRow, $fallbackDayLabel ?: 'Day '.($decodedIndex + 1)))
+                                            ->values()
+                                            ->all();
+                                    }
+
+                                    return [[
+                                        'day_number' => $fallbackDayLabel,
                                         'time' => '',
-                                        'activity' => is_string($existingRow) ? $existingRow : '',
-                                    ];
-                                })
+                                        'activity' => trim($existingRow),
+                                    ]];
+                                }
+
+                                return [[
+                                    'day_number' => $fallbackDayLabel,
+                                    'time' => '',
+                                    'activity' => '',
+                                ]];
+                            };
+                            $packageItineraryRows = $packageItineraryItems->isNotEmpty()
+                                ? $packageItineraryItems->flatMap(function ($existingRow, $index) use ($normalizePackageItineraryRows) {
+                                    return $normalizePackageItineraryRows($existingRow, 'Day '.($index + 1));
+                                })->values()
                                 : collect(range(0, $packageDurationDays - 1))->map(function ($index) {
                                     return [
                                         'day_number' => 'Day '.($index + 1),
@@ -422,105 +471,106 @@
                                 </div>
                             </div>
 
-                            <div class="package-inline-edit hidden fixed inset-0 z-[400] items-center justify-center overflow-y-auto bg-stone-950/55 px-8 py-6">
-                                <div class="w-full max-w-[1390px] overflow-y-auto rounded-[2rem] border border-stone-200 bg-stone-100 p-4 shadow-[0_24px_60px_rgba(15,23,42,0.24)]" data-package-inline-panel>
+                            <div class="package-inline-edit hidden fixed inset-0 z-[400] items-start justify-center overflow-hidden bg-stone-950/55 px-5 py-3 sm:px-6 sm:py-4">
+                                <div class="w-full max-w-[1380px] overflow-y-auto rounded-[2rem] border border-stone-200 bg-stone-100 p-4 pr-6 shadow-[0_24px_60px_rgba(15,23,42,0.24)]" data-package-inline-panel style="max-height: calc(100vh - 1.5rem); scrollbar-gutter: stable; padding-right: 1.75rem;">
                                 <div class="grid gap-6 items-start" style="grid-template-columns: 560px minmax(0, 1fr);">
                                     <div>
                                         <div class="grid gap-4" style="grid-template-columns: 240px 180px;">
                                             <div class="min-w-0">
                                                 <p class="mb-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-stone-400">Main image</p>
-                                                @if ($product->image_url)
-                                                    <button type="button" class="package-inline-main-image-open block overflow-hidden rounded-lg shadow-sm" data-inline-main-image-target="package-inline-main-image-{{ $product->id }}" aria-label="Open main image preview">
-                                                        <img src="{{ $product->image_url }}" alt="{{ $product->name }}" class="rounded-lg object-cover" style="width: 240px; height: 240px;">
-                                                    </button>
+                                                <button
+                                                    type="button"
+                                                    class="package-inline-main-image-open {{ $product->image_url ? 'block' : 'hidden' }} overflow-hidden rounded-lg shadow-sm"
+                                                    data-inline-main-image-target="package-inline-main-image-{{ $product->id }}"
+                                                    data-package-main-image-button
+                                                    aria-label="Open main image preview"
+                                                >
+                                                    <img
+                                                        src="{{ $product->image_url }}"
+                                                        alt="{{ $product->name }}"
+                                                        class="rounded-lg object-cover"
+                                                        data-package-main-image-card
+                                                        style="width: 240px; height: 240px;"
+                                                    >
+                                                </button>
+                                                <div
+                                                    class="{{ $product->image_url ? 'hidden' : 'flex' }} items-center justify-center rounded-lg border border-dashed border-stone-300 bg-stone-50 text-center text-[10px] font-medium uppercase tracking-[0.14em] text-stone-400"
+                                                    data-package-main-image-empty
+                                                    style="width: 240px; height: 240px;"
+                                                >
+                                                    No main image
+                                                </div>
 
-                                                    <div id="package-inline-main-image-{{ $product->id }}" class="package-inline-main-image-modal fixed inset-0 z-[260] hidden items-center justify-center bg-stone-950/70 px-4 py-4">
-                                                        <div class="inline-flex flex-col rounded-[0.8rem] bg-white shadow-[0_24px_60px_rgba(15,23,42,0.28)]" data-package-main-image-panel style="width: fit-content; min-width: 0; max-width: calc(100vw - 8rem); height: calc(88vh - 50px);">
-                                                            <div class="flex items-center justify-between border-b border-stone-200 px-4 py-3">
-                                                                <div>
-                                                                    <p class="text-xs font-semibold uppercase tracking-[0.18em] text-stone-400">Main image</p>
-                                                                    <p class="mt-1 text-sm font-semibold text-stone-800">{{ $product->name }}</p>
-                                                                </div>
-                                                                <button type="button" class="package-inline-main-image-close inline-flex h-8 w-8 items-center justify-center rounded-full border border-stone-200 bg-white text-lg leading-none text-stone-500 transition hover:bg-stone-100" aria-label="Close main image preview">&times;</button>
+                                                <div id="package-inline-main-image-{{ $product->id }}" class="package-inline-main-image-modal fixed inset-0 z-[260] hidden items-center justify-center bg-stone-950/70 px-4 py-4">
+                                                    <div class="inline-flex flex-col rounded-[0.8rem] bg-white shadow-[0_24px_60px_rgba(15,23,42,0.28)]" data-package-main-image-panel style="width: fit-content; min-width: 0; max-width: calc(100vw - 8rem); height: calc(88vh - 50px);">
+                                                        <div class="flex items-center justify-between border-b border-stone-200 px-4 py-3">
+                                                            <div>
+                                                                <p class="text-xs font-semibold uppercase tracking-[0.18em] text-stone-400">Main image</p>
+                                                                <p class="mt-1 text-sm font-semibold text-stone-800">{{ $product->name }}</p>
                                                             </div>
-                                                            <div class="flex flex-1 items-center justify-center overflow-hidden" style="width: fit-content; min-width: 0; max-width: 100%; padding: 30px; margin: 0 auto;">
-                                                                <img src="{{ $product->image_url }}" alt="{{ $product->name }}" class="block h-full w-auto rounded-[0.4rem] object-contain" data-package-main-image-preview style="max-width: none;">
-                                                            </div>
+                                                            <button type="button" class="package-inline-main-image-close inline-flex h-8 w-8 items-center justify-center rounded-full border border-stone-200 bg-white text-lg leading-none text-stone-500 transition hover:bg-stone-100" aria-label="Close main image preview">&times;</button>
+                                                        </div>
+                                                        <div class="flex flex-1 items-center justify-center overflow-hidden" style="width: fit-content; min-width: 0; max-width: 100%; padding: 30px; margin: 0 auto;">
+                                                            <img src="{{ $product->image_url }}" alt="{{ $product->name }}" class="block h-full w-auto rounded-[0.4rem] object-contain" data-package-main-image-preview style="max-width: none;">
                                                         </div>
                                                     </div>
-                                                @else
-                                                    <div class="flex items-center justify-center rounded-lg border border-dashed border-stone-300 bg-stone-50 text-center text-[10px] font-medium uppercase tracking-[0.14em] text-stone-400" style="width: 240px; height: 240px;">
-                                                        No main image
-                                                    </div>
-                                                @endif
+                                                </div>
                                                 <label class="mt-3 block">
                                                     <span class="mb-1 block text-[11px] font-semibold uppercase tracking-[0.14em] text-stone-500">Upload main image</span>
-                                                    <input name="image" type="file" accept=".jpg,.jpeg,.png,.webp" class="w-full rounded-2xl border border-dashed border-stone-300 bg-white px-3 py-2 text-xs text-stone-700">
+                                                    <input name="image" type="file" accept=".jpg,.jpeg,.png,.webp" class="w-full rounded-2xl border border-dashed border-stone-300 bg-white px-3 py-2 text-xs text-stone-700" data-package-main-image-input>
                                                 </label>
                                             </div>
 
                                             <div class="min-w-0">
                                                 <p class="mb-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-stone-400">Gallery folder</p>
-                                                @if ($inlineGalleryImages->isNotEmpty())
-                                                    <button type="button" class="package-inline-gallery-open relative flex h-[180px] w-[180px] flex-col justify-end overflow-hidden rounded-[1.6rem] border border-amber-200 bg-gradient-to-b from-amber-100 via-amber-50 to-white px-6 py-5 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md" data-inline-gallery-target="package-inline-gallery-{{ $product->id }}">
-                                                        <span class="absolute left-5 top-0 h-8 w-20 rounded-b-[1rem] rounded-t-[0.75rem] bg-amber-200/90"></span>
-                                                        <span class="absolute left-0 right-0 top-7 h-px bg-amber-200/80"></span>
-                                                        <p class="text-4xl font-semibold leading-none text-amber-950">{{ $inlineGalleryImages->count() }}</p>
-                                                        <p class="mt-3 text-lg font-semibold uppercase tracking-[0.06em] text-amber-900">Image{{ $inlineGalleryImages->count() === 1 ? '' : 's' }}</p>
-                                                        <p class="mt-4 text-sm uppercase tracking-[0.18em] text-amber-700/70">Open folder</p>
-                                                    </button>
+                                                <button type="button" class="package-inline-gallery-open relative flex h-[180px] w-[180px] flex-col justify-end overflow-hidden rounded-[1.6rem] border border-amber-200 bg-gradient-to-b from-amber-100 via-amber-50 to-white px-6 py-5 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md" data-inline-gallery-target="package-inline-gallery-{{ $product->id }}" data-package-gallery-open>
+                                                    <span class="absolute left-5 top-0 h-8 w-20 rounded-b-[1rem] rounded-t-[0.75rem] bg-amber-200/90"></span>
+                                                    <span class="absolute left-0 right-0 top-7 h-px bg-amber-200/80"></span>
+                                                    <p class="text-4xl font-semibold leading-none text-amber-950" data-package-gallery-count>{{ $inlineGalleryImages->count() }}</p>
+                                                    <p class="mt-3 text-lg font-semibold uppercase tracking-[0.06em] text-amber-900" data-package-gallery-label>Image{{ $inlineGalleryImages->count() === 1 ? '' : 's' }}</p>
+                                                    <p class="mt-4 text-sm uppercase tracking-[0.18em] text-amber-700/70" data-package-gallery-status>{{ $inlineGalleryImages->isNotEmpty() ? 'Open folder' : 'Empty folder' }}</p>
+                                                </button>
 
-                                                    <div id="package-inline-gallery-{{ $product->id }}" class="package-inline-gallery-modal fixed inset-0 z-[250] hidden items-center justify-center bg-stone-950/60 px-4 py-4">
-                                                        <div class="flex h-[88vh] w-full max-w-7xl flex-col rounded-[1.4rem] bg-white shadow-[0_24px_60px_rgba(15,23,42,0.28)]">
-                                                            <div class="flex items-center justify-between border-b border-stone-200 px-4 py-3">
-                                                                <div>
-                                                                    <p class="text-xs font-semibold uppercase tracking-[0.18em] text-stone-400">Gallery images</p>
-                                                                    <p class="mt-1 text-sm font-semibold text-stone-800">{{ $product->name }}</p>
-                                                                </div>
-                                                                <button type="button" class="package-inline-gallery-close inline-flex h-8 w-8 items-center justify-center rounded-full border border-stone-200 bg-white text-lg leading-none text-stone-500 transition hover:bg-stone-100" aria-label="Close gallery">&times;</button>
-                                                            </div>
-                                                            <div class="grid flex-1 grid-cols-2 gap-3 overflow-y-auto p-2 md:grid-cols-3 lg:grid-cols-4">
-                                                                @foreach ($inlineGalleryImages as $galleryImage)
-                                                                    <div class="package-inline-gallery-item relative overflow-hidden rounded-xl border border-stone-200 bg-stone-50" data-gallery-image="{{ $galleryImage }}">
-                                                                        <button type="button" class="package-inline-gallery-remove absolute right-2 top-2 z-10 inline-flex h-6 w-6 items-center justify-center rounded-full bg-rose-600 text-xs font-bold leading-none text-white shadow-sm transition hover:bg-rose-700" aria-label="Remove gallery image">-</button>
-                                                                        <button type="button" class="package-inline-gallery-preview-open block w-full" data-gallery-preview-src="{{ $galleryImage }}" data-gallery-preview-name="{{ $product->name }}" data-gallery-preview-modal="package-inline-gallery-image-preview-{{ $product->id }}" aria-label="Open gallery image preview">
-                                                                            <img src="{{ $galleryImage }}" alt="{{ $product->name }} gallery image" class="h-44 w-full object-cover transition hover:scale-[1.03]">
-                                                                        </button>
-                                                                    </div>
-                                                                @endforeach
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                @else
-                                                    <div class="relative flex h-[180px] w-[180px] flex-col justify-end overflow-hidden rounded-[1.6rem] border border-amber-200 bg-gradient-to-b from-amber-100 via-amber-50 to-white px-6 py-5 text-left shadow-sm">
-                                                        <span class="absolute left-5 top-0 h-8 w-20 rounded-b-[1rem] rounded-t-[0.75rem] bg-amber-200/90"></span>
-                                                        <span class="absolute left-0 right-0 top-7 h-px bg-amber-200/80"></span>
-                                                        <p class="text-4xl font-semibold leading-none text-amber-950">0</p>
-                                                        <p class="mt-3 text-lg font-semibold uppercase tracking-[0.06em] text-amber-900">Images</p>
-                                                        <p class="mt-4 text-sm uppercase tracking-[0.18em] text-amber-700/70">Empty folder</p>
-                                                    </div>
-                                                @endif
-                                                <label class="mt-3 block">
-                                                    <span class="mb-1 block text-[11px] font-semibold uppercase tracking-[0.14em] text-stone-500">Upload gallery images</span>
-                                                    <input name="gallery_image_files[]" type="file" accept=".jpg,.jpeg,.png,.webp" multiple class="w-full rounded-2xl border border-dashed border-stone-300 bg-white px-3 py-2 text-xs text-stone-700">
-                                                </label>
-                                            </div>
-                                            @if ($inlineGalleryImages->isNotEmpty())
-                                                <div id="package-inline-gallery-image-preview-{{ $product->id }}" class="package-inline-gallery-image-modal fixed inset-0 hidden items-center justify-center bg-stone-950/70 px-4 py-4" style="z-index: 20000;">
-                                                    <div class="inline-flex flex-col rounded-[0.8rem] bg-white shadow-[0_24px_60px_rgba(15,23,42,0.28)]" data-package-gallery-image-panel style="width: fit-content; min-width: 0; max-width: calc(100vw - 8rem); height: calc(88vh - 50px);">
+                                                <div id="package-inline-gallery-{{ $product->id }}" class="package-inline-gallery-modal fixed inset-0 z-[250] hidden items-center justify-center bg-stone-950/60 px-4 py-4">
+                                                    <div class="flex h-[88vh] w-full max-w-7xl flex-col rounded-[1.4rem] bg-white shadow-[0_24px_60px_rgba(15,23,42,0.28)]">
                                                         <div class="flex items-center justify-between border-b border-stone-200 px-4 py-3">
                                                             <div>
-                                                                <p class="text-xs font-semibold uppercase tracking-[0.18em] text-stone-400">Gallery image</p>
-                                                                <p class="mt-1 text-sm font-semibold text-stone-800" data-package-gallery-image-title>{{ $product->name }}</p>
+                                                                <p class="text-xs font-semibold uppercase tracking-[0.18em] text-stone-400">Gallery images</p>
+                                                                <p class="mt-1 text-sm font-semibold text-stone-800">{{ $product->name }}</p>
                                                             </div>
-                                                            <button type="button" class="package-inline-gallery-image-close inline-flex h-8 w-8 items-center justify-center rounded-full border border-stone-200 bg-white text-lg leading-none text-stone-500 transition hover:bg-stone-100" aria-label="Close gallery image preview">&times;</button>
+                                                            <button type="button" class="package-inline-gallery-close inline-flex h-8 w-8 items-center justify-center rounded-full border border-stone-200 bg-white text-lg leading-none text-stone-500 transition hover:bg-stone-100" aria-label="Close gallery">&times;</button>
                                                         </div>
-                                                        <div class="flex flex-1 items-center justify-center overflow-hidden" style="width: fit-content; min-width: 0; max-width: 100%; padding: 30px; margin: 0 auto;">
-                                                            <img src="" alt="" class="block h-full w-auto rounded-[0.4rem] object-contain" data-package-gallery-image-preview style="max-width: none;">
+                                                        <div class="grid flex-1 grid-cols-2 gap-3 overflow-y-auto p-2 md:grid-cols-3 lg:grid-cols-4" data-package-gallery-grid>
+                                                            @foreach ($inlineGalleryImages as $galleryImage)
+                                                                <div class="package-inline-gallery-item relative overflow-hidden rounded-xl border border-stone-200 bg-stone-50" data-gallery-image="{{ $galleryImage }}">
+                                                                    <button type="button" class="package-inline-gallery-remove absolute right-2 top-2 z-10 inline-flex h-6 w-6 items-center justify-center rounded-full bg-rose-600 text-xs font-bold leading-none text-white shadow-sm transition hover:bg-rose-700" aria-label="Remove gallery image">-</button>
+                                                                    <button type="button" class="package-inline-gallery-preview-open block w-full" data-gallery-preview-src="{{ $galleryImage }}" data-gallery-preview-name="{{ $product->name }}" data-gallery-preview-modal="package-inline-gallery-image-preview-{{ $product->id }}" aria-label="Open gallery image preview">
+                                                                        <img src="{{ $galleryImage }}" alt="{{ $product->name }} gallery image" class="h-44 w-full object-cover transition hover:scale-[1.03]">
+                                                                    </button>
+                                                                </div>
+                                                            @endforeach
                                                         </div>
                                                     </div>
                                                 </div>
-                                            @endif
+                                                <label class="mt-3 block">
+                                                    <span class="mb-1 block text-[11px] font-semibold uppercase tracking-[0.14em] text-stone-500">Upload gallery images</span>
+                                                    <input name="gallery_image_files[]" type="file" accept=".jpg,.jpeg,.png,.webp" multiple class="w-full rounded-2xl border border-dashed border-stone-300 bg-white px-3 py-2 text-xs text-stone-700" data-package-gallery-input>
+                                                </label>
+                                            </div>
+                                            <div id="package-inline-gallery-image-preview-{{ $product->id }}" class="package-inline-gallery-image-modal fixed inset-0 hidden items-center justify-center bg-stone-950/70 px-4 py-4" style="z-index: 20000;">
+                                                <div class="inline-flex flex-col rounded-[0.8rem] bg-white shadow-[0_24px_60px_rgba(15,23,42,0.28)]" data-package-gallery-image-panel style="width: fit-content; min-width: 0; max-width: calc(100vw - 8rem); height: calc(88vh - 50px);">
+                                                    <div class="flex items-center justify-between border-b border-stone-200 px-4 py-3">
+                                                        <div>
+                                                            <p class="text-xs font-semibold uppercase tracking-[0.18em] text-stone-400">Gallery image</p>
+                                                            <p class="mt-1 text-sm font-semibold text-stone-800" data-package-gallery-image-title>{{ $product->name }}</p>
+                                                        </div>
+                                                        <button type="button" class="package-inline-gallery-image-close inline-flex h-8 w-8 items-center justify-center rounded-full border border-stone-200 bg-white text-lg leading-none text-stone-500 transition hover:bg-stone-100" aria-label="Close gallery image preview">&times;</button>
+                                                    </div>
+                                                    <div class="flex flex-1 items-center justify-center overflow-hidden" style="width: fit-content; min-width: 0; max-width: 100%; padding: 30px; margin: 0 auto;">
+                                                        <img src="" alt="" class="block h-full w-auto rounded-[0.4rem] object-contain" data-package-gallery-image-preview style="max-width: none;">
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
 
@@ -1525,6 +1575,7 @@
             const cancelButton = row.querySelector('[data-package-inline-cancel]');
             const saveButton = row.querySelector('.package-inline-save');
             const itineraryModal = row.querySelector('[data-package-itinerary-modal]');
+            const itineraryForm = itineraryModal?.querySelector('form');
             const itineraryCloseButtons = row.querySelectorAll('[data-package-itinerary-close]');
             const itineraryTableBody = row.querySelector('[data-package-itinerary-table-body]');
             const itineraryDayTemplate = row.querySelector('[data-package-itinerary-day-template]');
@@ -2083,11 +2134,15 @@
                 itineraryModal?.classList.add('flex');
             });
 
+            const closeItineraryModal = () => {
+                itineraryModal?.classList.add('hidden');
+                itineraryModal?.classList.remove('flex');
+                syncRowOverlayState();
+            };
+
             itineraryCloseButtons.forEach((button) => {
                 button.addEventListener('click', () => {
-                    itineraryModal?.classList.add('hidden');
-                    itineraryModal?.classList.remove('flex');
-                    syncRowOverlayState();
+                    closeItineraryModal();
                 });
             });
 
@@ -2096,9 +2151,7 @@
                     return;
                 }
 
-                itineraryModal.classList.add('hidden');
-                itineraryModal.classList.remove('flex');
-                syncRowOverlayState();
+                closeItineraryModal();
             });
 
             packageDetailsButton?.addEventListener('click', () => {
@@ -2519,8 +2572,127 @@
                 }
             });
 
+            itineraryForm?.addEventListener('submit', async (event) => {
+                event.preventDefault();
+
+                const submitButton = itineraryForm.querySelector('button[type="submit"]');
+                const originalLabel = submitButton?.textContent?.trim() || 'Save Itinerary';
+                const formData = new FormData(itineraryForm);
+                const itineraryPersistKey = itineraryForm.dataset.formPersist
+                    ? `ueh-form-draft:${itineraryForm.dataset.formPersist}`
+                    : '';
+
+                if (submitButton instanceof HTMLButtonElement) {
+                    submitButton.disabled = true;
+                    submitButton.textContent = 'Saving...';
+                    submitButton.classList.add('opacity-70', 'cursor-not-allowed');
+                }
+
+                try {
+                    const response = await fetch(itineraryForm.action, {
+                        method: 'POST',
+                        headers: {
+                            'Accept': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest',
+                        },
+                        body: formData,
+                    });
+
+                    const responseType = response.headers.get('content-type') ?? '';
+
+                    if (response.status === 422 && responseType.includes('application/json')) {
+                        const data = await response.json();
+                        const firstError = Object.values(data.errors ?? {}).flat()[0];
+                        throw new Error(firstError || 'Unable to save package itinerary right now.');
+                    }
+
+                    if (!response.ok) {
+                        throw new Error('Unable to save package itinerary right now.');
+                    }
+
+                    if (responseType.includes('application/json')) {
+                        await response.json();
+                    }
+
+                    if (itineraryPersistKey) {
+                        try {
+                            window.localStorage.removeItem(itineraryPersistKey);
+                        } catch (error) {
+                            // Ignore localStorage failures.
+                        }
+                    }
+
+                    closeItineraryModal();
+                } catch (error) {
+                    console.error(error);
+                    alert(error instanceof Error ? error.message : 'Unable to save package itinerary right now. Please try again.');
+                } finally {
+                    if (submitButton instanceof HTMLButtonElement) {
+                        submitButton.disabled = false;
+                        submitButton.textContent = originalLabel;
+                        submitButton.classList.remove('opacity-70', 'cursor-not-allowed');
+                    }
+                }
+            });
+
+            form.addEventListener('submit', async (event) => {
+                event.preventDefault();
+
+                const formData = new FormData(form);
+                const originalSaveLabel = saveButton.textContent?.trim() || 'Save';
+                const persistKey = form.dataset.formPersist ? `ueh-form-draft:${form.dataset.formPersist}` : '';
+
+                saveButton.disabled = true;
+                saveButton.textContent = 'Saving...';
+                saveButton.classList.add('opacity-70', 'cursor-not-allowed');
+
+                try {
+                    const response = await fetch(form.action, {
+                        method: 'POST',
+                        headers: {
+                            'Accept': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest',
+                        },
+                        body: formData,
+                    });
+
+                    const responseType = response.headers.get('content-type') ?? '';
+
+                    if (response.status === 422 && responseType.includes('application/json')) {
+                        const data = await response.json();
+                        const firstError = Object.values(data.errors ?? {}).flat()[0];
+                        throw new Error(firstError || 'Unable to save package right now.');
+                    }
+
+                    if (!response.ok || !responseType.includes('application/json')) {
+                        throw new Error('Unable to save package right now.');
+                    }
+
+                    const data = await response.json();
+                    applySavedPackageImages(row, form, data.package ?? {});
+
+                    if (persistKey) {
+                        try {
+                            window.localStorage.removeItem(persistKey);
+                        } catch (error) {
+                            // Ignore localStorage failures.
+                        }
+                    }
+
+                    closeEditFormAfterSave();
+                } catch (error) {
+                    console.error(error);
+                    alert(error instanceof Error ? error.message : 'Unable to save package right now. Please try again.');
+                } finally {
+                    saveButton.disabled = false;
+                    saveButton.textContent = originalSaveLabel;
+                    saveButton.classList.remove('opacity-70', 'cursor-not-allowed');
+                }
+            });
+
             cancelButton.addEventListener('click', () => {
                 resetForm();
+                form.querySelectorAll('[data-package-rich-editor]').forEach(syncRichEditorInput);
                 editSection.style.zIndex = '';
                 editPanel.style.position = '';
                 editPanel.style.zIndex = '';
@@ -2530,6 +2702,17 @@
                 editButton.classList.remove('hidden');
                 syncRowOverlayState();
             });
+
+            function closeEditFormAfterSave() {
+                editSection.style.zIndex = '';
+                editPanel.style.position = '';
+                editPanel.style.zIndex = '';
+                viewSection.classList.remove('hidden');
+                editSection.classList.add('hidden');
+                editSection.classList.remove('flex');
+                editButton.classList.remove('hidden');
+                syncRowOverlayState();
+            }
 
             editSection.addEventListener('click', (event) => {
                 if (event.target !== editSection) {
@@ -2637,6 +2820,413 @@
             editButton.click();
         });
 
+        const updatePackageGallerySummary = (row) => {
+            if (!(row instanceof HTMLElement)) {
+                return;
+            }
+
+            const galleryGrid = row.querySelector('[data-package-gallery-grid]');
+            const countElement = row.querySelector('[data-package-gallery-count]');
+            const labelElement = row.querySelector('[data-package-gallery-label]');
+            const statusElement = row.querySelector('[data-package-gallery-status]');
+            const totalImages = galleryGrid?.querySelectorAll('.package-inline-gallery-item').length ?? 0;
+
+            if (countElement instanceof HTMLElement) {
+                countElement.textContent = `${totalImages}`;
+            }
+
+            if (labelElement instanceof HTMLElement) {
+                labelElement.textContent = totalImages === 1 ? 'Image' : 'Images';
+            }
+
+            if (statusElement instanceof HTMLElement) {
+                statusElement.textContent = totalImages > 0 ? 'Open folder' : 'Empty folder';
+            }
+        };
+
+        const syncInlineMainImagePreview = (row) => {
+            if (!(row instanceof HTMLElement)) {
+                return;
+            }
+
+            const input = row.querySelector('[data-package-main-image-input]');
+            const previewButton = row.querySelector('[data-package-main-image-button]');
+            const cardImage = row.querySelector('[data-package-main-image-card]');
+            const modalImage = row.querySelector('[data-package-main-image-preview]');
+            const emptyState = row.querySelector('[data-package-main-image-empty]');
+
+            if (!(input instanceof HTMLInputElement) || !(previewButton instanceof HTMLElement) || !(cardImage instanceof HTMLImageElement) || !(modalImage instanceof HTMLImageElement) || !(emptyState instanceof HTMLElement)) {
+                return;
+            }
+
+            const previousObjectUrl = previewButton.dataset.objectUrl;
+            if (previousObjectUrl) {
+                URL.revokeObjectURL(previousObjectUrl);
+                delete previewButton.dataset.objectUrl;
+            }
+
+            if (!previewButton.dataset.savedSrc) {
+                previewButton.dataset.savedSrc = cardImage.getAttribute('src') ?? '';
+            }
+
+            const file = input.files?.[0];
+
+            if (!file) {
+                const savedSrc = previewButton.dataset.savedSrc ?? '';
+
+                if (savedSrc) {
+                    cardImage.src = savedSrc;
+                    modalImage.src = savedSrc;
+                    previewButton.classList.remove('hidden');
+                    previewButton.classList.add('block');
+                    emptyState.classList.add('hidden');
+                    emptyState.classList.remove('flex');
+                } else {
+                    cardImage.removeAttribute('src');
+                    modalImage.removeAttribute('src');
+                    previewButton.classList.add('hidden');
+                    previewButton.classList.remove('block');
+                    emptyState.classList.remove('hidden');
+                    emptyState.classList.add('flex');
+                }
+
+                return;
+            }
+
+            const objectUrl = URL.createObjectURL(file);
+            previewButton.dataset.objectUrl = objectUrl;
+            cardImage.src = objectUrl;
+            modalImage.src = objectUrl;
+            previewButton.classList.remove('hidden');
+            previewButton.classList.add('block');
+            emptyState.classList.add('hidden');
+            emptyState.classList.remove('flex');
+        };
+
+        const openPackageGalleryPreview = (button, event) => {
+            event.preventDefault();
+            event.stopPropagation();
+
+            const row = button.closest('[data-package-inline-row]');
+            const modal = document.getElementById(button.dataset.galleryPreviewModal || '');
+            const galleryModal = button.closest('.package-inline-gallery-modal');
+            const panel = modal?.querySelector('[data-package-gallery-image-panel]');
+            const image = modal?.querySelector('[data-package-gallery-image-preview]');
+            const title = modal?.querySelector('[data-package-gallery-image-title]');
+            const imageSrc = button.dataset.galleryPreviewSrc;
+            const imageTitle = button.dataset.galleryPreviewName;
+
+            const syncGalleryImageModalWidth = () => {
+                if (!modal || !panel || !image || !image.naturalWidth || !image.naturalHeight) {
+                    return;
+                }
+
+                panel.style.width = 'fit-content';
+
+                requestAnimationFrame(() => {
+                    const header = panel.firstElementChild;
+                    const panelHeight = panel.clientHeight;
+                    const headerHeight = header instanceof HTMLElement ? header.offsetHeight : 0;
+                    const bodyVerticalPadding = 60;
+                    const bodyHorizontalPadding = 60;
+                    const availableImageHeight = Math.max(120, panelHeight - headerHeight - bodyVerticalPadding);
+                    const imageAspectRatio = image.naturalWidth / image.naturalHeight;
+                    const targetImageWidth = availableImageHeight * imageAspectRatio;
+                    const viewportWidthCap = window.innerWidth - 80;
+                    const panelWidth = Math.min(targetImageWidth + bodyHorizontalPadding, viewportWidthCap);
+
+                    panel.style.width = `${panelWidth}px`;
+                });
+            };
+
+            if (!row || !modal || !panel || !image || !imageSrc) {
+                return;
+            }
+
+            if (modal.parentElement !== document.body) {
+                document.body.appendChild(modal);
+            }
+
+            modal.style.zIndex = '20000';
+            panel.style.zIndex = '20001';
+
+            if (galleryModal instanceof HTMLElement) {
+                galleryModal.style.zIndex = '1200';
+            }
+
+            image.src = imageSrc;
+            image.alt = imageTitle ? `${imageTitle} gallery image` : 'Gallery image';
+
+            if (title && imageTitle) {
+                title.textContent = imageTitle;
+            }
+
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+
+            if (image.complete) {
+                syncGalleryImageModalWidth();
+            } else {
+                image.addEventListener('load', syncGalleryImageModalWidth, { once: true });
+            }
+        };
+
+        const buildTemporaryGalleryPreviewItem = ({ imageUrl, imageName, modalId }) => {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'package-inline-gallery-item relative overflow-hidden rounded-xl border border-stone-200 bg-stone-50';
+            wrapper.dataset.tempGalleryItem = 'true';
+            wrapper.dataset.objectUrl = imageUrl;
+
+            const badge = document.createElement('span');
+            badge.className = 'absolute left-2 top-2 z-10 inline-flex items-center rounded-full bg-amber-500 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-white shadow-sm';
+            badge.textContent = 'New';
+
+            const previewButton = document.createElement('button');
+            previewButton.type = 'button';
+            previewButton.className = 'package-inline-gallery-preview-open block w-full';
+            previewButton.dataset.galleryPreviewSrc = imageUrl;
+            previewButton.dataset.galleryPreviewName = imageName;
+            previewButton.dataset.galleryPreviewModal = modalId;
+            previewButton.setAttribute('aria-label', 'Open gallery image preview');
+            previewButton.addEventListener('click', (event) => {
+                openPackageGalleryPreview(previewButton, event);
+            });
+
+            const image = document.createElement('img');
+            image.src = imageUrl;
+            image.alt = `${imageName} gallery image`;
+            image.className = 'h-44 w-full object-cover transition hover:scale-[1.03]';
+
+            previewButton.appendChild(image);
+            wrapper.appendChild(badge);
+            wrapper.appendChild(previewButton);
+
+            return wrapper;
+        };
+
+        const buildSavedGalleryPreviewItem = ({ row, imageUrl, imageName, modalId }) => {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'package-inline-gallery-item relative overflow-hidden rounded-xl border border-stone-200 bg-stone-50';
+            wrapper.dataset.galleryImage = imageUrl;
+
+            const removeButton = document.createElement('button');
+            removeButton.type = 'button';
+            removeButton.className = 'package-inline-gallery-remove absolute right-2 top-2 z-10 inline-flex h-6 w-6 items-center justify-center rounded-full bg-rose-600 text-xs font-bold leading-none text-white shadow-sm transition hover:bg-rose-700';
+            removeButton.setAttribute('aria-label', 'Remove gallery image');
+            removeButton.textContent = '-';
+            removeButton.addEventListener('click', () => {
+                row.querySelectorAll('input[name="existing_gallery_images[]"]').forEach((input) => {
+                    if (input.value === imageUrl) {
+                        input.remove();
+                    }
+                });
+
+                wrapper.remove();
+                updatePackageGallerySummary(row);
+            });
+
+            const previewButton = document.createElement('button');
+            previewButton.type = 'button';
+            previewButton.className = 'package-inline-gallery-preview-open block w-full';
+            previewButton.dataset.galleryPreviewSrc = imageUrl;
+            previewButton.dataset.galleryPreviewName = imageName;
+            previewButton.dataset.galleryPreviewModal = modalId;
+            previewButton.setAttribute('aria-label', 'Open gallery image preview');
+            previewButton.addEventListener('click', (event) => {
+                openPackageGalleryPreview(previewButton, event);
+            });
+
+            const image = document.createElement('img');
+            image.src = imageUrl;
+            image.alt = `${imageName} gallery image`;
+            image.className = 'h-44 w-full object-cover transition hover:scale-[1.03]';
+
+            previewButton.appendChild(image);
+            wrapper.appendChild(removeButton);
+            wrapper.appendChild(previewButton);
+
+            return wrapper;
+        };
+
+        const syncExistingGalleryInputs = (row, form, galleryImages) => {
+            row.querySelectorAll('input[name="existing_gallery_images[]"]').forEach((input) => input.remove());
+
+            const imageUrlInput = form.querySelector('input[name="image_url"]');
+            if (!(imageUrlInput instanceof HTMLInputElement)) {
+                return;
+            }
+
+            galleryImages.forEach((imageUrl) => {
+                const hiddenInput = document.createElement('input');
+                hiddenInput.type = 'hidden';
+                hiddenInput.name = 'existing_gallery_images[]';
+                hiddenInput.value = imageUrl;
+                imageUrlInput.insertAdjacentElement('afterend', hiddenInput);
+            });
+        };
+
+        const syncPackageCardImage = (row, mainImageUrl, galleryImages) => {
+            const cardImage = row.querySelector('[data-package-card-image]');
+            const cardEmpty = row.querySelector('[data-package-card-empty]');
+            const displayImage = mainImageUrl || galleryImages[0] || '';
+
+            if (!(cardImage instanceof HTMLImageElement) || !(cardEmpty instanceof HTMLElement)) {
+                return;
+            }
+
+            if (displayImage) {
+                cardImage.src = displayImage;
+                cardImage.classList.remove('hidden');
+                cardImage.classList.add('block');
+                cardEmpty.classList.add('hidden');
+                cardEmpty.classList.remove('flex');
+                return;
+            }
+
+            cardImage.removeAttribute('src');
+            cardImage.classList.add('hidden');
+            cardImage.classList.remove('block');
+            cardEmpty.classList.remove('hidden');
+            cardEmpty.classList.add('flex');
+        };
+
+        const applySavedPackageImages = (row, form, savedPackage) => {
+            const imageUrl = typeof savedPackage.image_url === 'string' ? savedPackage.image_url : '';
+            const galleryImages = Array.isArray(savedPackage.gallery_images)
+                ? savedPackage.gallery_images.filter((image) => typeof image === 'string' && image.trim() !== '')
+                : [];
+            const mainImageInput = row.querySelector('[data-package-main-image-input]');
+            const galleryInput = row.querySelector('[data-package-gallery-input]');
+            const previewButton = row.querySelector('[data-package-main-image-button]');
+            const cardImage = row.querySelector('[data-package-main-image-card]');
+            const modalImage = row.querySelector('[data-package-main-image-preview]');
+            const emptyState = row.querySelector('[data-package-main-image-empty]');
+            const imageUrlInput = form.querySelector('input[name="image_url"]');
+            const galleryGrid = row.querySelector('[data-package-gallery-grid]');
+            const galleryPreviewTitle = row.querySelector('[data-package-gallery-image-title]')?.textContent?.trim() || 'Package';
+            const galleryPreviewModal = row.querySelector('.package-inline-gallery-image-modal')?.id || '';
+
+            if (previewButton instanceof HTMLElement) {
+                const previousObjectUrl = previewButton.dataset.objectUrl;
+                if (previousObjectUrl) {
+                    URL.revokeObjectURL(previousObjectUrl);
+                    delete previewButton.dataset.objectUrl;
+                }
+
+                previewButton.dataset.savedSrc = imageUrl;
+            }
+
+            if (imageUrlInput instanceof HTMLInputElement) {
+                imageUrlInput.value = imageUrl;
+                imageUrlInput.defaultValue = imageUrl;
+            }
+
+            if (cardImage instanceof HTMLImageElement && modalImage instanceof HTMLImageElement && previewButton instanceof HTMLElement && emptyState instanceof HTMLElement) {
+                if (imageUrl) {
+                    cardImage.src = imageUrl;
+                    modalImage.src = imageUrl;
+                    previewButton.classList.remove('hidden');
+                    previewButton.classList.add('block');
+                    emptyState.classList.add('hidden');
+                    emptyState.classList.remove('flex');
+                } else {
+                    cardImage.removeAttribute('src');
+                    modalImage.removeAttribute('src');
+                    previewButton.classList.add('hidden');
+                    previewButton.classList.remove('block');
+                    emptyState.classList.remove('hidden');
+                    emptyState.classList.add('flex');
+                }
+            }
+
+            if (galleryGrid instanceof HTMLElement) {
+                galleryGrid.innerHTML = '';
+                galleryImages.forEach((galleryImage) => {
+                    galleryGrid.appendChild(buildSavedGalleryPreviewItem({
+                        row,
+                        imageUrl: galleryImage,
+                        imageName: galleryPreviewTitle,
+                        modalId: galleryPreviewModal,
+                    }));
+                });
+            }
+
+            syncExistingGalleryInputs(row, form, galleryImages);
+            syncPackageCardImage(row, imageUrl, galleryImages);
+            updatePackageGallerySummary(row);
+
+            if (mainImageInput instanceof HTMLInputElement) {
+                mainImageInput.value = '';
+            }
+
+            if (galleryInput instanceof HTMLInputElement) {
+                galleryInput.value = '';
+            }
+        };
+
+        const syncInlineGalleryPreviews = (row) => {
+            if (!(row instanceof HTMLElement)) {
+                return;
+            }
+
+            const input = row.querySelector('[data-package-gallery-input]');
+            const galleryGrid = row.querySelector('[data-package-gallery-grid]');
+            const galleryPreviewTitle = row.querySelector('[data-package-gallery-image-title]')?.textContent?.trim() || 'Package';
+            const galleryPreviewModal = row.querySelector('.package-inline-gallery-image-modal')?.id || '';
+
+            if (!(input instanceof HTMLInputElement) || !(galleryGrid instanceof HTMLElement)) {
+                return;
+            }
+
+            galleryGrid.querySelectorAll('[data-temp-gallery-item="true"]').forEach((item) => {
+                if (!(item instanceof HTMLElement)) {
+                    return;
+                }
+
+                const objectUrl = item.dataset.objectUrl;
+                if (objectUrl) {
+                    URL.revokeObjectURL(objectUrl);
+                }
+
+                item.remove();
+            });
+
+            Array.from(input.files ?? []).forEach((file) => {
+                const objectUrl = URL.createObjectURL(file);
+                const previewItem = buildTemporaryGalleryPreviewItem({
+                    imageUrl: objectUrl,
+                    imageName: galleryPreviewTitle,
+                    modalId: galleryPreviewModal,
+                });
+
+                galleryGrid.appendChild(previewItem);
+            });
+
+            updatePackageGallerySummary(row);
+        };
+
+        document.querySelectorAll('[data-package-inline-row]').forEach((row) => {
+            if (!(row instanceof HTMLElement)) {
+                return;
+            }
+
+            updatePackageGallerySummary(row);
+
+            const mainImageInput = row.querySelector('[data-package-main-image-input]');
+            if (mainImageInput instanceof HTMLInputElement) {
+                mainImageInput.addEventListener('change', () => {
+                    syncInlineMainImagePreview(row);
+                });
+            }
+
+            const galleryInput = row.querySelector('[data-package-gallery-input]');
+            if (galleryInput instanceof HTMLInputElement) {
+                galleryInput.addEventListener('change', () => {
+                    syncInlineGalleryPreviews(row);
+                });
+            }
+        });
+
         document.querySelectorAll('.package-gallery-remove').forEach((button) => {
             button.addEventListener('click', () => {
                 button.closest('.package-gallery-item')?.remove();
@@ -2687,76 +3277,13 @@
                 });
 
                 item.remove();
+                updatePackageGallerySummary(row);
             });
         });
 
         document.querySelectorAll('.package-inline-gallery-preview-open').forEach((button) => {
             button.addEventListener('click', (event) => {
-                event.preventDefault();
-                event.stopPropagation();
-
-                const row = button.closest('[data-package-inline-row]');
-                const modal = document.getElementById(button.dataset.galleryPreviewModal || '');
-                const galleryModal = button.closest('.package-inline-gallery-modal');
-                const panel = modal?.querySelector('[data-package-gallery-image-panel]');
-                const image = modal?.querySelector('[data-package-gallery-image-preview]');
-                const title = modal?.querySelector('[data-package-gallery-image-title]');
-                const imageSrc = button.dataset.galleryPreviewSrc;
-                const imageTitle = button.dataset.galleryPreviewName;
-
-                const syncGalleryImageModalWidth = () => {
-                    if (!modal || !panel || !image || !image.naturalWidth || !image.naturalHeight) {
-                        return;
-                    }
-
-                    panel.style.width = 'fit-content';
-
-                    requestAnimationFrame(() => {
-                        const header = panel.firstElementChild;
-                        const panelHeight = panel.clientHeight;
-                        const headerHeight = header instanceof HTMLElement ? header.offsetHeight : 0;
-                        const bodyVerticalPadding = 60;
-                        const bodyHorizontalPadding = 60;
-                        const availableImageHeight = Math.max(120, panelHeight - headerHeight - bodyVerticalPadding);
-                        const imageAspectRatio = image.naturalWidth / image.naturalHeight;
-                        const targetImageWidth = availableImageHeight * imageAspectRatio;
-                        const viewportWidthCap = window.innerWidth - 80;
-                        const panelWidth = Math.min(targetImageWidth + bodyHorizontalPadding, viewportWidthCap);
-
-                        panel.style.width = `${panelWidth}px`;
-                    });
-                };
-
-                if (!row || !modal || !panel || !image || !imageSrc) {
-                    return;
-                }
-
-                if (modal.parentElement !== document.body) {
-                    document.body.appendChild(modal);
-                }
-
-                modal.style.zIndex = '20000';
-                panel.style.zIndex = '20001';
-
-                if (galleryModal instanceof HTMLElement) {
-                    galleryModal.style.zIndex = '1200';
-                }
-
-                image.src = imageSrc;
-                image.alt = imageTitle ? `${imageTitle} gallery image` : 'Gallery image';
-
-                if (title && imageTitle) {
-                    title.textContent = imageTitle;
-                }
-
-                modal.classList.remove('hidden');
-                modal.classList.add('flex');
-
-                if (image.complete) {
-                    syncGalleryImageModalWidth();
-                } else {
-                    image.addEventListener('load', syncGalleryImageModalWidth, { once: true });
-                }
+                openPackageGalleryPreview(button, event);
             });
         });
 
@@ -2819,6 +3346,10 @@
                         panel.style.width = `${panelWidth}px`;
                     });
                 };
+
+                if (!image?.getAttribute('src')) {
+                    return;
+                }
 
                 modal?.classList.remove('hidden');
                 modal?.classList.add('flex');

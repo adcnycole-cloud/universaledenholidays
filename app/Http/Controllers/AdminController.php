@@ -3005,7 +3005,7 @@ class AdminController extends Controller
         return back()->with('success', 'Package saved successfully.');
     }
 
-    public function updatePackage(Request $request, Package $package): RedirectResponse
+    public function updatePackage(Request $request, Package $package)
     {
         $request->merge([
             'image_url' => $this->normalizeOptionalUrl($request->input('image_url')),
@@ -3034,7 +3034,8 @@ class AdminController extends Controller
             ->values()
             ->all();
 
-        $removedGalleryImages = array_values(array_diff($package->gallery_images ?? [], $existingGalleryImages));
+        $originalGalleryImages = $this->normalizeStoredGalleryImages($package->gallery_images ?? []);
+        $removedGalleryImages = array_values(array_diff($originalGalleryImages, $existingGalleryImages));
         $this->deleteManagedProductImages($removedGalleryImages);
 
         $galleryImages = $existingGalleryImages;
@@ -3045,10 +3046,25 @@ class AdminController extends Controller
         $packagePayload = $this->buildPackagePayload($validated, $request, $galleryImages, $package);
         $package->update($packagePayload);
 
+        if ($request->expectsJson() || $request->ajax()) {
+            $package->refresh();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Package updated successfully.',
+                'package' => [
+                    'id' => $package->id,
+                    'name' => $package->name,
+                    'image_url' => $package->image_url,
+                    'gallery_images' => collect($package->gallery_images ?? [])->filter()->values()->all(),
+                ],
+            ]);
+        }
+
         return back()->with('success', 'Package updated successfully.');
     }
 
-    public function updatePackageItinerary(Request $request, Package $package): RedirectResponse
+    public function updatePackageItinerary(Request $request, Package $package)
     {
         $validated = $request->validate([
             'itinerary_day_number' => ['nullable', 'array', 'max:31'],
@@ -3061,7 +3077,16 @@ class AdminController extends Controller
             'itinerary_notes.*' => ['nullable', 'string', 'max:1000'],
         ]);
 
-        $package->update(['itinerary_items' => $this->buildStructuredItinerary($validated)]);
+        $itineraryItems = $this->buildStructuredItinerary($validated);
+        $package->update(['itinerary_items' => $itineraryItems]);
+
+        if ($request->expectsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Package itinerary updated successfully.',
+                'itinerary_items' => $itineraryItems,
+            ]);
+        }
 
         return back()->with('success', 'Package itinerary updated successfully.');
     }
@@ -3163,7 +3188,7 @@ class AdminController extends Controller
     public function destroyPackage(Request $request, Package $package)
     {
         $this->deleteManagedProductImage($package->image_url);
-        $this->deleteManagedProductImages($package->gallery_images ?? []);
+        $this->deleteManagedProductImages($this->normalizeStoredGalleryImages($package->gallery_images ?? []));
         $package->delete();
 
         if ($request->expectsJson()) {
@@ -3210,6 +3235,31 @@ class AdminController extends Controller
         collect($imageUrls)
             ->filter(fn ($imageUrl) => is_string($imageUrl) && str_starts_with($imageUrl, '/storage/'))
             ->each(fn ($imageUrl) => Storage::disk('public')->delete(substr($imageUrl, strlen('/storage/'))));
+    }
+
+    private function normalizeStoredGalleryImages(mixed $value): array
+    {
+        if (is_array($value)) {
+            return collect($value)
+                ->filter(fn ($imageUrl) => is_string($imageUrl) && filled($imageUrl))
+                ->values()
+                ->all();
+        }
+
+        if (is_string($value)) {
+            $decoded = json_decode($value, true);
+
+            if (is_array($decoded)) {
+                return collect($decoded)
+                    ->filter(fn ($imageUrl) => is_string($imageUrl) && filled($imageUrl))
+                    ->values()
+                    ->all();
+            }
+
+            return $this->parseGalleryImageUrls($value);
+        }
+
+        return [];
     }
 
     private function parseGalleryImageUrls(?string $value): array

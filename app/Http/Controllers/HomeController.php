@@ -768,12 +768,11 @@ class HomeController extends Controller
     private function productMatchesTourCategory($product, array $tourPage): bool
     {
         $tourCode = strtoupper(trim((string) ($product->tour_code ?? '')));
+        $durationLabel = Str::lower(trim((string) $product->duration));
+        $compactDurationLabel = preg_replace('/[^a-z0-9]+/', '', $durationLabel) ?? $durationLabel;
+        $compactTourCode = preg_replace('/[^a-z0-9]+/', '', Str::lower($tourCode)) ?? Str::lower($tourCode);
 
         if ($tourPage['slug'] === 'day-trip' && str_starts_with($tourCode, 'DT-UEH')) {
-            return true;
-        }
-
-        if ($tourPage['slug'] !== 'day-trip' && str_starts_with($tourCode, 'OT-UEH')) {
             return true;
         }
 
@@ -786,11 +785,25 @@ class HomeController extends Controller
             return true;
         }
 
-        $durationLabel = Str::lower(trim((string) $product->duration));
-
         if ($tourPage['slug'] === 'day-trip') {
             return str_contains($durationLabel, 'day trip')
                 || str_contains($durationLabel, '1 day');
+        }
+
+        $durationTokens = match ($tourPage['slug']) {
+            '2d1n-trip' => ['2d1n', '2days1night', '2days1nights'],
+            '3d2n-trip' => ['3d2n', '3days2night', '3days2nights'],
+            '4d3n-trip' => ['4d3n', '4days3night', '4days3nights'],
+            default => [],
+        };
+
+        foreach ($durationTokens as $durationToken) {
+            if (
+                str_contains($compactDurationLabel, $durationToken)
+                || str_contains($compactTourCode, $durationToken)
+            ) {
+                return true;
+            }
         }
 
         return str_contains($durationLabel, Str::lower((string) $tourPage['label']));

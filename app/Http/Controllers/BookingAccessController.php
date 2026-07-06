@@ -76,7 +76,9 @@ class BookingAccessController extends Controller
             );
         }
 
-        return $this->redirectToHitPayCheckout($booking);
+        return redirect()
+            ->route('bookings.track.show', $booking->booking_reference)
+            ->with('success', 'Booking found. Please review your booking details below.');
     }
 
     public function showTrackingDetails(string $bookingReference): View

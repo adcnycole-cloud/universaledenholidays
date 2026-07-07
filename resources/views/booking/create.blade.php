@@ -878,6 +878,13 @@
 
             const getSelectedDurationDays = () => {
                 const durationLabel = getSelectedDurationLabel();
+                const normalizedDurationLabel = durationLabel.replace(/\s+/g, '').toLowerCase();
+                const compactDurationMatch = normalizedDurationLabel.match(/(\d+)d(\d+)n/);
+
+                if (compactDurationMatch) {
+                    return Number(compactDurationMatch[1]);
+                }
+
                 const durationMatch = durationLabel.match(/(\d+)\s*day/i);
 
                 return durationMatch ? Number(durationMatch[1]) : 0;
@@ -1182,7 +1189,7 @@
                 if (startDate) {
                     const durationLabel = getSelectedDurationLabel();
                     const durationDays = getSelectedDurationDays();
-                    const endDate = durationDays > 0 ? addDays(startDate, durationDays) : startDate;
+                    const endDate = durationDays > 1 ? addDays(startDate, durationDays - 1) : startDate;
 
                     dateLabel.textContent = `${formatDisplay(startDate)} to ${formatDisplay(endDate)}`;
                     dateHint.textContent = durationLabel
@@ -1199,7 +1206,7 @@
                 startInput.value = startDate ? formatValue(startDate) : '';
                 if (startDate) {
                     const durationDays = getSelectedDurationDays();
-                    const endDate = durationDays > 0 ? addDays(startDate, durationDays) : startDate;
+                    const endDate = durationDays > 1 ? addDays(startDate, durationDays - 1) : startDate;
                     endInput.value = formatValue(endDate);
                 } else {
                     endInput.value = '';

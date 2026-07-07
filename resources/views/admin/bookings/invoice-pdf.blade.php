@@ -8,6 +8,46 @@
     $address = $booking->pickup_location ?: 'N/A';
     $phone = $booking->phone ?: 'N/A';
     $packageLine = trim(($booking->package_name ?: 'Package').' - '.($booking->destination ?: 'Destination'));
+    $packageDuration = trim((string) ($booking->product->duration ?? $booking->package_name ?? ''));
+    $travelStartDate = $booking->check_in_date;
+    $travelEndDate = $booking->check_out_date ?: $travelStartDate;
+    $durationDays = null;
+    $durationNights = null;
+
+    if ($packageDuration !== '') {
+        $compactPackageDuration = strtolower(preg_replace('/\s+/', '', $packageDuration));
+
+        if (preg_match('/(\d+)d(\d+)n/', $compactPackageDuration, $durationMatches)) {
+            $durationDays = max(1, (int) $durationMatches[1]);
+            $durationNights = max(0, (int) $durationMatches[2]);
+        } elseif (preg_match('/(\d+)\s*day/i', $packageDuration, $durationMatches)) {
+            $durationDays = max(1, (int) $durationMatches[1]);
+        }
+    }
+
+    if ($travelStartDate && $durationDays) {
+        $calculatedTravelEndDate = $travelStartDate->copy()->addDays($durationDays - 1);
+
+        if (! $travelEndDate || $travelEndDate->lessThanOrEqualTo($travelStartDate)) {
+            $travelEndDate = $calculatedTravelEndDate;
+        }
+    }
+
+    $travelDateLine = 'Travel date: N/A';
+
+    if ($travelStartDate && $travelEndDate) {
+        $travelDateLine = 'Travel date: '.$travelStartDate->format('d M Y').' to '.$travelEndDate->format('d M Y');
+
+        if ($durationDays) {
+            $travelDateLine .= ' ('.$durationDays.' day'.($durationDays === 1 ? '' : 's');
+
+            if ($durationNights !== null) {
+                $travelDateLine .= ' '.$durationNights.' night'.($durationNights === 1 ? '' : 's');
+            }
+
+            $travelDateLine .= ')';
+        }
+    }
 @endphp
 
 <!DOCTYPE html>
@@ -18,8 +58,8 @@
     <title>Invoice {{ $booking->invoice_number_or_reference }}</title>
     <style>
         @page {
-            size: A4;
-            margin: 10mm;
+            size: A4 landscape;
+            margin: 18mm 16mm 12mm;
         }
 
         * {
@@ -38,6 +78,9 @@
 
         .page {
             width: 100%;
+            max-width: 255mm;
+            margin: 0 auto;
+            padding: 8mm 0 0;
         }
 
         .logo-section {
@@ -71,14 +114,14 @@
 
         .office-label {
             font-weight: 700;
-            width: 90px;
+            width: 130px;
             display: inline-block;
             vertical-align: top;
         }
 
         .office-content {
             display: inline-block;
-            width: calc(100% - 95px);
+            width: calc(100% - 135px);
             vertical-align: top;
             line-height: 1.4;
         }
@@ -198,6 +241,7 @@
             display: table-cell;
             vertical-align: top;
             width: 50%;
+            text-align: right;
         }
 
         .bank-info {
@@ -206,9 +250,16 @@
             margin-bottom: 2px;
         }
 
+        .totals-panel {
+            width: 130px;
+            margin-left: auto;
+            margin-right: 18px;
+            text-align: left;
+        }
+
         .totals-box {
             border: 1px solid #111827;
-            width: 130px;
+            width: 100%;
             text-align: right;
             font-weight: 700;
             padding: 4px 6px;
@@ -217,15 +268,14 @@
         }
 
         .totals-wrap {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin-bottom: 2px;
+            margin-bottom: 4px;
         }
 
         .totals-label {
+            display: block;
             font-weight: 600;
             font-size: 9px;
+            margin-bottom: 2px;
         }
 
         .footer-note {
@@ -280,7 +330,7 @@
         </div>
 
         <div class="office-section">
-            <span class="office-label"><strong>BRANCH [ EHHQ ]</strong></span>
+            <span class="office-label"><strong>BRANCH [ UEHHQ ]</strong></span>
             <span class="office-content">: Jalan Kalansanan, Batu 6, Tuaran By Pass, 88450 Kota Kinabalu, Sabah<br>Email: uniedenholidays@gmail.com</span>
         </div>
 
@@ -334,7 +384,7 @@
                     </tr>
                     <tr>
                         <td></td>
-                        <td style="padding-left: 20px; font-size: 9px;">Travel date: {{ optional($booking->check_in_date)->format('d M Y') }} to {{ optional($booking->check_out_date)->format('d M Y') }}</td>
+                        <td style="padding-left: 20px; font-size: 9px;">{{ $travelDateLine }}</td>
                         <td></td>
                     </tr>
                     <tr>
@@ -356,17 +406,19 @@
                 <div class="footer-note">This is a computer-generated invoice for customer records.</div>
             </div>
             <div class="footer-right">
-                <div class="totals-wrap">
-                    <div class="totals-label">Total Amount :</div>
-                    <div class="totals-box">{{ number_format((float) $booking->amount_myr, 2) }}</div>
-                </div>
-                <div class="totals-wrap">
-                    <div class="totals-label">Rounding :</div>
-                    <div class="totals-box">-</div>
-                </div>
-                <div class="totals-wrap">
-                    <div class="totals-label"><strong>Grand Total :</strong></div>
-                    <div class="totals-box"><strong>{{ number_format((float) $booking->amount_myr, 2) }}</strong></div>
+                <div class="totals-panel">
+                    <div class="totals-wrap">
+                        <div class="totals-label">Total Amount :</div>
+                        <div class="totals-box">{{ number_format((float) $booking->amount_myr, 2) }}</div>
+                    </div>
+                    <div class="totals-wrap">
+                        <div class="totals-label">Rounding :</div>
+                        <div class="totals-box">-</div>
+                    </div>
+                    <div class="totals-wrap">
+                        <div class="totals-label"><strong>Grand Total :</strong></div>
+                        <div class="totals-box"><strong>{{ number_format((float) $booking->amount_myr, 2) }}</strong></div>
+                    </div>
                 </div>
             </div>
         </div>

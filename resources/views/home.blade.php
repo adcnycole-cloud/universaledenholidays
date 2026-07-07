@@ -715,20 +715,22 @@
         @endif
     </section>
 
-        <div id="promo-poster-modal" class="promo-poster-modal fixed inset-0 z-[9999] bg-[rgba(15,23,42,0.82)] px-4 py-6 md:px-8 md:py-10" style="z-index: 2147483647; isolation: isolate;" hidden>
-            <div class="flex min-h-full items-start justify-center pt-16 md:pt-24">
-                <div class="relative overflow-hidden rounded-[1.8rem] bg-white shadow-[0_30px_80px_rgba(15,23,42,0.32)]" style="width: 76rem; max-width: calc(100vw - 2.5rem); margin-top: 8rem; min-height: 24rem; z-index: 2147483647;">
-                    <button type="button" data-promo-modal-close class="absolute right-4 top-4 z-20 inline-flex h-12 w-12 items-center justify-center rounded-full border border-stone-200 bg-white text-[1.9rem] font-semibold leading-none text-stone-900 shadow-[0_10px_24px_rgba(15,23,42,0.18)] transition hover:bg-stone-100" aria-label="Close promo viewer">
+        <div id="promo-poster-modal" class="promo-poster-modal fixed inset-0 z-[9999] px-4 md:px-8" style="z-index: 2147483647; isolation: isolate; background: #dbeafe;" hidden>
+            <div class="flex min-h-full items-center justify-center">
+                <div id="promo-poster-modal-panel" class="relative overflow-hidden rounded-[1.8rem] shadow-[0_24px_60px_rgba(37,99,235,0.18)]" style="width: 78rem; max-width: calc(100vw - 2.5rem); min-height: 26rem; margin-top: 4rem; z-index: 2147483647; background: #eff6ff;">
+                    <button type="button" data-promo-modal-close class="absolute right-4 top-4 z-20 inline-flex h-8 w-8 items-center justify-center rounded-full border border-blue-100 bg-[#eff6ff] text-[1.2rem] font-semibold leading-none text-slate-800 shadow-[0_8px_18px_rgba(37,99,235,0.16)] transition hover:bg-[#dbeafe]" aria-label="Close promo viewer">
                         &times;
                     </button>
                     <div class="flex flex-row flex-nowrap items-stretch">
-                        <div class="flex w-[40rem] min-w-[40rem] items-start justify-center bg-[#f7efe3] p-6">
+                        <div class="flex w-[40rem] min-w-[40rem] items-center justify-center bg-[#f7efe3] p-6">
                             <img id="promo-poster-modal-image" src="" alt="" class="h-auto w-auto object-contain" style="max-width: 41rem; max-height: 35rem; background: #ffffff;">
                         </div>
-                        <div class="flex min-w-0 flex-1 flex-col justify-center px-14 py-10 md:px-16" style="min-width: 0; width: 100%;">
-                            <p id="promo-poster-modal-date" class="text-sm font-bold uppercase tracking-[0.22em] text-amber-600"></p>
-                            <h3 id="promo-poster-modal-title" class="mt-4 font-['Prata'] text-3xl leading-tight text-stone-900 md:text-4xl"></h3>
-                            <p id="promo-poster-modal-summary" class="mt-6 text-base leading-8 text-stone-700 md:text-[1.02rem]"></p>
+                        <div id="promo-poster-modal-copy-column" class="flex min-w-0 flex-1 flex-col justify-center px-16 py-10 md:px-20" style="min-width: 0; width: 100%;">
+                            <div id="promo-poster-modal-copy-inner" class="w-full max-w-[30rem]">
+                                <p id="promo-poster-modal-date" class="text-sm font-bold uppercase tracking-[0.22em] text-amber-600"></p>
+                                <h3 id="promo-poster-modal-title" class="mt-4 font-['Prata'] text-3xl leading-tight text-stone-900 md:text-4xl"></h3>
+                                <p id="promo-poster-modal-summary" class="mt-6 text-base leading-8 text-stone-700 md:text-[1.02rem]"></p>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -1310,8 +1312,42 @@
             const promoModalDate = document.getElementById('promo-poster-modal-date');
             const promoModalTitle = document.getElementById('promo-poster-modal-title');
             const promoModalSummary = document.getElementById('promo-poster-modal-summary');
+            const promoModalPanel = document.getElementById('promo-poster-modal-panel');
+            const promoModalCopyColumn = document.getElementById('promo-poster-modal-copy-column');
+            const promoModalCopyInner = document.getElementById('promo-poster-modal-copy-inner');
             const promoModalCloseButton = promoModal?.querySelector('[data-promo-modal-close]');
             const promoModalTriggers = Array.from(document.querySelectorAll('[data-promo-modal-trigger]'));
+            const pageRoot = document.documentElement;
+            const defaultPromoModalPanelWidth = '78rem';
+            const defaultPromoModalPanelMinHeight = '26rem';
+            const expandedPromoModalPanelWidth = '82rem';
+            const expandedPromoModalPanelMinHeight = '29rem';
+            const defaultPromoModalCopyWidth = '30rem';
+            const expandedPromoModalCopyWidth = '34rem';
+
+            const lockPromoModalScroll = () => {
+                pageRoot.style.overflow = 'hidden';
+                document.body.style.overflow = 'hidden';
+            };
+
+            const unlockPromoModalScroll = () => {
+                pageRoot.style.overflow = '';
+                document.body.style.overflow = '';
+            };
+
+            const syncPromoModalLayout = (promoSummary = '') => {
+                if (!promoModalPanel || !promoModalCopyInner || !promoModalCopyColumn) {
+                    return;
+                }
+
+                const isLongSummary = promoSummary.trim().length > 260;
+
+                promoModalPanel.style.width = isLongSummary ? expandedPromoModalPanelWidth : defaultPromoModalPanelWidth;
+                promoModalPanel.style.minHeight = isLongSummary ? expandedPromoModalPanelMinHeight : defaultPromoModalPanelMinHeight;
+                promoModalCopyColumn.style.paddingLeft = isLongSummary ? '4.25rem' : '';
+                promoModalCopyColumn.style.paddingRight = isLongSummary ? '4.5rem' : '';
+                promoModalCopyInner.style.maxWidth = isLongSummary ? expandedPromoModalCopyWidth : defaultPromoModalCopyWidth;
+            };
 
             const closePromoModal = () => {
                 if (!promoModal) {
@@ -1319,7 +1355,7 @@
                 }
 
                 promoModal.hidden = true;
-                document.body.style.overflow = '';
+                unlockPromoModalScroll();
             };
 
             promoModalTriggers.forEach((trigger) => {
@@ -1339,8 +1375,9 @@
                     promoModalDate.textContent = promoDate;
                     promoModalTitle.textContent = promoTitle;
                     promoModalSummary.textContent = promoSummary;
+                    syncPromoModalLayout(promoSummary);
                     promoModal.hidden = false;
-                    document.body.style.overflow = 'hidden';
+                    lockPromoModalScroll();
                 });
             });
 

@@ -1,5 +1,204 @@
 <x-layouts.app :title="$product->name.' | Universal Eden Holidays'">
     <style>
+        .transport-detail-page {
+            background:
+                radial-gradient(circle at top, rgba(34, 197, 94, 0.06), transparent 28%),
+                linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+        }
+
+        .transport-detail-grid {
+            display: grid;
+            gap: 1.35rem;
+            align-items: start;
+        }
+
+        .transport-hero-card,
+        .transport-info-card {
+            border: 1px solid rgba(226, 232, 240, 0.9);
+            border-radius: 1.75rem;
+            background: rgba(255, 255, 255, 0.98);
+            box-shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
+        }
+
+        .transport-hero-card {
+            padding: 0;
+        }
+
+        .transport-hero-frame {
+            position: relative;
+            overflow: hidden;
+            border-radius: 1.75rem 1.75rem 0 0;
+            background: transparent;
+        }
+
+        .transport-hero-badge {
+            position: absolute;
+            left: 1.5rem;
+            top: 1.25rem;
+            z-index: 20;
+            display: inline-flex;
+            align-items: center;
+            border-radius: 999px;
+            background: rgba(15, 23, 42, 0.7);
+            padding: 0.5rem 0.85rem;
+            color: #ffffff;
+            font-size: 0.68rem;
+            font-weight: 700;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            backdrop-filter: blur(10px);
+        }
+
+        .transport-info-title {
+            margin: 0;
+            font-family: "Prata", Georgia, serif;
+            font-size: clamp(2rem, 3vw, 2.5rem);
+            line-height: 1.08;
+            color: #1e3159;
+        }
+
+        .transport-info-accent {
+            width: 2.4rem;
+            height: 3px;
+            margin-top: 0.9rem;
+            border-radius: 999px;
+            background: linear-gradient(90deg, #10b981, #34d399);
+        }
+
+        .transport-info-summary {
+            margin: 1rem 0 0;
+            color: #5f6f86;
+            font-size: 0.98rem;
+            line-height: 1.8;
+        }
+
+        .transport-hero-copy {
+            padding: 1.7rem 1.6rem 1.35rem;
+        }
+
+        .transport-hero-copy h1 {
+            margin: 0;
+            font-family: "Prata", Georgia, serif;
+            font-size: 2rem;
+            line-height: 1.15;
+            color: #223761;
+        }
+
+        .transport-hero-copy p {
+            margin: 0.95rem 0 0;
+            max-width: 42rem;
+            color: #5f6f86;
+            font-size: 0.98rem;
+            line-height: 1.8;
+        }
+
+        .transport-info-list {
+            margin-top: 1.5rem;
+            border-top: 1px solid rgba(226, 232, 240, 0.95);
+        }
+
+        .transport-info-row {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto;
+            gap: 1rem;
+            align-items: center;
+            padding: 1rem 0;
+            border-bottom: 1px solid rgba(226, 232, 240, 0.95);
+        }
+
+        .transport-info-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.85rem;
+            min-width: 0;
+            color: #1e3159;
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        .transport-info-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 2.55rem;
+            height: 2.55rem;
+            border-radius: 0.95rem;
+            border: 1px solid rgba(16, 185, 129, 0.12);
+            background: linear-gradient(180deg, #f4fbf8 0%, #ecfdf5 100%);
+            color: #1e3159;
+            flex: 0 0 auto;
+        }
+
+        .transport-info-value {
+            color: #5b6576;
+            font-size: 0.96rem;
+            line-height: 1.6;
+            text-align: right;
+        }
+
+        .transport-info-actions {
+            display: grid;
+            gap: 0.75rem;
+            margin-top: 1.5rem;
+        }
+
+        .transport-primary-action,
+        .transport-secondary-action {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.65rem;
+            width: 100%;
+            min-height: 3.3rem;
+            border-radius: 0.7rem;
+            font-size: 0.96rem;
+            font-weight: 700;
+            text-decoration: none;
+            transition: transform 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease;
+        }
+
+        .transport-primary-action {
+            background: linear-gradient(180deg, #16a34a 0%, #0f9f61 100%);
+            color: #ffffff;
+            box-shadow: 0 12px 26px rgba(16, 185, 129, 0.18);
+        }
+
+        .transport-primary-action:hover,
+        .transport-secondary-action:hover {
+            transform: translateY(-1px);
+        }
+
+        .transport-secondary-action {
+            border: 1px solid rgba(16, 185, 129, 0.7);
+            background: #ffffff;
+            color: #0f9f61;
+        }
+
+        @media (min-width: 1024px) {
+            .transport-detail-grid {
+                grid-template-columns: minmax(0, 1.62fr) minmax(20.5rem, 0.9fr);
+            }
+        }
+
+        @media (max-width: 767px) {
+            .transport-info-row {
+                grid-template-columns: 1fr;
+            }
+
+            .transport-info-value {
+                text-align: left;
+                padding-left: 3.4rem;
+            }
+
+            .transport-hero-copy {
+                padding: 1.35rem 1rem 1rem;
+            }
+
+            .transport-hero-copy h1 {
+                font-size: 1.8rem;
+            }
+        }
+
         .price-info-tooltip {
             position: relative;
             display: inline-flex;
@@ -109,8 +308,8 @@
             color: rgb(180 83 9);
         }
     </style>
-        <div class="flex min-h-[calc(100vh-var(--app-header-offset,0px))] flex-col" style="background-color: #ffffff;">
-    <main class="mx-auto w-full px-6 py-10 lg:px-10" style="max-width: {{ $product->category === 'package' ? '92rem' : '120rem' }}; background-color: #ffffff;">
+        <div class="flex min-h-[calc(100vh-var(--app-header-offset,0px))] flex-col {{ $product->category === 'transport' ? 'transport-detail-page' : '' }}" style="background-color: #ffffff;">
+    <main class="mx-auto w-full px-6 py-10 lg:px-8" style="max-width: {{ in_array($product->category, ['package', 'transport'], true) ? '98rem' : '98rem' }}; background-color: #ffffff;">
         <div class="mb-6 text-stone-500" style="font-size: 1.2rem; line-height: 1.25;">
             <a href="{{ route('home') }}" class="hover:text-sky-700">Home</a>
             <span class="mx-2">›</span>
@@ -397,7 +596,78 @@
             }
 
             $showOptionalActivities = filled($optionalActivitiesDescription) || $optionalActivitiesRows->isNotEmpty();
-            $itineraryItems = collect($product->itinerary_items ?? [])->filter()->values();
+            $transportSummary = $product->summary ?: $product->description ?: 'Suitable for group travel, tours, events, and transport planning across Sabah.';
+            $transportCapacityValue = filled($product->capacity)
+                ? Str::contains(Str::lower((string) $product->capacity), 'passenger')
+                    ? (string) $product->capacity
+                    : $product->capacity.' passengers'
+                : 'Flexible group size';
+            $transportRegionValue = $product->location ?: 'Sabah, Malaysia';
+            $transportAvailabilityValue = filled($product->duration)
+                ? $product->duration.' / Subject to booking'
+                : 'Daily / Subject to booking';
+            $transportDetailRows = [
+                [
+                    'icon' => 'location',
+                    'label' => 'Region',
+                    'value' => $transportRegionValue,
+                ],
+                [
+                    'icon' => 'vehicle',
+                    'label' => 'Service',
+                    'value' => 'Custom charter',
+                ],
+                [
+                    'icon' => 'group',
+                    'label' => 'Capacity',
+                    'value' => $transportCapacityValue,
+                ],
+                [
+                    'icon' => 'calendar',
+                    'label' => 'Availability',
+                    'value' => $transportAvailabilityValue,
+                ],
+                [
+                    'icon' => 'booking',
+                    'label' => 'Booking',
+                    'value' => 'Advance reservation required',
+                ],
+            ];
+            $itineraryItems = collect($product->itinerary_items ?? [])
+                ->filter()
+                ->flatMap(function ($item) {
+                    if (is_array($item)) {
+                        return [$item];
+                    }
+
+                    if (! is_string($item)) {
+                        return [$item];
+                    }
+
+                    $trimmedItem = trim($item);
+
+                    if ($trimmedItem === '') {
+                        return [];
+                    }
+
+                    if (Str::startsWith($trimmedItem, ['[', '{'])) {
+                        $decoded = json_decode($trimmedItem, true);
+
+                        if (json_last_error() === JSON_ERROR_NONE) {
+                            if (is_array($decoded) && array_is_list($decoded)) {
+                                return $decoded;
+                            }
+
+                            if (is_array($decoded)) {
+                                return [$decoded];
+                            }
+                        }
+                    }
+
+                    return [$item];
+                })
+                ->filter()
+                ->values();
             $structuredItineraryItems = $itineraryItems
                 ->filter(fn ($item) => is_array($item) && array_key_exists('activity', $item))
                 ->values();
@@ -412,13 +682,14 @@
         @endphp
 
         @if ($isTransport)
-        <section class="grid gap-8 lg:grid-cols-5 lg:items-stretch">
-            <div class="h-full lg:col-span-3">
-                <div>
-                    <div class="flex h-full flex-col overflow-hidden rounded-[2rem] border border-stone-200 bg-white shadow-sm">
+        <section class="transport-detail-grid">
+            <div class="h-full">
+                <div class="transport-hero-card flex h-full flex-col overflow-hidden">
+                    <div class="transport-hero-frame">
+                        <span class="transport-hero-badge">Transport</span>
                         @if ($primaryImage)
-                            <div class="px-5 pt-5" data-product-carousel>
-                                <div class="relative mx-auto overflow-hidden bg-white" style="width: min(100%, 720px); height: 420px;">
+                            <div data-product-carousel>
+                                <div class="relative mx-auto overflow-hidden bg-white" style="width: 100%; height: min(60vw, 29.8rem); min-height: 18rem; max-height: 29.8rem;">
                                     <button
                                         type="button"
                                         class="relative block h-full w-full overflow-hidden text-left"
@@ -448,45 +719,65 @@
                                 @endif
                             </div>
                         @else
-                            <div class="flex h-[26rem] items-center justify-center bg-[linear-gradient(135deg,_#dbeafe,_#fff7ed_55%,_#ecfeff)] px-8 text-center">
+                            <div class="flex h-[26rem] items-center justify-center px-8 text-center">
                                 <div>
                                     <p class="text-sm uppercase tracking-[0.3em] text-sky-700">{{ ucfirst($product->category) }}</p>
                                     <h1 class="mt-3 font-['Prata'] text-4xl text-stone-900 md:text-5xl">{{ $product->name }}</h1>
                                 </div>
                             </div>
                         @endif
-                        <div class="flex-1 p-8">
-                            <p class="text-sm uppercase tracking-[0.3em] text-sky-700">{{ ucfirst($product->category) }}</p>
-                            <h1 class="mt-3 font-['Prata'] text-4xl text-stone-900 md:text-5xl">{{ $product->name }}</h1>
-                            <p class="mt-4 text-sm leading-7 text-stone-500">View the gallery for this transport option and review the service details in the card beside it.</p>
-                        </div>
                     </div>
-
+                    <div class="transport-hero-copy">
+                        <h1>{{ $product->name }}</h1>
+                        <p>View the gallery for this transport option and review the service details in the card beside it.</p>
+                    </div>
                 </div>
             </div>
 
-            <aside class="space-y-6 h-full lg:col-span-2">
-                <section class="h-full rounded-[2rem] border border-emerald-500/30 bg-white p-6 shadow-sm">
-                        <div class="rounded-3xl bg-stone-50 p-5">
-                            <p class="text-sm uppercase tracking-[0.3em] text-emerald-700">Product Description</p>
-                            <p class="mt-3 text-sm leading-7 text-stone-600">
-                                {{ $product->summary ?: $product->description }}
-                            </p>
-                        </div>
+            <aside class="h-full">
+                <section class="transport-info-card h-full p-6 md:p-7">
+                    <h2 class="transport-info-title">Vehicle Details</h2>
+                    <div class="transport-info-accent"></div>
+                    <p class="transport-info-summary">{{ $transportSummary }}</p>
 
-                    <div class="mt-6 space-y-4 text-sm text-stone-700">
-                        <div class="flex justify-between gap-4"><span class="font-semibold">Description</span><span>{{ $product->name }}</span></div>
-                        <div class="flex justify-between gap-4"><span class="font-semibold">Region</span><span>{{ $product->location }}</span></div>
-                        <div class="flex justify-between gap-4"><span class="font-semibold">Duration</span><span>{{ $product->duration }}</span></div>
-                        <div class="flex justify-between gap-4"><span class="font-semibold">Capacity</span><span>{{ $product->capacity ?? 'Flexible' }}</span></div>
-                        <div class="flex justify-between gap-4"><span class="font-semibold">Availability</span><span>Daily / Subject to booking</span></div>
+                    <div class="transport-info-list">
+                        @foreach ($transportDetailRows as $detail)
+                            <div class="transport-info-row">
+                                <div class="transport-info-label">
+                                    <span class="transport-info-icon" aria-hidden="true">
+                                        @switch($detail['icon'])
+                                            @case('location')
+                                                <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 21s-6-5.4-6-10a6 6 0 1 1 12 0c0 4.6-6 10-6 10Z"></path><circle cx="12" cy="11" r="2.4"></circle></svg>
+                                                @break
+                                            @case('vehicle')
+                                                <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="6.5" width="16" height="9" rx="2"></rect><path d="M6 15.5v2.5"></path><path d="M18 15.5v2.5"></path><path d="M4 11.5h16"></path><circle cx="7.5" cy="17.5" r="1.5"></circle><circle cx="16.5" cy="17.5" r="1.5"></circle></svg>
+                                                @break
+                                            @case('group')
+                                                <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M16 19a4 4 0 0 0-8 0"></path><circle cx="12" cy="11" r="3"></circle><path d="M22 19a4 4 0 0 0-3-3.87"></path><path d="M2 19a4 4 0 0 1 3-3.87"></path><path d="M17 8a3 3 0 1 1 0 6"></path><path d="M7 8a3 3 0 1 0 0 6"></path></svg>
+                                                @break
+                                            @case('calendar')
+                                                <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M16 3v4"></path><path d="M8 3v4"></path><path d="M3 10h18"></path></svg>
+                                                @break
+                                            @default
+                                                <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="7" y="3" width="10" height="18" rx="2"></rect><path d="M10 7h4"></path><path d="M9 12h6"></path></svg>
+                                        @endswitch
+                                    </span>
+                                    <span>{{ $detail['label'] }}</span>
+                                </div>
+                                <div class="transport-info-value">{{ $detail['value'] }}</div>
+                            </div>
+                        @endforeach
                     </div>
 
-                    <div class="mt-6 flex flex-wrap gap-3">
-                        <div class="rounded-[1.25rem] border border-stone-200 bg-stone-50 px-4 py-3 text-sm leading-6 text-stone-600">
-                            Transport listings are information-only here. Please review the vehicle details and contact the team directly for arrangement support.
-                        </div>
-                        <a href="{{ route('booking.create', [$bookingRouteParameter => $product->id, 'mode' => 'enquiry']) }}" class="rounded-full border border-amber-400 px-5 py-3 text-sm font-semibold text-amber-600 transition hover:bg-amber-50">Send Enquiry</a>
+                    <div class="transport-info-actions">
+                        <a href="{{ route('booking.create', [$bookingRouteParameter => $product->id, 'mode' => 'enquiry']) }}" class="transport-primary-action">
+                            <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m22 2-7 20-4-9-9-4Z"></path><path d="M22 2 11 13"></path></svg>
+                            <span>Send Enquiry</span>
+                        </a>
+                        <a href="{{ route('transport.index') }}" class="transport-secondary-action">
+                            <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M19 12H5"></path><path d="m12 19-7-7 7-7"></path></svg>
+                            <span>Back to Transport</span>
+                        </a>
                     </div>
                 </section>
             </aside>

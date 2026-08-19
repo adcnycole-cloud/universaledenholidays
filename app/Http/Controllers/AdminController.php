@@ -7,6 +7,7 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use App\Models\BlogPost;
 use App\Models\Booking;
 use App\Models\CompanyCertification;
+use App\Models\CustomerGalleryItem;
 use App\Models\HomeHeroSlide;
 use App\Models\NewsFeature;
 use App\Models\Package;
@@ -327,6 +328,75 @@ class AdminController extends Controller
     public function testimonials(): View
     {
         return view('admin.testimonials', $this->sharedAdminData());
+    }
+
+    public function testimonialsReviews(): View
+    {
+        return view('admin.testimonials-reviews', $this->sharedAdminData());
+    }
+
+    public function testimonialsGallery(): View
+    {
+        return view('admin.testimonials-gallery', $this->sharedAdminData());
+    }
+
+    public function storeCustomerGalleryItem(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'title' => ['required', 'string', 'max:255'],
+            'description' => ['required', 'string', 'max:1000'],
+            'image' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
+            'is_active' => ['nullable', 'boolean'],
+        ]);
+
+        CustomerGalleryItem::create([
+            'title' => $validated['title'],
+            'description' => $validated['description'],
+            'image_path' => $request->file('image')->store('customer-gallery', 'public'),
+            'is_active' => $request->boolean('is_active', true),
+            'sort_order' => (int) (CustomerGalleryItem::max('sort_order') ?? -1) + 1,
+        ]);
+
+        return back()->with('success', 'Customer gallery item saved successfully.');
+    }
+
+    public function updateCustomerGalleryItem(Request $request, CustomerGalleryItem $customerGalleryItem): RedirectResponse
+    {
+        $validated = $request->validate([
+            'title' => ['required', 'string', 'max:255'],
+            'description' => ['required', 'string', 'max:1000'],
+            'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
+            'is_active' => ['nullable', 'boolean'],
+        ]);
+
+        $updates = [
+            'title' => $validated['title'],
+            'description' => $validated['description'],
+            'is_active' => $request->boolean('is_active'),
+        ];
+
+        if ($request->hasFile('image')) {
+            if ($customerGalleryItem->image_path) {
+                Storage::disk('public')->delete($customerGalleryItem->image_path);
+            }
+
+            $updates['image_path'] = $request->file('image')->store('customer-gallery', 'public');
+        }
+
+        $customerGalleryItem->update($updates);
+
+        return back()->with('success', 'Customer gallery item updated successfully.');
+    }
+
+    public function destroyCustomerGalleryItem(CustomerGalleryItem $customerGalleryItem): RedirectResponse
+    {
+        if ($customerGalleryItem->image_path) {
+            Storage::disk('public')->delete($customerGalleryItem->image_path);
+        }
+
+        $customerGalleryItem->delete();
+
+        return back()->with('success', 'Customer gallery item deleted successfully.');
     }
 
     public function aboutUs(): View
@@ -3687,11 +3757,15 @@ class AdminController extends Controller
 
         $validated = $request->validate([
             'image' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:' . self::HOME_HERO_SLIDE_MAX_KB],
+            'card_heading' => ['nullable', 'string', 'max:255'],
+            'card_description' => ['nullable', 'string', 'max:255'],
             'display_order' => ['nullable', 'integer', 'min:1', 'max:5'],
         ]);
 
         $slide = HomeHeroSlide::create([
             'image_path' => $request->file('image')->store('home-hero-slides', 'public'),
+            'card_heading' => trim((string) ($validated['card_heading'] ?? '')),
+            'card_description' => trim((string) ($validated['card_description'] ?? '')),
             'display_order' => HomeHeroSlide::count() + 1,
             'is_active' => $request->boolean('is_active', true),
         ]);
@@ -3711,10 +3785,14 @@ class AdminController extends Controller
 
         $validated = $request->validate([
             'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:' . self::HOME_HERO_SLIDE_MAX_KB],
+            'card_heading' => ['nullable', 'string', 'max:255'],
+            'card_description' => ['nullable', 'string', 'max:255'],
             'display_order' => ['required', 'integer', 'min:1', 'max:5'],
         ]);
 
         $updates = [
+            'card_heading' => trim((string) ($validated['card_heading'] ?? '')),
+            'card_description' => trim((string) ($validated['card_description'] ?? '')),
             'is_active' => $request->boolean('is_active'),
         ];
 
@@ -3886,11 +3964,15 @@ class AdminController extends Controller
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['nullable', 'string', 'max:255', 'email:rfc,dns'],
-            'location' => ['required', 'string', 'max:255'],
-            'trip_name' => ['required', 'string', 'max:255'],
+            'location' => ['nullable', 'string', 'max:255'],
+            'trip_name' => ['nullable', 'string', 'max:255'],
             'quote' => ['required', 'string', 'max:1000'],
             'rating' => ['required', 'integer', 'min:1', 'max:5'],
             'profile_photo' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
+            'gallery_image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
+            'gallery_title' => ['nullable', 'string', 'max:255'],
+            'gallery_description' => ['nullable', 'string', 'max:1000'],
+            'show_in_customer_gallery' => ['nullable', 'boolean'],
             'display_location' => ['required', 'in:landing,package'],
             'package_id' => ['nullable', 'exists:packages,id'],
             'is_featured' => ['nullable', 'boolean'],
@@ -3912,12 +3994,23 @@ class AdminController extends Controller
             $profilePhotoPath = $request->file('profile_photo')->store('testimonial-profiles', 'public');
         }
 
-        unset($validated['profile_photo']);
+        $galleryImagePath = null;
+
+        if ($request->hasFile('gallery_image')) {
+            $galleryImagePath = $request->file('gallery_image')->store('testimonial-gallery', 'public');
+        }
+
+        unset($validated['profile_photo'], $validated['gallery_image']);
 
         Testimonial::create([
             ...$validated,
+            'email' => $validated['email'] ?? null,
+            'location' => $validated['location'] ?? '',
+            'trip_name' => $validated['trip_name'] ?? '',
             'profile_photo_path' => $profilePhotoPath,
+            'gallery_image_path' => $galleryImagePath,
             'is_featured' => $request->boolean('is_featured'),
+            'show_in_customer_gallery' => $request->boolean('show_in_customer_gallery'),
             'product_id' => null,
             'package_id' => ($validated['display_location'] ?? 'landing') === 'package'
                 ? $validated['package_id']
@@ -3937,6 +4030,10 @@ class AdminController extends Controller
             'quote' => ['required', 'string', 'max:1000'],
             'rating' => ['required', 'integer', 'min:1', 'max:5'],
             'profile_photo' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
+            'gallery_image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
+            'gallery_title' => ['nullable', 'string', 'max:255'],
+            'gallery_description' => ['nullable', 'string', 'max:1000'],
+            'show_in_customer_gallery' => ['nullable', 'boolean'],
             'display_location' => ['required', 'in:landing,package'],
             'package_id' => ['nullable', 'exists:packages,id'],
             'is_featured' => ['nullable', 'boolean'],
@@ -3965,6 +4062,9 @@ class AdminController extends Controller
                 ? $validated['package_id']
                 : null,
             'is_featured' => $request->boolean('is_featured'),
+            'show_in_customer_gallery' => $request->boolean('show_in_customer_gallery'),
+            'gallery_title' => $validated['gallery_title'] ?? null,
+            'gallery_description' => $validated['gallery_description'] ?? null,
         ];
 
         if ($request->hasFile('profile_photo')) {
@@ -3973,6 +4073,14 @@ class AdminController extends Controller
             }
 
             $updates['profile_photo_path'] = $request->file('profile_photo')->store('testimonial-profiles', 'public');
+        }
+
+        if ($request->hasFile('gallery_image')) {
+            if ($testimonial->gallery_image_path) {
+                Storage::disk('public')->delete($testimonial->gallery_image_path);
+            }
+
+            $updates['gallery_image_path'] = $request->file('gallery_image')->store('testimonial-gallery', 'public');
         }
 
         $testimonial->update($updates);
@@ -3984,6 +4092,10 @@ class AdminController extends Controller
     {
         if ($testimonial->profile_photo_path) {
             Storage::disk('public')->delete($testimonial->profile_photo_path);
+        }
+
+        if ($testimonial->gallery_image_path) {
+            Storage::disk('public')->delete($testimonial->gallery_image_path);
         }
 
         $testimonial->delete();
@@ -4056,6 +4168,9 @@ class AdminController extends Controller
                 ? BlogPost::latest('published_at')->latest()->get()
                 : collect(),
             'testimonials' => Testimonial::with(['product', 'package'])->latest()->get(),
+            'customerGalleryItems' => Schema::hasTable('customer_gallery_items')
+                ? CustomerGalleryItem::query()->latest()->get()
+                : collect(),
             'staffMembers' => Schema::hasTable('staff')
                 ? Staff::query()->orderBy('sort_order')->orderBy('name')->get()
                 : collect(),

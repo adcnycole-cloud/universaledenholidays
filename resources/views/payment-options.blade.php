@@ -1,17 +1,52 @@
 <x-layouts.app title="Payment Options | Universal Eden Holidays">
+    <style>
+        .page-banner {
+            position: relative;
+            overflow: hidden;
+            margin-top: -3.1rem;
+        }
+
+        .page-banner-wave {
+            position: absolute;
+            bottom: 0;
+            left: -2px;
+            right: -2px;
+            width: calc(100% + 4px);
+            min-width: calc(100% + 4px);
+            max-width: none;
+            height: auto;
+            display: block;
+            filter: brightness(0) invert(1);
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .page-banner-image {
+            position: relative;
+            z-index: 0;
+        }
+
+        @media (max-width: 767px) {
+            .page-banner {
+                margin-top: 0;
+            }
+        }
+    </style>
+
     <main class="min-h-[calc(100vh-var(--app-header-offset,0px))] bg-white">
         <div class="w-full">
-            <section class="relative w-full bg-white">
+            <section class="page-banner w-full bg-white">
                 <img
                     src="{{ asset('images/payment.png') }}"
                     alt="Payment Options"
-                    class="block w-full h-auto"
+                    class="page-banner-image block w-full h-auto"
                 >
-                <div class="absolute inset-0 flex items-center justify-center px-6 text-center">
-                    <h1 class="rounded-full bg-white/85 px-6 py-3 font-['Oswald'] text-4xl font-bold uppercase tracking-[0.06em] text-stone-900 shadow-[0_10px_24px_rgba(255,255,255,0.28)] md:text-5xl">
-                        Payment Options
-                    </h1>
-                </div>
+                <img
+                    src="{{ asset('images/wave.png') }}"
+                    alt=""
+                    class="page-banner-wave"
+                    aria-hidden="true"
+                >
             </section>
 
             <section class="w-full bg-white px-6 py-10 lg:px-10">
@@ -57,4 +92,6 @@
             </section>
         </div>
     </main>
+
+    @include('partials.footer')
 </x-layouts.app>

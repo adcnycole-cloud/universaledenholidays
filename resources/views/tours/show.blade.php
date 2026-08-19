@@ -1,8 +1,21 @@
 <x-layouts.app :title="$tourPage['heading'].' | Universal Eden Holidays'">
     <style>
+        .tour-top-hero {
+            margin-top: -3.1rem;
+            min-height: calc(100% + 3.1rem);
+        }
+
         @media (min-width: 1024px) {
             #home-footer-grid {
                 grid-template-columns: var(--footer-grid-columns-lg, 1fr);
+            }
+        }
+
+        @media (max-width: 767px) {
+            .tour-top-hero {
+                margin-top: 0;
+                min-height: calc(20rem - 65px);
+                padding: calc(2.75rem - 32.5px) 1.25rem !important;
             }
         }
 
@@ -28,7 +41,7 @@
         };
     @endphp
     <main class="min-h-[calc(100vh-var(--app-header-offset,0px))] px-0 pt-0 pb-10" style="background: #ffffff;">
-        <section style="position: relative; overflow: hidden; width: 100%; {{ $heroImageStyle }} box-shadow: 0 22px 45px rgba(15,23,42,0.16); padding: 7.5rem 1.5rem 6.9rem;">
+        <section class="tour-top-hero" style="position: relative; overflow: hidden; width: 100%; {{ $heroImageStyle }} box-shadow: 0 22px 45px rgba(15,23,42,0.16); padding: 7.5rem 1.5rem 6.9rem; display: flex; align-items: center;">
             @if (in_array($tourPage['slug'], ['day-trip', '2d1n-trip', '3d2n-trip', '4d3n-trip'], true))
                 <div style="position: absolute; inset: 0; background: linear-gradient(90deg, rgba(15,23,42,0.58) 0%, rgba(15,23,42,0.32) 38%, rgba(15,23,42,0.14) 100%);"></div>
             @else

@@ -108,9 +108,15 @@
         <div class="flex flex-col gap-4">
             <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                 <h2 class="text-2xl font-semibold text-stone-900">{{ $listHeading }}</h2>
-                <label class="relative block w-full lg:max-w-sm">
-                    <input id="{{ $searchIdPrefix }}-search" type="search" placeholder="{{ $searchPlaceholder }}" class="w-full rounded-full border border-stone-300 bg-stone-50 px-4 py-3 text-sm text-stone-800 outline-none transition focus:border-sky-400 focus:bg-white">
-                </label>
+                <div class="flex w-full flex-col gap-3 lg:w-auto lg:flex-row lg:items-center">
+                    <label class="relative block w-full lg:w-[10rem] lg:shrink-0">
+                        <input id="{{ $searchIdPrefix }}-search" type="search" placeholder="{{ $searchPlaceholder }}" class="w-full rounded-full border border-stone-300 bg-stone-50 px-4 py-3 text-sm text-stone-800 outline-none transition focus:border-sky-400 focus:bg-white">
+                    </label>
+                    <div class="flex items-center gap-2 lg:shrink-0">
+                        <button id="{{ $searchIdPrefix }}-prev" type="button" class="inline-flex h-10 w-10 items-center justify-center rounded-full border border-stone-300 bg-white text-lg font-semibold leading-none text-stone-700 transition hover:bg-stone-100" aria-label="Previous page">&larr;</button>
+                        <button id="{{ $searchIdPrefix }}-next" type="button" class="inline-flex h-10 w-10 items-center justify-center rounded-full border border-stone-300 bg-white text-lg font-semibold leading-none text-stone-700 transition hover:bg-stone-100" aria-label="Next page">&rarr;</button>
+                    </div>
+                </div>
             </div>
             @if (!empty($listingFilters))
                 <div class="flex flex-wrap gap-2" data-list-filter-group>
@@ -127,13 +133,7 @@
                     @endforeach
                 </div>
             @endif
-            <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-                <p id="{{ $searchIdPrefix }}-results" class="text-sm text-stone-500" aria-live="polite">Showing {{ $products->count() }} {{ $listHeading }}</p>
-                <div class="flex items-center gap-2">
-                    <button id="{{ $searchIdPrefix }}-prev" type="button" class="inline-flex h-10 w-10 items-center justify-center rounded-full border border-stone-300 bg-white text-lg font-semibold leading-none text-stone-700 transition hover:bg-stone-100" aria-label="Previous page">&larr;</button>
-                    <button id="{{ $searchIdPrefix }}-next" type="button" class="inline-flex h-10 w-10 items-center justify-center rounded-full border border-stone-300 bg-white text-lg font-semibold leading-none text-stone-700 transition hover:bg-stone-100" aria-label="Next page">&rarr;</button>
-                </div>
-            </div>
+            <p id="{{ $searchIdPrefix }}-results" class="text-sm text-stone-500" aria-live="polite">Showing {{ $products->count() }} {{ $listHeading }}</p>
         </div>
         @include('admin.partials.product-table', [
             'products' => $products,

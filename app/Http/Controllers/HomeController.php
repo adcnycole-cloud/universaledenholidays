@@ -6,6 +6,7 @@ use App\Mail\BookingReferenceMail;
 use App\Models\BlogPost;
 use App\Models\Booking;
 use App\Models\CompanyCertification;
+use App\Models\CustomerGalleryItem;
 use App\Models\HomeHeroSlide;
 use App\Models\NewsFeature;
 use App\Models\Package;
@@ -113,11 +114,25 @@ class HomeController extends Controller
         return view('home', $this->sharedPageData());
     }
 
+    public function showTransportPage(): View
+    {
+        return view('transport', $this->sharedPageData());
+    }
+
     public function showReviewsIndex(): View
     {
         $landingTestimonials = $this->landingTestimonials();
         $googleReviewData = $this->googlePlaceReviewService->getPlaceReviews();
         $websiteReviews = $this->mapWebsiteReviews($landingTestimonials);
+        $customerGallery = $this->mapCustomerGalleryItems(
+            Schema::hasTable('customer_gallery_items')
+                ? CustomerGalleryItem::query()
+                    ->where('is_active', true)
+                    ->orderBy('sort_order')
+                    ->latest('id')
+                    ->get()
+                : collect()
+        );
 
         return view('reviews.index', [
             'websiteReviews' => $websiteReviews,
@@ -125,6 +140,7 @@ class HomeController extends Controller
             'allReviews' => $websiteReviews
                 ->concat(collect($googleReviewData['reviews'] ?? []))
                 ->values(),
+            'customerGallery' => $customerGallery,
             'websiteReviewStats' => $this->buildWebsiteReviewStats($landingTestimonials),
             'googleReviewData' => $googleReviewData,
         ]);
@@ -977,6 +993,8 @@ class HomeController extends Controller
                 ->map(fn (HomeHeroSlide $slide) => [
                     'id' => $slide->id,
                     'image_url' => $slide->image_url,
+                    'card_heading' => trim((string) ($slide->card_heading ?? '')),
+                    'card_description' => trim((string) ($slide->card_description ?? '')),
                 ])
                 ->filter(fn (array $slide) => filled($slide['image_url']))
                 ->values()
@@ -987,6 +1005,8 @@ class HomeController extends Controller
                 [
                     'id' => 'fallback-hero-slide',
                     'image_url' => asset('images/bg_image.png'),
+                    'card_heading' => 'Sabah Escape',
+                    'card_description' => 'Slide 01',
                 ],
             ]);
         }
@@ -1146,6 +1166,19 @@ class HomeController extends Controller
                 'review_url' => null,
             ];
         });
+    }
+
+    private function mapCustomerGalleryItems(EloquentCollection|Collection $galleryItems): Collection
+    {
+        return collect($galleryItems)->map(function ($galleryItem) {
+            return [
+                'image' => trim((string) ($galleryItem->image_url ?? '')),
+                'title' => trim((string) ($galleryItem->title ?? '')),
+                'caption' => trim((string) ($galleryItem->description ?? '')),
+            ];
+        })->filter(function (array $galleryItem) {
+            return $galleryItem['image'] !== '' && $galleryItem['title'] !== '' && $galleryItem['caption'] !== '';
+        })->values();
     }
 
     public function book(Request $request): RedirectResponse

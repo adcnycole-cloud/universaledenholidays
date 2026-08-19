@@ -1,4 +1,4 @@
-<x-layouts.app title="Booking Form | Universal Eden Holidays">
+<x-layouts.app title="{{ $isEnquiry ? 'Enquiry Form' : ($isReserveForm ? 'Reserve Form' : 'Booking Form') }} | Universal Eden Holidays">
     @php
         $isEnquiry = ($formMode ?? 'booking') === 'enquiry';
         $selectedServiceType = old('service_type', $selectedProduct->category ?? 'package');
@@ -36,7 +36,173 @@
             ? ($productPricingTiers[$selectedProduct->category.':'.$selectedProduct->id] ?? ['malaysia' => [], 'international' => []])
             : ['malaysia' => [], 'international' => []];
     @endphp
-    <main class="mx-auto max-w-[144rem] px-4 py-8 sm:px-5 lg:px-6">
+    <style>
+        .enquiry-page {
+            background:
+                radial-gradient(circle at top, rgba(34, 197, 94, 0.08), transparent 26%),
+                linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+        }
+
+        .enquiry-shell {
+            max-width: 120rem;
+        }
+
+        .booking-shell {
+            width: min(100%, calc(100vw - 424px));
+            max-width: 120rem;
+        }
+
+        .enquiry-layout {
+            display: grid;
+            gap: 1.4rem;
+            align-items: start;
+        }
+
+        .enquiry-form-card,
+        .enquiry-side-card {
+            border: 1px solid rgba(226, 232, 240, 0.95);
+            border-radius: 1.2rem;
+            background: rgba(255, 255, 255, 0.98);
+            box-shadow: 0 16px 38px rgba(15, 23, 42, 0.08);
+        }
+
+        .enquiry-section-label {
+            margin: 0 0 0.9rem;
+            color: #0f9f61;
+            font-size: 0.76rem;
+            font-weight: 800;
+            letter-spacing: 0.22em;
+            text-transform: uppercase;
+        }
+
+        .enquiry-card-divider {
+            margin: 1.25rem 0;
+            border: 0;
+            border-top: 1px solid rgba(226, 232, 240, 0.95);
+        }
+
+        .enquiry-field-label {
+            margin-bottom: 0.45rem;
+            display: block;
+            color: #1f2937;
+            font-size: 0.88rem;
+            font-weight: 600;
+        }
+
+        .enquiry-input,
+        .enquiry-select,
+        .enquiry-textarea {
+            width: 100%;
+            border: 1px solid #d7dee7;
+            border-radius: 0.5rem;
+            background: #ffffff;
+            padding: 0.88rem 0.95rem;
+            color: #111827;
+            font-size: 0.95rem;
+            transition: border-color 0.18s ease, box-shadow 0.18s ease;
+        }
+
+        .enquiry-input:focus,
+        .enquiry-select:focus,
+        .enquiry-textarea:focus {
+            outline: none;
+            border-color: #1fb977;
+            box-shadow: 0 0 0 3px rgba(31, 185, 119, 0.12);
+        }
+
+        .enquiry-textarea {
+            min-height: 7rem;
+            resize: vertical;
+        }
+
+        .enquiry-submit {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            min-height: 3.25rem;
+            border: 0;
+            border-radius: 0.4rem;
+            background: linear-gradient(180deg, #16a34a 0%, #0f9f61 100%);
+            color: #ffffff;
+            font-size: 1rem;
+            font-weight: 700;
+            box-shadow: 0 14px 24px rgba(16, 185, 129, 0.18);
+            transition: transform 0.18s ease, box-shadow 0.18s ease;
+        }
+
+        .enquiry-submit:hover {
+            transform: translateY(-1px);
+        }
+
+        .enquiry-back-link {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            margin-top: 0.85rem;
+            color: #0f9f61;
+            font-size: 0.9rem;
+            font-weight: 600;
+            text-decoration: underline;
+            text-underline-offset: 3px;
+        }
+
+        .enquiry-side-hero {
+            border-radius: 1.2rem 1.2rem 0 0;
+            background: linear-gradient(180deg, #071b33 0%, #082545 100%);
+            padding: 1.4rem 1.2rem 1.6rem;
+            color: #ffffff;
+            text-align: center;
+        }
+
+        .enquiry-side-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1.2rem 1.15rem;
+            border-top: 1px solid rgba(226, 232, 240, 0.95);
+        }
+
+        .enquiry-side-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 2.6rem;
+            height: 2.6rem;
+            color: #0f9f61;
+            flex: 0 0 auto;
+        }
+
+        .enquiry-track-box {
+            margin: 1rem;
+            border: 1px solid #c9d4e3;
+            border-radius: 0.8rem;
+            padding: 1rem;
+            text-align: center;
+        }
+
+        .enquiry-track-button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            min-height: 3rem;
+            border: 1px solid #93a6bf;
+            border-radius: 0.55rem;
+            color: #0f172a;
+            font-size: 0.95rem;
+            font-weight: 700;
+            text-decoration: none;
+        }
+
+        @media (min-width: 1024px) {
+            .enquiry-layout {
+                grid-template-columns: minmax(0, 1.65fr) minmax(16rem, 0.78fr);
+            }
+        }
+    </style>
+    <main class="mx-auto px-3 py-8 sm:px-4 lg:px-3 {{ $isEnquiry ? 'enquiry-shell enquiry-page' : 'booking-shell' }}">
         <div class="mb-6 flex items-start justify-between gap-4">
             <div>
                 <p class="text-sm uppercase tracking-[0.3em] text-amber-600">{{ $isEnquiry ? 'Enquiry Form' : ($isReserveForm ? 'Reserve Form' : 'Booking Form') }}</p>
@@ -191,87 +357,134 @@
                 </div>
 
                 @if ($isEnquiry)
-                <div class="grid gap-6 lg:grid-cols-[minmax(0,1.65fr)_minmax(20rem,0.75fr)] lg:items-start">
-                    <div class="rounded-[1.5rem] border border-stone-200 bg-stone-50/70 p-5 shadow-sm">
-                        <p class="mb-4 text-sm font-semibold uppercase tracking-[0.25em] text-stone-600">Your Details</p>
+                @php
+                    $enquiryBackUrl = old('service_type', $selectedProduct->category ?? '') === 'transport'
+                        ? route('transport.index')
+                        : route('home');
+                    $enquiryBackLabel = old('service_type', $selectedProduct->category ?? '') === 'transport'
+                        ? 'Back to transport'
+                        : 'Back to home';
+                @endphp
+                <div class="enquiry-layout">
+                    <div class="enquiry-form-card p-5 md:p-6">
+                        <p class="enquiry-section-label">Enquiry Form</p>
+                        <h2 class="font-['Prata'] text-3xl leading-tight text-[#223761]">Plan your transport with us</h2>
+                        <p class="mt-3 text-sm leading-6 text-stone-500">Tell us what you need and our team will confirm availability and the next steps.</p>
+
+                        <hr class="enquiry-card-divider">
+
+                        <p class="enquiry-section-label">Contact Details</p>
                         <div class="grid gap-4 md:grid-cols-2">
                             <div>
-                                <label for="full_name" class="mb-2 block text-sm font-medium text-stone-700">Full name <span class="text-rose-600">*</span></label>
-                                <input id="full_name" name="full_name" type="text" value="{{ old('full_name', auth()->user()->name ?? '') }}" class="w-full rounded-2xl border border-stone-300 bg-white px-4 py-3 text-stone-800" required>
+                                <label for="full_name" class="enquiry-field-label">Full name <span class="text-rose-600">*</span></label>
+                                <input id="full_name" name="full_name" type="text" value="{{ old('full_name', auth()->user()->name ?? '') }}" class="enquiry-input" required>
                             </div>
                             <div>
-                                <label for="email" class="mb-2 block text-sm font-medium text-stone-700">Email <span class="text-rose-600">*</span></label>
-                                <input id="email" name="email" type="email" value="{{ old('email', auth()->user()->email ?? '') }}" class="w-full rounded-2xl border border-stone-300 bg-white px-4 py-3 text-stone-800" autocomplete="email" inputmode="email" spellcheck="false" required>
+                                <label for="email" class="enquiry-field-label">Email <span class="text-rose-600">*</span></label>
+                                <input id="email" name="email" type="email" value="{{ old('email', auth()->user()->email ?? '') }}" class="enquiry-input" autocomplete="email" inputmode="email" spellcheck="false" required>
                             </div>
                         </div>
                         <div class="mt-3">
-                            <label for="phone_local_number" class="mb-2 block text-sm font-medium text-stone-700">Phone <span class="text-rose-600">*</span></label>
+                            <label for="phone_local_number" class="enquiry-field-label">Phone <span class="text-rose-600">*</span></label>
                             <div class="grid gap-3 sm:grid-cols-[12rem_minmax(0,1fr)]">
-                                <select id="phone_country_code" name="phone_country_code" class="w-full rounded-2xl border border-stone-300 bg-white px-4 py-3 text-stone-800" autocomplete="tel-country-code" required>
+                                <select id="phone_country_code" name="phone_country_code" class="enquiry-select" autocomplete="tel-country-code" required>
                                     @foreach ($phoneCountryCodes as $code => $label)
                                         <option value="{{ $code }}" @selected($selectedPhoneCountryCode === $code)>{{ $label }}</option>
                                     @endforeach
                                 </select>
-                                <input id="phone_local_number" name="phone_local_number" type="tel" value="{{ $phoneLocalNumber }}" class="w-full rounded-2xl border border-stone-300 bg-white px-4 py-3 text-stone-800" autocomplete="tel-national" inputmode="tel" maxlength="20" placeholder="12-345 6789" required>
+                                <input id="phone_local_number" name="phone_local_number" type="tel" value="{{ $phoneLocalNumber }}" class="enquiry-input" autocomplete="tel-national" inputmode="tel" maxlength="20" placeholder="12-345 6789" required>
                             </div>
-                            <p class="mt-2 text-xs text-stone-500">Choose the country code, then enter the rest of your phone number without the leading `+`.</p>
                         </div>
-                    </div>
 
-                    <div class="rounded-[1.5rem] border border-stone-200 bg-stone-50/70 p-5 shadow-sm">
-                        <p class="mb-4 text-sm font-semibold uppercase tracking-[0.25em] text-stone-600">Trip Preference</p>
-                        <div>
-                            <label for="preferred_travel_date" class="mb-2 block text-sm font-medium text-stone-700">Preferred travel date</label>
-                            <input id="preferred_travel_date" name="preferred_travel_date" type="date" min="{{ now()->toDateString() }}" value="{{ old('preferred_travel_date') }}" class="w-full rounded-2xl border border-stone-300 bg-white px-4 py-3 text-stone-800">
+                        <hr class="enquiry-card-divider">
+
+                        <p class="enquiry-section-label">Trip Details</p>
+                        <div class="grid gap-4 md:grid-cols-2">
+                            <div>
+                                <label for="preferred_travel_date" class="enquiry-field-label">Preferred travel date <span class="text-rose-600">*</span></label>
+                                <input id="preferred_travel_date" name="preferred_travel_date" type="date" min="{{ now()->toDateString() }}" value="{{ old('preferred_travel_date') }}" class="enquiry-input" required>
+                            </div>
+                            <div>
+                                <label for="estimated_guest_count" class="enquiry-field-label">Estimated guest count</label>
+                                <input id="estimated_guest_count" name="estimated_guest_count" type="number" min="0" max="50" value="{{ old('estimated_guest_count') }}" class="enquiry-input" placeholder="Optional">
+                            </div>
                         </div>
                         <div class="mt-3">
-                            <label for="estimated_guest_count" class="mb-2 block text-sm font-medium text-stone-700">Estimated guest count</label>
-                            <input id="estimated_guest_count" name="estimated_guest_count" type="number" min="0" max="50" value="{{ old('estimated_guest_count') }}" class="w-full rounded-2xl border border-stone-300 bg-white px-4 py-3 text-stone-800" placeholder="Optional">
+                            <label for="special_requests" class="enquiry-field-label">Message / Special requests</label>
+                            <textarea id="special_requests" name="special_requests" rows="4" class="enquiry-textarea" placeholder="Tell us about your destination, schedule, or any special requirements.">{{ old('special_requests') }}</textarea>
+                        </div>
+
+                        <p class="mt-3 text-xs text-stone-500"><span class="text-rose-600">*</span> Required fields</p>
+
+                        <div class="mt-4 rounded-[1rem] border border-amber-100 bg-amber-50 px-4 py-3 text-sm leading-6 text-stone-600">
+                            By submitting this form, you consent to the collection, processing, and storage of your personal data in accordance with our
+                            <a href="{{ route('legal.privacy-policy') }}" target="_blank" rel="noopener noreferrer" class="font-medium text-amber-700 underline hover:text-amber-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 rounded">Privacy Policy</a>.
+                        </div>
+
+                        <div class="mt-4 space-y-3">
+                            <label class="flex cursor-pointer items-start gap-3" for="legal_consent_enquiry">
+                                <input
+                                    id="legal_consent_enquiry"
+                                    name="legal_consent"
+                                    type="checkbox"
+                                    value="1"
+                                    class="mt-0.5 h-4 w-4 flex-shrink-0 cursor-pointer rounded border-stone-300 accent-emerald-600 focus-visible:ring-2 focus-visible:ring-emerald-500"
+                                    required
+                                    aria-required="true"
+                                    aria-describedby="enquiry-consent-error"
+                                    @checked(old('legal_consent'))
+                                >
+                                <span class="text-sm leading-5 text-stone-600">
+                                    I have read and agree to the
+                                    <a href="{{ route('legal.terms-and-conditions') }}" target="_blank" rel="noopener noreferrer" class="font-medium text-emerald-700 underline hover:text-emerald-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 rounded">Terms &amp; Conditions</a>
+                                    and
+                                    <a href="{{ route('legal.privacy-policy') }}" target="_blank" rel="noopener noreferrer" class="font-medium text-emerald-700 underline hover:text-emerald-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 rounded">Privacy Policy</a>.
+                                </span>
+                            </label>
+                            <p id="enquiry-consent-error" class="hidden text-sm text-rose-600" role="alert" aria-live="polite">
+                                You must agree to the Terms &amp; Conditions and Privacy Policy before submitting.
+                            </p>
+                        </div>
+
+                        <div class="mt-4">
+                            <button type="submit" class="enquiry-submit">Submit Enquiry</button>
+                            <a href="{{ $enquiryBackUrl }}" class="enquiry-back-link">{{ $enquiryBackLabel }}</a>
                         </div>
                     </div>
-                </div>
 
-                <div class="rounded-[1.5rem] border border-stone-200 bg-white p-5 shadow-sm">
-                    <label for="special_requests" class="mb-2 block text-sm font-medium text-stone-700">Your enquiry</label>
-                    <textarea id="special_requests" name="special_requests" rows="6" class="w-full rounded-2xl border border-stone-300 bg-white px-4 py-3 text-stone-800" placeholder="Tell us what product you are interested in, your travel plan, number of travelers, or any questions you want us to answer.">{{ old('special_requests') }}</textarea>
-                </div>
+                    <aside class="enquiry-side-card overflow-hidden">
+                        <div class="enquiry-side-hero">
+                            <h3 class="text-4xl font-['Prata'] leading-tight text-white">Your enquiry</h3>
+                            <div class="mt-3 flex justify-center">
+                                <svg viewBox="0 0 64 64" class="h-20 w-20 text-white" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M10 38V25a5 5 0 0 1 5-5h27l12 8v10"></path><path d="M17 43a5 5 0 1 0 0 10 5 5 0 0 0 0-10Zm30 0a5 5 0 1 0 0 10 5 5 0 0 0 0-10Z"></path><path d="M22 48h20"></path><path d="M10 38h44"></path><path d="M42 20v12h12"></path><path d="M16 28h14"></path></svg>
+                            </div>
+                            <p class="mt-3 text-base leading-7 text-slate-100">We'll help arrange the right transport for your trip.</p>
+                        </div>
 
-                {{-- PDPA notice --}}
-                <div class="rounded-[1.5rem] border border-amber-100 bg-amber-50 px-5 py-4 text-sm leading-6 text-stone-600">
-                    By submitting this form, you consent to the collection, processing, and storage of your personal data in accordance with our
-                    <a href="{{ route('legal.privacy-policy') }}" target="_blank" rel="noopener noreferrer" class="font-medium text-amber-700 underline hover:text-amber-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 rounded">Privacy Policy</a>.
-                </div>
+                        <div class="enquiry-side-item">
+                            <span class="enquiry-side-icon">
+                                <svg viewBox="0 0 24 24" class="h-7 w-7" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M20 15.5V18a2 2 0 0 1-2 2h-1.2a2 2 0 0 1-1.8-1.1l-1.2-2.4a2 2 0 0 0-1.8-1.1H12a2 2 0 0 0-1.8 1.1L9 18.9A2 2 0 0 1 7.2 20H6a2 2 0 0 1-2-2v-2.5a8 8 0 1 1 16 0Z"></path><circle cx="8.5" cy="10" r="1"></circle><circle cx="15.5" cy="10" r="1"></circle></svg>
+                            </span>
+                            <p class="text-sm font-medium text-stone-700">Personal assistance</p>
+                        </div>
+                        <div class="enquiry-side-item">
+                            <span class="enquiry-side-icon">
+                                <svg viewBox="0 0 24 24" class="h-7 w-7" fill="none" stroke="currentColor" stroke-width="1.9"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 3"></path></svg>
+                            </span>
+                            <p class="text-sm font-medium text-stone-700">Response within 1-2 business days</p>
+                        </div>
+                        <div class="enquiry-side-item">
+                            <span class="enquiry-side-icon">
+                                <svg viewBox="0 0 24 24" class="h-7 w-7" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M12 22s7-3.5 7-10V5l-7-3-7 3v7c0 6.5 7 10 7 10Z"></path><path d="m9 12 2 2 4-4"></path></svg>
+                            </span>
+                            <p class="text-sm font-medium text-stone-700">No payment required</p>
+                        </div>
 
-                <div class="rounded-[1.5rem] bg-white p-4 space-y-4">
-                    {{-- Legal consent checkbox --}}
-                    <label class="flex cursor-pointer items-start gap-3" for="legal_consent_enquiry">
-                        <input
-                            id="legal_consent_enquiry"
-                            name="legal_consent"
-                            type="checkbox"
-                            value="1"
-                            class="mt-0.5 h-4 w-4 flex-shrink-0 cursor-pointer rounded border-stone-300 accent-sky-600 focus-visible:ring-2 focus-visible:ring-sky-500"
-                            required
-                            aria-required="true"
-                            aria-describedby="enquiry-consent-error"
-                            @checked(old('legal_consent'))
-                        >
-                        <span class="text-sm leading-5 text-stone-600">
-                            I have read and agree to the
-                            <a href="{{ route('legal.terms-and-conditions') }}" target="_blank" rel="noopener noreferrer" class="font-medium text-sky-700 underline hover:text-sky-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 rounded">Terms &amp; Conditions</a>
-                            and
-                            <a href="{{ route('legal.privacy-policy') }}" target="_blank" rel="noopener noreferrer" class="font-medium text-sky-700 underline hover:text-sky-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 rounded">Privacy Policy</a>.
-                        </span>
-                    </label>
-                    <p id="enquiry-consent-error" class="hidden text-sm text-rose-600" role="alert" aria-live="polite">
-                        You must agree to the Terms &amp; Conditions and Privacy Policy before submitting.
-                    </p>
-                    <div class="flex flex-col gap-3 sm:flex-row sm:justify-start">
-                        <button type="submit" class="flex-1 rounded-full border border-sky-600 bg-sky-600 px-5 py-3 text-sm font-semibold uppercase tracking-[0.22em] text-white transition hover:bg-sky-700">Submit Enquiry</button>
-                        <a href="{{ route('home') }}" class="inline-flex items-center justify-center gap-2 rounded-full border border-stone-300 bg-white px-5 py-3 text-sm font-semibold text-stone-700 transition hover:bg-stone-50 sm:min-w-[9rem]">
-                            Cancel
-                        </a>
-                    </div>
+                        <div class="enquiry-track-box">
+                            <p class="text-base font-semibold text-slate-800">Already submitted?</p>
+                            <a href="{{ route('bookings.track.form') }}" class="enquiry-track-button mt-3">Track Booking ID</a>
+                        </div>
+                    </aside>
                 </div>
                 @else
                 <div class="grid gap-6 lg:grid-cols-2 lg:items-start">

@@ -140,6 +140,32 @@
                 transform: rotate(90deg);
             }
 
+            .public-header-top {
+                min-height: 52px;
+                border-bottom: 1px solid rgba(148, 163, 184, 0.14);
+                background: #ffffff;
+            }
+
+            .public-brand-link img:first-child {
+                height: 2.15rem;
+            }
+
+            .public-brand-link img:nth-child(2) {
+                height: 3.1rem;
+            }
+
+            .public-currency-group span {
+                font-size: 0.95rem;
+                color: #6b7280;
+            }
+
+            .public-currency-select {
+                min-width: 4.8rem;
+                border-color: #d1d5db;
+                color: #374151;
+                box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.85);
+            }
+
             .site-nav-panel {
                 position: absolute;
                 top: calc(100% + 0.9rem);
@@ -225,23 +251,72 @@
                 align-items: center;
                 justify-content: center;
                 border: 0;
-                border-radius: 999px;
+                position: relative;
+                border-radius: 0;
                 background: transparent;
-                padding: 0.28rem 0.62rem;
+                padding: 0;
                 font: inherit;
+                font-size: 0.84rem;
+                font-weight: 700;
+                letter-spacing: 0.08em;
+                color: rgba(255, 255, 255, 0.92);
+                text-transform: uppercase;
                 cursor: pointer;
-                transition: background-color 0.18s ease, color 0.18s ease, transform 0.18s ease;
+                transition: color 0.18s ease;
             }
 
             .main-nav-link:hover {
-                background: rgba(255, 255, 255, 0.14);
                 color: #ffffff;
-                transform: translateY(-1px);
+                transform: none;
             }
 
             .main-nav-link.is-light:hover {
-                background: rgba(69, 84, 153, 0.1);
                 color: #455499;
+            }
+
+            .main-nav-link::after {
+                content: '';
+                position: absolute;
+                right: 0;
+                bottom: -0.95rem;
+                left: 0;
+                height: 3px;
+                border-radius: 999px;
+                background: transparent;
+                transition: background-color 0.2s ease;
+            }
+
+            .main-nav-link.is-active::after,
+            .main-nav-link[aria-current='page']::after {
+                background: #45b649;
+            }
+
+            .public-header-nav {
+                background: linear-gradient(180deg, #0c1f34 0%, #07192c 100%);
+                box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.06);
+            }
+
+            .public-header-nav nav {
+                padding-top: 0.85rem;
+                padding-bottom: 0.85rem;
+                background: transparent;
+            }
+
+            .public-header-nav .tours-menu-panel {
+                border: 1px solid rgba(15, 23, 42, 0.1);
+                border-radius: 1rem;
+                background: rgba(255, 255, 255, 0.98);
+            }
+
+            .public-header-nav .tours-menu-link {
+                border-radius: 0.8rem;
+                color: #0f172a;
+            }
+
+            .public-header-nav .tours-menu-link:hover {
+                background: #eff6ff;
+                color: #0f172a;
+                transform: none;
             }
 
             @media (min-width: 768px) {
@@ -267,6 +342,20 @@
                     pointer-events: none;
                 }
             }
+
+            @media (max-width: 767px) {
+                .public-brand-link img:first-child {
+                    height: 1.85rem;
+                }
+
+                .public-brand-link img:nth-child(2) {
+                    height: 2.45rem;
+                }
+
+                .public-currency-group span {
+                    display: none;
+                }
+            }
         </style>
         @php($isAdminRoute = request()->routeIs('admin.*'))
         @php($hideHeader = $isAdminRoute || request()->routeIs('login', 'admin.login'))
@@ -277,14 +366,14 @@
         <div class="flex min-h-screen flex-col bg-[radial-gradient(circle_at_top,_rgba(14,165,233,0.08),_transparent_30%),linear-gradient(180deg,_#fffdf9,_#f8fafc)]">
             @unless ($hideHeader)
                 <header class="js-app-header shadow-[0_10px_24px_rgba(15,23,42,0.08)] {{ $isAdminRoute ? 'border-b border-emerald-200 bg-white' : 'bg-white' }} ">
-                    <div class="{{ $isAdminRoute ? 'grid w-full grid-cols-[1fr_auto_1fr] items-center px-6 lg:px-10' : 'flex w-full items-center justify-between px-6 lg:px-10' }}" style="height: 62px; padding-top: 0; padding-bottom: 0;">
+                    <div class="public-header-top {{ $isAdminRoute ? 'grid w-full grid-cols-[1fr_auto_1fr] items-center px-6 lg:px-10' : 'flex w-full items-center justify-between px-6 lg:px-10' }}" style="height: 62px; padding-top: 0; padding-bottom: 0;">
                         @if ($isAdminRoute)
                             <div class="justify-self-start" aria-hidden="true"></div>
                         @else
-                            <a href="{{ route('home') }}" class="flex items-center gap-3" style="position: relative; left: 0.25rem;">
+                            <a href="{{ route('home') }}" class="public-brand-link flex items-center gap-3" style="position: relative; left: 0.25rem;">
                                 <img src="{{ asset('images/ue blue logo.png') }}" alt="Universal Eden Logo" class="w-auto " style="height: 1.8rem;">
                                 <img src="{{ asset('images/Malaysia Truly Asia logo 2026.png') }}" alt="Malaysia Truly Asia Logo" class="w-auto" style="display: block; height: 3.45rem; margin: 0; padding: 0;">
-                                <span class="hidden font-['Prata'] text-xl text-stone-900 md:inline">Universal Eden Holidays</span>
+                                <span class="public-brand-title hidden font-['Prata'] text-xl text-stone-900 md:inline">Universal Eden Holidays</span>
                             </a>
                         @endif
 
@@ -293,44 +382,17 @@
                         @else
                             <nav class="hidden">
                                 <div class="flex items-center gap-5 font-semibold uppercase text-stone-700 xl:gap-6" style="font-size: 0.58rem; letter-spacing: 0.1em;">
-                                    <a href="{{ route('home') }}" class="main-nav-link is-light whitespace-nowrap">Home</a>
-                                    <a href="{{ route('home') }}#transport" class="main-nav-link is-light whitespace-nowrap">Transport</a>
-                                    <div class="tours-menu" data-tours-menu>
-                                        <button type="button" class="main-nav-link is-light tours-menu-toggle whitespace-nowrap" data-tours-toggle aria-expanded="false" style="display: inline-flex; align-items: center; gap: 0.28rem;">
-                                            <span>Tour Packages</span>
-                                            <span aria-hidden="true" style="font-size: 0.72rem; line-height: 1;">&#9662;</span>
-                                        </button>
-                                        <div class="tours-menu-panel" style="border-radius: 0;">
-                                            <a href="{{ route('tours.show', 'day-trip') }}" class="tours-menu-link" style="border-radius: 0;">Day Trip</a>
-                                            <a href="{{ route('tours.show', '2d1n-trip') }}" class="tours-menu-link" style="border-radius: 0;">2D1N Trip</a>
-                                            <a href="{{ route('tours.show', '3d2n-trip') }}" class="tours-menu-link" style="border-radius: 0;">3D2N Trip</a>
-                                            <a href="{{ route('tours.show', '4d3n-trip') }}" class="tours-menu-link" style="border-radius: 0;">4D3N Trip</a>
-                                        </div>
-                                    </div>
-                                    <div class="tours-menu" data-tours-menu>
-                                        <button type="button" class="main-nav-link is-light tours-menu-toggle whitespace-nowrap" data-tours-toggle aria-expanded="false" style="display: inline-flex; align-items: center; gap: 0.28rem;">
-                                            <span>About Us</span>
-                                            <span aria-hidden="true" style="font-size: 0.72rem; line-height: 1;">&#9662;</span>
-                                        </button>
-                                        <div class="tours-menu-panel" style="border-radius: 0;">
-                                            <a href="{{ route('about-us') }}" class="tours-menu-link" style="border-radius: 0;">About Us</a>
-                                            <a href="{{ route('reviews.index') }}" class="tours-menu-link" style="border-radius: 0;">Customer Reviews</a>
-                                            <a href="{{ route('blog.index') }}" class="tours-menu-link" style="border-radius: 0;">Travel Blog</a>
-                                            <a href="{{ route('legal.terms-and-conditions') }}" class="tours-menu-link" style="border-radius: 0;">Terms and Condition</a>
-                                            <a href="{{ route('payment-options') }}" class="tours-menu-link" style="border-radius: 0;">Payment Options</a>
-                                        </div>
-                                    </div>
-                                    <a href="{{ route('bookings.track.form') }}" class="main-nav-link is-light whitespace-nowrap">Track Booking</a>
+                                    <x-public-topnav-links light />
                                 </div>
                             </nav>
                         @endif
 
                         <div class="flex items-center gap-3 {{ $isAdminRoute ? 'w-full justify-end justify-self-stretch' : '' }}">
                             @if (! $isAdminRoute)
-                                <div class="flex items-center gap-2">
+                                <div class="public-currency-group flex items-center gap-2">
                                     <span class="text-sm font-semibold text-stone-500">Currency:</span>
                                     <div class="relative inline-flex items-center">
-                                        <select id="currency-selector" class="appearance-none rounded-full border border-stone-200 bg-white px-3 py-1.5 pr-8 text-sm font-semibold text-stone-700 outline-none" style="min-width: 4.75rem;">
+                                        <select id="currency-selector" class="public-currency-select appearance-none rounded-full border border-stone-200 bg-white px-3 py-1.5 pr-8 text-sm font-semibold text-stone-700 outline-none" style="min-width: 4.75rem;">
                                             @foreach ($currencyOptions as $code)
                                                 <option value="{{ $code }}" @selected((auth()->user()->preferred_currency ?? 'MYR') === $code)>{{ $code }}</option>
                                             @endforeach
@@ -374,37 +436,10 @@
                         </div>
                     </div>
                     @if (! $isAdminRoute)
-                        <div class="hidden md:block" style="background: #1f2937;">
-                            <nav class="w-full px-6 lg:px-10" style="padding-top: 0.42rem; padding-bottom: 0.42rem; background: #1f2937;">
+                        <div class="public-header-nav hidden md:block">
+                            <nav class="w-full px-6 lg:px-10">
                                 <div class="flex items-center justify-center gap-8 font-semibold uppercase text-white xl:gap-10" style="font-size: 0.9rem; letter-spacing: 0.12em;">
-                                    <a href="{{ route('home') }}" class="main-nav-link whitespace-nowrap">Home</a>
-                                    <a href="{{ route('home') }}#transport" class="main-nav-link whitespace-nowrap">Transport</a>
-                                    <div class="tours-menu" data-tours-menu>
-                                        <button type="button" class="main-nav-link tours-menu-toggle whitespace-nowrap" data-tours-toggle aria-expanded="false" style="display: inline-flex; align-items: center; gap: 0.28rem;">
-                                            <span>TOUR PACKAGES</span>
-                                            <span aria-hidden="true" style="font-size: 0.72rem; line-height: 1;">&#9662;</span>
-                                        </button>
-                                        <div class="tours-menu-panel" style="border-radius: 0;">
-                                            <a href="{{ route('tours.show', 'day-trip') }}" class="tours-menu-link" style="border-radius: 0;">Day Trip</a>
-                                            <a href="{{ route('tours.show', '2d1n-trip') }}" class="tours-menu-link" style="border-radius: 0;">2D1N Trip</a>
-                                            <a href="{{ route('tours.show', '3d2n-trip') }}" class="tours-menu-link" style="border-radius: 0;">3D2N Trip</a>
-                                            <a href="{{ route('tours.show', '4d3n-trip') }}" class="tours-menu-link" style="border-radius: 0;">4D3N Trip</a>
-                                        </div>
-                                    </div>
-                                    <div class="tours-menu" data-tours-menu>
-                                        <button type="button" class="main-nav-link tours-menu-toggle whitespace-nowrap" data-tours-toggle aria-expanded="false" style="display: inline-flex; align-items: center; gap: 0.28rem;">
-                                            <span>ABOUT US</span>
-                                            <span aria-hidden="true" style="font-size: 0.72rem; line-height: 1;">&#9662;</span>
-                                        </button>
-                                        <div class="tours-menu-panel" style="border-radius: 0;">
-                                            <a href="{{ route('about-us') }}" class="tours-menu-link" style="border-radius: 0;">About Us</a>
-                                            <a href="{{ route('reviews.index') }}" class="tours-menu-link" style="border-radius: 0;">Customer Reviews</a>
-                                            <a href="{{ route('blog.index') }}" class="tours-menu-link" style="border-radius: 0;">Travel Blog</a>
-                                            <a href="{{ route('legal.terms-and-conditions') }}" class="tours-menu-link" style="border-radius: 0;">Terms and Condition</a>
-                                            <a href="{{ route('payment-options') }}" class="tours-menu-link" style="border-radius: 0;">Payment Options</a>
-                                        </div>
-                                    </div>
-                                    <a href="{{ route('bookings.track.form') }}" class="main-nav-link whitespace-nowrap">Track Booking</a>
+                                    <x-public-topnav-links :uppercase-dropdown-labels="true" />
                                 </div>
                             </nav>
                         </div>

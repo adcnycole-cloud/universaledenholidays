@@ -9,6 +9,8 @@ class HomeHeroSlide extends Model
 {
     protected $fillable = [
         'image_path',
+        'card_heading',
+        'card_description',
         'display_order',
         'is_active',
     ];

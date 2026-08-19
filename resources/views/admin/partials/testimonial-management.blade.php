@@ -1,37 +1,93 @@
 <section class="mt-5 space-y-8">
     <section class="rounded-[2rem] border border-stone-200 bg-white p-6 shadow-sm">
-        <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-            <div>
-                <p class="text-sm uppercase tracking-[0.3em] text-amber-600">Testimonials</p>
-                <h1 class="mt-2 text-2xl font-semibold text-stone-900">Customer review moderation</h1>
-                <p class="mt-3 max-w-3xl text-sm leading-7 text-stone-600">
-                    Reviews come from customers. Use this page to decide whether each review should appear on the landing page or a specific product package page.
-                </p>
+        <details>
+            <summary class="list-none">
+                <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                    <div>
+                        <p class="text-sm uppercase tracking-[0.3em] text-amber-600">Testimonials</p>
+                        <h1 class="mt-2 text-2xl font-semibold text-stone-900">Customer review moderation</h1>
+                    </div>
+                    <span class="inline-flex cursor-pointer items-center justify-center rounded-full border border-stone-300 bg-white px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-stone-700 transition hover:bg-stone-100">
+                        Add Customer Review
+                    </span>
+                </div>
+            </summary>
+
+            <div class="mt-6 rounded-[1.5rem] border border-stone-200 bg-stone-50 p-5">
+                <form method="POST" action="{{ route('admin.testimonials.store') }}" enctype="multipart/form-data" class="space-y-4">
+                    @csrf
+                    <div>
+                        <label class="mb-1 block text-xs font-medium uppercase tracking-[0.18em] text-stone-500">Customer name</label>
+                        <input name="name" type="text" class="w-full rounded-2xl border border-stone-300 px-4 py-3 text-sm text-stone-800" required>
+                    </div>
+                    <div class="grid gap-4 md:grid-cols-2">
+                        <div>
+                            <label class="mb-1 block text-xs font-medium uppercase tracking-[0.18em] text-stone-500">Profile picture</label>
+                            <input name="profile_photo" type="file" accept=".jpg,.jpeg,.png,.webp" class="w-full rounded-2xl border border-dashed border-stone-300 px-4 py-3 text-sm text-stone-700">
+                        </div>
+                        <div>
+                            <label class="mb-1 block text-xs font-medium uppercase tracking-[0.18em] text-stone-500">Rating</label>
+                            <select name="rating" class="w-full rounded-2xl border border-stone-300 px-4 py-3 text-sm text-stone-800" required>
+                                @foreach ([5, 4, 3, 2, 1] as $rating)
+                                    <option value="{{ $rating }}">{{ $rating }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+                    <div class="grid gap-4 md:grid-cols-2">
+                        <div>
+                            <label class="mb-1 block text-xs font-medium uppercase tracking-[0.18em] text-stone-500">Show review at</label>
+                            <select name="display_location" class="w-full rounded-2xl border border-stone-300 px-4 py-3 text-sm text-stone-800" data-testimonial-location-select>
+                                <option value="landing">Landing page</option>
+                                <option value="package">Specific product package</option>
+                            </select>
+                        </div>
+                        <div data-testimonial-package-field class="hidden">
+                            <label class="mb-1 block text-xs font-medium uppercase tracking-[0.18em] text-stone-500">Package</label>
+                            <select name="package_id" class="w-full rounded-2xl border border-stone-300 px-4 py-3 text-sm text-stone-800">
+                                <option value="">Select a package</option>
+                                @foreach (($packageProducts ?? collect()) as $packageProduct)
+                                    <option value="{{ $packageProduct->id }}">{{ $packageProduct->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+                    <label class="flex items-center gap-2 text-sm text-stone-700">
+                        <input type="checkbox" name="is_featured" value="1" checked class="rounded border-stone-300">
+                        Show this review on the public site
+                    </label>
+                    <div>
+                        <label class="mb-1 block text-xs font-medium uppercase tracking-[0.18em] text-stone-500">Quote</label>
+                        <textarea name="quote" rows="4" class="w-full rounded-2xl border border-stone-300 px-4 py-3 text-sm text-stone-800" required></textarea>
+                    </div>
+                    <button type="submit" class="w-full rounded-full bg-sky-600 px-4 py-3 text-sm font-semibold uppercase tracking-[0.2em] text-white transition hover:bg-sky-700">Save Customer Review</button>
+                </form>
             </div>
-            <div class="grid gap-3 md:grid-cols-[minmax(0,20rem)_12rem]">
-                <label class="relative block">
-                    <span class="sr-only">Search reviews</span>
-                    <input id="admin-testimonial-search" type="search" placeholder="Search by customer, trip, quote, or package" class="w-full rounded-full border border-stone-300 bg-stone-50 px-4 py-3 text-sm text-stone-800 outline-none transition focus:border-sky-400 focus:bg-white">
-                </label>
-                <label class="relative block">
-                    <span class="sr-only">Filter by rating</span>
-                    <select id="admin-testimonial-rating-filter" class="w-full rounded-full border border-stone-300 bg-stone-50 px-4 py-3 text-sm text-stone-800 outline-none transition focus:border-sky-400 focus:bg-white">
-                        <option value="">All ratings</option>
-                        <option value="5">5 stars</option>
-                        <option value="4">4 stars</option>
-                        <option value="3">3 stars</option>
-                        <option value="2">2 stars</option>
-                        <option value="1">1 star</option>
-                    </select>
-                </label>
-            </div>
-        </div>
+        </details>
 
         <div class="mt-5 flex items-center justify-between gap-3">
             <p id="admin-testimonial-results" class="text-sm text-stone-500" aria-live="polite">Showing {{ $testimonials->count() }} customer reviews</p>
         </div>
 
-        <div class="mt-6 overflow-hidden rounded-[1.5rem] border border-stone-200">
+        <div class="mt-6 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-end">
+            <label class="relative block w-full lg:w-[20rem]">
+                <span class="sr-only">Search reviews</span>
+                <input id="admin-testimonial-search" type="search" placeholder="Search by customer, trip, quote, or package" class="w-full rounded-full border border-stone-300 bg-stone-50 px-4 py-3 text-sm text-stone-800 outline-none transition focus:border-sky-400 focus:bg-white">
+            </label>
+            <label class="relative block w-full lg:w-[12rem]">
+                <span class="sr-only">Filter by rating</span>
+                <select id="admin-testimonial-rating-filter" class="w-full rounded-full border border-stone-300 bg-stone-50 px-4 py-3 text-sm text-stone-800 outline-none transition focus:border-sky-400 focus:bg-white">
+                    <option value="">All ratings</option>
+                    <option value="5">5 stars</option>
+                    <option value="4">4 stars</option>
+                    <option value="3">3 stars</option>
+                    <option value="2">2 stars</option>
+                    <option value="1">1 star</option>
+                </select>
+            </label>
+        </div>
+
+        <div class="mt-4 overflow-hidden rounded-[1.5rem] border border-stone-200">
             <div class="overflow-x-auto">
                 <table class="min-w-full divide-y divide-stone-200 text-left text-sm">
                     <thead class="bg-stone-100 text-stone-700">
@@ -94,7 +150,7 @@
                                                 <span class="group-open:hidden">Review Settings</span>
                                                 <span class="hidden group-open:inline">Close</span>
                                             </summary>
-                                            <form method="POST" action="{{ route('admin.testimonials.update', $testimonial) }}" enctype="multipart/form-data" class="mt-4 space-y-3 rounded-2xl border border-stone-200 bg-stone-50 p-4" data-form-persist="admin-testimonials-update-{{ $testimonial->id }}">
+                                            <form method="POST" action="{{ route('admin.testimonials.update', $testimonial) }}" enctype="multipart/form-data" class="mt-4 space-y-3 rounded-2xl border border-stone-200 bg-stone-50 p-4">
                                                 @csrf
                                                 @method('PATCH')
                                                 <div class="grid gap-3 md:grid-cols-2">

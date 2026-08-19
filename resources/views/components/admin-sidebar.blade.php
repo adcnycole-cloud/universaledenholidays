@@ -6,10 +6,10 @@
         <div class="shrink-0 border-b border-stone-200 px-4 py-5">
             <div class="admin-sidebar-brand-wrap flex items-start gap-2">
                 <a href="{{ route('admin.dashboard') }}"
-                   class="admin-sidebar-brand flex min-w-0 flex-1 items-center gap-3 rounded-2xl bg-stone-50 px-3 py-3 transition hover:bg-stone-100">
+                   class="admin-sidebar-brand flex min-w-0 flex-1 items-center gap-3 px-3 py-3 transition">
                     <img src="{{ asset('images/ue blue logo.png') }}"
                          alt="Eden Holidays Logo"
-                         class="admin-sidebar-logo h-11 w-auto shrink-0 object-contain shadow-sm">
+                         class="admin-sidebar-logo h-11 w-auto shrink-0 object-contain">
                     <div class="admin-sidebar-brand-copy min-w-0">
                         <p class="truncate text-sm font-semibold text-stone-900">Eden Holidays</p>
                     </div>
@@ -126,9 +126,9 @@
 
             <!-- Testimonials -->
             <a href="{{ route('admin.testimonials') }}"
-               class="admin-sidebar-link flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition {{ request()->routeIs('admin.testimonials') ? 'border border-emerald-200 bg-emerald-50 text-emerald-700' : 'text-stone-700 hover:border-stone-200 hover:bg-stone-50' }}"
+               class="admin-sidebar-link flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition {{ request()->routeIs(['admin.testimonials', 'admin.testimonials.*']) ? 'border border-emerald-200 bg-emerald-50 text-emerald-700' : 'text-stone-700 hover:border-stone-200 hover:bg-stone-50' }}"
                title="Testimonials"
-               @if(request()->routeIs('admin.testimonials')) aria-current="page" @endif>
+               @if(request()->routeIs(['admin.testimonials', 'admin.testimonials.*'])) aria-current="page" @endif>
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M17 8h2a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V10a2 2 0 0 1 2-2h2"></path>
                     <path d="M7 21v-4a4 4 0 0 1 4-4h6a4 4 0 0 1 4 4v4"></path>

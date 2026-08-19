@@ -1,23 +1,70 @@
 <x-layouts.app title="Blog | Universal Eden Holidays">
+    <style>
+        .page-banner {
+            position: relative;
+            overflow: hidden;
+            margin-top: -3.1rem;
+        }
+
+        .page-banner-wave {
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100vw;
+            min-width: 100vw;
+            max-width: none;
+            height: auto;
+            display: block;
+            filter: brightness(0) invert(1);
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .page-banner-image {
+            position: relative;
+            z-index: 0;
+        }
+
+        .page-banner-overlay {
+            position: absolute;
+            top: 10%;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 2;
+            width: 100%;
+        }
+
+        @media (max-width: 767px) {
+            .page-banner {
+                margin-top: 0;
+            }
+        }
+    </style>
+
     <main class="min-h-[calc(100vh-var(--app-header-offset,0px))]" style="background: linear-gradient(180deg, #f5efe3 0%, #e7edf8 100%);">
-        <section class="relative w-full bg-white">
+        <section class="page-banner w-full bg-white">
             <img
                 src="{{ asset('images/travel_blog.png') }}"
                 alt="Travel Blog"
-                class="block w-full h-auto"
+                class="page-banner-image block w-full h-auto"
             >
-            <div class="absolute inset-0 flex items-center justify-center px-6 text-center">
-                <h1 class="rounded-full bg-white/85 px-6 py-3 font-['Oswald'] text-4xl font-bold uppercase tracking-[0.22em] text-stone-900 shadow-[0_10px_24px_rgba(255,255,255,0.28)] md:text-5xl lg:text-6xl">
-                    Travel Blog
-                </h1>
-            </div>
+            <img
+                src="{{ asset('images/wave.png') }}"
+                alt=""
+                class="page-banner-wave"
+                aria-hidden="true"
+            >
         </section>
 
         <section class="w-full bg-white">
             <div class="mx-auto max-w-[1500px] px-5 py-6 md:px-8 md:py-8">
                     <div class="text-center">
-                        <p class="font-['Oswald'] text-sm font-semibold uppercase tracking-[0.28em] text-[#315fbd]">Travel Channel</p>
-                        <p class="mx-auto mt-4 max-w-3xl text-sm leading-7 text-stone-500 md:text-base">
+                        <span class="inline-flex rounded-full bg-[#ffe8df] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-[#f97316]">Travel Channel</span>
+                        <h1 class="mt-4 font-['Prata'] text-3xl text-stone-900 md:text-4xl">
+                            Travel Channel
+                        </h1>
+                        <p class="mx-auto mt-4 max-w-3xl text-sm leading-7 text-stone-600 md:text-base">
                             Browse travel updates, trip highlights, and fresh stories from Universal Eden Holidays.
                         </p>
                     </div>

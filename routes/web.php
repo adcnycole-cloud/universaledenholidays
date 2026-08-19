@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
+Route::get('/transport', [HomeController::class, 'showTransportPage'])->name('transport.index');
 Route::get('/customer-reviews', [HomeController::class, 'showReviewsIndex'])->name('reviews.index');
 // Legal pages
 Route::get('/privacy-policy', [LegalController::class, 'privacyPolicy'])->name('legal.privacy-policy');
@@ -91,6 +92,11 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     Route::post('/packages/import', [AdminController::class, 'importPackages'])->name('admin.packages.import');
     Route::get('/packages/template', [AdminController::class, 'downloadPackageTemplate'])->name('admin.packages.template');
     Route::get('/testimonials', [AdminController::class, 'testimonials'])->name('admin.testimonials');
+    Route::get('/testimonials/reviews', [AdminController::class, 'testimonialsReviews'])->name('admin.testimonials.reviews');
+    Route::get('/testimonials/gallery', [AdminController::class, 'testimonialsGallery'])->name('admin.testimonials.gallery');
+    Route::post('/testimonials/gallery/items', [AdminController::class, 'storeCustomerGalleryItem'])->name('admin.customer-gallery-items.store');
+    Route::patch('/testimonials/gallery/items/{customerGalleryItem}', [AdminController::class, 'updateCustomerGalleryItem'])->name('admin.customer-gallery-items.update');
+    Route::delete('/testimonials/gallery/items/{customerGalleryItem}', [AdminController::class, 'destroyCustomerGalleryItem'])->name('admin.customer-gallery-items.destroy');
     Route::get('/bookings', [AdminController::class, 'bookings'])->name('admin.bookings');
     Route::get('/enquiries', [AdminController::class, 'enquiries'])->name('admin.enquiries');
     Route::get('/bookings/export/monthly', [AdminController::class, 'exportMonthlyBookings'])->name('admin.bookings.export');

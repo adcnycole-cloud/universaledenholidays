@@ -51,7 +51,7 @@
         }
 
         .booking-shell {
-            width: min(100%, calc(100vw - 424px));
+            width: 100%;
             max-width: 120rem;
         }
 
@@ -206,7 +206,7 @@
         }
     </style>
     <main class="mx-auto px-3 py-8 sm:px-4 lg:px-3 {{ $isEnquiry ? 'enquiry-shell enquiry-page' : 'booking-shell' }}">
-        <div class="mb-6 flex items-start justify-between gap-4">
+        <div class="mb-6 flex flex-col items-start justify-between gap-4 sm:flex-row">
             <div>
                 <p class="text-sm uppercase tracking-[0.3em] text-amber-600">{{ $isEnquiry ? 'Enquiry Form' : ($isReserveForm ? 'Reserve Form' : 'Booking Form') }}</p>
                 <h1 class="mt-2 text-2xl font-semibold text-stone-900">{{ $isEnquiry ? 'Send an enquiry for transport services and packages' : $actionTitle }}</h1>

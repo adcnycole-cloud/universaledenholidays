@@ -140,6 +140,18 @@
                 transform: rotate(90deg);
             }
 
+            .site-nav-details .site-nav-icon-close {
+                display: none;
+            }
+
+            .site-nav-details[open] .site-nav-icon-close {
+                display: block;
+            }
+
+            .site-nav-details[open] .site-nav-icon-bars {
+                display: none;
+            }
+
             .public-header-top {
                 min-height: 52px;
                 border-bottom: 1px solid rgba(148, 163, 184, 0.14);
@@ -152,6 +164,19 @@
 
             .public-brand-link img:nth-child(2) {
                 height: 3.1rem;
+            }
+
+            .public-brand-link .public-malaysia-logo {
+                display: block;
+                height: 2.45rem;
+                margin: 0;
+                padding: 0;
+            }
+
+            @media (min-width: 768px) {
+                .public-brand-link .public-malaysia-logo {
+                    height: 3.45rem;
+                }
             }
 
             .public-currency-group span {
@@ -195,6 +220,149 @@
                 background: #f0f9ff;
                 color: #0369a1;
                 transform: translateX(-2px);
+            }
+
+            /* ── Mobile nav (burger) accordion ─────────────────────── */
+            .mobile-nav {
+                display: flex;
+                flex-direction: column;
+            }
+
+            .mobile-nav-link {
+                display: flex;
+                align-items: center;
+                min-height: 2.75rem;
+                padding: 0.6rem 1rem;
+                border-radius: 0.85rem;
+                font-size: 1rem;
+                font-weight: 600;
+                color: #1f2937;
+                text-decoration: none;
+                transition: background-color 0.15s ease, color 0.15s ease;
+            }
+
+            .mobile-nav-link:hover,
+            .mobile-nav-link:focus-visible {
+                background: #f1f5f9;
+                color: #0f172a;
+            }
+
+            .mobile-nav-link.is-active {
+                color: #15803d;
+            }
+
+            .mobile-nav-toggle {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 0.75rem;
+                width: 100%;
+                min-height: 2.75rem;
+                padding: 0.6rem 1rem;
+                border: 0;
+                border-radius: 0.85rem;
+                background: transparent;
+                font: inherit;
+                font-size: 1rem;
+                font-weight: 600;
+                color: #1f2937;
+                text-align: left;
+                cursor: pointer;
+                transition: background-color 0.15s ease, color 0.15s ease;
+            }
+
+            .mobile-nav-toggle:hover,
+            .mobile-nav-toggle:focus-visible {
+                background: #f1f5f9;
+                color: #0f172a;
+            }
+
+            .mobile-nav-chevron {
+                flex: 0 0 auto;
+                width: 1.1rem;
+                height: 1.1rem;
+                color: #9ca3af;
+                transition: transform 0.25s ease;
+            }
+
+            .mobile-nav-toggle[aria-expanded='true'] .mobile-nav-chevron {
+                transform: rotate(180deg);
+            }
+
+            .mobile-nav-submenu {
+                display: grid;
+                grid-template-rows: 0fr;
+                overflow: hidden;
+                opacity: 0;
+                visibility: hidden;
+                transition: grid-template-rows 0.25s ease, opacity 0.25s ease, visibility 0.25s;
+            }
+
+            .mobile-nav-submenu.is-open {
+                grid-template-rows: 1fr;
+                opacity: 1;
+                visibility: visible;
+            }
+
+            .mobile-nav-submenu-inner {
+                min-height: 0;
+                overflow: hidden;
+                margin-left: 1.35rem;
+                padding-left: 1rem;
+                border-left: 1px solid #e5e7eb;
+            }
+
+            .mobile-nav-sublink {
+                display: flex;
+                align-items: center;
+                min-height: 2.5rem;
+                padding: 0.4rem 0.85rem;
+                border-radius: 0.7rem;
+                font-size: 0.925rem;
+                font-weight: 500;
+                color: #6b7280;
+                text-decoration: none;
+                transition: background-color 0.15s ease, color 0.15s ease;
+            }
+
+            .mobile-nav-sublink:hover,
+            .mobile-nav-sublink:focus-visible {
+                background: #f8fafc;
+                color: #0f172a;
+            }
+
+            .mobile-nav-sublink.is-active {
+                color: #15803d;
+                font-weight: 600;
+                background: #f0fdf4;
+            }
+
+            .mobile-nav-cta {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                min-height: 2.75rem;
+                margin-top: 0.75rem;
+                padding: 0.7rem 1rem;
+                border-radius: 0.85rem;
+                background: #3ca543;
+                color: #ffffff;
+                font-size: 1rem;
+                font-weight: 700;
+                text-decoration: none;
+                transition: background-color 0.15s ease, transform 0.15s ease;
+            }
+
+            .mobile-nav-cta:hover {
+                background: #32923a;
+            }
+
+            .mobile-nav-cta:active {
+                transform: translateY(1px);
+            }
+
+            body.site-nav-open {
+                overflow: hidden;
             }
 
             .tours-menu {
@@ -366,25 +534,19 @@
         <div class="flex min-h-screen flex-col bg-[radial-gradient(circle_at_top,_rgba(14,165,233,0.08),_transparent_30%),linear-gradient(180deg,_#fffdf9,_#f8fafc)]">
             @unless ($hideHeader)
                 <header class="js-app-header shadow-[0_10px_24px_rgba(15,23,42,0.08)] {{ $isAdminRoute ? 'border-b border-emerald-200 bg-white' : 'bg-white' }} ">
-                    <div class="public-header-top {{ $isAdminRoute ? 'grid w-full grid-cols-[1fr_auto_1fr] items-center px-6 lg:px-10' : 'flex w-full items-center justify-between px-6 lg:px-10' }}" style="height: 62px; padding-top: 0; padding-bottom: 0;">
+                    <div class="public-header-top {{ $isAdminRoute ? 'grid w-full grid-cols-[1fr_auto_1fr] items-center px-6 lg:px-10' : 'flex w-full items-center justify-between px-3 sm:px-6 lg:px-10' }}" style="height: 62px; padding-top: 0; padding-bottom: 0;">
                         @if ($isAdminRoute)
                             <div class="justify-self-start" aria-hidden="true"></div>
                         @else
-                            <a href="{{ route('home') }}" class="public-brand-link flex items-center gap-3" style="position: relative; left: 0.25rem;">
+                            <a href="{{ route('home') }}" class="public-brand-link flex items-center gap-2" style="position: relative; left: 0.25rem;">
                                 <img src="{{ asset('images/ue blue logo.png') }}" alt="Universal Eden Logo" class="w-auto " style="height: 1.8rem;">
-                                <img src="{{ asset('images/Malaysia Truly Asia logo 2026.png') }}" alt="Malaysia Truly Asia Logo" class="w-auto" style="display: block; height: 3.45rem; margin: 0; padding: 0;">
+                                <img src="{{ asset('images/Malaysia Truly Asia logo 2026.png') }}" alt="Malaysia Truly Asia Logo" class="public-malaysia-logo w-auto">
                                 <span class="public-brand-title hidden font-['Prata'] text-xl text-stone-900 md:inline">Universal Eden Holidays</span>
                             </a>
                         @endif
 
                         @if ($isAdminRoute)
                             <p class="hidden md:block text-xs font-semibold uppercase tracking-[0.18em] text-emerald-600">Admin Workspace</p>
-                        @else
-                            <nav class="hidden">
-                                <div class="flex items-center gap-5 font-semibold uppercase text-stone-700 xl:gap-6" style="font-size: 0.58rem; letter-spacing: 0.1em;">
-                                    <x-public-topnav-links light />
-                                </div>
-                            </nav>
                         @endif
 
                         <div class="flex items-center gap-3 {{ $isAdminRoute ? 'w-full justify-end justify-self-stretch' : '' }}">
@@ -392,7 +554,7 @@
                                 <div class="public-currency-group flex items-center gap-2">
                                     <span class="text-sm font-semibold text-stone-500">Currency:</span>
                                     <div class="relative inline-flex items-center">
-                                        <select id="currency-selector" class="public-currency-select appearance-none rounded-full border border-stone-200 bg-white px-3 py-1.5 pr-8 text-sm font-semibold text-stone-700 outline-none" style="min-width: 4.75rem;">
+                                        <select id="currency-selector" class="public-currency-select appearance-none rounded-full border border-stone-200 bg-white px-3 py-1.5 pr-8 text-sm font-semibold text-stone-700 outline-none" style="min-width: 4rem;">
                                             @foreach ($currencyOptions as $code)
                                                 <option value="{{ $code }}" @selected((auth()->user()->preferred_currency ?? 'MYR') === $code)>{{ $code }}</option>
                                             @endforeach
@@ -403,6 +565,22 @@
 
 
                             @endif
+                            <details class="site-nav-details js-site-nav relative md:hidden">
+                                <summary class="flex h-10 w-10 cursor-pointer list-none items-center justify-center rounded-full border border-stone-200 bg-white text-stone-700 transition hover:bg-stone-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500" aria-label="Open navigation menu">
+                                    <svg class="site-nav-icon-bars h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                        <path d="M4 6h16"></path>
+                                        <path d="M4 12h16"></path>
+                                        <path d="M4 18h16"></path>
+                                    </svg>
+                                    <svg class="site-nav-icon-close h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                        <path d="M6 6l12 12"></path>
+                                        <path d="M18 6L6 18"></path>
+                                    </svg>
+                                </summary>
+                                <div class="site-nav-panel p-3" style="max-height: calc(100vh - 6rem); overflow-y: auto;">
+                                    <x-public-mobile-nav />
+                                </div>
+                            </details>
                             @auth
                                 @if (! $isAdminRoute)
                                     @if (auth()->user()->isAdmin())
@@ -716,6 +894,7 @@
                         if (details.open) {
                             closeSiteNavs(details);
                         }
+                        document.body.classList.toggle('site-nav-open', siteNavDetails.some((d) => d.open));
                     });
                 });
 
@@ -737,6 +916,32 @@
                     link.addEventListener('click', () => {
                         closeSiteNavs();
                     });
+                });
+
+                const mobileNavToggles = Array.from(document.querySelectorAll('[data-mobile-nav-toggle]'));
+
+                mobileNavToggles.forEach((toggle) => {
+                    toggle.addEventListener('click', () => {
+                        const submenu = document.getElementById(toggle.getAttribute('aria-controls'));
+                        const willOpen = toggle.getAttribute('aria-expanded') !== 'true';
+
+                        mobileNavToggles.forEach((other) => {
+                            if (other !== toggle) {
+                                other.setAttribute('aria-expanded', 'false');
+                                const otherSubmenu = document.getElementById(other.getAttribute('aria-controls'));
+                                otherSubmenu?.classList.remove('is-open');
+                            }
+                        });
+
+                        toggle.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+                        submenu?.classList.toggle('is-open', willOpen);
+                    });
+                });
+
+                document.addEventListener('keydown', (event) => {
+                    if (event.key === 'Escape') {
+                        closeSiteNavs();
+                    }
                 });
 
                 toursMenus.forEach((menu) => {

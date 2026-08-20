@@ -29,7 +29,7 @@
         .home-hero-shell {
             width: min(100%, 1200px);
             margin: 0 auto 0 max(0rem, calc((100vw - 1200px) / 2));
-            padding: calc(clamp(3.7rem, 7vw, 5.6rem) + 20px) clamp(1.25rem, 4vw, 2.75rem) 3rem 0.1rem;
+            padding: calc(clamp(3.7rem, 7vw, 5.6rem) + 20px) clamp(1.25rem, 4vw, 2.75rem) 3rem clamp(1.25rem, 4vw, 2.75rem);
         }
 
         .home-kicker {
@@ -683,39 +683,55 @@
             }
 
             .home-search-segment {
-                justify-content: center;
-                gap: 0.75rem;
-                padding: 0.95rem 1rem;
+                align-items: flex-start;
+                justify-content: flex-start;
+                gap: 0.85rem;
+                padding: 1.1rem 1.15rem;
                 border-right: 0;
                 border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-                text-align: center;
+                text-align: left;
             }
 
             .home-search-icon {
-                width: 1.25rem;
-                height: 1.25rem;
+                flex: 0 0 auto;
+                width: 1.15rem;
+                height: 1.15rem;
+                margin-top: 0.2rem;
             }
 
             .home-search-field {
+                flex: 1;
+                min-width: 0;
                 display: flex;
                 flex-direction: column;
-                align-items: center;
+                align-items: flex-start;
             }
 
             .home-search-label {
-                font-size: 0.88rem;
+                font-size: 0.7rem;
+                font-weight: 700;
+                letter-spacing: 0.1em;
+                text-transform: uppercase;
+                color: rgba(248, 250, 252, 0.55);
             }
 
             .home-search-control,
             .home-search-static,
             .home-guests-value {
-                font-size: 0.92rem;
-                text-align: center;
+                font-size: 0.98rem;
+                font-weight: 500;
+                text-align: left;
+                color: rgba(226, 232, 240, 0.92);
+            }
+
+            .home-search-date-input {
+                text-align: left;
             }
 
             .home-search-field::after {
-                right: 50%;
-                transform: translate(50%, -65%) rotate(45deg);
+                top: 64%;
+                right: 0.5rem;
+                transform: translateY(-65%) rotate(45deg);
             }
 
             .home-search-button {

@@ -74,7 +74,7 @@
     </ul>
     <p>
         To exercise any of these rights, please contact us at
-        <a href="mailto:info@universaledenholiday.com" class="text-amber-700 underline hover:text-amber-900">info@universaledenholiday.com</a>.
+        <a href="mailto:uniedenholidays@gmail.com" class="text-amber-700 underline hover:text-amber-900">uniedenholidays@gmail.com</a>.
     </p>
 
     <h2>Cookies</h2>
@@ -96,9 +96,9 @@
     <address class="not-italic">
         <strong>Universal Eden Holidays Sdn. Bhd.</strong><br>
         SSM Registration: 202201026346<br>
-        Kota Kinabalu, Sabah, Malaysia<br>
-        Email: <a href="mailto:info@universaledenholiday.com" class="text-amber-700 underline hover:text-amber-900">info@universaledenholiday.com</a><br>
-        Phone: <a href="tel:+6088212345" class="text-amber-700 underline hover:text-amber-900">+60 88 212 345</a>
+        Jalan Kalansanan, Batu 6, Tuaran By Pass, 88450 Kota Kinabalu, Sabah, Malaysia<br>
+        Email: <a href="mailto:uniedenholidays@gmail.com" class="text-amber-700 underline hover:text-amber-900">uniedenholidays@gmail.com</a><br>
+        Phone: <a href="tel:+60103869077" class="text-amber-700 underline hover:text-amber-900">+60 10-386 9077</a>
     </address>
 
     <p class="mt-8 text-sm text-stone-500"><em>Effective date: 1 January 2025. Last reviewed: June 2026.</em></p>

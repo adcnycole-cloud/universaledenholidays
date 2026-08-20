@@ -1,9 +1,12 @@
-<x-layouts.app title="{{ $isEnquiry ? 'Enquiry Form' : ($isReserveForm ? 'Reserve Form' : 'Booking Form') }} | Universal Eden Holidays">
+@php
+    $isEnquiry = ($formMode ?? 'booking') === 'enquiry';
+    $isReserveForm = !$isEnquiry && ($actionType ?? null) === 'reserve';
+    $pageTitle = $isEnquiry ? 'Enquiry Form' : ($isReserveForm ? 'Reserve Form' : 'Booking Form');
+@endphp
+<x-layouts.app title="{{ $pageTitle }} | Universal Eden Holidays">
     @php
-        $isEnquiry = ($formMode ?? 'booking') === 'enquiry';
-        $selectedServiceType = old('service_type', $selectedProduct->category ?? 'package');
+        $selectedServiceType = old('service_type', $selectedProduct?->category ?? 'package');
         $isProductLocked = $isProductLocked ?? false;
-        $isReserveForm = !$isEnquiry && ($actionType ?? null) === 'reserve';
         $isInstantBookForm = !$isEnquiry && ($actionType ?? null) === 'instant_book';
         $actionTitle = match ($actionType ?? null) {
             'reserve' => 'Reserve your Sabah experience',

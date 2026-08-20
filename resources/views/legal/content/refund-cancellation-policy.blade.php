@@ -12,7 +12,7 @@
     <h2>Cancellation by the Customer</h2>
     <p>
         All cancellation requests must be submitted in writing to
-        <a href="mailto:info@universaledenholiday.com" class="text-amber-700 underline hover:text-amber-900">info@universaledenholiday.com</a>.
+        <a href="mailto:uniedenholidays@gmail.com" class="text-amber-700 underline hover:text-amber-900">uniedenholidays@gmail.com</a>.
         Cancellation charges are calculated based on the number of days prior to the scheduled departure date:
     </p>
     <div class="overflow-x-auto">
@@ -102,8 +102,8 @@
     <h2>How to Request a Cancellation</h2>
     <p>To cancel your booking, please contact us in writing with your booking reference number:</p>
     <address class="not-italic">
-        Email: <a href="mailto:info@universaledenholiday.com" class="text-amber-700 underline hover:text-amber-900">info@universaledenholiday.com</a><br>
-        Phone: <a href="tel:+6088212345" class="text-amber-700 underline hover:text-amber-900">+60 88 212 345</a>
+        Email: <a href="mailto:uniedenholidays@gmail.com" class="text-amber-700 underline hover:text-amber-900">uniedenholidays@gmail.com</a><br>
+        Phone: <a href="tel:+60103869077" class="text-amber-700 underline hover:text-amber-900">+60 10-386 9077</a>
     </address>
     <p>
         Cancellations are only effective upon receipt of written acknowledgement from our team. Verbal requests

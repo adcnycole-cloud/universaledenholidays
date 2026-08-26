@@ -52,7 +52,12 @@
 
         .booking-shell {
             width: 100%;
-            max-width: 120rem;
+        }
+
+        @media (min-width: 64rem) {
+            .booking-shell {
+                max-width: 96rem;
+            }
         }
 
         .enquiry-layout {

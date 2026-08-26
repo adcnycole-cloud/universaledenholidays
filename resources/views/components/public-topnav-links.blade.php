@@ -10,7 +10,7 @@
     $aboutMenuLabel = $uppercaseDropdownLabels ? 'ABOUT US' : 'About Us';
     $isHomeRoute = request()->routeIs('home');
     $isTransportRoute = request()->routeIs('transport.index', 'products.show') && (request()->routeIs('transport.index') || (isset($product) && ($product->category ?? null) === 'transport'));
-    $isTourRoute = request()->routeIs('tours.show');
+    $isTourRoute = request()->routeIs('tours.*');
     $isAboutRoute = request()->routeIs('about-us', 'reviews.*', 'blog.*', 'legal.*', 'payment-options');
     $isTrackRoute = request()->routeIs('bookings.track.*');
 
@@ -19,6 +19,7 @@
         ['label' => '2D1N Trip', 'route' => route('tours.show', '2d1n-trip')],
         ['label' => '3D2N Trip', 'route' => route('tours.show', '3d2n-trip')],
         ['label' => '4D3N Trip', 'route' => route('tours.show', '4d3n-trip')],
+        ['label' => 'All Packages', 'route' => route('tours.index')],
     ];
 
     $aboutLinks = [

@@ -613,6 +613,25 @@ class HomeController extends Controller
         ]);
     }
 
+    public function showAllTours(): View
+    {
+        return view('tours.show', [
+            'tourPage' => [
+                'slug' => 'all-packages',
+                'label' => 'All Packages',
+                'heading' => 'All Tour Packages',
+                'description' => 'Explore every Sabah experience we offer, from quick day trips to longer, immersive journeys.',
+            ],
+            'tourPackages' => Package::query()
+                ->where('is_active', true)
+                ->orderBy('price_myr')
+                ->get(),
+            'tourPages' => array_values(self::TOUR_PAGE_DEFINITIONS),
+            'currencyRates' => self::CURRENCY_RATES,
+            'currencySymbols' => self::CURRENCY_SYMBOLS,
+        ]);
+    }
+
     public function storeLandingTestimonial(Request $request): RedirectResponse
     {
         $this->storePublicTestimonial($request, null);

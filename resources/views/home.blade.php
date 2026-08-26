@@ -849,9 +849,7 @@
                     Private rides, curated tours, and unforgettable journeys across Sabah.
                 </p>
 
-                <form method="GET" action="{{ route('booking.create') }}" class="home-search-card" id="home-search-form">
-                    <input type="hidden" name="product_id" id="home-search-product-id">
-                    <input type="hidden" name="package_id" id="home-search-package-id">
+                <form method="GET" action="{{ route('tours.index') }}" class="home-search-card" id="home-search-form">
                     <div class="home-search-segment">
                         <svg class="home-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                             <path d="M12 21s-6-5.33-6-10a6 6 0 1 1 12 0c0 4.67-6 10-6 10Z"></path>
@@ -859,16 +857,16 @@
                         </svg>
                         <div class="home-search-field">
                             <label class="home-search-label" for="home-destination">Destination</label>
-                            <select class="home-search-control" id="home-destination" name="destination_option" required>
+                            <select class="home-search-control" id="home-destination" name="search" required>
                                 <option value="">Where would you like to go?</option>
                                 @if ($packageDestinations->isNotEmpty())
                                     @foreach ($packageDestinations as $destination)
-                                        <option value="location:{{ \Illuminate\Support\Str::slug($destination) }}">{{ $destination }}</option>
+                                        <option value="{{ $destination }}">{{ $destination }}</option>
                                     @endforeach
                                 @endif
                                 @if ($destinationPackages->isNotEmpty())
                                     @foreach ($destinationPackages as $package)
-                                        <option value="package:{{ $package->id }}">{{ $package->name }}</option>
+                                        <option value="{{ $package->name }}">{{ $package->name }}</option>
                                     @endforeach
                                 @endif
                             </select>
@@ -926,7 +924,7 @@
                     <div class="home-featured-subrow">
                         <p class="home-featured-copy">Handpicked island escapes and unforgettable journeys across Sabah.</p>
                         <a
-                            href="{{ route('tours.show', 'day-trip') }}"
+                            href="{{ route('tours.index') }}"
                             class="home-featured-link"
                         >
                             <span>View Packages</span>
@@ -1018,34 +1016,15 @@
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const destinationField = document.getElementById('home-destination');
-            const productInput = document.getElementById('home-search-product-id');
-            const packageInput = document.getElementById('home-search-package-id');
             const guestsInput = document.getElementById('home-guests');
             const guestsDisplay = document.getElementById('home-guests-display');
             const guestsDecrease = document.getElementById('home-guests-decrease');
             const guestsIncrease = document.getElementById('home-guests-increase');
             const form = document.getElementById('home-search-form');
 
-            if (!destinationField || !productInput || !packageInput || !guestsInput || !guestsDisplay || !guestsDecrease || !guestsIncrease || !form) {
+            if (!destinationField || !guestsInput || !guestsDisplay || !guestsDecrease || !guestsIncrease || !form) {
                 return;
             }
-
-            const syncDestination = () => {
-                const [type, id] = String(destinationField.value || '').split(':');
-                productInput.value = '';
-                packageInput.value = '';
-
-                if (type === 'package') {
-                    packageInput.value = id || '';
-                }
-
-                if (type === 'product') {
-                    productInput.value = id || '';
-                }
-            };
-
-            destinationField.addEventListener('change', syncDestination);
-            form.addEventListener('submit', syncDestination);
 
             const syncGuests = () => {
                 const guestCount = Number.parseInt(guestsInput.value || '1', 10);
@@ -1065,7 +1044,6 @@
                 syncGuests();
             });
 
-            syncDestination();
             syncGuests();
         });
     </script>

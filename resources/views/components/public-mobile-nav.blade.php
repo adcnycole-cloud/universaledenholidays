@@ -4,6 +4,7 @@
         ['label' => '2D1N Trip', 'route' => route('tours.show', '2d1n-trip'), 'active' => request()->routeIs('tours.show') && request()->route('tourType') === '2d1n-trip'],
         ['label' => '3D2N Trip', 'route' => route('tours.show', '3d2n-trip'), 'active' => request()->routeIs('tours.show') && request()->route('tourType') === '3d2n-trip'],
         ['label' => '4D3N Trip', 'route' => route('tours.show', '4d3n-trip'), 'active' => request()->routeIs('tours.show') && request()->route('tourType') === '4d3n-trip'],
+        ['label' => 'All Packages', 'route' => route('tours.index'), 'active' => request()->routeIs('tours.index')],
     ];
 
     $aboutLinks = [
@@ -14,7 +15,7 @@
         ['label' => 'Payment Options', 'route' => route('payment-options'), 'active' => request()->routeIs('payment-options')],
     ];
 
-    $isTourActive = request()->routeIs('tours.show');
+    $isTourActive = request()->routeIs('tours.*');
     $isAboutActive = request()->routeIs('about-us', 'reviews.*', 'blog.*', 'legal.*', 'payment-options');
 @endphp
 

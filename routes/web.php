@@ -18,6 +18,7 @@ Route::get('/privacy-policy', [LegalController::class, 'privacyPolicy'])->name('
 Route::get('/terms-and-conditions', [LegalController::class, 'termsAndConditions'])->name('legal.terms-and-conditions');
 Route::get('/refund-cancellation-policy', [LegalController::class, 'refundCancellationPolicy'])->name('legal.refund-cancellation-policy');
 Route::get('/car-rental-terms', [LegalController::class, 'carRentalTerms'])->name('legal.car-rental-terms');
+Route::get('/tours', [HomeController::class, 'showAllTours'])->name('tours.index');
 Route::get('/tours/{tourType}', [HomeController::class, 'showTourCategory'])->name('tours.show');
 Route::get('/blog', [HomeController::class, 'showBlogIndex'])->name('blog.index');
 Route::get('/blog/{blogPost}', [HomeController::class, 'showBlogPost'])->name('blog.show');

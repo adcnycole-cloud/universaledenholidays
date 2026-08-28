@@ -10,6 +10,49 @@
         $destinationPackages = $travelPackages
             ->unique(fn ($package) => trim((string) $package->name))
             ->values();
+        $latestStories = $latestBlogPosts->take(3)->values();
+        $storyFallbacks = collect([
+            [
+                'title' => 'A First-Timer\'s Guide to Exploring Sabah',
+                'destination' => 'Destinations',
+                'excerpt' => 'From Mount Kinabalu to island escapes, here\'s everything you need to know to plan your perfect Sabah adventure.',
+                'published_at' => null,
+                'cover_image_url' => asset('images/mount kinabalu.jpg'),
+                'url' => route('blog.index'),
+            ],
+            [
+                'title' => '5 Cultural Experiences You Shouldn\'t Miss',
+                'destination' => 'Culture',
+                'excerpt' => 'Discover the rich heritage and unique traditions that make Sabah so special.',
+                'published_at' => null,
+                'cover_image_url' => asset('images/mari mari.png'),
+                'url' => route('blog.index'),
+            ],
+            [
+                'title' => 'What to Eat When Visiting Kota Kinabalu',
+                'destination' => 'Food & Drink',
+                'excerpt' => 'A local food guide to must-try dishes and where to find them in KK.',
+                'published_at' => null,
+                'cover_image_url' => asset('images/shun shun.png'),
+                'url' => route('blog.index'),
+            ],
+        ]);
+        $storyCards = collect([0, 1, 2])->map(function ($index) use ($latestStories, $storyFallbacks) {
+            $story = $latestStories->get($index);
+
+            if ($story) {
+                return [
+                    'title' => $story->title,
+                    'destination' => $story->destination ?: 'Travel Story',
+                    'excerpt' => $story->excerpt ?: $story->description ?: 'Read the latest travel inspiration from Universal Eden Holidays.',
+                    'published_at' => $story->published_at,
+                    'cover_image_url' => $story->cover_image_url ?: $storyFallbacks[$index]['cover_image_url'],
+                    'url' => route('blog.show', $story),
+                ];
+            }
+
+            return $storyFallbacks[$index];
+        });
     @endphp
 
     <style>
@@ -551,6 +594,389 @@
             color: #2f9f3a;
         }
 
+        .home-transport-section {
+            padding: 2.6rem 1.25rem 3rem;
+            background: #f7f4ec;
+        }
+
+        .home-transport-shell {
+            width: min(100%, 1400px);
+            margin: 0 auto;
+        }
+
+        .home-transport-header {
+            margin-bottom: 0.55rem;
+            text-align: center;
+        }
+
+        .home-transport-kicker {
+            color: #2f9f3a;
+            font-size: 0.92rem;
+            font-weight: 700;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+        }
+
+        .home-transport-title {
+            margin-top: 0.55rem;
+            color: #163254;
+            font-size: clamp(2.2rem, 4vw, 3.2rem);
+            font-weight: 800;
+            line-height: 1.05;
+        }
+
+        .home-transport-copy {
+            margin: 0.45rem auto 0;
+            max-width: 40rem;
+            color: #687385;
+            font-size: 1.08rem;
+            line-height: 1.5;
+        }
+
+        .home-transport-feature {
+            display: grid;
+            grid-template-columns: minmax(0, 0.86fr) minmax(0, 1.14fr);
+            overflow: hidden;
+            border: 1px solid rgba(15, 23, 42, 0.09);
+            border-radius: 0.8rem;
+            background: #ffffff;
+            box-shadow: 0 9px 22px rgba(15, 23, 42, 0.08);
+        }
+
+        .home-transport-feature-copy {
+            padding: 1.15rem 1.4rem;
+        }
+
+        .home-transport-feature-label {
+            color: #2f9f3a;
+            font-size: 0.62rem;
+            font-weight: 800;
+            letter-spacing: 0.16em;
+            text-transform: uppercase;
+        }
+
+        .home-transport-feature h3 {
+            margin-top: 0.35rem;
+            color: #163254;
+            font-size: clamp(1.55rem, 2.5vw, 2rem);
+            font-weight: 800;
+            line-height: 1.04;
+        }
+
+        .home-transport-feature-copy > p {
+            margin-top: 0.45rem;
+            color: #687385;
+            font-size: 0.92rem;
+            line-height: 1.5;
+        }
+
+        .home-transport-feature-points {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem 0.65rem;
+            margin-top: 0.55rem;
+        }
+
+        .home-transport-feature-points span {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            color: #2d5862;
+            font-size: 0.76rem;
+            font-weight: 700;
+        }
+
+        .home-transport-feature-points span::before {
+            content: '✓';
+            display: inline-flex;
+            width: 0.85rem;
+            height: 0.85rem;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid #35a846;
+            border-radius: 50%;
+            color: #259638;
+            font-size: 0.58rem;
+        }
+
+        .home-transport-actions {
+            display: flex;
+            align-items: center;
+            gap: 1.15rem;
+            margin-top: 0.6rem;
+        }
+
+        .home-transport-actions a {
+            color: #163254;
+            font-size: 0.86rem;
+            font-weight: 800;
+            text-decoration: none;
+        }
+
+        .home-transport-actions a:first-child {
+            border-radius: 0.35rem;
+            background: #2e9f42;
+            color: #ffffff;
+            padding: 0.55rem 0.8rem;
+        }
+
+        .home-transport-feature-media {
+            overflow: hidden;
+            min-height: 13.5rem;
+            background: #dce9e2;
+        }
+
+        .home-transport-feature-media img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center;
+        }
+
+        .home-transport-benefits {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 0.65rem;
+            margin-top: 0.65rem;
+        }
+
+        .home-transport-benefit {
+            display: flex;
+            align-items: center;
+            gap: 0.7rem;
+            min-height: 3.25rem;
+            padding: 0.5rem 0.7rem;
+            border: 1px solid #e6ebea;
+            border-radius: 0.65rem;
+            background: #ffffff;
+        }
+
+        .home-transport-benefit-icon {
+            flex: 0 0 auto;
+            color: #2f9f3a;
+            font-size: 1.35rem;
+        }
+
+        .home-transport-benefit strong,
+        .home-transport-benefit span:last-child {
+            display: block;
+        }
+
+        .home-transport-benefit strong {
+            color: #183150;
+            font-size: 0.96rem;
+            font-weight: 800;
+        }
+
+        .home-transport-benefit span:last-child {
+            margin-top: 0.12rem;
+            color: #778496;
+            font-size: 0.78rem;
+        }
+
+        .home-stories-section {
+            position: relative;
+            padding: 6rem 1.25rem 5rem;
+            background: #f7f4ec;
+        }
+
+        .home-stories-shell {
+            width: min(100%, 1400px);
+            margin: 0 auto;
+        }
+
+        .home-stories-header {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 1rem;
+            margin-bottom: 1.8rem;
+            text-align: center;
+        }
+
+        .home-stories-header-copy {
+            flex: 1 1 100%;
+        }
+
+        .home-stories-kicker {
+            display: inline-block;
+            color: #2f9f3a;
+            font-size: 0.82rem;
+            font-weight: 800;
+            letter-spacing: 0.22em;
+            text-transform: uppercase;
+        }
+
+        .home-stories-title {
+            margin-top: 0.45rem;
+            font-size: clamp(2rem, 3.5vw, 3rem);
+            line-height: 1.08;
+            color: #163254;
+            font-weight: 800;
+        }
+
+        .home-stories-copy {
+            grid-column: 2;
+            margin: 0;
+            max-width: 44rem;
+            color: #687385;
+            font-size: 1rem;
+            line-height: 1.7;
+        }
+
+        .home-stories-copy-row {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) minmax(0, 44rem) minmax(0, 1fr);
+            align-items: center;
+            gap: 0.7rem 1rem;
+            margin-top: 0.7rem;
+            width: min(100%, 68rem);
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .home-stories-link {
+            grid-column: 3;
+            justify-self: end;
+            transform: translateX(5rem);
+            display: inline-flex;
+            align-items: center;
+            gap: 0.55rem;
+            color: #2d7f45;
+            font-size: 1rem;
+            font-weight: 700;
+            text-decoration: none;
+            border-bottom: 2px solid rgba(45, 127, 69, 0.35);
+            padding-bottom: 0.2rem;
+            flex: 0 0 auto;
+        }
+
+        .home-stories-grid {
+            display: grid;
+            grid-template-columns: minmax(0, 1.35fr) minmax(320px, 0.95fr);
+            gap: 1rem;
+        }
+
+        .home-story-card {
+            display: flex;
+            min-width: 0;
+            overflow: hidden;
+            border: 1px solid rgba(15, 23, 42, 0.08);
+            border-radius: 1.2rem;
+            background: rgba(255, 255, 255, 0.94);
+            box-shadow: 0 18px 40px rgba(15, 23, 42, 0.1);
+            text-decoration: none;
+            transition: transform 0.28s ease, box-shadow 0.28s ease, border-color 0.28s ease;
+        }
+
+        .home-story-card:hover {
+            transform: translateY(-4px);
+            border-color: rgba(47, 159, 58, 0.24);
+            box-shadow: 0 24px 48px rgba(15, 23, 42, 0.13);
+        }
+
+        .home-story-card:hover .home-story-media img {
+            transform: scale(1.04);
+        }
+
+        .home-story-card--featured {
+            flex-direction: column;
+        }
+
+        .home-story-media {
+            position: relative;
+            overflow: hidden;
+            background: linear-gradient(145deg, #dbe8f6 0%, #bdd4ef 100%);
+        }
+
+        .home-story-media img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.4s ease;
+        }
+
+        .home-story-card--featured .home-story-media {
+            aspect-ratio: 16 / 6.2;
+        }
+
+        .home-story-stack {
+            display: grid;
+            gap: 1rem;
+        }
+
+        .home-story-stack .home-story-card {
+            display: grid;
+            grid-template-columns: minmax(180px, 42%) minmax(0, 1fr);
+            align-items: stretch;
+        }
+
+        .home-story-stack .home-story-media {
+            min-height: 100%;
+        }
+
+        .home-story-body {
+            display: flex;
+            flex: 1 1 auto;
+            flex-direction: column;
+            padding: 0.65rem 0.85rem 0.7rem;
+        }
+
+        .home-story-meta {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 0.55rem;
+            color: #8892a3;
+            font-size: 0.78rem;
+        }
+
+        .home-story-tag {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.18rem 0.45rem;
+            border-radius: 0.35rem;
+            background: rgba(111, 209, 90, 0.15);
+            color: #2d8e3a;
+            font-weight: 800;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .home-story-date {
+            white-space: nowrap;
+        }
+
+        .home-story-card h3 {
+            margin-top: 0.35rem;
+            color: #16233d;
+            font-size: 1.35rem;
+            line-height: 1.18;
+            font-weight: 800;
+        }
+
+        .home-story-stack .home-story-card h3 {
+            font-size: 1.1rem;
+        }
+
+        .home-story-card p {
+            margin-top: 0.25rem;
+            color: #667084;
+            line-height: 1.35;
+        }
+
+        .home-story-read {
+            margin-top: auto;
+            padding-top: 0.45rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.45rem;
+            color: #2d8e3a;
+            font-weight: 700;
+            font-size: 0.96rem;
+        }
+
         @media (max-width: 1023px) {
             .home-hero-shell {
                 padding-bottom: 4rem;
@@ -638,6 +1064,22 @@
             .home-featured-link {
                 justify-content: center;
             }
+
+            .home-stories-section {
+                padding-bottom: 4rem;
+            }
+
+            .home-transport-benefits {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .home-stories-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .home-story-stack {
+                grid-template-columns: 1fr;
+            }
         }
 
         @media (max-width: 767px) {
@@ -648,7 +1090,7 @@
 
             .home-hero-shell {
                 margin: 0;
-                padding-top: 2rem;
+                padding-top: 4.5rem;
                 padding-bottom: 2.25rem;
             }
 
@@ -812,6 +1254,75 @@
             .home-featured-meta-item + .home-featured-meta-item {
                 border-left: 0;
                 border-top: 1px solid rgba(15, 23, 42, 0.08);
+            }
+
+            .home-stories-section {
+                padding-top: 4.5rem;
+                padding-left: 0.8rem;
+                padding-right: 0.8rem;
+                padding-bottom: 3.2rem;
+            }
+
+            .home-transport-section {
+                padding: 2.4rem 0.8rem;
+            }
+
+            .home-transport-feature {
+                grid-template-columns: 1fr;
+            }
+
+            .home-transport-feature-copy {
+                padding: 1rem;
+            }
+
+            .home-transport-feature-media {
+                min-height: 10.5rem;
+            }
+
+            .home-transport-benefits {
+                grid-template-columns: 1fr;
+            }
+
+            .home-stories-header {
+                justify-content: center;
+                margin-bottom: 1.4rem;
+            }
+
+            .home-stories-copy-row {
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                width: 100%;
+            }
+
+            .home-stories-link {
+                justify-self: auto;
+                transform: none;
+            }
+
+            .home-stories-title {
+                font-size: 2rem;
+            }
+
+            .home-story-stack .home-story-card {
+                grid-template-columns: 1fr;
+            }
+
+            .home-story-card h3,
+            .home-story-stack .home-story-card h3 {
+                font-size: 1.05rem;
+            }
+
+            .home-story-card p {
+                font-size: 0.95rem;
+            }
+
+            .home-story-body {
+                padding: 0.65rem 0.8rem 0.7rem;
+            }
+
+            .home-story-stack .home-story-media {
+                aspect-ratio: 16 / 9;
             }
         }
 
@@ -1006,6 +1517,96 @@
                         <path d="M5 5c1.4 0 2.5 1.1 2.5 2.5S6.4 10 5 10 2.5 8.9 2.5 7.5 3.6 5 5 5Z"></path>
                     </svg>
                     <span>Curated Experiences</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="home-transport-section">
+        <div class="home-transport-shell">
+            <div class="home-transport-header">
+                <span class="home-transport-kicker">Travel In Comfort</span>
+                <h2 class="home-transport-title">Your Journey Across Sabah Starts Here</h2>
+                <p class="home-transport-copy">Reliable transport for airport transfers, private tours, and group travel.</p>
+            </div>
+
+            <div class="home-transport-feature">
+                <div class="home-transport-feature-copy">
+                    <span class="home-transport-feature-label">Universal Eden Transport</span>
+                    <h3>Comfortable Rides.<br>Local Expertise.</h3>
+                    <p>Travel with confidence in our air-conditioned fleet, driven by experienced local professionals who know Sabah best.</p>
+                    <div class="home-transport-feature-points"><span>Private &amp; Group Travel</span><span>Sabah-Wide Service</span><span>Flexible Scheduling</span></div>
+                    <div class="home-transport-actions"><a href="{{ route('transport.index') }}">Explore Transport <span aria-hidden="true">→</span></a><a href="{{ route('booking.create', ['mode' => 'enquiry']) }}">Contact Us</a></div>
+                </div>
+                <div class="home-transport-feature-media"><img src="{{ asset('images/transport_top.png') }}" alt="Universal Eden transport vehicle travelling through Sabah"></div>
+            </div>
+            <div class="home-transport-benefits">
+                <div class="home-transport-benefit"><span class="home-transport-benefit-icon" aria-hidden="true">✈</span><div><strong>Airport Transfer</strong><span>Easy arrivals &amp; departures</span></div></div>
+                <div class="home-transport-benefit"><span class="home-transport-benefit-icon" aria-hidden="true">▰</span><div><strong>Private Charter</strong><span>Travel at your own pace</span></div></div>
+                <div class="home-transport-benefit"><span class="home-transport-benefit-icon" aria-hidden="true">♧</span><div><strong>Group Transport</strong><span>Comfort for every group</span></div></div>
+                <div class="home-transport-benefit"><span class="home-transport-benefit-icon" aria-hidden="true">⌖</span><div><strong>Custom Routes</strong><span>Planned around your trip</span></div></div>
+            </div>
+        </div>
+    </section>
+
+    <section class="home-stories-section">
+        <div class="home-stories-shell">
+            <div class="home-stories-header">
+                <div class="home-stories-header-copy">
+                    <span class="home-stories-kicker">Travel Stories</span>
+                    <h2 class="home-stories-title">Latest from Sabah</h2>
+                    <div class="home-stories-copy-row">
+                        <p class="home-stories-copy">Travel inspiration, local guides and the latest updates from Universal Eden Holidays.</p>
+                        <a href="{{ route('blog.index') }}" class="home-stories-link">
+                            <span>View All Stories</span>
+                            <span aria-hidden="true">→</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="home-stories-grid">
+                @php($featuredStory = $storyCards->get(0))
+                @php($sideStories = $storyCards->slice(1, 2))
+
+                <a href="{{ $featuredStory['url'] }}" class="home-story-card home-story-card--featured">
+                    <div class="home-story-media">
+                        <img src="{{ $featuredStory['cover_image_url'] }}" alt="{{ $featuredStory['title'] }}">
+                    </div>
+                    <div class="home-story-body">
+                        <div class="home-story-meta">
+                            <span class="home-story-tag">{{ $featuredStory['destination'] }}</span>
+                            <span class="home-story-date">{{ $featuredStory['published_at']?->format('d M Y') ?? 'Travel Guide' }}</span>
+                        </div>
+                        <h3>{{ $featuredStory['title'] }}</h3>
+                        <p>{{ \Illuminate\Support\Str::limit($featuredStory['excerpt'], 150) }}</p>
+                        <span class="home-story-read">
+                            <span>Read Article</span>
+                            <span aria-hidden="true">→</span>
+                        </span>
+                    </div>
+                </a>
+
+                <div class="home-story-stack">
+                    @foreach ($sideStories as $story)
+                        <a href="{{ $story['url'] }}" class="home-story-card">
+                            <div class="home-story-media">
+                                <img src="{{ $story['cover_image_url'] }}" alt="{{ $story['title'] }}">
+                            </div>
+                            <div class="home-story-body">
+                                <div class="home-story-meta">
+                                    <span class="home-story-tag">{{ $story['destination'] }}</span>
+                                    <span class="home-story-date">{{ $story['published_at']?->format('d M Y') ?? 'Travel Guide' }}</span>
+                                </div>
+                                <h3>{{ $story['title'] }}</h3>
+                                <p>{{ \Illuminate\Support\Str::limit($story['excerpt'], 110) }}</p>
+                                <span class="home-story-read">
+                                    <span>Read Article</span>
+                                    <span aria-hidden="true">→</span>
+                                </span>
+                            </div>
+                        </a>
+                    @endforeach
                 </div>
             </div>
         </div>

@@ -26,13 +26,11 @@
         html,
         body {
             overflow-x: hidden;
-            background: #f5f7fb;
+            background: #f7fbff;
         }
 
         .transport-page {
-            background:
-                radial-gradient(circle at top, rgba(34, 197, 94, 0.08), transparent 30%),
-                linear-gradient(180deg, #ffffff 0%, #f7f9fc 54%, #eef3f8 100%);
+            background: linear-gradient(180deg, #f7fbff 0%, #ffffff 100%);
         }
 
         .transport-hero {
@@ -488,7 +486,7 @@
             }
         }
 
-        @media (max-width: 767px) {
+            @media (max-width: 767px) {
             .transport-hero {
                 margin-top: 0;
                 min-height: calc(20rem - 65px);
@@ -541,20 +539,174 @@
                 background: linear-gradient(180deg, #4ade80 0%, #84cc16 50%, #4ade80 100%);
             }
         }
+
+        .transport-showcase {
+            padding: 3rem 1.5rem 1.5rem;
+            background: linear-gradient(180deg, #f7fbff 0%, #ffffff 100%);
+        }
+
+        .transport-showcase-shell {
+            width: min(100%, 1400px);
+            margin: 0 auto;
+        }
+
+        .transport-showcase-head {
+            text-align: center;
+        }
+
+        .transport-showcase-kicker {
+            color: #2f9f3a;
+            font-size: 0.7rem;
+            font-weight: 800;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+        }
+
+        .transport-showcase-head h1 {
+            margin-top: 0.3rem;
+            color: #163254;
+            font-size: clamp(1.8rem, 3vw, 2.4rem);
+            font-weight: 800;
+            line-height: 1.08;
+        }
+
+        .transport-showcase-head p {
+            margin: 0.35rem auto 0;
+            color: #687385;
+            font-size: 0.8rem;
+        }
+
+        .transport-showcase-panel {
+            display: grid;
+            grid-template-columns: minmax(0, 0.86fr) minmax(0, 1.14fr);
+            overflow: hidden;
+            margin-top: 0.8rem;
+            border: 1px solid rgba(15, 23, 42, 0.09);
+            border-radius: 0.8rem;
+            background: #ffffff;
+            box-shadow: 0 9px 22px rgba(15, 23, 42, 0.08);
+        }
+
+        .transport-showcase-copy {
+            padding: 1.65rem 1.8rem;
+        }
+
+        .transport-showcase-label {
+            color: #2f9f3a;
+            font-size: 0.62rem;
+            font-weight: 800;
+            letter-spacing: 0.16em;
+            text-transform: uppercase;
+        }
+
+        .transport-showcase-copy h2 {
+            margin-top: 0.55rem;
+            color: #163254;
+            font-size: clamp(1.45rem, 2.5vw, 2rem);
+            font-weight: 800;
+            line-height: 1.04;
+        }
+
+        .transport-showcase-copy > p {
+            margin-top: 0.75rem;
+            color: #687385;
+            font-size: 0.78rem;
+            line-height: 1.5;
+        }
+
+        .transport-showcase-points {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.55rem 0.8rem;
+            margin-top: 1rem;
+        }
+
+        .transport-showcase-points span {
+            color: #2d5862;
+            font-size: 0.62rem;
+            font-weight: 700;
+        }
+
+        .transport-showcase-points span::before {
+            content: '✓';
+            display: inline-flex;
+            width: 0.85rem;
+            height: 0.85rem;
+            align-items: center;
+            justify-content: center;
+            margin-right: 0.3rem;
+            border: 1px solid #35a846;
+            border-radius: 50%;
+            color: #259638;
+            font-size: 0.58rem;
+        }
+
+        .transport-showcase-actions {
+            display: flex;
+            align-items: center;
+            gap: 1.15rem;
+            margin-top: 1.25rem;
+        }
+
+        .transport-showcase-actions a {
+            color: #163254;
+            font-size: 0.7rem;
+            font-weight: 800;
+            text-decoration: none;
+        }
+
+        .transport-showcase-actions a:first-child {
+            border-radius: 0.35rem;
+            background: #2e9f42;
+            color: #ffffff;
+            padding: 0.68rem 0.95rem;
+        }
+
+        .transport-showcase-media {
+            min-height: 17rem;
+            overflow: hidden;
+            background: #dce9e2;
+        }
+
+        .transport-showcase-media img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .transport-showcase-benefits {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 0.65rem;
+            margin-top: 0.65rem;
+        }
+
+        .transport-showcase-benefit {
+            display: flex;
+            align-items: center;
+            gap: 0.7rem;
+            min-height: 3.6rem;
+            padding: 0.65rem 0.8rem;
+            border: 1px solid #e6ebea;
+            border-radius: 0.65rem;
+            background: #ffffff;
+        }
+
+        .transport-showcase-benefit-icon { color: #2f9f3a; font-size: 1.35rem; }
+        .transport-showcase-benefit strong, .transport-showcase-benefit small { display: block; }
+        .transport-showcase-benefit strong { color: #183150; font-size: 0.7rem; }
+        .transport-showcase-benefit small { margin-top: 0.12rem; color: #778496; font-size: 0.58rem; }
+
+        @media (max-width: 767px) {
+            .transport-showcase { padding: 2.2rem 0.8rem 1rem; }
+            .transport-showcase-panel { grid-template-columns: 1fr; }
+            .transport-showcase-copy { padding: 1.3rem; }
+            .transport-showcase-media { min-height: 13rem; }
+            .transport-showcase-benefits { grid-template-columns: 1fr; }
+        }
     </style>
 
     <div class="transport-page">
-        <section class="transport-hero">
-            <div class="transport-hero-shell">
-                <div class="transport-hero-copy-wrap">
-                    <h1 class="transport-hero-title">Choose Your Ride</h1>
-                    <p class="transport-hero-copy">
-                        Reliable transport for every journey, from airport arrivals to island gateways, city transfers, and flexible group travel across Sabah.
-                    </p>
-                </div>
-            </div>
-        </section>
-
         <main class="transport-main">
             <section id="transport-options">
                 <div class="transport-section-head">

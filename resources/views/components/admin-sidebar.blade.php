@@ -50,18 +50,6 @@
                 <span class="admin-sidebar-label">Profile</span>
             </a>
 
-            <a href="{{ route('admin.landing-page') }}"
-               class="admin-sidebar-link flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition {{ request()->routeIs('admin.landing-page') ? 'border border-emerald-200 bg-emerald-50 text-emerald-700' : 'text-stone-700 hover:border-stone-200 hover:bg-stone-50' }}"
-               title="Landing Page"
-               @if(request()->routeIs('admin.landing-page')) aria-current="page" @endif>
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M3 12l9-8 9 8"></path>
-                    <path d="M5 10.5V20h14v-9.5"></path>
-                    <path d="M9 20v-6h6v6"></path>
-                </svg>
-                <span class="admin-sidebar-label">Landing Page</span>
-            </a>
-
             <a href="{{ route('admin.about-us') }}"
                class="admin-sidebar-link flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition {{ request()->routeIs(['admin.about-us', 'admin.staff', 'admin.about-us.certifications']) ? 'border border-emerald-200 bg-emerald-50 text-emerald-700' : 'text-stone-700 hover:border-stone-200 hover:bg-stone-50' }}"
                title="About Us"

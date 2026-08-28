@@ -151,11 +151,6 @@ class AdminController extends Controller
         return view('admin.promos', $this->sharedAdminData());
     }
 
-    public function landingPage(): View
-    {
-        return view('admin.landing-page', $this->sharedAdminData());
-    }
-
     public function blogs(): View
     {
         return view('admin.blogs', $this->sharedAdminData());

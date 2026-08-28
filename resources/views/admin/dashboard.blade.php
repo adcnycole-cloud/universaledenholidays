@@ -32,18 +32,6 @@
                     <p class="mt-2 text-xs leading-5 text-stone-600">Upload posters, edit offers, and manage live promos.</p>
                 </a>
 
-                <a href="{{ route('admin.landing-page') }}" class="group rounded-xl border border-stone-200 bg-gradient-to-br from-stone-50 to-white p-5 transition hover:border-sky-200 hover:shadow-md">
-                    <div class="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-sky-100 text-sky-700 group-hover:bg-sky-200">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M3 12l9-8 9 8"></path>
-                            <path d="M5 10.5V20h14v-9.5"></path>
-                            <path d="M9 20v-6h6v6"></path>
-                        </svg>
-                    </div>
-                    <p class="mt-4 font-semibold text-stone-900">Landing Page</p>
-                    <p class="mt-2 text-xs leading-5 text-stone-600">Manage the homepage hero slider and other landing-page content.</p>
-                </a>
-
                 <a href="{{ route('admin.about-us') }}" class="group rounded-xl border border-stone-200 bg-gradient-to-br from-stone-50 to-white p-5 transition hover:border-orange-200 hover:shadow-md">
                     <div class="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-orange-100 text-orange-700 group-hover:bg-orange-200">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">

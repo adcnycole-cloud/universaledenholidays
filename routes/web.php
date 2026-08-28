@@ -82,7 +82,6 @@ Route::middleware('auth')->group(function () {
 Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     Route::get('/', [AdminController::class, 'index'])->name('admin.dashboard');
     Route::get('/profile', [AdminController::class, 'profile'])->name('admin.profile');
-    Route::get('/landing-page', [AdminController::class, 'landingPage'])->name('admin.landing-page');
     Route::get('/about-us', [AdminController::class, 'aboutUs'])->name('admin.about-us');
     Route::get('/about-us/staff', [AdminController::class, 'staffs'])->name('admin.staff');
     Route::get('/about-us/certifications', [AdminController::class, 'certifications'])->name('admin.about-us.certifications');

@@ -460,6 +460,7 @@
             }
 
             .public-header-nav {
+                display: none;
                 background: linear-gradient(180deg, #0c1f34 0%, #07192c 100%);
                 box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.06);
             }
@@ -488,6 +489,10 @@
             }
 
             @media (min-width: 768px) {
+                .public-header-nav {
+                    display: block !important;
+                }
+
                 .admin-shell.with-sidebar {
                     position: relative;
                     margin-left: var(--admin-sidebar-width);
